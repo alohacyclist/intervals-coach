@@ -1,31 +1,21 @@
 import { useCallback, useEffect, useState } from 'react'
-import type { CoachConfig, Plan } from '../coach/types.ts'
-import { getConfig, getPlan } from './api.ts'
-import { StateHeader } from './components/StateHeader.tsx'
-import { DayCard } from './components/DayCard.tsx'
-import { GoalsPanel } from './components/GoalsPanel.tsx'
-import { SettingsPanel } from './components/SettingsPanel.tsx'
+import { getMe } from './api.ts'
+import type { Me } from './api.ts'
+import { Landing } from './Landing.tsx'
+import { Onboarding } from './Onboarding.tsx'
+import { PlanView } from './PlanView.tsx'
+import { Imprint, Privacy } from './Legal.tsx'
 
-const PLAN_DAYS = 3
-
+/** The signed-in state decides what is shown; the path only carries the legal pages. */
 export const App = () => {
-  const [plan, setPlan] = useState<Plan | null>(null)
-  const [config, setConfig] = useState<CoachConfig | null>(null)
+  const [me, setMe] = useState<Me | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [busy, setBusy] = useState(false)
-  const [showSettings, setShowSettings] = useState(false)
 
   const load = useCallback(async () => {
-    setBusy(true)
-    setError(null)
     try {
-      const [nextPlan, nextConfig] = await Promise.all([getPlan(PLAN_DAYS), getConfig()])
-      setPlan(nextPlan)
-      setConfig(nextConfig)
+      setMe(await getMe())
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Unbekannter Fehler')
-    } finally {
-      setBusy(false)
     }
   }, [])
 
@@ -33,51 +23,37 @@ export const App = () => {
     void load()
   }, [load])
 
-  return (
-    <main className="app">
-      {plan && (
-        <StateHeader
-          state={plan.state}
-          busy={busy}
-          onRefresh={() => void load()}
-          onSettings={() => setShowSettings((open) => !open)}
-        />
-      )}
+  const path = window.location.pathname
+  if (path === '/datenschutz') return <main className="app"><Privacy /></main>
+  if (path === '/impressum') return <main className="app"><Imprint /></main>
 
-      {error && (
-        <p className="error error--block">
-          {error}
-          <button type="button" onClick={() => void load()}>
-            Erneut versuchen
-          </button>
-        </p>
-      )}
+  if (error) return <main className="app"><p className="error error--block">{error}</p></main>
+  if (!me) return <main className="app"><p className="loading">Einen Moment…</p></main>
 
-      {showSettings && config && (
-        <SettingsPanel
-          config={config}
-          onClose={() => setShowSettings(false)}
-          onSaved={(saved) => {
-            setConfig(saved)
-            setShowSettings(false)
-            void load()
+  if (!me.authenticated) {
+    return (
+      <main className="app">
+        <Landing error={new URLSearchParams(window.location.search).get('fehler')} />
+      </main>
+    )
+  }
+
+  if (!me.onboarded) {
+    return (
+      <main className="app">
+        <Onboarding
+          onDone={() => {
+            window.history.replaceState(null, '', '/app')
+            setMe({ ...me, onboarded: true })
           }}
         />
-      )}
+      </main>
+    )
+  }
 
-      {!plan && !error && <p className="loading">Lade Daten von intervals.icu…</p>}
-
-      {plan?.days.map((day, index) => (
-        <DayCard key={day.date} day={day} index={index} />
-      ))}
-
-      {plan && config && <GoalsPanel goals={config.goals} feasibility={plan.feasibility} />}
-
-      {plan && (
-        <footer className="footer">
-          Stand: {new Date(plan.generatedAt).toLocaleString('de-DE')}
-        </footer>
-      )}
+  return (
+    <main className="app">
+      <PlanView me={me} onNeedsOnboarding={() => setMe({ ...me, onboarded: false })} />
     </main>
   )
 }
