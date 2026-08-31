@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
+import type { Context } from 'hono'
 import type { ConfigStore } from '../src/coach/config-schema.ts'
-import { ValidationError, validateConfig } from '../src/coach/config-schema.ts'
+import { MissingConfigError, ValidationError, validateConfig } from '../src/coach/config-schema.ts'
 import type { IntervalsAuth } from './intervals.ts'
 import { IntervalsError, createWorkoutEvent, fetchActivities, fetchSportSettings, fetchWellness } from './intervals.ts'
 import { addDays } from '../src/coach/dates.ts'
@@ -24,8 +25,11 @@ export type RouteDeps = {
   readonly store: ConfigStore
 }
 
-/** Resolves per-request dependencies — fixed under Node, from bindings under Workers. */
-export type DepsResolver = (env: unknown) => RouteDeps
+/**
+ * Resolves per-request dependencies: fixed under Node, derived from the signed
+ * session and the Worker bindings in the hosted multi user setup.
+ */
+export type DepsResolver = (context: Context) => Promise<RouteDeps>
 
 const buildPlan = async (deps: RouteDeps, days: number): Promise<Plan> => {
   const today = localToday()
@@ -48,6 +52,9 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
   const app = new Hono()
 
   app.onError((error, context) => {
+    if (error instanceof MissingConfigError) {
+      return context.json({ error: error.message, needsOnboarding: true }, 409)
+    }
     if (error instanceof ValidationError) return context.json({ error: error.message, issues: error.issues }, 400)
     if (error instanceof IntervalsError) return context.json({ error: error.message }, 502)
     console.error(error)
@@ -56,22 +63,22 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
 
   app.get('/api/health', (context) => context.json({ ok: true, today: localToday() }))
 
-  app.get('/api/config', async (context) => context.json(await resolve(context.env).store.load()))
+  app.get('/api/config', async (context) => context.json(await (await resolve(context)).store.load()))
 
   app.put('/api/config', async (context) => {
-    const { store } = resolve(context.env)
+    const { store } = await resolve(context)
     return context.json(await store.save(validateConfig(await context.req.json())))
   })
 
   app.get('/api/plan', async (context) => {
     const requested = Number(context.req.query('days') ?? 3)
     const days = Number.isFinite(requested) ? Math.min(Math.max(Math.trunc(requested), 1), 7) : 3
-    return context.json(await buildPlan(resolve(context.env), days))
+    return context.json(await buildPlan(await resolve(context), days))
   })
 
   /** Pulls FTP and threshold pace from intervals.icu into the stored profile. */
   app.post('/api/sync-settings', async (context) => {
-    const { auth, store } = resolve(context.env)
+    const { auth, store } = await resolve(context)
     const settings = await fetchSportSettings(auth)
     const config = await store.load()
     const merged = validateConfig({
@@ -87,6 +94,12 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
     return context.json({ config: await store.save(merged), settings })
   })
 
+  /** Raw sport settings, used to prefill onboarding before any config exists. */
+  app.get('/api/sport-settings', async (context) => {
+    const { auth } = await resolve(context)
+    return context.json(await fetchSportSettings(auth))
+  })
+
   app.post('/api/push', async (context) => {
     const body = (await context.req.json()) as { date?: string; templateId?: string }
     const template = body.templateId ? findTemplate(body.templateId) : undefined
@@ -95,7 +108,7 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
     }
     if (!template) return context.json({ error: `Unbekanntes Workout: ${body.templateId}` }, 400)
 
-    const deps = resolve(context.env)
+    const deps = await resolve(context)
     const plan = await buildPlan(deps, 7)
     const planned = plan.days
       .find((day) => day.date === body.date)

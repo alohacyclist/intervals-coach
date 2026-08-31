@@ -7,8 +7,8 @@ import { fileConfigStore } from './config-store-file.ts'
 const start = (): void => {
   const env = readEnv()
   const store = fileConfigStore()
-  const app = createApiRoutes(() => ({
-    auth: { apiKey: env.apiKey, athleteId: env.athleteId },
+  const app = createApiRoutes(async () => ({
+    auth: { kind: 'apiKey' as const, apiKey: env.apiKey, athleteId: env.athleteId },
     store,
   }))
 

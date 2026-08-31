@@ -1,10 +1,12 @@
 import type { Activity, Sport, Wellness } from '../src/coach/types.ts'
 
-/** Credentials for one athlete — supplied by the Node env or the Worker bindings. */
-export type IntervalsAuth = {
-  readonly apiKey: string
-  readonly athleteId: string
-}
+/**
+ * Credentials for one athlete. A personal API key covers the single user setup;
+ * OAuth bearer tokens are what intervals.icu requires for multi user apps.
+ */
+export type IntervalsAuth =
+  | { readonly kind: 'apiKey'; readonly apiKey: string; readonly athleteId: string }
+  | { readonly kind: 'bearer'; readonly accessToken: string; readonly athleteId: string }
 
 const BASE_URL = 'https://intervals.icu/api/v1'
 
@@ -22,7 +24,8 @@ export class IntervalsError extends Error {
 }
 
 // btoa exists in both Node and workerd, unlike Buffer.
-const authHeader = (apiKey: string): string => `Basic ${btoa(`API_KEY:${apiKey}`)}`
+const authHeader = (auth: IntervalsAuth): string =>
+  auth.kind === 'bearer' ? `Bearer ${auth.accessToken}` : `Basic ${btoa(`API_KEY:${auth.apiKey}`)}`
 
 const request = async <T>(
   auth: IntervalsAuth,
@@ -32,7 +35,7 @@ const request = async <T>(
   const response = await fetch(`${BASE_URL}${path}`, {
     ...init,
     headers: {
-      Authorization: authHeader(auth.apiKey),
+      Authorization: authHeader(auth),
       'Content-Type': 'application/json',
       ...init.headers,
     },
