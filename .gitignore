@@ -1,0 +1,9 @@
+node_modules
+dist
+.env
+config/athlete.json
+*.log
+coverage
+
+.dev.vars
+.wrangler
