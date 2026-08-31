@@ -5,6 +5,7 @@
 export type KVNamespace = {
   get(key: string, type: 'text'): Promise<string | null>
   put(key: string, value: string): Promise<void>
+  delete(key: string): Promise<void>
 }
 
 export type Fetcher = {
@@ -14,8 +15,24 @@ export type Fetcher = {
 export type Bindings = {
   readonly ASSETS: Fetcher
   readonly COACH_CONFIG: KVNamespace
-  readonly INTERVALS_API_KEY: string
-  readonly INTERVALS_ATHLETE_ID: string
-  readonly APP_PASSWORD: string
+
+  /** Multi user mode: set all three to enable "sign in with intervals.icu". */
+  readonly INTERVALS_CLIENT_ID?: string
+  readonly INTERVALS_CLIENT_SECRET?: string
+  readonly SESSION_SECRET?: string
+
+  /** Single user mode: a personal API key behind one shared password. */
+  readonly INTERVALS_API_KEY?: string
+  readonly INTERVALS_ATHLETE_ID?: string
+  readonly APP_PASSWORD?: string
   readonly APP_USER?: string
 }
+
+export type MultiUserBindings = Bindings & {
+  readonly INTERVALS_CLIENT_ID: string
+  readonly INTERVALS_CLIENT_SECRET: string
+  readonly SESSION_SECRET: string
+}
+
+export const isMultiUser = (env: Bindings): env is MultiUserBindings =>
+  Boolean(env.INTERVALS_CLIENT_ID && env.INTERVALS_CLIENT_SECRET && env.SESSION_SECRET)
