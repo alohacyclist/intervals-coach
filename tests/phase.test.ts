@@ -31,7 +31,7 @@ describe('periodization', () => {
 
   it('caps the hard budget by weekly volume', () => {
     expect(weeklyHardBudget('BUILD', config.profile)).toBe(2)
-    expect(weeklyHardBudget('BUILD', { ...config.profile, weeklySessions: 6 })).toBe(3)
+    expect(weeklyHardBudget('BUILD', { ...config.profile, weeklySessions: { min: 4, max: 6 } })).toBe(3)
     expect(weeklyHardBudget('RECOVERY', config.profile)).toBe(1)
   })
 })

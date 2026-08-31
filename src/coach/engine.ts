@@ -26,6 +26,7 @@ type Simulation = {
   readonly fitness: Fitness
   readonly daysSinceHard: Readonly<Record<Sport, number>>
   readonly hardThisWeek: number
+  readonly sessionsThisWeek: number
   readonly hardThisWeekBySport: Readonly<Record<Sport, number>>
   readonly stimulusAge: Readonly<Record<string, number>>
   readonly usedTemplateIds: readonly string[]
@@ -43,6 +44,7 @@ const initSimulation = (state: TrainingState): Simulation => ({
   fitness: state.overall,
   daysSinceHard: state.daysSinceHard,
   hardThisWeek: state.hardSessionsThisWeek,
+  sessionsThisWeek: state.sessionsThisWeek,
   hardThisWeekBySport: state.hardThisWeekBySport,
   stimulusAge: Object.fromEntries(
     state.recency.map((entry) => [`${entry.sport}:${entry.stimulus}`, entry.daysAgo]),
@@ -171,6 +173,7 @@ const notesFor = (
   dayType: DayType,
   state: TrainingState,
   simulation: Simulation,
+  config: CoachConfig,
   budget: number,
   dayIndex: number,
 ): readonly string[] => {
@@ -182,6 +185,10 @@ const notesFor = (
   }
   if (dayType === 'EASY' && minDaysSinceHard(simulation) < HARD_SPACING_DAYS) {
     notes.push('Weniger als 48h seit der letzten harten Einheit')
+  }
+  const { min } = config.profile.weeklySessions
+  if (simulation.sessionsThisWeek < min) {
+    notes.push(`Diese Woche ${simulation.sessionsThisWeek} von mindestens ${min} Einheiten`)
   }
   if (state.rampRate > 6) notes.push(`Fitness steigt schnell (+${state.rampRate}/Woche) — Verletzungsrisiko beachten`)
   return notes
@@ -208,6 +215,7 @@ const advance = (
       ]),
     ) as Record<Sport, number>,
     hardThisWeek: sameWeek ? simulation.hardThisWeek + (isHard ? 1 : 0) : 0,
+    sessionsThisWeek: (sameWeek ? simulation.sessionsThisWeek : 0) + (session ? 1 : 0),
     hardThisWeekBySport: Object.fromEntries(
       SPORTS.map((sport) => {
         const carried = sameWeek ? simulation.hardThisWeekBySport[sport] : 0
@@ -269,7 +277,7 @@ export const planDays = (
         phase,
         recommended,
         options,
-        notes: notesFor(dayType, state, simulation, budget, dayIndex),
+        notes: notesFor(dayType, state, simulation, config, budget, dayIndex),
       }
 
       return {

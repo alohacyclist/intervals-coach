@@ -83,6 +83,17 @@ describe('plan engine', () => {
     expect(ids.length).toBeGreaterThan(0)
   })
 
+  it('warns while the week is below the athletes minimum session count', () => {
+    const [today] = planDays(stateFrom(rested), config)
+    expect(today?.notes.join(' ')).toContain('von mindestens 2 Einheiten')
+  })
+
+  it('drops the warning once the minimum is met', () => {
+    const met = [activity(0, 'Ride', { load: 55, intensity: 70 }), activity(1, 'Run', { load: 50, intensity: 70 })]
+    const [today] = planDays(stateFrom(met), config)
+    expect(today?.notes.join(' ')).not.toContain('von mindestens')
+  })
+
   it('carries a workout description in intervals.icu syntax', () => {
     const [today] = planDays(stateFrom(rested), config)
     expect(today?.options[0]?.description).toMatch(/^- /m)

@@ -45,7 +45,7 @@ const raceFeasibility = (goal: Goal, profile: AthleteProfile, today: string): Fe
   const currentPace = racePaceSecPerKm(goal.currentValue, distanceKm)
   const paceText = `${formatSeconds(currentPace)}/km → ${formatSeconds(targetPace)}/km`
 
-  const volumeShortfall = distanceKm >= 10 && profile.weeklySessions < MIN_RUN_SESSIONS_FOR_10K + 1
+  const volumeShortfall = distanceKm >= 10 && profile.weeklySessions.max < MIN_RUN_SESSIONS_FOR_10K + 1
 
   if (months === null) {
     return {
@@ -64,7 +64,7 @@ const raceFeasibility = (goal: Goal, profile: AthleteProfile, today: string): Fe
     required <= RACE_PERCENT_PER_MONTH ? 'on-track' : required <= RACE_PERCENT_PER_MONTH * 2 ? 'ambitious' : 'unrealistic'
   const verdict = volumeShortfall && timeVerdict === 'on-track' ? 'ambitious' : timeVerdict
   const volumeNote = volumeShortfall
-    ? ` Zeitlich reicht das Fenster, der Engpass ist die Laufhäufigkeit: in den letzten drei Monaten vor dem Ziel brauchst du ${MIN_RUN_SESSIONS_FOR_10K}+ Läufe/Woche statt der aktuell geplanten ${profile.weeklySessions} Einheiten insgesamt.`
+    ? ` Zeitlich reicht das Fenster, der Engpass ist die Laufhäufigkeit: in den letzten drei Monaten vor dem Ziel brauchst du ${MIN_RUN_SESSIONS_FOR_10K}+ Läufe/Woche statt der aktuell geplanten ${profile.weeklySessions.max} Einheiten insgesamt.`
     : ''
   return {
     goalId: goal.id,

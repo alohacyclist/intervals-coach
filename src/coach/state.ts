@@ -63,6 +63,7 @@ export const buildState = (
     ) as Record<Sport, number>,
     hardSessionsLast7: last7.filter(isHardActivity).length,
     hardSessionsThisWeek: thisWeek.filter(isHardActivity).length,
+    sessionsThisWeek: thisWeek.filter((activity) => activity.sport !== 'Other').length,
     hardThisWeekBySport: Object.fromEntries(
       SPORTS.map((sport) => [
         sport,

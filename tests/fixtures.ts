@@ -39,7 +39,7 @@ export const config: CoachConfig = {
     weightKg: 71,
     maxHr: null,
     lthr: null,
-    weeklySessions: 3,
+    weeklySessions: { min: 2, max: 3 },
     maxSessionMinutes: 75,
   },
   goals: [

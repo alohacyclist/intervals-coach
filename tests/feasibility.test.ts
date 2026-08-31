@@ -26,7 +26,7 @@ describe('goal feasibility', () => {
   })
 
   it('drops the frequency warning when enough sessions are planned', () => {
-    const profile = { ...config.profile, weeklySessions: 5 }
+    const profile = { ...config.profile, weeklySessions: { min: 3, max: 5 } }
     const [, run] = assessGoals(config.goals, profile, TODAY)
     expect(run?.verdict).toBe('on-track')
   })

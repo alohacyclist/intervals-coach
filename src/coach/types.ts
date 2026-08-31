@@ -18,6 +18,11 @@ export type Stimulus =
 
 export type IntensityClass = 'hard' | 'moderate' | 'easy'
 
+export type WeeklySessions = {
+  readonly min: number
+  readonly max: number
+}
+
 export type AthleteProfile = {
   readonly ftp: number
   /** Threshold pace in seconds per km, must match the value set in intervals.icu. */
@@ -25,8 +30,8 @@ export type AthleteProfile = {
   readonly weightKg: number
   readonly maxHr: number | null
   readonly lthr: number | null
-  /** Sessions the athlete can realistically complete per week. */
-  readonly weeklySessions: number
+  /** Sessions per week: `min` is the commitment, `max` the ceiling time allows. */
+  readonly weeklySessions: WeeklySessions
   /** Time budget for a single session in minutes. */
   readonly maxSessionMinutes: number
 }
@@ -100,6 +105,7 @@ export type TrainingState = {
   readonly daysSinceHard: Readonly<Record<Sport, number>>
   readonly hardSessionsLast7: number
   readonly hardSessionsThisWeek: number
+  readonly sessionsThisWeek: number
   readonly hardThisWeekBySport: Readonly<Record<Sport, number>>
   readonly recentWorkoutNames: readonly string[]
   readonly loadLast7: number

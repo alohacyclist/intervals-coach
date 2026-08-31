@@ -65,7 +65,7 @@ const PHASE_HARD_BUDGET: Readonly<Record<Phase, number>> = {
  */
 export const weeklyHardBudget = (phase: Phase, profile: AthleteProfile): number => {
   const phaseBudget = PHASE_HARD_BUDGET[phase]
-  const volumeBudget = Math.max(1, profile.weeklySessions - 1)
+  const volumeBudget = Math.max(1, profile.weeklySessions.max - 1)
   return Math.min(phaseBudget, volumeBudget)
 }
 

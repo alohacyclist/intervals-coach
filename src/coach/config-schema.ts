@@ -14,7 +14,7 @@ const DEFAULT_CONFIG: CoachConfig = {
     weightKg: 71,
     maxHr: null,
     lthr: null,
-    weeklySessions: 3,
+    weeklySessions: { min: 2, max: 3 },
     maxSessionMinutes: 75,
   },
   goals: [
@@ -54,7 +54,12 @@ const validateProfile = (raw: unknown, issues: string[]): AthleteProfile => {
   if (!positive(profile['ftp'])) issues.push('profile.ftp muss > 0 sein')
   if (!positive(profile['thresholdPaceSecPerKm'])) issues.push('profile.thresholdPaceSecPerKm muss > 0 sein')
   if (!positive(profile['weightKg'])) issues.push('profile.weightKg muss > 0 sein')
-  if (!positive(profile['weeklySessions'])) issues.push('profile.weeklySessions muss > 0 sein')
+  const sessions = (profile['weeklySessions'] ?? {}) as Record<string, unknown>
+  if (!positive(sessions['min'])) issues.push('profile.weeklySessions.min muss > 0 sein')
+  if (!positive(sessions['max'])) issues.push('profile.weeklySessions.max muss > 0 sein')
+  if (positive(sessions['min']) && positive(sessions['max']) && Number(sessions['min']) > Number(sessions['max'])) {
+    issues.push('profile.weeklySessions.min darf nicht über max liegen')
+  }
   if (!positive(profile['maxSessionMinutes'])) issues.push('profile.maxSessionMinutes muss > 0 sein')
 
   return {
@@ -63,7 +68,7 @@ const validateProfile = (raw: unknown, issues: string[]): AthleteProfile => {
     weightKg: Number(profile['weightKg']),
     maxHr: positive(profile['maxHr']) ? Number(profile['maxHr']) : null,
     lthr: positive(profile['lthr']) ? Number(profile['lthr']) : null,
-    weeklySessions: Number(profile['weeklySessions']),
+    weeklySessions: { min: Number(sessions['min']), max: Number(sessions['max']) },
     maxSessionMinutes: Number(profile['maxSessionMinutes']),
   }
 }
@@ -106,6 +111,14 @@ export const validateConfig = (raw: unknown): CoachConfig => {
 
   if (issues.length > 0) throw new ValidationError(issues)
   return config
+}
+
+/** Raised when a user is authenticated but has not completed onboarding yet. */
+export class MissingConfigError extends Error {
+  constructor() {
+    super('Onboarding noch nicht abgeschlossen')
+    this.name = 'MissingConfigError'
+  }
 }
 
 /** Persistence for the athlete configuration — file backed locally, KV in production. */

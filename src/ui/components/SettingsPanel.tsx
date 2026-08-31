@@ -75,13 +75,31 @@ export const SettingsPanel = ({ config, onSaved, onClose }: Props) => {
           />
         </label>
         <label>
-          Einheiten / Woche
+          Einheiten / Woche (mindestens)
           <input
             type="number"
             min={1}
-            max={7}
-            value={draft.profile.weeklySessions}
-            onChange={(event) => patchProfile({ weeklySessions: Number(event.target.value) })}
+            max={14}
+            value={draft.profile.weeklySessions.min}
+            onChange={(event) =>
+              patchProfile({
+                weeklySessions: { ...draft.profile.weeklySessions, min: Number(event.target.value) },
+              })
+            }
+          />
+        </label>
+        <label>
+          Einheiten / Woche (höchstens)
+          <input
+            type="number"
+            min={1}
+            max={14}
+            value={draft.profile.weeklySessions.max}
+            onChange={(event) =>
+              patchProfile({
+                weeklySessions: { ...draft.profile.weeklySessions, max: Number(event.target.value) },
+              })
+            }
           />
         </label>
         <label>

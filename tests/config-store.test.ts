@@ -31,6 +31,19 @@ describe('config validation', () => {
     expect(validateConfig(open).goals[0]?.targetDate).toBeUndefined()
   })
 
+  it('rejects a weekly session range with min above max', () => {
+    const broken = {
+      ...DEFAULT_CONFIG,
+      profile: { ...DEFAULT_CONFIG.profile, weeklySessions: { min: 5, max: 3 } },
+    }
+    expect(() => validateConfig(broken)).toThrow(/min darf nicht über max/)
+  })
+
+  it('rejects a missing weekly session range', () => {
+    const broken = { ...DEFAULT_CONFIG, profile: { ...DEFAULT_CONFIG.profile, weeklySessions: {} } }
+    expect(() => validateConfig(broken)).toThrow(ValidationError)
+  })
+
   it('reports every issue at once', () => {
     try {
       validateConfig({ profile: {}, goals: [{}] })
