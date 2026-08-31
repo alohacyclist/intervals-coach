@@ -77,6 +77,49 @@ auf Rolle bzw. Uhr. Zielangaben sind Prozentwerte von FTP bzw. Schwellenpace, da
 intervals.icu immer mit den dort hinterlegten Werten rechnet; die App zeigt zusätzlich
 die absoluten Watt- und Pace-Bereiche an.
 
+## Mehrbenutzer-Betrieb
+
+Die App kennt zwei Modi und schaltet automatisch um:
+
+| | Einzelbetrieb | Mehrbenutzer |
+|---|---|---|
+| Aktiv wenn | `INTERVALS_API_KEY` gesetzt | `INTERVALS_CLIENT_ID`, `INTERVALS_CLIENT_SECRET`, `SESSION_SECRET` gesetzt |
+| Zugang | ein gemeinsames Passwort (Basic Auth) | „Mit intervals.icu anmelden" (OAuth) |
+| Zugangsdaten | ein persönlicher API-Key im Secret | pro Nutzer ein OAuth-Token, verschlüsselt in KV |
+| Konfiguration | ein Datensatz | ein Datensatz je Athlet |
+
+intervals.icu verlangt für Apps mit mehreren Nutzern ausdrücklich OAuth. Der Client muss
+per Mail bei `david@intervals.icu` beantragt werden — mit App-Name, Beschreibung,
+Website-URL, quadratischem Logo (≥128 px), Datenschutz-URL und den Redirect-URIs.
+`http://localhost/` ist immer erlaubt, der Flow lässt sich also vor der Freigabe testen.
+
+Angefragte Scopes: `ACTIVITY:READ WELLNESS:READ CALENDAR:WRITE` — lesen und Einheiten
+planen, nichts löschen.
+
+Sobald der Client da ist:
+
+```bash
+npx wrangler secret put INTERVALS_CLIENT_ID
+npx wrangler secret put INTERVALS_CLIENT_SECRET
+npx wrangler secret put SESSION_SECRET      # z. B. openssl rand -base64 32
+npm run deploy
+```
+
+Der Redirect-URI wird aus der Request-Origin abgeleitet, dieselbe Codebasis funktioniert
+also unter `localhost` und in Produktion. Solange `INTERVALS_CLIENT_ID` fehlt, bleibt der
+Einzelbetrieb unverändert aktiv — ein bestehendes Deployment bricht nicht.
+
+**Gespeichert wird:** OAuth-Token (AES-GCM-verschlüsselt mit `SESSION_SECRET`) und die
+Zielkonfiguration je Athlet. Trainings- und Gesundheitsdaten werden bei jedem Aufruf frisch
+von intervals.icu geholt und nicht abgelegt.
+
+**Sitzungen:** HMAC-signiertes Cookie, `HttpOnly`, `Secure`, `SameSite=Lax`, 30 Tage.
+Der OAuth-`state` läuft über ein eigenes kurzlebiges Cookie gegen CSRF.
+
+**Rechtliches:** HRV, Ruhepuls und Schlaf sind Gesundheitsdaten nach Art. 9 DSGVO.
+`/datenschutz` und `/impressum` liegen als Entwurf bei und müssen vor der Veröffentlichung
+mit echten Angaben gefüllt werden.
+
 ## Struktur
 
 ```
@@ -88,7 +131,11 @@ src/coach/     reine Trainingslogik, ohne IO — hier liegt die gesamte Fachlich
   engine.ts    Regel-Engine für die nächsten Tage
   feasibility.ts  Realismus-Check der Ziele
 server/        intervals.icu-Client, HTTP-Routen, Node-Entry für die Entwicklung
-worker/        Cloudflare-Worker-Entry, Basic Auth, KV-Konfigurationsspeicher
+worker/        Cloudflare-Worker-Entry
+  oauth.ts     intervals.icu OAuth: Authorize-URL, Code-Tausch, Refresh
+  session.ts   signierte Session-Cookies, OAuth-state
+  crypto.ts    HMAC-Signatur und AES-GCM-Verschlüsselung (Web Crypto)
+  users.ts     Nutzer- und Konfigurationsspeicher in KV, je Athlet
 src/ui/        React-Oberfläche
 tests/         Vitest (npm test)
 scripts/demo.ts  Plan aus synthetischen Daten, läuft ohne API-Zugang
