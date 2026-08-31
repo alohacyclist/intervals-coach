@@ -1,0 +1,5 @@
+# Local secrets for "wrangler dev" (never commit .dev.vars)
+INTERVALS_API_KEY=your_api_key_here
+INTERVALS_ATHLETE_ID=i000000
+APP_PASSWORD=choose_a_long_password
+APP_USER=coach
