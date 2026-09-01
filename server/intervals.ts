@@ -71,6 +71,7 @@ type RawWellness = Record<string, unknown>
 
 const mapActivity = (raw: RawActivity): Activity => ({
   id: String(raw['id'] ?? ''),
+  source: typeof raw['source'] === 'string' ? raw['source'] : null,
   date: String(raw['start_date_local'] ?? '').slice(0, 10),
   sport: toSport(raw['type']),
   name: String(raw['name'] ?? ''),

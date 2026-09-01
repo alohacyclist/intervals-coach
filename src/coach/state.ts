@@ -1,5 +1,6 @@
 import type {
   Activity,
+  DataIssue,
   Fitness,
   RecentActivity,
   Sport,
@@ -71,6 +72,27 @@ const newestActivity = (activities: readonly Activity[], today: string): RecentA
     : null
 }
 
+/**
+ * Strava forbids intervals.icu from serving Strava-sourced activities over its
+ * API, so they arrive as empty stubs. Without this check the plan would just
+ * show zeroes and look broken.
+ */
+const SHARE_WORTH_REPORTING = 0.2
+
+const detectDataIssue = (activities: readonly Activity[]): DataIssue | null => {
+  const total = activities.length
+  if (total === 0) return null
+  const blocked = activities.filter(
+    (activity) => activity.source === 'STRAVA' && activity.load <= 0,
+  ).length
+  if (blocked > 0 && blocked / total > SHARE_WORTH_REPORTING) {
+    return { kind: 'strava-blocked', affected: blocked, total }
+  }
+  return activities.every((activity) => activity.load <= 0)
+    ? { kind: 'no-load', affected: total, total }
+    : null
+}
+
 const bySport = (activities: readonly Activity[], today: string): Record<Sport, Fitness> =>
   Object.fromEntries(
     SPORTS.map((sport) => [sport, computeFitness(activities, today, sport)]),
@@ -117,5 +139,6 @@ export const buildState = (
     lastActivity: newestActivity(activities, today),
     activityCount: activities.length,
     loadedActivityCount: activities.filter((activity) => activity.load > 0).length,
+    dataIssue: detectDataIssue(activities),
   }
 }

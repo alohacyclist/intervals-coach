@@ -95,3 +95,33 @@ describe('noise from auto-detected activities', () => {
     expect(stimulusRecency([activity(1, 'Ride', { load: 0, intensity: 0 })], TODAY)).toEqual([])
   })
 })
+
+describe('blocked data sources', () => {
+  const strava = (daysAgo: number) =>
+    activity(daysAgo, 'Ride', { source: 'STRAVA', name: '', load: 0, intensity: 0 })
+
+  it('reports Strava activities that arrive without any payload', () => {
+    const state = buildState([strava(1), strava(2), strava(3)], [], TODAY)
+    expect(state.dataIssue).toEqual({ kind: 'strava-blocked', affected: 3, total: 3 })
+  })
+
+  it('still reports when only part of the history is blocked', () => {
+    const state = buildState([strava(1), strava(2), activity(3, 'Ride', { load: 80 })], [], TODAY)
+    expect(state.dataIssue?.kind).toBe('strava-blocked')
+    expect(state.dataIssue?.affected).toBe(2)
+  })
+
+  it('stays quiet when a single blocked activity sits among healthy ones', () => {
+    const healthy = Array.from({ length: 9 }, (_unused, index) => activity(index + 2, 'Ride', { load: 70 }))
+    expect(buildState([strava(1), ...healthy], [], TODAY).dataIssue).toBeNull()
+  })
+
+  it('separates missing load from a blocked source', () => {
+    const state = buildState([activity(1, 'Run', { source: 'GARMIN', load: 0 })], [], TODAY)
+    expect(state.dataIssue).toEqual({ kind: 'no-load', affected: 1, total: 1 })
+  })
+
+  it('reports nothing when the data is healthy', () => {
+    expect(buildState([activity(1, 'Ride', { load: 80 })], [], TODAY).dataIssue).toBeNull()
+  })
+})

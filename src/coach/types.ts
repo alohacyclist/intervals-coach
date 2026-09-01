@@ -62,6 +62,8 @@ export type CoachConfig = {
 
 export type Activity = {
   readonly id: string
+  /** Where intervals.icu got the activity from — STRAVA payloads arrive empty. */
+  readonly source: string | null
   readonly date: string
   readonly sport: Sport | 'Other'
   readonly name: string
@@ -119,6 +121,17 @@ export type TrainingState = {
   readonly activityCount: number
   /** Only those carrying a training load — what the plan actually reacts to. */
   readonly loadedActivityCount: number
+  readonly dataIssue: DataIssue | null
+}
+
+/**
+ * Something is wrong with the incoming data itself, not with the plan. Surfaced
+ * to the athlete because the fix is in their intervals.icu account, not here.
+ */
+export type DataIssue = {
+  readonly kind: 'strava-blocked' | 'no-load'
+  readonly affected: number
+  readonly total: number
 }
 
 export type RecentActivity = {

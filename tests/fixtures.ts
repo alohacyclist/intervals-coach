@@ -10,6 +10,7 @@ export const activity = (
   overrides: Partial<Activity> = {},
 ): Activity => ({
   id: `a-${daysAgo}-${sport}`,
+  source: 'GARMIN',
   date: addDays(TODAY, -daysAgo),
   sport,
   name: `${sport} ${daysAgo}`,

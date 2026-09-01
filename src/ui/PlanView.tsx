@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import type { CoachConfig, Plan } from '../coach/types.ts'
 import { ApiError, getConfig, getPlan } from './api.ts'
 import type { Me } from './api.ts'
+import { DataIssueBanner } from './components/DataIssueBanner.tsx'
 import { StateHeader } from './components/StateHeader.tsx'
 import { DayCard } from './components/DayCard.tsx'
 import { GoalsPanel } from './components/GoalsPanel.tsx'
@@ -64,6 +65,8 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
           onSettings={() => setShowSettings((open) => !open)}
         />
       )}
+
+      {plan?.state.dataIssue && <DataIssueBanner issue={plan.state.dataIssue} />}
 
       {error && (
         <p className="error error--block">
