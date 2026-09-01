@@ -49,12 +49,23 @@ const isIsoDate = (value: unknown): value is string =>
 const positive = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value) && value > 0
 
+/**
+ * Earlier versions stored a single "sessions per week" number, which meant the
+ * ceiling. Stored configurations are migrated in place rather than rejected.
+ */
+const normaliseWeeklySessions = (raw: unknown): Record<string, unknown> => {
+  if (typeof raw === 'number' && Number.isFinite(raw) && raw > 0) {
+    return { min: Math.max(1, Math.round(raw) - 1), max: Math.round(raw) }
+  }
+  return (raw ?? {}) as Record<string, unknown>
+}
+
 const validateProfile = (raw: unknown, issues: string[]): AthleteProfile => {
   const profile = (raw ?? {}) as Record<string, unknown>
   if (!positive(profile['ftp'])) issues.push('profile.ftp muss > 0 sein')
   if (!positive(profile['thresholdPaceSecPerKm'])) issues.push('profile.thresholdPaceSecPerKm muss > 0 sein')
   if (!positive(profile['weightKg'])) issues.push('profile.weightKg muss > 0 sein')
-  const sessions = (profile['weeklySessions'] ?? {}) as Record<string, unknown>
+  const sessions = normaliseWeeklySessions(profile['weeklySessions'])
   if (!positive(sessions['min'])) issues.push('profile.weeklySessions.min muss > 0 sein')
   if (!positive(sessions['max'])) issues.push('profile.weeklySessions.max muss > 0 sein')
   if (positive(sessions['min']) && positive(sessions['max']) && Number(sessions['min']) > Number(sessions['max'])) {

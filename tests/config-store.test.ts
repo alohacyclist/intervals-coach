@@ -53,3 +53,34 @@ describe('config validation', () => {
     }
   })
 })
+
+describe('configuration migration', () => {
+  it('migrates a legacy weeklySessions number into a range', () => {
+    const legacy = {
+      ...DEFAULT_CONFIG,
+      profile: { ...DEFAULT_CONFIG.profile, weeklySessions: 3 },
+    }
+    expect(validateConfig(legacy).profile.weeklySessions).toEqual({ min: 2, max: 3 })
+  })
+
+  it('never migrates below one session', () => {
+    const legacy = {
+      ...DEFAULT_CONFIG,
+      profile: { ...DEFAULT_CONFIG.profile, weeklySessions: 1 },
+    }
+    expect(validateConfig(legacy).profile.weeklySessions).toEqual({ min: 1, max: 1 })
+  })
+
+  it('leaves a range untouched', () => {
+    const current = {
+      ...DEFAULT_CONFIG,
+      profile: { ...DEFAULT_CONFIG.profile, weeklySessions: { min: 3, max: 5 } },
+    }
+    expect(validateConfig(current).profile.weeklySessions).toEqual({ min: 3, max: 5 })
+  })
+
+  it('still rejects a zero or negative legacy value', () => {
+    const broken = { ...DEFAULT_CONFIG, profile: { ...DEFAULT_CONFIG.profile, weeklySessions: 0 } }
+    expect(() => validateConfig(broken)).toThrow(ValidationError)
+  })
+})
