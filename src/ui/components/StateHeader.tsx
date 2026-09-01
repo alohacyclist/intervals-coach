@@ -58,6 +58,26 @@ export const StateHeader = ({ state, onRefresh, onSettings, busy }: Props) => (
       </div>
     </dl>
 
+    <div className="datasource">
+      {state.lastActivity ? (
+        <>
+          <span>
+            Zuletzt gesehen: <strong>{state.lastActivity.name || 'Einheit ohne Namen'}</strong> am{' '}
+            {state.lastActivity.date.slice(8, 10)}.{state.lastActivity.date.slice(5, 7)}.
+            {state.lastActivity.daysAgo === 0
+              ? ' (heute)'
+              : state.lastActivity.daysAgo === 1
+                ? ' (gestern)'
+                : ` (vor ${state.lastActivity.daysAgo} Tagen)`}{' '}
+            · {Math.round(state.lastActivity.load)} TSS
+          </span>
+          <span className="datasource__count">{state.activityCount} Einheiten in 180 Tagen</span>
+        </>
+      ) : (
+        <span>Keine Einheiten in den letzten 180 Tagen gefunden.</span>
+      )}
+    </div>
+
     <div className="metrics metrics--sport">
       <div>
         <dt>Rad · letzte harte Einheit</dt>

@@ -39,6 +39,22 @@ describe('training state', () => {
     expect(stimulusRecency([activity(-3, 'Run', { intensity: 98 })], TODAY)).toEqual([])
   })
 
+  it('reports the newest past activity so stale data is visible', () => {
+    const state = buildState([activity(5, 'Ride'), activity(1, 'Run'), activity(9, 'Ride')], [], TODAY)
+    expect(state.lastActivity?.daysAgo).toBe(1)
+    expect(state.lastActivity?.sport).toBe('Run')
+    expect(state.activityCount).toBe(3)
+  })
+
+  it('ignores future activities when picking the newest', () => {
+    const state = buildState([activity(-2, 'Ride'), activity(3, 'Run')], [], TODAY)
+    expect(state.lastActivity?.daysAgo).toBe(3)
+  })
+
+  it('reports no activity when the history is empty', () => {
+    expect(buildState([], [], TODAY).lastActivity).toBeNull()
+  })
+
   it('includes readiness derived from wellness', () => {
     const state = buildState([], [wellness(0), ...baselineWellness()], TODAY)
     expect(state.readiness.score).toBe('green')
