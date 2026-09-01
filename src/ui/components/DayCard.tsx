@@ -30,11 +30,13 @@ export const DayCard = ({ day, index }: { readonly day: PlannedDay; readonly ind
 
     {day.recommended === 'REST' && (
       <p className="rest-hint">
-        Empfehlung: Pause. Die Optionen unten sind das Maximum, falls du dich doch bewegen willst.
+        <strong>Heute ist Pause vorgesehen.</strong> Ruhetage sind Teil des Plans, nicht das
+        Ausbleiben davon — die Anpassung passiert dazwischen. Falls du dich trotzdem bewegen willst,
+        stehen unten die lockersten Varianten.
       </p>
     )}
 
-    <div className="day__options">
+    <div className={`day__options ${day.recommended === 'REST' ? 'day__options--optional' : ''}`}>
       {day.options.map((session) => (
         <SessionCard
           key={session.template.id}

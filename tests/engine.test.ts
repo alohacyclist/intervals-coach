@@ -49,12 +49,53 @@ describe('plan engine', () => {
   })
 
   it('respects the weekly hard budget', () => {
+    // Both on the same day, so the 48h spacing rule stays satisfied.
+    const roomy = { ...config, profile: { ...config.profile, weeklySessions: { min: 2, max: 5 } } }
     const busyWeek = [
-      activity(0, 'Ride', { load: 90, intensity: 98 }),
-      activity(1, 'Run', { load: 80, intensity: 96 }),
+      activity(2, 'Ride', { load: 90, intensity: 98 }),
+      activity(2, 'Run', { load: 80, intensity: 96 }),
     ]
-    const [today] = planDays(stateFrom(busyWeek), config)
+    const [today] = planDays(stateFrom(busyWeek), roomy)
+    expect(today?.dayType).toBe('EASY')
     expect(today?.notes.join(' ')).toContain('Wochenbudget')
+  })
+
+  it('plans a rest day once the weekly session ceiling is reached', () => {
+    const fullWeek = [
+      activity(0, 'Ride', { load: 60, intensity: 70 }),
+      activity(1, 'Run', { load: 55, intensity: 70 }),
+      activity(2, 'Ride', { load: 70, intensity: 75 }),
+    ]
+    const [today] = planDays(stateFrom(fullWeek), config)
+    expect(today?.dayType).toBe('REST')
+    expect(today?.recommended).toBe('REST')
+    expect(today?.notes.join(' ')).toContain('Wochenpensum erreicht (3 von 3)')
+  })
+
+  it('rests rather than adding volume after a hard day once the minimum is met', () => {
+    const minimumMet = [
+      activity(1, 'Ride', { load: 90, intensity: 98 }),
+      activity(2, 'Run', { load: 50, intensity: 70 }),
+    ]
+    const [today] = planDays(stateFrom(minimumMet), config)
+    expect(today?.dayType).toBe('REST')
+    expect(today?.notes.join(' ')).toContain('Mindestpensum erfüllt')
+  })
+
+  it('offers an easy session instead of rest while below the weekly minimum', () => {
+    const [today] = planDays(stateFrom([activity(1, 'Ride', { load: 90, intensity: 98 })]), config)
+    expect(today?.dayType).toBe('EASY')
+  })
+
+  it('still shows two easy options on a rest day', () => {
+    const fullWeek = [
+      activity(0, 'Ride', { load: 60, intensity: 70 }),
+      activity(1, 'Run', { load: 55, intensity: 70 }),
+      activity(2, 'Ride', { load: 70, intensity: 75 }),
+    ]
+    const [today] = planDays(stateFrom(fullWeek), config)
+    expect(today?.options).toHaveLength(2)
+    expect(today?.options.every((option) => intensityClass(option.template.stimulus) === 'easy')).toBe(true)
   })
 
   it('recommends the sport that has had no quality session this week', () => {

@@ -59,22 +59,57 @@ const stimulusAge = (simulation: Simulation, sport: Sport, stimulus: Stimulus): 
 const minDaysSinceHard = (simulation: Simulation): number =>
   Math.min(...SPORTS.map((sport) => simulation.daysSinceHard[sport]))
 
-const decideDayType = (
+type DayDecision = {
+  readonly dayType: DayType
+  readonly reason: string
+}
+
+/**
+ * Rest days come out of the weekly session budget, not only out of fatigue.
+ * An athlete training three times a week rests four days, and the plan has to
+ * say so instead of proposing something every single day.
+ */
+const decideDay = (
   simulation: Simulation,
   state: TrainingState,
+  config: CoachConfig,
   budget: number,
   dayIndex: number,
-): DayType => {
+): DayDecision => {
+  const { min, max } = config.profile.weeklySessions
   const readinessRed = state.readiness.score === 'red'
+  const planned = simulation.sessionsThisWeek
+
   if (readinessRed && dayIndex === 0) {
-    return simulation.fitness.tsb < -25 ? 'REST' : 'RECOVERY'
+    return simulation.fitness.tsb < -25
+      ? { dayType: 'REST', reason: 'Erholungssignale und tiefe Form — heute gar nichts' }
+      : { dayType: 'RECOVERY', reason: 'Erholungssignale sprechen gegen Belastung' }
   }
-  if (simulation.fitness.tsb < -30) return 'RECOVERY'
-  if (minDaysSinceHard(simulation) < HARD_SPACING_DAYS) return 'EASY'
-  if (simulation.hardThisWeek >= budget) return 'EASY'
-  if (simulation.fitness.tsb < -18) return 'EASY'
-  if (readinessRed || (state.readiness.score === 'amber' && dayIndex === 0)) return 'EASY'
-  return 'KEY'
+  if (planned >= max) {
+    return {
+      dayType: 'REST',
+      reason: `Wochenpensum erreicht (${planned} von ${max}) — heute ist Pause eingeplant`,
+    }
+  }
+  if (simulation.fitness.tsb < -30) {
+    return { dayType: 'RECOVERY', reason: 'Form deutlich im Minus — nur Regeneration' }
+  }
+  if (minDaysSinceHard(simulation) < HARD_SPACING_DAYS) {
+    return planned >= min
+      ? {
+          dayType: 'REST',
+          reason: `Mindestpensum erfüllt (${planned} von ${min}) und keine 48h seit der letzten harten Einheit — Pause bringt mehr als eine lockere Einheit`,
+        }
+      : { dayType: 'EASY', reason: 'Keine 48h seit der letzten harten Einheit' }
+  }
+  if (simulation.hardThisWeek >= budget) {
+    return { dayType: 'EASY', reason: `Wochenbudget harter Einheiten erreicht (${simulation.hardThisWeek}/${budget})` }
+  }
+  if (simulation.fitness.tsb < -18) return { dayType: 'EASY', reason: 'Hohe Ermüdung — locker halten' }
+  if (readinessRed || (state.readiness.score === 'amber' && dayIndex === 0)) {
+    return { dayType: 'EASY', reason: 'Erholungswerte unter deiner Baseline' }
+  }
+  return { dayType: 'KEY', reason: 'Erholt und im Wochenbudget — heute darf es wehtun' }
 }
 
 /** How well a stimulus serves the current phase — keeps the block focused. */
@@ -170,22 +205,17 @@ const chooseRecommended = (
 }
 
 const notesFor = (
-  dayType: DayType,
+  decision: DayDecision,
   state: TrainingState,
   simulation: Simulation,
   config: CoachConfig,
-  budget: number,
   dayIndex: number,
 ): readonly string[] => {
-  const notes: string[] = []
-  if (dayIndex === 0) notes.push(...state.readiness.reasons)
+  const notes: string[] = [decision.reason]
+  if (dayIndex === 0 && state.readiness.reasons[0] !== 'Keine Warnsignale') {
+    notes.push(...state.readiness.reasons)
+  }
   notes.push(`Form ${simulation.fitness.tsb} · Fitness ${simulation.fitness.ctl} · Ermüdung ${simulation.fitness.atl}`)
-  if (dayType === 'EASY' && simulation.hardThisWeek >= budget) {
-    notes.push(`Wochenbudget harter Einheiten erreicht (${simulation.hardThisWeek}/${budget})`)
-  }
-  if (dayType === 'EASY' && minDaysSinceHard(simulation) < HARD_SPACING_DAYS) {
-    notes.push('Weniger als 48h seit der letzten harten Einheit')
-  }
   const { min } = config.profile.weeklySessions
   if (simulation.sessionsThisWeek < min) {
     notes.push(`Diese Woche ${simulation.sessionsThisWeek} von mindestens ${min} Einheiten`)
@@ -253,7 +283,8 @@ export const planDays = (
       const primarySport = primaryGoal(config.goals, date)?.sport ?? 'Ride'
       const phase = phases[primarySport]
       const budget = weeklyHardBudget(phase, config.profile)
-      const dayType = decideDayType(simulation, state, budget, dayIndex)
+      const decision = decideDay(simulation, state, config, budget, dayIndex)
+      const { dayType } = decision
 
       const options = SPORTS.map((sport) => {
         const sportPhase = phases[sport]
@@ -277,7 +308,7 @@ export const planDays = (
         phase,
         recommended,
         options,
-        notes: notesFor(dayType, state, simulation, config, budget, dayIndex),
+        notes: notesFor(decision, state, simulation, config, dayIndex),
       }
 
       return {
