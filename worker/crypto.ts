@@ -1,10 +1,11 @@
 const encoder = new TextEncoder()
 const decoder = new TextDecoder()
 
-const toBase64Url = (bytes: Uint8Array): string =>
+const toBase64Url = (bytes: Uint8Array<ArrayBuffer>): string =>
   btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
 
-const fromBase64Url = (value: string): Uint8Array => {
+// The ArrayBuffer parameter matters: Web Crypto rejects ArrayBufferLike-backed views.
+const fromBase64Url = (value: string): Uint8Array<ArrayBuffer> => {
   const padded = value.replace(/-/g, '+').replace(/_/g, '/')
   const binary = atob(padded.padEnd(Math.ceil(padded.length / 4) * 4, '='))
   return Uint8Array.from(binary, (character) => character.charCodeAt(0))
