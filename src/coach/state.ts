@@ -29,7 +29,7 @@ export const stimulusRecency = (
 ): readonly StimulusRecency[] => {
   const freshest = new Map<string, StimulusRecency>()
   for (const activity of activities) {
-    if (activity.sport === 'Other') continue
+    if (activity.sport === 'Other' || activity.load <= 0) continue
     const daysAgo = diffDays(activity.date, today)
     if (daysAgo < 0) continue
     const stimulus = inferStimulus(activity)
@@ -42,10 +42,22 @@ export const stimulusRecency = (
   return [...freshest.values()]
 }
 
+/** Watches auto-log walks and similar. They carry no load and are not training. */
+const carriesLoad = (activity: Activity): boolean => activity.load > 0
+
+/**
+ * The newest activity worth showing: latest date first, and among several on the
+ * same day the one with the highest load, so a stray auto-detected entry never
+ * masks the real session.
+ */
 const newestActivity = (activities: readonly Activity[], today: string): RecentActivity | null => {
   const past = activities.filter((activity) => diffDays(activity.date, today) >= 0)
-  const newest = past.reduce<Activity | null>(
-    (best, activity) => (best === null || activity.date > best.date ? activity : best),
+  const candidates = past.some(carriesLoad) ? past.filter(carriesLoad) : past
+  const newest = candidates.reduce<Activity | null>(
+    (best, activity) =>
+      best === null || activity.date > best.date || (activity.date === best.date && activity.load > best.load)
+        ? activity
+        : best,
     null,
   )
   return newest
@@ -104,5 +116,6 @@ export const buildState = (
     recency: stimulusRecency(activities, today),
     lastActivity: newestActivity(activities, today),
     activityCount: activities.length,
+    loadedActivityCount: activities.filter((activity) => activity.load > 0).length,
   }
 }

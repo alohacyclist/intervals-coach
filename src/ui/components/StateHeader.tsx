@@ -71,7 +71,9 @@ export const StateHeader = ({ state, onRefresh, onSettings, busy }: Props) => (
                 : ` (vor ${state.lastActivity.daysAgo} Tagen)`}{' '}
             · {Math.round(state.lastActivity.load)} TSS
           </span>
-          <span className="datasource__count">{state.activityCount} Einheiten in 180 Tagen</span>
+          <span className="datasource__count">
+            {state.loadedActivityCount} mit Belastung von {state.activityCount} Einträgen (180 Tage)
+          </span>
         </>
       ) : (
         <span>Keine Einheiten in den letzten 180 Tagen gefunden.</span>

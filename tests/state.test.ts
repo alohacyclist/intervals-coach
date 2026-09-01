@@ -60,3 +60,38 @@ describe('training state', () => {
     expect(state.readiness.score).toBe('green')
   })
 })
+
+describe('noise from auto-detected activities', () => {
+  it('prefers the session with load over a zero load entry on the same day', () => {
+    const state = buildState(
+      [
+        activity(1, 'Run', { name: '', load: 0, intensity: 0 }),
+        activity(1, 'Ride', { name: 'Schwelle 3x12min', load: 88, intensity: 95 }),
+      ],
+      [],
+      TODAY,
+    )
+    expect(state.lastActivity?.name).toBe('Schwelle 3x12min')
+    expect(state.lastActivity?.load).toBe(88)
+  })
+
+  it('counts loaded entries separately from everything returned', () => {
+    const state = buildState(
+      [activity(1, 'Ride', { load: 80 }), activity(2, 'Other' as 'Ride', { load: 0 }), activity(3, 'Run', { load: 0 })],
+      [],
+      TODAY,
+    )
+    expect(state.activityCount).toBe(3)
+    expect(state.loadedActivityCount).toBe(1)
+  })
+
+  it('still reports something when nothing carries load', () => {
+    const state = buildState([activity(2, 'Run', { load: 0 })], [], TODAY)
+    expect(state.lastActivity?.daysAgo).toBe(2)
+    expect(state.loadedActivityCount).toBe(0)
+  })
+
+  it('keeps zero load entries out of the stimulus rotation', () => {
+    expect(stimulusRecency([activity(1, 'Ride', { load: 0, intensity: 0 })], TODAY)).toEqual([])
+  })
+})

@@ -115,7 +115,10 @@ export type TrainingState = {
   readonly recency: readonly StimulusRecency[]
   /** The newest activity the plan was built from — makes stale data visible. */
   readonly lastActivity: RecentActivity | null
+  /** Everything intervals.icu returned, including auto-detected walks. */
   readonly activityCount: number
+  /** Only those carrying a training load — what the plan actually reacts to. */
+  readonly loadedActivityCount: number
 }
 
 export type RecentActivity = {
