@@ -1,4 +1,12 @@
-import type { Activity, Fitness, Sport, StimulusRecency, TrainingState, Wellness } from './types.ts'
+import type {
+  Activity,
+  Fitness,
+  RecentActivity,
+  Sport,
+  StimulusRecency,
+  TrainingState,
+  Wellness,
+} from './types.ts'
 import { SPORTS } from './types.ts'
 import { diffDays, startOfWeek } from './dates.ts'
 import { computeFitness, inferStimulus, isHardActivity, rampRate } from './fitness.ts'
@@ -32,6 +40,23 @@ export const stimulusRecency = (
     }
   }
   return [...freshest.values()]
+}
+
+const newestActivity = (activities: readonly Activity[], today: string): RecentActivity | null => {
+  const past = activities.filter((activity) => diffDays(activity.date, today) >= 0)
+  const newest = past.reduce<Activity | null>(
+    (best, activity) => (best === null || activity.date > best.date ? activity : best),
+    null,
+  )
+  return newest
+    ? {
+        date: newest.date,
+        name: newest.name,
+        sport: newest.sport,
+        load: newest.load,
+        daysAgo: diffDays(newest.date, today),
+      }
+    : null
 }
 
 const bySport = (activities: readonly Activity[], today: string): Record<Sport, Fitness> =>
@@ -76,5 +101,7 @@ export const buildState = (
     rampRate: rampRate(activities, today),
     readiness: computeReadiness(wellness, today, overall.tsb),
     recency: stimulusRecency(activities, today),
+    lastActivity: newestActivity(activities, today),
+    activityCount: activities.length,
   }
 }

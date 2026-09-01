@@ -107,6 +107,17 @@ export type TrainingState = {
   readonly rampRate: number
   readonly readiness: Readiness
   readonly recency: readonly StimulusRecency[]
+  /** The newest activity the plan was built from — makes stale data visible. */
+  readonly lastActivity: RecentActivity | null
+  readonly activityCount: number
+}
+
+export type RecentActivity = {
+  readonly date: string
+  readonly name: string
+  readonly sport: Sport | 'Other'
+  readonly load: number
+  readonly daysAgo: number
 }
 
 export type Step = {

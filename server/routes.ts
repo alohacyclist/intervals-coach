@@ -47,6 +47,12 @@ const buildPlan = async (deps: RouteDeps, days: number): Promise<Plan> => {
 export const createApiRoutes = (resolve: DepsResolver): Hono => {
   const app = new Hono()
 
+  // Plan data changes as soon as an activity syncs, so it must never be cached.
+  app.use('/api/*', async (context, next) => {
+    await next()
+    context.header('Cache-Control', 'no-store, max-age=0')
+  })
+
   app.onError((error, context) => {
     if (error instanceof ValidationError) return context.json({ error: error.message, issues: error.issues }, 400)
     if (error instanceof IntervalsError) return context.json({ error: error.message }, 502)
