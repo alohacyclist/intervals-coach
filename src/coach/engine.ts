@@ -12,7 +12,7 @@ import type {
   WorkoutTemplate,
 } from './types.ts'
 import { SPORTS } from './types.ts'
-import { addDays, startOfWeek, weekdayDe } from './dates.ts'
+import { addDays, diffDays, startOfWeek, weekdayDe } from './dates.ts'
 import { projectFitness } from './fitness.ts'
 import { PHASE_LABELS, phaseForSport, primaryGoal, weeklyHardBudget } from './phase.ts'
 import { flattenBlocks, intensityClass, templatesFor } from './library.ts'
@@ -69,12 +69,16 @@ type DayDecision = {
  * An athlete training three times a week rests four days, and the plan has to
  * say so instead of proposing something every single day.
  */
+/** Days left in the Monday-based week, including the given day. */
+const daysLeftInWeek = (date: string): number => 7 - diffDays(startOfWeek(date), date)
+
 const decideDay = (
   simulation: Simulation,
   state: TrainingState,
   config: CoachConfig,
   budget: number,
   dayIndex: number,
+  date: string,
 ): DayDecision => {
   const { min, max } = config.profile.weeklySessions
   const readinessRed = state.readiness.score === 'red'
@@ -95,12 +99,24 @@ const decideDay = (
     return { dayType: 'RECOVERY', reason: 'Form deutlich im Minus — nur Regeneration' }
   }
   if (minDaysSinceHard(simulation) < HARD_SPACING_DAYS) {
-    return planned >= min
-      ? {
-          dayType: 'REST',
-          reason: `Mindestpensum erfüllt (${planned} von ${min}) und keine 48h seit der letzten harten Einheit — Pause bringt mehr als eine lockere Einheit`,
-        }
-      : { dayType: 'EASY', reason: 'Keine 48h seit der letzten harten Einheit' }
+    // A hard day is followed by rest. The weekly minimum is reached by spreading
+    // the remaining sessions over the remaining days, never by stacking one onto
+    // a recovery day — unless the week has run out of room to space them out.
+    const needed = min - planned
+    const room = daysLeftInWeek(date)
+    if (needed < room) {
+      return {
+        dayType: 'REST',
+        reason:
+          planned >= min
+            ? `Mindestpensum erfüllt (${planned} von ${min}) und keine 48h seit der letzten harten Einheit`
+            : `Pause nach harter Einheit — für die fehlende${needed === 1 ? '' : 'n'} ${needed} Einheit${needed === 1 ? '' : 'en'} bleiben noch ${room - 1} Tage`,
+      }
+    }
+    return {
+      dayType: 'EASY',
+      reason: `Keine 48h seit der letzten harten Einheit, aber die Woche läuft aus — locker statt Pause`,
+    }
   }
   if (simulation.hardThisWeek >= budget) {
     return { dayType: 'EASY', reason: `Wochenbudget harter Einheiten erreicht (${simulation.hardThisWeek}/${budget})` }
@@ -283,7 +299,7 @@ export const planDays = (
       const primarySport = primaryGoal(config.goals, date)?.sport ?? 'Ride'
       const phase = phases[primarySport]
       const budget = weeklyHardBudget(phase, config.profile)
-      const decision = decideDay(simulation, state, config, budget, dayIndex)
+      const decision = decideDay(simulation, state, config, budget, dayIndex, date)
       const { dayType } = decision
 
       const options = SPORTS.map((sport) => {

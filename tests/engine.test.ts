@@ -26,10 +26,11 @@ describe('plan engine', () => {
     expect(today?.options.every((option) => intensityClass(option.template.stimulus) === 'hard')).toBe(true)
   })
 
-  it('keeps 48 hours between hard sessions', () => {
+  it('never follows a hard day with another hard day', () => {
     const yesterdayHard = [activity(1, 'Ride', { load: 90, intensity: 98 })]
     const [today] = planDays(stateFrom(yesterdayHard), config)
-    expect(today?.dayType).toBe('EASY')
+    expect(today?.dayType).not.toBe('KEY')
+    expect(today?.options.every((option) => intensityClass(option.template.stimulus) !== 'hard')).toBe(true)
   })
 
   it('never plans two hard days back to back inside the three day view', () => {
@@ -82,9 +83,18 @@ describe('plan engine', () => {
     expect(today?.notes.join(' ')).toContain('Mindestpensum erfüllt')
   })
 
-  it('offers an easy session instead of rest while below the weekly minimum', () => {
+  it('rests after a hard day while the week still has room for the minimum', () => {
     const [today] = planDays(stateFrom([activity(1, 'Ride', { load: 90, intensity: 98 })]), config)
+    expect(today?.dayType).toBe('REST')
+    expect(today?.notes.join(' ')).toContain('Pause nach harter Einheit')
+  })
+
+  it('falls back to an easy session on the last day of an unfinished week', () => {
+    const sunday = '2026-09-06'
+    const saturdayHard = { ...activity(0, 'Ride', { load: 90, intensity: 98 }), date: '2026-09-05' }
+    const [today] = planDays(buildState([saturdayHard], [], sunday), config)
     expect(today?.dayType).toBe('EASY')
+    expect(today?.notes.join(' ')).toContain('Woche läuft aus')
   })
 
   it('still shows two easy options on a rest day', () => {
