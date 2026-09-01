@@ -9,7 +9,7 @@ export class ValidationError extends Error {
 
 const DEFAULT_CONFIG: CoachConfig = {
   profile: {
-    ftp: 280,
+    ftp: 285,
     thresholdPaceSecPerKm: 236,
     weightKg: 71,
     maxHr: null,
@@ -24,7 +24,7 @@ const DEFAULT_CONFIG: CoachConfig = {
       kind: 'ftp',
       label: 'FTP 300W',
       targetValue: 300,
-      currentValue: 280,
+      currentValue: 285,
       targetDate: '2026-11-30',
       priority: 'A',
     },

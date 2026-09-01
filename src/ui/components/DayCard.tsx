@@ -1,6 +1,7 @@
 import type { PlannedDay } from '../../coach/types.ts'
 import { PHASE_LABELS } from '../../coach/phase.ts'
 import { SessionCard } from './SessionCard.tsx'
+import { StrengthCard } from './StrengthCard.tsx'
 
 const DAY_TYPE_LABEL: Record<PlannedDay['dayType'], string> = {
   KEY: 'Qualitätstag',
@@ -46,5 +47,7 @@ export const DayCard = ({ day, index }: { readonly day: PlannedDay; readonly ind
         />
       ))}
     </div>
+
+    {day.strength && <StrengthCard strength={day.strength} />}
   </section>
 )

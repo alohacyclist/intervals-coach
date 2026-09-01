@@ -1,5 +1,6 @@
 import type {
   CoachConfig,
+  StrengthSuggestion,
   DayType,
   Fitness,
   IntensityClass,
@@ -15,12 +16,15 @@ import { SPORTS } from './types.ts'
 import { addDays, diffDays, startOfWeek, weekdayDe } from './dates.ts'
 import { projectFitness } from './fitness.ts'
 import { PHASE_LABELS, phaseForSport, primaryGoal, weeklyHardBudget } from './phase.ts'
-import { flattenBlocks, intensityClass, templatesFor } from './library.ts'
+import { STRENGTH_SESSION, flattenBlocks, intensityClass, isPreferredSport, templatesFor } from './library.ts'
 import { describeWorkout, toHumanSteps } from './format.ts'
 
 /** Minimum days between two hard sessions, regardless of sport. */
 const HARD_SPACING_DAYS = 2
 const STALE_STIMULUS_DAYS = 28
+/** A gap this long means the body has detrained; VO2max is the wrong way back in. */
+const LAYOFF_DAYS = 10
+const MAX_STRENGTH_PER_WEEK = 2
 
 type Simulation = {
   readonly fitness: Fitness
@@ -30,6 +34,7 @@ type Simulation = {
   readonly hardThisWeekBySport: Readonly<Record<Sport, number>>
   readonly stimulusAge: Readonly<Record<string, number>>
   readonly usedTemplateIds: readonly string[]
+  readonly strengthThisWeek: number
   readonly weekStart: string
 }
 
@@ -50,6 +55,7 @@ const initSimulation = (state: TrainingState): Simulation => ({
     state.recency.map((entry) => [`${entry.sport}:${entry.stimulus}`, entry.daysAgo]),
   ),
   usedTemplateIds: [],
+  strengthThisWeek: state.strengthSessionsThisWeek,
   weekStart: startOfWeek(state.today),
 })
 
@@ -150,12 +156,25 @@ const scoreTemplate = (
   const dueness = Math.min(stimulusAge(simulation, template.sport, template.stimulus), STALE_STIMULUS_DAYS) / STALE_STIMULUS_DAYS
   const fit = template.minutes <= budgetMinutes ? 1 : -5
   const usesBudget = template.minutes / budgetMinutes
+  // The sport that normally carries this stimulus gets the nod, all else equal.
+  const roleBonus = isPreferredSport(template.stimulus, template.sport) ? 1 : 0
+  // Coming back from a break, the first hard session is threshold, not VO2max.
+  const layoffPenalty =
+    state.daysSinceAnySession >= LAYOFF_DAYS && template.stimulus === 'VO2' ? -4 : 0
   const repeatPenalty =
     simulation.usedTemplateIds.includes(template.id) ||
     state.recentWorkoutNames.some((name) => name.includes(template.name))
       ? -2.5
       : 0
-  return 3 * dueness + phaseAffinity(phase, template.stimulus) + fit + 0.5 * usesBudget + repeatPenalty
+  return (
+    3 * dueness +
+    phaseAffinity(phase, template.stimulus) +
+    roleBonus +
+    layoffPenalty +
+    fit +
+    0.5 * usesBudget +
+    repeatPenalty
+  )
 }
 
 const candidatesFor = (
@@ -232,6 +251,11 @@ const notesFor = (
     notes.push(...state.readiness.reasons)
   }
   notes.push(`Form ${simulation.fitness.tsb} · Fitness ${simulation.fitness.ctl} · Ermüdung ${simulation.fitness.atl}`)
+  if (state.daysSinceAnySession >= LAYOFF_DAYS && state.daysSinceAnySession < 99) {
+    notes.push(
+      `${state.daysSinceAnySession} Tage ohne Training — Wiedereinstieg über die Schwelle, VO₂max erst danach`,
+    )
+  }
   const { min } = config.profile.weeklySessions
   if (simulation.sessionsThisWeek < min) {
     notes.push(`Diese Woche ${simulation.sessionsThisWeek} von mindestens ${min} Einheiten`)
@@ -240,10 +264,15 @@ const notesFor = (
   return notes
 }
 
+/** Strength rides along with a hard day, which keeps it off the day before one. */
+const strengthFor = (dayType: DayType, simulation: Simulation): StrengthSuggestion | null =>
+  dayType === 'KEY' && simulation.strengthThisWeek < MAX_STRENGTH_PER_WEEK ? STRENGTH_SESSION : null
+
 const advance = (
   simulation: Simulation,
   session: PlannedSession | null,
   offered: readonly PlannedSession[],
+  strengthAdded: boolean,
   nextDate: string,
 ): Simulation => {
   const isHard = session !== null && intensityClass(session.template.stimulus) === 'hard'
@@ -276,6 +305,7 @@ const advance = (
       ...simulation.usedTemplateIds,
       ...offered.map((option) => option.template.id),
     ],
+    strengthThisWeek: (sameWeek ? simulation.strengthThisWeek : 0) + (strengthAdded ? 1 : 0),
     weekStart: sameWeek ? simulation.weekStart : startOfWeek(nextDate),
   }
 }
@@ -315,6 +345,7 @@ export const planDays = (
       }).filter((session): session is PlannedSession => session !== null)
 
       const recommended = chooseRecommended(dayType, simulation, config, date)
+      const strength = strengthFor(dayType, simulation)
       const chosen = options.find((session) => session.sport === recommended) ?? null
 
       const day: PlannedDay = {
@@ -325,10 +356,11 @@ export const planDays = (
         recommended,
         options,
         notes: notesFor(decision, state, simulation, config, dayIndex),
+        strength,
       }
 
       return {
-        simulation: advance(simulation, chosen, options, addDays(state.today, dayIndex + 1)),
+        simulation: advance(simulation, chosen, options, strength !== null, addDays(state.today, dayIndex + 1)),
         plan: [...plan, day],
       }
     },

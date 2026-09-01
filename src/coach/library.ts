@@ -1,4 +1,13 @@
-import type { Block, IntensityClass, Repeat, Sport, Step, Stimulus, WorkoutTemplate } from './types.ts'
+import type {
+  Block,
+  IntensityClass,
+  Repeat,
+  Sport,
+  Step,
+  Stimulus,
+  StrengthSuggestion,
+  WorkoutTemplate,
+} from './types.ts'
 
 const step = (duration: string, target: string, extra: Partial<Step> = {}): Step => ({
   kind: 'step',
@@ -370,6 +379,36 @@ const CLASS_BY_STIMULUS: Readonly<Record<Stimulus, IntensityClass>> = {
 }
 
 export const intensityClass = (stimulus: Stimulus): IntensityClass => CLASS_BY_STIMULUS[stimulus]
+
+/**
+ * Which sport carries which stimulus by default. Running is the more specific
+ * and more central VO2max stimulus; threshold work is safer and better
+ * controlled on the trainer. This is a preference the scoring leans on, never a
+ * rule — an athlete who did VO2max on the bike simply moves the rotation on.
+ */
+const PREFERRED_SPORT: Partial<Record<Stimulus, Sport>> = {
+  VO2: 'Run',
+  THRESHOLD: 'Ride',
+  SWEETSPOT: 'Ride',
+  LONG: 'Run',
+}
+
+export const isPreferredSport = (stimulus: Stimulus, sport: Sport): boolean =>
+  PREFERRED_SPORT[stimulus] === sport
+
+export const STRENGTH_SESSION: StrengthSuggestion = {
+  name: 'Krafttraining',
+  minutes: 28,
+  note: 'Direkt nach der Ausdauereinheit oder mindestens 6h später — nie am Tag davor. 2 Wiederholungen in Reserve, kein Muskelversagen. Ziel ist neuromuskuläre Anpassung, nicht Masse.',
+  exercises: [
+    { name: 'Kniebeuge / Beinpresse', sets: '4 × 5', load: '~85 % 1RM' },
+    { name: 'Rumänisches Kreuzheben', sets: '3 × 6', load: 'schwer' },
+    { name: 'Bulgarian Split Squat', sets: '3 × 6 je Seite', load: 'schwer' },
+    { name: 'Einbeiniges Wadenheben', sets: '3 × 8', load: 'schwer' },
+    { name: 'Rumpf (Plank, Pallof Press)', sets: '2 Sätze', load: '—' },
+    { name: 'Optional vorweg: Hops / Drop Jumps', sets: '3 × 10', load: 'Körpergewicht' },
+  ],
+}
 
 export const flattenBlocks = (blocks: readonly Block[]): readonly Step[] =>
   blocks.flatMap((block) =>

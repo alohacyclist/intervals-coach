@@ -12,6 +12,7 @@ const BASE_URL = 'https://intervals.icu/api/v1'
 
 const RIDE_TYPES = new Set(['Ride', 'VirtualRide', 'GravelRide', 'MountainBikeRide', 'EBikeRide'])
 const RUN_TYPES = new Set(['Run', 'TrailRun', 'VirtualRun', 'Treadmill'])
+const STRENGTH_TYPES = new Set(['WeightTraining', 'Workout', 'Crossfit'])
 
 export class IntervalsError extends Error {
   constructor(
@@ -78,6 +79,7 @@ const mapActivity = (raw: RawActivity): Activity => ({
   load: num(raw['icu_training_load']),
   intensity: num(raw['icu_intensity']),
   movingTimeSec: num(raw['moving_time']),
+  isStrength: typeof raw['type'] === 'string' && STRENGTH_TYPES.has(raw['type']),
 })
 
 const mapWellness = (raw: RawWellness): Wellness => ({

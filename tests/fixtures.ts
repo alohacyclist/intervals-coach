@@ -17,6 +17,7 @@ export const activity = (
   load: 60,
   intensity: 80,
   movingTimeSec: 3600,
+  isStrength: false,
   ...overrides,
 })
 

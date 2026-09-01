@@ -151,3 +151,53 @@ describe('plan engine', () => {
     expect(today?.options[0]?.description).toContain('Warum heute')
   })
 })
+
+describe('sport roles and returning to training', () => {
+  // A goal eight weeks out puts both sports into the build phase, where the
+  // VO2max and threshold templates actually live.
+  const buildPhase = {
+    ...config,
+    goals: config.goals.map((goal) => ({ ...goal, targetDate: '2026-10-28' })),
+  }
+
+  const optionFor = (day: ReturnType<typeof planDays>[number] | undefined, sport: 'Ride' | 'Run') =>
+    day?.options.find((option) => option.sport === sport)
+
+  it('gives running the VO2max work and cycling the threshold work', () => {
+    const [today] = planDays(stateFrom(rested), buildPhase)
+    expect(today?.dayType).toBe('KEY')
+    expect(optionFor(today, 'Run')?.template.stimulus).toBe('VO2')
+    expect(optionFor(today, 'Ride')?.template.stimulus).toBe('THRESHOLD')
+  })
+
+  it('treats the role as a preference, not a rule', () => {
+    // VO2max already run two days ago, so the rotation moves running on.
+    const recentRunVo2 = [activity(2, 'Run', { load: 75, intensity: 105 })]
+    const [today] = planDays(stateFrom(recentRunVo2), buildPhase)
+    expect(optionFor(today, 'Run')?.template.stimulus).not.toBe('VO2')
+  })
+
+  it('does not open with VO2max after a long break', () => {
+    const longGap = [activity(21, 'Ride', { load: 70, intensity: 80 })]
+    const [today] = planDays(stateFrom(longGap), buildPhase)
+    expect(today?.options.every((option) => option.template.stimulus !== 'VO2')).toBe(true)
+    expect(today?.notes.join(' ')).toContain('ohne Training')
+  })
+
+  it('puts strength on hard days only', () => {
+    const days = planDays(stateFrom(rested), buildPhase, 3)
+    for (const day of days) {
+      expect(day.strength === null).toBe(day.dayType !== 'KEY')
+    }
+  })
+
+  it('stops suggesting strength once the week already holds two sessions', () => {
+    const withStrength = [
+      ...rested,
+      { ...activity(1, 'Ride', { load: 30, intensity: 50 }), isStrength: true },
+      { ...activity(2, 'Ride', { load: 30, intensity: 50 }), isStrength: true },
+    ]
+    const [today] = planDays(stateFrom(withStrength), buildPhase)
+    expect(today?.strength).toBeNull()
+  })
+})

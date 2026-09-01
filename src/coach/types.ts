@@ -70,6 +70,20 @@ export type Activity = {
   readonly load: number
   readonly intensity: number
   readonly movingTimeSec: number
+  readonly isStrength: boolean
+}
+
+export type StrengthExercise = {
+  readonly name: string
+  readonly sets: string
+  readonly load: string
+}
+
+export type StrengthSuggestion = {
+  readonly name: string
+  readonly minutes: number
+  readonly note: string
+  readonly exercises: readonly StrengthExercise[]
 }
 
 export type Wellness = {
@@ -122,6 +136,9 @@ export type TrainingState = {
   /** Only those carrying a training load — what the plan actually reacts to. */
   readonly loadedActivityCount: number
   readonly dataIssue: DataIssue | null
+  /** Days since any session at all — a long gap changes how training resumes. */
+  readonly daysSinceAnySession: number
+  readonly strengthSessionsThisWeek: number
 }
 
 /**
@@ -188,6 +205,8 @@ export type PlannedDay = {
   readonly recommended: Sport | 'REST'
   readonly options: readonly PlannedSession[]
   readonly notes: readonly string[]
+  /** Strength belongs on a hard day, never the day before one. */
+  readonly strength: StrengthSuggestion | null
 }
 
 export type Feasibility = {

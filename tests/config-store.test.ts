@@ -3,7 +3,7 @@ import { validateConfig, ValidationError, DEFAULT_CONFIG } from '../src/coach/co
 
 describe('config validation', () => {
   it('accepts the default configuration', () => {
-    expect(validateConfig(DEFAULT_CONFIG).profile.ftp).toBe(280)
+    expect(validateConfig(DEFAULT_CONFIG).profile.ftp).toBe(285)
   })
 
   it('rejects a missing FTP', () => {

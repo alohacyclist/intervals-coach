@@ -23,6 +23,14 @@ const daysSinceHard = (activities: readonly Activity[], today: string, sport: Sp
   return ages.length === 0 ? NEVER : Math.min(...ages)
 }
 
+const daysSinceAny = (activities: readonly Activity[], today: string): number => {
+  const ages = activities
+    .filter((activity) => activity.load > 0)
+    .map((activity) => diffDays(activity.date, today))
+    .filter((age) => age >= 0)
+  return ages.length === 0 ? NEVER : Math.min(...ages)
+}
+
 /** Most recent occurrence of each stimulus per sport, used to rotate the training focus. */
 export const stimulusRecency = (
   activities: readonly Activity[],
@@ -140,5 +148,7 @@ export const buildState = (
     activityCount: activities.length,
     loadedActivityCount: activities.filter((activity) => activity.load > 0).length,
     dataIssue: detectDataIssue(activities),
+    daysSinceAnySession: daysSinceAny(activities, today),
+    strengthSessionsThisWeek: thisWeek.filter((activity) => activity.isStrength).length,
   }
 }

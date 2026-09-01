@@ -190,6 +190,30 @@ label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color:
 .loading { color: var(--muted); }
 .footer { color: var(--muted); font-size: 12px; text-align: center; }
 
+.strength {
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+.strength summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  list-style: none;
+}
+.strength summary::-webkit-details-marker { display: none; }
+.strength summary::before { content: '▸'; color: var(--muted); }
+.strength[open] summary::before { content: '▾'; }
+.strength__meta { margin-left: auto; color: var(--muted); font-size: 12px; }
+.badge--strength { color: var(--accent); border-color: rgba(77, 163, 255, 0.45); }
+.strength__table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13.5px; }
+.strength__table td { padding: 4px 0; border-bottom: 1px solid var(--line); }
+.strength__table td:nth-child(2) { text-align: right; white-space: nowrap; padding-left: 10px; }
+.strength__table td:nth-child(3) { text-align: right; color: var(--muted); white-space: nowrap; padding-left: 10px; }
+.strength__note { margin: 10px 0 0; font-size: 13px; color: var(--muted); }
+
 .issue {
   background: rgba(255, 176, 32, 0.09);
   border: 1px solid rgba(255, 176, 32, 0.4);
