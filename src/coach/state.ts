@@ -8,7 +8,7 @@ import type {
   TrainingState,
   Wellness,
 } from './types.ts'
-import { SPORTS } from './types.ts'
+import { ALL_SPORTS } from './types.ts'
 import { diffDays, startOfWeek } from './dates.ts'
 import { computeFitness, inferStimulus, isHardActivity, rampRate } from './fitness.ts'
 import { computeReadiness } from './readiness.ts'
@@ -103,7 +103,7 @@ const detectDataIssue = (activities: readonly Activity[]): DataIssue | null => {
 
 const bySport = (activities: readonly Activity[], today: string): Record<Sport, Fitness> =>
   Object.fromEntries(
-    SPORTS.map((sport) => [sport, computeFitness(activities, today, sport)]),
+    ALL_SPORTS.map((sport) => [sport, computeFitness(activities, today, sport)]),
   ) as Record<Sport, Fitness>
 
 export const buildState = (
@@ -126,13 +126,13 @@ export const buildState = (
     overall,
     bySport: bySport(activities, today),
     daysSinceHard: Object.fromEntries(
-      SPORTS.map((sport) => [sport, daysSinceHard(activities, today, sport)]),
+      ALL_SPORTS.map((sport) => [sport, daysSinceHard(activities, today, sport)]),
     ) as Record<Sport, number>,
     hardSessionsLast7: last7.filter(isHardActivity).length,
     hardSessionsThisWeek: thisWeek.filter(isHardActivity).length,
     sessionsThisWeek: thisWeek.filter((activity) => activity.sport !== 'Other').length,
     hardThisWeekBySport: Object.fromEntries(
-      SPORTS.map((sport) => [
+      ALL_SPORTS.map((sport) => [
         sport,
         thisWeek.filter((activity) => activity.sport === sport && isHardActivity(activity)).length,
       ]),

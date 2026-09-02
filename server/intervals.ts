@@ -12,6 +12,7 @@ const BASE_URL = 'https://intervals.icu/api/v1'
 
 const RIDE_TYPES = new Set(['Ride', 'VirtualRide', 'GravelRide', 'MountainBikeRide', 'EBikeRide'])
 const RUN_TYPES = new Set(['Run', 'TrailRun', 'VirtualRun', 'Treadmill'])
+const SWIM_TYPES = new Set(['Swim', 'OpenWaterSwim'])
 const STRENGTH_TYPES = new Set(['WeightTraining', 'Workout', 'Crossfit'])
 
 export class IntervalsError extends Error {
@@ -58,6 +59,7 @@ const toSport = (type: unknown): Sport | 'Other' => {
   if (typeof type !== 'string') return 'Other'
   if (RIDE_TYPES.has(type)) return 'Ride'
   if (RUN_TYPES.has(type)) return 'Run'
+  if (SWIM_TYPES.has(type)) return 'Swim'
   return 'Other'
 }
 
@@ -118,6 +120,7 @@ export const fetchWellness = async (
 export type SportSettings = {
   readonly ftp: number | null
   readonly thresholdPaceSecPerKm: number | null
+  readonly cssSecPer100m: number | null
   readonly lthr: number | null
   readonly maxHr: number | null
 }
@@ -133,12 +136,15 @@ export const fetchSportSettings = async (auth: IntervalsAuth): Promise<SportSett
 
   const ride = forSport('Ride')
   const run = forSport('Run')
+  const swim = forSport('Swim')
   const thresholdSpeed = nullableNum(run?.['threshold_pace'])
+  const swimSpeed = nullableNum(swim?.['threshold_pace'])
 
   return {
     ftp: nullableNum(ride?.['ftp']),
     // intervals.icu stores threshold pace as metres per second.
     thresholdPaceSecPerKm: thresholdSpeed && thresholdSpeed > 0 ? Math.round(1000 / thresholdSpeed) : null,
+    cssSecPer100m: swimSpeed && swimSpeed > 0 ? Math.round(100 / swimSpeed) : null,
     lthr: nullableNum(ride?.['lthr']),
     maxHr: nullableNum(ride?.['max_hr']),
   }

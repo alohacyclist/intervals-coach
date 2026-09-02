@@ -1,4 +1,4 @@
-import type { Activity, CoachConfig, Sport, Wellness } from '../src/coach/types.ts'
+import type { Activity, CoachConfig, Sport, SportThreshold, Wellness } from '../src/coach/types.ts'
 import { addDays } from '../src/coach/dates.ts'
 
 // A Wednesday, so the current calendar week already contains earlier days.
@@ -36,8 +36,10 @@ export const baselineWellness = (days = 30): readonly Wellness[] =>
 
 export const config: CoachConfig = {
   profile: {
-    ftp: 280,
-    thresholdPaceSecPerKm: 236,
+    sports: [
+      { sport: 'Ride', threshold: { metric: 'power', ftp: 280 } },
+      { sport: 'Run', threshold: { metric: 'pace', thresholdSecPerKm: 236 } },
+    ],
     weightKg: 71,
     maxHr: null,
     lthr: null,
@@ -68,4 +70,21 @@ export const config: CoachConfig = {
     },
   ],
   planStart: '2026-08-31',
+}
+
+export const BIKE_THRESHOLD: SportThreshold = { metric: 'power', ftp: 280 }
+export const RUN_THRESHOLD: SportThreshold = { metric: 'pace', thresholdSecPerKm: 236 }
+export const SWIM_THRESHOLD: SportThreshold = { metric: 'swimPace', cssSecPer100m: 110 }
+
+/** A triathlete: all three sports, each with its own steering quantity. */
+export const triConfig: CoachConfig = {
+  ...config,
+  profile: {
+    ...config.profile,
+    sports: [
+      { sport: 'Ride', threshold: BIKE_THRESHOLD },
+      { sport: 'Run', threshold: RUN_THRESHOLD },
+      { sport: 'Swim', threshold: SWIM_THRESHOLD },
+    ],
+  },
 }

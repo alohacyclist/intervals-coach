@@ -12,10 +12,11 @@ import type {
   TrainingState,
   WorkoutTemplate,
 } from './types.ts'
-import { SPORTS } from './types.ts'
+import { ALL_SPORTS } from './types.ts'
 import { addDays, diffDays, startOfWeek, weekdayDe } from './dates.ts'
 import { projectFitness } from './fitness.ts'
 import { PHASE_LABELS, phaseForSport, primaryGoal, weeklyHardBudget } from './phase.ts'
+import { defaultThreshold, selectedSports, thresholdFor } from './thresholds.ts'
 import { STRENGTH_SESSION, flattenBlocks, intensityClass, isPreferredSport, templatesFor } from './library.ts'
 import { describeWorkout, toHumanSteps } from './format.ts'
 
@@ -62,8 +63,8 @@ const initSimulation = (state: TrainingState): Simulation => ({
 const stimulusAge = (simulation: Simulation, sport: Sport, stimulus: Stimulus): number =>
   simulation.stimulusAge[`${sport}:${stimulus}`] ?? STALE_STIMULUS_DAYS
 
-const minDaysSinceHard = (simulation: Simulation): number =>
-  Math.min(...SPORTS.map((sport) => simulation.daysSinceHard[sport]))
+const minDaysSinceHard = (simulation: Simulation, sports: readonly Sport[]): number =>
+  Math.min(...sports.map((sport) => simulation.daysSinceHard[sport]))
 
 type DayDecision = {
   readonly dayType: DayType
@@ -85,6 +86,7 @@ const decideDay = (
   budget: number,
   dayIndex: number,
   date: string,
+  sports: readonly Sport[],
 ): DayDecision => {
   const { min, max } = config.profile.weeklySessions
   const readinessRed = state.readiness.score === 'red'
@@ -104,7 +106,7 @@ const decideDay = (
   if (simulation.fitness.tsb < -30) {
     return { dayType: 'RECOVERY', reason: 'Form deutlich im Minus — nur Regeneration' }
   }
-  if (minDaysSinceHard(simulation) < HARD_SPACING_DAYS) {
+  if (minDaysSinceHard(simulation, sports) < HARD_SPACING_DAYS) {
     // A hard day is followed by rest. The weekly minimum is reached by spreading
     // the remaining sessions over the remaining days, never by stacking one onto
     // a recovery day — unless the week has run out of room to space them out.
@@ -217,7 +219,10 @@ const buildSession = (
   template,
   reason,
   description: describeWorkout(template, reason),
-  humanSteps: toHumanSteps(template.blocks, config.profile),
+  humanSteps: toHumanSteps(
+    template.blocks,
+    thresholdFor(config.profile, template.sport) ?? defaultThreshold(template.sport),
+  ),
 })
 
 const chooseRecommended = (
@@ -225,18 +230,25 @@ const chooseRecommended = (
   simulation: Simulation,
   config: CoachConfig,
   date: string,
+  sports: readonly Sport[],
 ): Sport | 'REST' => {
   if (dayType === 'REST') return 'REST'
-  const primarySport = primaryGoal(config.goals, date)?.sport ?? 'Ride'
-  if (dayType === 'KEY') {
-    const neglected = SPORTS.filter((sport) => simulation.hardThisWeekBySport[sport] === 0)
-    if (neglected.length === 1 && neglected[0]) return neglected[0]
-    return primarySport
-  }
-  const [rested] = [...SPORTS].sort(
+  const fallback = sports[0] ?? 'Ride'
+  const goalSport = primaryGoal(config.goals, date)?.sport
+  const primarySport = goalSport && sports.includes(goalSport) ? goalSport : fallback
+
+  const mostRested = [...sports].sort(
     (left, right) => simulation.daysSinceHard[right] - simulation.daysSinceHard[left],
   )
-  return rested ?? primarySport
+
+  if (dayType === 'KEY') {
+    // A sport with no quality work this week comes first; among several, the
+    // one that has waited longest.
+    const neglected = mostRested.filter((sport) => simulation.hardThisWeekBySport[sport] === 0)
+    if (neglected.length > 0 && !neglected.includes(primarySport)) return neglected[0] ?? primarySport
+    return primarySport
+  }
+  return mostRested[0] ?? primarySport
 }
 
 const notesFor = (
@@ -284,7 +296,7 @@ const advance = (
   return {
     fitness: projectFitness(simulation.fitness, session?.template.load ?? 0),
     daysSinceHard: Object.fromEntries(
-      SPORTS.map((sport) => [
+      ALL_SPORTS.map((sport) => [
         sport,
         isHard && session.sport === sport ? 1 : simulation.daysSinceHard[sport] + 1,
       ]),
@@ -292,7 +304,7 @@ const advance = (
     hardThisWeek: sameWeek ? simulation.hardThisWeek + (isHard ? 1 : 0) : 0,
     sessionsThisWeek: (sameWeek ? simulation.sessionsThisWeek : 0) + (session ? 1 : 0),
     hardThisWeekBySport: Object.fromEntries(
-      SPORTS.map((sport) => {
+      ALL_SPORTS.map((sport) => {
         const carried = sameWeek ? simulation.hardThisWeekBySport[sport] : 0
         return [sport, carried + (isHard && session.sport === sport ? 1 : 0)]
       }),
@@ -316,6 +328,7 @@ export const planDays = (
   days = 3,
 ): readonly PlannedDay[] => {
   const budgetMinutes = config.profile.maxSessionMinutes
+  const sports = selectedSports(config.profile)
 
   const { plan } = Array.from({ length: days }).reduce<{
     simulation: Simulation
@@ -324,15 +337,15 @@ export const planDays = (
     ({ simulation, plan }, _unused, dayIndex) => {
       const date = addDays(state.today, dayIndex)
       const phases = Object.fromEntries(
-        SPORTS.map((sport) => [sport, phaseForSport(config, sport, date)]),
+        sports.map((sport) => [sport, phaseForSport(config, sport, date)]),
       ) as Record<Sport, Phase>
       const primarySport = primaryGoal(config.goals, date)?.sport ?? 'Ride'
       const phase = phases[primarySport]
       const budget = weeklyHardBudget(phase, config.profile)
-      const decision = decideDay(simulation, state, config, budget, dayIndex, date)
+      const decision = decideDay(simulation, state, config, budget, dayIndex, date, sports)
       const { dayType } = decision
 
-      const options = SPORTS.map((sport) => {
+      const options = sports.map((sport) => {
         const sportPhase = phases[sport]
         const candidates = candidatesFor(sport, dayType, sportPhase, budgetMinutes)
         const best = [...candidates].sort(
@@ -344,7 +357,7 @@ export const planDays = (
         return buildSession(best, config, reasonFor(best, dayType, sportPhase, simulation))
       }).filter((session): session is PlannedSession => session !== null)
 
-      const recommended = chooseRecommended(dayType, simulation, config, date)
+      const recommended = chooseRecommended(dayType, simulation, config, date, sports)
       const strength = strengthFor(dayType, simulation)
       const chosen = options.find((session) => session.sport === recommended) ?? null
 

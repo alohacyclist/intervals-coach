@@ -1,6 +1,26 @@
-export type Sport = 'Ride' | 'Run'
+export type Sport = 'Ride' | 'Run' | 'Swim'
 
-export const SPORTS: readonly Sport[] = ['Ride', 'Run'] as const
+export const ALL_SPORTS: readonly Sport[] = ['Ride', 'Run', 'Swim'] as const
+
+export const SPORT_LABELS: Readonly<Record<Sport, string>> = {
+  Ride: 'Rad',
+  Run: 'Laufen',
+  Swim: 'Schwimmen',
+}
+
+/**
+ * Every sport is steered by a different quantity. Keeping them in one union lets
+ * the engine stay sport-agnostic while each sport keeps its own natural metric.
+ */
+export type SportThreshold =
+  | { readonly metric: 'power'; readonly ftp: number }
+  | { readonly metric: 'pace'; readonly thresholdSecPerKm: number }
+  | { readonly metric: 'swimPace'; readonly cssSecPer100m: number }
+
+export type SportSetting = {
+  readonly sport: Sport
+  readonly threshold: SportThreshold
+}
 
 /** Training phase derived from the distance to a goal date. */
 export type Phase = 'BASE' | 'BUILD' | 'SPECIFIC' | 'TAPER' | 'RECOVERY'
@@ -24,9 +44,8 @@ export type WeeklySessions = {
 }
 
 export type AthleteProfile = {
-  readonly ftp: number
-  /** Threshold pace in seconds per km, must match the value set in intervals.icu. */
-  readonly thresholdPaceSecPerKm: number
+  /** The sports this athlete trains, in the order they are shown. */
+  readonly sports: readonly SportSetting[]
   readonly weightKg: number
   readonly maxHr: number | null
   readonly lthr: number | null

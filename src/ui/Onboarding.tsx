@@ -1,19 +1,17 @@
 import { useEffect, useState } from 'react'
-import type { CoachConfig, Goal } from '../coach/types.ts'
-import { formatSeconds } from '../coach/dates.ts'
+import type { CoachConfig, Goal, Sport, SportSetting } from '../coach/types.ts'
+import { SPORT_LABELS } from '../coach/types.ts'
+import { ftpOf } from '../coach/thresholds.ts'
 import { getSportSettings, putConfig } from './api.ts'
-
-const parseMmSs = (value: string): number => {
-  const [minutes = '0', seconds = '0'] = value.split(':')
-  return Number(minutes) * 60 + Number(seconds)
-}
+import { parseMmSs } from './format-input.ts'
+import { SportPicker } from './components/SportPicker.tsx'
 
 type Draft = {
-  ftp: string
+  sports: readonly SportSetting[]
+  weightKg: string
   ftpTarget: string
   ftpDate: string
-  thresholdPace: string
-  weightKg: string
+  raceSport: Sport
   raceDistanceKm: string
   raceCurrent: string
   raceTarget: string
@@ -24,11 +22,14 @@ type Draft = {
 }
 
 const EMPTY: Draft = {
-  ftp: '250',
+  sports: [
+    { sport: 'Ride', threshold: { metric: 'power', ftp: 250 } },
+    { sport: 'Run', threshold: { metric: 'pace', thresholdSecPerKm: 270 } },
+  ],
+  weightKg: '75',
   ftpTarget: '',
   ftpDate: '',
-  thresholdPace: '4:30',
-  weightKg: '75',
+  raceSport: 'Run',
   raceDistanceKm: '10',
   raceCurrent: '',
   raceTarget: '',
@@ -38,15 +39,15 @@ const EMPTY: Draft = {
   maxMinutes: '75',
 }
 
-const buildGoals = (draft: Draft): readonly Goal[] => {
+const buildGoals = (draft: Draft, ftp: number | null): readonly Goal[] => {
   const goals: Goal[] = []
-  if (Number(draft.ftpTarget) > 0) {
+  if (ftp && Number(draft.ftpTarget) > 0) {
     goals.push({
       id: 'ftp',
       sport: 'Ride',
       kind: 'ftp',
       label: `FTP ${draft.ftpTarget}W`,
-      currentValue: Number(draft.ftp),
+      currentValue: ftp,
       targetValue: Number(draft.ftpTarget),
       priority: 'A',
       ...(draft.ftpDate ? { targetDate: draft.ftpDate } : {}),
@@ -56,9 +57,9 @@ const buildGoals = (draft: Draft): readonly Goal[] => {
     const distance = Number(draft.raceDistanceKm)
     goals.push({
       id: 'race',
-      sport: 'Run',
+      sport: draft.raceSport,
       kind: 'raceTime',
-      label: `${distance} km in ${draft.raceTarget}`,
+      label: `${distance} km ${SPORT_LABELS[draft.raceSport]} in ${draft.raceTarget}`,
       currentValue: parseMmSs(draft.raceCurrent),
       targetValue: parseMmSs(draft.raceTarget),
       distanceKm: distance,
@@ -68,20 +69,6 @@ const buildGoals = (draft: Draft): readonly Goal[] => {
   }
   return goals
 }
-
-const buildConfig = (draft: Draft): CoachConfig => ({
-  profile: {
-    ftp: Number(draft.ftp),
-    thresholdPaceSecPerKm: parseMmSs(draft.thresholdPace),
-    weightKg: Number(draft.weightKg),
-    maxHr: null,
-    lthr: null,
-    weeklySessions: { min: Number(draft.sessionsMin), max: Number(draft.sessionsMax) },
-    maxSessionMinutes: Number(draft.maxMinutes),
-  },
-  goals: buildGoals(draft),
-  planStart: new Date().toISOString().slice(0, 10),
-})
 
 export const Onboarding = ({ onDone }: { readonly onDone: () => void }) => {
   const [draft, setDraft] = useState<Draft>(EMPTY)
@@ -94,10 +81,18 @@ export const Onboarding = ({ onDone }: { readonly onDone: () => void }) => {
       .then((settings) =>
         setDraft((current) => ({
           ...current,
-          ftp: settings.ftp ? String(settings.ftp) : current.ftp,
-          thresholdPace: settings.thresholdPaceSecPerKm
-            ? formatSeconds(settings.thresholdPaceSecPerKm)
-            : current.thresholdPace,
+          sports: current.sports.map((setting) => {
+            if (setting.sport === 'Ride' && settings.ftp) {
+              return { ...setting, threshold: { metric: 'power' as const, ftp: settings.ftp } }
+            }
+            if (setting.sport === 'Run' && settings.thresholdPaceSecPerKm) {
+              return {
+                ...setting,
+                threshold: { metric: 'pace' as const, thresholdSecPerKm: settings.thresholdPaceSecPerKm },
+              }
+            }
+            return setting
+          }),
         })),
       )
       .catch(() => undefined)
@@ -106,8 +101,26 @@ export const Onboarding = ({ onDone }: { readonly onDone: () => void }) => {
   const set = (key: keyof Draft) => (event: { target: { value: string } }) =>
     setDraft((current) => ({ ...current, [key]: event.target.value }))
 
+  const profile = {
+    sports: draft.sports,
+    weightKg: Number(draft.weightKg),
+    maxHr: null,
+    lthr: null,
+    weeklySessions: { min: Number(draft.sessionsMin), max: Number(draft.sessionsMax) },
+    maxSessionMinutes: Number(draft.maxMinutes),
+  }
+  const ridesBike = draft.sports.some((setting) => setting.sport === 'Ride')
+
   const submit = async () => {
-    const config = buildConfig(draft)
+    const config: CoachConfig = {
+      profile,
+      goals: buildGoals(draft, ftpOf(profile)),
+      planStart: new Date().toISOString().slice(0, 10),
+    }
+    if (config.profile.sports.length === 0) {
+      setError('Wähl mindestens eine Sportart.')
+      return
+    }
     if (config.goals.length === 0) {
       setError('Setz mindestens ein Ziel — FTP oder eine Wettkampfzeit.')
       return
@@ -127,21 +140,16 @@ export const Onboarding = ({ onDone }: { readonly onDone: () => void }) => {
   return (
     <section className="onboarding">
       <h1>Kurz einrichten</h1>
-      <p className="onboarding__lead">
-        Zwei Minuten. Alles lässt sich später in den Einstellungen ändern.
-      </p>
+      <p className="onboarding__lead">Zwei Minuten. Alles lässt sich später ändern.</p>
 
       <fieldset>
-        <legend>Wo stehst du</legend>
+        <legend>Was trainierst du</legend>
+        <p className="hint">
+          Der Plan zeigt für jeden Tag zu jeder gewählten Sportart eine Einheit — du nimmst die, für
+          die du Zeit hast. Die Schwellenwerte holt er, wenn möglich, aus deinen intervals.icu-Einstellungen.
+        </p>
+        <SportPicker sports={draft.sports} onChange={(sports) => setDraft((c) => ({ ...c, sports }))} />
         <div className="grid">
-          <label>
-            FTP aktuell (W)
-            <input type="number" value={draft.ftp} onChange={set('ftp')} />
-          </label>
-          <label>
-            Schwellenpace Laufen (min/km)
-            <input type="text" value={draft.thresholdPace} onChange={set('thresholdPace')} />
-          </label>
           <label>
             Gewicht (kg)
             <input type="number" value={draft.weightKg} onChange={set('weightKg')} />
@@ -152,20 +160,32 @@ export const Onboarding = ({ onDone }: { readonly onDone: () => void }) => {
       <fieldset>
         <legend>Was willst du erreichen</legend>
         <p className="hint">Mindestens eines von beiden. Zieldatum ist optional.</p>
+        {ridesBike && (
+          <div className="grid">
+            <label>
+              FTP-Ziel (W)
+              <input type="number" placeholder="z. B. 300" value={draft.ftpTarget} onChange={set('ftpTarget')} />
+            </label>
+            <label>
+              bis wann
+              <input type="date" value={draft.ftpDate} onChange={set('ftpDate')} />
+            </label>
+          </div>
+        )}
         <div className="grid">
           <label>
-            FTP-Ziel (W)
-            <input type="number" placeholder="z. B. 300" value={draft.ftpTarget} onChange={set('ftpTarget')} />
+            Wettkampf-Sportart
+            <select value={draft.raceSport} onChange={set('raceSport')}>
+              {draft.sports.map((setting) => (
+                <option key={setting.sport} value={setting.sport}>
+                  {SPORT_LABELS[setting.sport]}
+                </option>
+              ))}
+            </select>
           </label>
           <label>
-            bis wann
-            <input type="date" value={draft.ftpDate} onChange={set('ftpDate')} />
-          </label>
-        </div>
-        <div className="grid">
-          <label>
-            Laufdistanz (km)
-            <input type="number" value={draft.raceDistanceKm} onChange={set('raceDistanceKm')} />
+            Distanz (km)
+            <input type="number" step="0.1" value={draft.raceDistanceKm} onChange={set('raceDistanceKm')} />
           </label>
           <label>
             aktuelle Zeit (mm:ss)
@@ -185,8 +205,8 @@ export const Onboarding = ({ onDone }: { readonly onDone: () => void }) => {
       <fieldset>
         <legend>Wie viel Zeit hast du</legend>
         <p className="hint">
-          Das Minimum ist dein Vorsatz — der Plan sagt dir, wenn du drunter liegst. Das Maximum steuert,
-          wie viele harte Einheiten pro Woche eingeplant werden.
+          Das Minimum ist dein Vorsatz — der Plan sagt dir, wenn du drunter liegst. Das Maximum
+          steuert, wie viele harte Einheiten pro Woche eingeplant werden.
         </p>
         <div className="grid">
           <label>

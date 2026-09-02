@@ -1,4 +1,4 @@
-import type { AthleteProfile, Block, Step, WorkoutTemplate } from './types.ts'
+import type { Block, Step, SportThreshold, WorkoutTemplate } from './types.ts'
 import { formatSeconds } from './dates.ts'
 
 const stepLine = (step: Step): string =>
@@ -31,26 +31,29 @@ const percentages = (target: string): readonly number[] =>
 const watts = (percent: number, ftp: number): number => Math.round((percent / 100) * ftp)
 
 /** Pace percentages in intervals.icu scale speed, so a higher percentage is a faster pace. */
-const paceSecPerKm = (percent: number, thresholdSecPerKm: number): number =>
-  thresholdSecPerKm / (percent / 100)
+const paceFromPercent = (percent: number, thresholdPace: number): number =>
+  thresholdPace / (percent / 100)
 
-const humanTarget = (target: string, profile: AthleteProfile): string => {
+const renderPace = (
+  values: readonly number[],
+  thresholdPace: number,
+  unit: string,
+): string => {
+  const paces = values.map((value) => paceFromPercent(value, thresholdPace))
+  const sorted = [...paces].sort((left, right) => left - right)
+  return `${[...new Set(sorted.map(formatSeconds))].join('–')}${unit}`
+}
+
+const humanTarget = (target: string, threshold: SportThreshold): string => {
   const values = percentages(target)
   if (values.length === 0) return target
-  const isPace = /pace/i.test(target)
   const isRamp = /ramp/i.test(target)
 
-  if (isPace) {
-    const paces = values.map((value) => paceSecPerKm(value, profile.thresholdPaceSecPerKm))
-    const sorted = [...paces].sort((a, b) => a - b)
-    const rendered = [...new Set(sorted.map((pace) => formatSeconds(pace)))]
-    return `${rendered.join('–')}/km`
-  }
+  if (threshold.metric === 'pace') return renderPace(values, threshold.thresholdSecPerKm, '/km')
+  if (threshold.metric === 'swimPace') return renderPace(values, threshold.cssSecPer100m, '/100m')
 
-  const powers = values.map((value) => watts(value, profile.ftp))
-  const rendered = [...new Set(powers)]
-  const joiner = isRamp ? '→' : '–'
-  return `${rendered.join(joiner)} W${isRamp ? ' (Rampe)' : ''}`
+  const powers = [...new Set(values.map((value) => watts(value, threshold.ftp)))]
+  return `${powers.join(isRamp ? '→' : '–')} W${isRamp ? ' (Rampe)' : ''}`
 }
 
 const humanDuration = (duration: string): string => {
@@ -66,9 +69,9 @@ const humanDuration = (duration: string): string => {
     .join(' ')
 }
 
-const humanStep = (step: Step, profile: AthleteProfile): string =>
+const humanStep = (step: Step, threshold: SportThreshold): string =>
   [
-    `${humanDuration(step.duration)} @ ${humanTarget(step.target, profile)}`,
+    `${humanDuration(step.duration)} @ ${humanTarget(step.target, threshold)}`,
     step.cadence,
     step.label && `(${step.label})`,
   ]
@@ -78,12 +81,12 @@ const humanStep = (step: Step, profile: AthleteProfile): string =>
 /** Human readable steps with absolute watt and pace targets for the UI. */
 export const toHumanSteps = (
   blocks: readonly Block[],
-  profile: AthleteProfile,
+  threshold: SportThreshold,
 ): readonly string[] =>
   blocks.map((block) =>
     block.kind === 'step'
-      ? humanStep(block, profile)
-      : `${block.times}× [ ${block.steps.map((step) => humanStep(step, profile)).join(' | ')} ]`,
+      ? humanStep(block, threshold)
+      : `${block.times}× [ ${block.steps.map((step) => humanStep(step, threshold)).join(' | ')} ]`,
   )
 
 export const describeWorkout = (template: WorkoutTemplate, reason: string): string =>
@@ -92,3 +95,7 @@ export const describeWorkout = (template: WorkoutTemplate, reason: string): stri
 /** Race pace per km for a target time over a distance. */
 export const racePaceSecPerKm = (targetTimeSec: number, distanceKm: number): number =>
   targetTimeSec / distanceKm
+
+/** Swimmers read pace per 100 m, not per km. */
+export const racePaceSecPer100m = (targetTimeSec: number, distanceKm: number): number =>
+  targetTimeSec / (distanceKm * 10)

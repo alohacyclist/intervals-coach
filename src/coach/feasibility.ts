@@ -1,6 +1,6 @@
 import type { AthleteProfile, Feasibility, Goal } from './types.ts'
 import { diffDays, formatSeconds } from './dates.ts'
-import { racePaceSecPerKm } from './format.ts'
+import { racePaceSecPer100m, racePaceSecPerKm } from './format.ts'
 
 /** Realistic FTP gain for a trained athlete on two to three sessions per week. */
 const FTP_PERCENT_PER_MONTH = 2.5
@@ -41,11 +41,14 @@ const raceFeasibility = (goal: Goal, profile: AthleteProfile, today: string): Fe
   const distanceKm = goal.distanceKm ?? 10
   const gainPercent = ((goal.currentValue - goal.targetValue) / goal.currentValue) * 100
   const months = monthsUntil(goal, today)
-  const targetPace = racePaceSecPerKm(goal.targetValue, distanceKm)
-  const currentPace = racePaceSecPerKm(goal.currentValue, distanceKm)
-  const paceText = `${formatSeconds(currentPace)}/km → ${formatSeconds(targetPace)}/km`
+  const perHundred = goal.sport === 'Swim'
+  const unit = perHundred ? '/100m' : '/km'
+  const pace = (seconds: number) =>
+    perHundred ? racePaceSecPer100m(seconds, distanceKm) : racePaceSecPerKm(seconds, distanceKm)
+  const paceText = `${formatSeconds(pace(goal.currentValue))}${unit} → ${formatSeconds(pace(goal.targetValue))}${unit}`
 
-  const volumeShortfall = distanceKm >= 10 && profile.weeklySessions.max < MIN_RUN_SESSIONS_FOR_10K + 1
+  const volumeShortfall =
+    goal.sport === 'Run' && distanceKm >= 10 && profile.weeklySessions.max < MIN_RUN_SESSIONS_FOR_10K + 1
 
   if (months === null) {
     return {

@@ -1,4 +1,5 @@
-import type { AthleteProfile, CoachConfig, Goal } from './types.ts'
+import type { AthleteProfile, CoachConfig, Goal, Sport, SportSetting, SportThreshold } from './types.ts'
+import { ALL_SPORTS } from './types.ts'
 
 export class ValidationError extends Error {
   constructor(readonly issues: readonly string[]) {
@@ -9,8 +10,10 @@ export class ValidationError extends Error {
 
 const DEFAULT_CONFIG: CoachConfig = {
   profile: {
-    ftp: 285,
-    thresholdPaceSecPerKm: 236,
+    sports: [
+      { sport: 'Ride', threshold: { metric: 'power', ftp: 285 } },
+      { sport: 'Run', threshold: { metric: 'pace', thresholdSecPerKm: 236 } },
+    ],
     weightKg: 71,
     maxHr: null,
     lthr: null,
@@ -60,10 +63,71 @@ const normaliseWeeklySessions = (raw: unknown): Record<string, unknown> => {
   return (raw ?? {}) as Record<string, unknown>
 }
 
+const isSport = (value: unknown): value is Sport =>
+  typeof value === 'string' && (ALL_SPORTS as readonly string[]).includes(value)
+
+const validateThreshold = (raw: unknown, where: string, issues: string[]): SportThreshold => {
+  const threshold = (raw ?? {}) as Record<string, unknown>
+  const metric = threshold['metric']
+
+  if (metric === 'power') {
+    if (!positive(threshold['ftp'])) issues.push(`${where}.ftp muss > 0 sein`)
+    return { metric: 'power', ftp: Number(threshold['ftp']) }
+  }
+  if (metric === 'pace') {
+    if (!positive(threshold['thresholdSecPerKm'])) issues.push(`${where}.thresholdSecPerKm muss > 0 sein`)
+    return { metric: 'pace', thresholdSecPerKm: Number(threshold['thresholdSecPerKm']) }
+  }
+  if (metric === 'swimPace') {
+    if (!positive(threshold['cssSecPer100m'])) issues.push(`${where}.cssSecPer100m muss > 0 sein`)
+    return { metric: 'swimPace', cssSecPer100m: Number(threshold['cssSecPer100m']) }
+  }
+
+  issues.push(`${where}.metric muss power, pace oder swimPace sein`)
+  return { metric: 'power', ftp: 0 }
+}
+
+/**
+ * Configurations written before the app supported more than two sports carried
+ * a flat `ftp` and `thresholdPaceSecPerKm`. They are migrated, not rejected.
+ */
+const normaliseSports = (profile: Record<string, unknown>): readonly unknown[] => {
+  if (Array.isArray(profile['sports'])) return profile['sports']
+  const legacy: SportSetting[] = []
+  if (positive(profile['ftp'])) {
+    legacy.push({ sport: 'Ride', threshold: { metric: 'power', ftp: Number(profile['ftp']) } })
+  }
+  if (positive(profile['thresholdPaceSecPerKm'])) {
+    legacy.push({
+      sport: 'Run',
+      threshold: { metric: 'pace', thresholdSecPerKm: Number(profile['thresholdPaceSecPerKm']) },
+    })
+  }
+  return legacy
+}
+
+const validateSports = (raw: unknown, issues: string[]): readonly SportSetting[] => {
+  const entries = Array.isArray(raw) ? raw : []
+  if (entries.length === 0) issues.push('profile.sports braucht mindestens eine Sportart')
+
+  const settings = entries.map((entry, index) => {
+    const setting = (entry ?? {}) as Record<string, unknown>
+    const where = `profile.sports[${index}]`
+    if (!isSport(setting['sport'])) issues.push(`${where}.sport muss Ride, Run oder Swim sein`)
+    return {
+      sport: (isSport(setting['sport']) ? setting['sport'] : 'Ride') as Sport,
+      threshold: validateThreshold(setting['threshold'], `${where}.threshold`, issues),
+    }
+  })
+
+  const seen = new Set(settings.map((setting) => setting.sport))
+  if (seen.size !== settings.length) issues.push('profile.sports darf jede Sportart nur einmal enthalten')
+  return settings
+}
+
 const validateProfile = (raw: unknown, issues: string[]): AthleteProfile => {
   const profile = (raw ?? {}) as Record<string, unknown>
-  if (!positive(profile['ftp'])) issues.push('profile.ftp muss > 0 sein')
-  if (!positive(profile['thresholdPaceSecPerKm'])) issues.push('profile.thresholdPaceSecPerKm muss > 0 sein')
+  const sports = validateSports(normaliseSports(profile), issues)
   if (!positive(profile['weightKg'])) issues.push('profile.weightKg muss > 0 sein')
   const sessions = normaliseWeeklySessions(profile['weeklySessions'])
   if (!positive(sessions['min'])) issues.push('profile.weeklySessions.min muss > 0 sein')
@@ -74,8 +138,7 @@ const validateProfile = (raw: unknown, issues: string[]): AthleteProfile => {
   if (!positive(profile['maxSessionMinutes'])) issues.push('profile.maxSessionMinutes muss > 0 sein')
 
   return {
-    ftp: Number(profile['ftp']),
-    thresholdPaceSecPerKm: Number(profile['thresholdPaceSecPerKm']),
+    sports,
     weightKg: Number(profile['weightKg']),
     maxHr: positive(profile['maxHr']) ? Number(profile['maxHr']) : null,
     lthr: positive(profile['lthr']) ? Number(profile['lthr']) : null,

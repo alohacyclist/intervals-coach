@@ -3,12 +3,56 @@ import { validateConfig, ValidationError, DEFAULT_CONFIG } from '../src/coach/co
 
 describe('config validation', () => {
   it('accepts the default configuration', () => {
-    expect(validateConfig(DEFAULT_CONFIG).profile.ftp).toBe(285)
+    expect(validateConfig(DEFAULT_CONFIG).profile.sports).toHaveLength(2)
   })
 
-  it('rejects a missing FTP', () => {
-    const broken = { ...DEFAULT_CONFIG, profile: { ...DEFAULT_CONFIG.profile, ftp: 0 } }
+  it('rejects a sport without a usable threshold', () => {
+    const broken = {
+      ...DEFAULT_CONFIG,
+      profile: {
+        ...DEFAULT_CONFIG.profile,
+        sports: [{ sport: 'Ride', threshold: { metric: 'power', ftp: 0 } }],
+      },
+    }
     expect(() => validateConfig(broken)).toThrow(ValidationError)
+  })
+
+  it('rejects a profile without any sport', () => {
+    const broken = { ...DEFAULT_CONFIG, profile: { ...DEFAULT_CONFIG.profile, sports: [] } }
+    expect(() => validateConfig(broken)).toThrow(/mindestens eine Sportart/)
+  })
+
+  it('rejects the same sport twice', () => {
+    const broken = {
+      ...DEFAULT_CONFIG,
+      profile: {
+        ...DEFAULT_CONFIG.profile,
+        sports: [
+          { sport: 'Run', threshold: { metric: 'pace', thresholdSecPerKm: 240 } },
+          { sport: 'Run', threshold: { metric: 'pace', thresholdSecPerKm: 250 } },
+        ],
+      },
+    }
+    expect(() => validateConfig(broken)).toThrow(/nur einmal/)
+  })
+
+  it('migrates a legacy flat profile into per-sport thresholds', () => {
+    const legacy = {
+      ...DEFAULT_CONFIG,
+      profile: {
+        weightKg: 71,
+        maxHr: null,
+        lthr: null,
+        weeklySessions: { min: 2, max: 3 },
+        maxSessionMinutes: 75,
+        ftp: 280,
+        thresholdPaceSecPerKm: 236,
+      },
+    }
+    expect(validateConfig(legacy).profile.sports).toEqual([
+      { sport: 'Ride', threshold: { metric: 'power', ftp: 280 } },
+      { sport: 'Run', threshold: { metric: 'pace', thresholdSecPerKm: 236 } },
+    ])
   })
 
   it('rejects a configuration without goals', () => {

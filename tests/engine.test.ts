@@ -2,7 +2,17 @@ import { describe, expect, it } from 'vitest'
 import { planDays } from '../src/coach/engine.ts'
 import { buildState } from '../src/coach/state.ts'
 import { intensityClass } from '../src/coach/library.ts'
-import { activity, baselineWellness, config, TODAY, wellness } from './fixtures.ts'
+import {
+  BIKE_THRESHOLD,
+  RUN_THRESHOLD,
+  SWIM_THRESHOLD,
+  activity,
+  baselineWellness,
+  config,
+  triConfig,
+  TODAY,
+  wellness,
+} from './fixtures.ts'
 
 const stateFrom = (
   activities: Parameters<typeof buildState>[0],
@@ -199,5 +209,55 @@ describe('sport roles and returning to training', () => {
     ]
     const [today] = planDays(stateFrom(withStrength), buildPhase)
     expect(today?.strength).toBeNull()
+  })
+})
+
+describe('sport selection', () => {
+  it('offers one option per chosen sport', () => {
+    const days = planDays(stateFrom(rested), triConfig, 3)
+    for (const day of days) {
+      expect(day.options.map((option) => option.sport).sort()).toEqual(['Ride', 'Run', 'Swim'])
+    }
+  })
+
+  it('plans for a single sport without falling over', () => {
+    const runOnly = {
+      ...config,
+      profile: { ...config.profile, sports: [{ sport: 'Run' as const, threshold: RUN_THRESHOLD }] },
+    }
+    const days = planDays(stateFrom(rested), runOnly, 3)
+    for (const day of days) {
+      expect(day.options.map((option) => option.sport)).toEqual(['Run'])
+    }
+    expect(days.some((day) => day.dayType === 'KEY')).toBe(true)
+  })
+
+  it('never recommends a sport the athlete does not train', () => {
+    const swimBike = {
+      ...config,
+      profile: {
+        ...config.profile,
+        sports: [
+          { sport: 'Ride' as const, threshold: BIKE_THRESHOLD },
+          { sport: 'Swim' as const, threshold: SWIM_THRESHOLD },
+        ],
+      },
+    }
+    const days = planDays(stateFrom(rested), swimBike, 3)
+    for (const day of days) {
+      expect(['Ride', 'Swim', 'REST']).toContain(day.recommended)
+    }
+  })
+
+  it('spreads quality across the sports that have had none this week', () => {
+    const bikeOnly = [activity(2, 'Ride', { load: 90, intensity: 98 })]
+    const [today] = planDays(stateFrom(bikeOnly), triConfig)
+    expect(today?.recommended).not.toBe('Ride')
+  })
+
+  it('renders swim steps in metres and per 100 m', () => {
+    const days = planDays(stateFrom(rested), triConfig, 3)
+    const swim = days.flatMap((day) => day.options).find((option) => option.sport === 'Swim')
+    expect(swim?.humanSteps.join(' ')).toContain('/100m')
   })
 })

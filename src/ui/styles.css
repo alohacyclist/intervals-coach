@@ -190,6 +190,40 @@ label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color:
 .loading { color: var(--muted); }
 .footer { color: var(--muted); font-size: 12px; text-align: center; }
 
+.sports { display: flex; flex-direction: column; gap: 8px; }
+.sports__row {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+.sports__row--on { border-color: rgba(77, 163, 255, 0.45); }
+.sports__toggle {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+  font-size: 14px;
+  min-width: 150px;
+  cursor: pointer;
+}
+.sports__toggle input { width: auto; accent-color: var(--accent); }
+.sports__threshold { flex: 1; min-width: 170px; }
+
+select {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 7px 9px;
+  font: inherit;
+  width: 100%;
+}
+
 .strength {
   background: var(--surface-2);
   border: 1px solid var(--line);

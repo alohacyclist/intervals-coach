@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import type { PlannedSession } from '../../coach/types.ts'
+import { SPORT_LABELS } from '../../coach/types.ts'
 import { pushWorkout } from '../api.ts'
-
-const SPORT_LABEL: Record<PlannedSession['sport'], string> = { Ride: 'Rad', Run: 'Lauf' }
 
 type Props = {
   readonly session: PlannedSession
@@ -28,7 +27,7 @@ export const SessionCard = ({ session, date, recommended }: Props) => {
   return (
     <article className={`session ${recommended ? 'session--recommended' : ''}`}>
       <div className="session__head">
-        <span className={`badge badge--${session.sport.toLowerCase()}`}>{SPORT_LABEL[session.sport]}</span>
+        <span className={`badge badge--${session.sport.toLowerCase()}`}>{SPORT_LABELS[session.sport]}</span>
         {recommended && <span className="badge badge--pick">Empfehlung</span>}
         <span className="session__meta">
           {session.template.minutes} min · {session.template.load} TSS

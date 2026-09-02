@@ -87,12 +87,31 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
     const { auth, store } = await resolve(context)
     const settings = await fetchSportSettings(auth)
     const config = await store.load()
+    // Only the sports the athlete actually trains are updated; the rest is theirs.
+    const synced = config.profile.sports.map((setting) => {
+      if (setting.sport === 'Ride' && settings.ftp) {
+        return { ...setting, threshold: { metric: 'power' as const, ftp: settings.ftp } }
+      }
+      if (setting.sport === 'Run' && settings.thresholdPaceSecPerKm) {
+        return {
+          ...setting,
+          threshold: { metric: 'pace' as const, thresholdSecPerKm: settings.thresholdPaceSecPerKm },
+        }
+      }
+      if (setting.sport === 'Swim' && settings.cssSecPer100m) {
+        return {
+          ...setting,
+          threshold: { metric: 'swimPace' as const, cssSecPer100m: settings.cssSecPer100m },
+        }
+      }
+      return setting
+    })
+
     const merged = validateConfig({
       ...config,
       profile: {
         ...config.profile,
-        ftp: settings.ftp ?? config.profile.ftp,
-        thresholdPaceSecPerKm: settings.thresholdPaceSecPerKm ?? config.profile.thresholdPaceSecPerKm,
+        sports: synced,
         lthr: settings.lthr ?? config.profile.lthr,
         maxHr: settings.maxHr ?? config.profile.maxHr,
       },

@@ -359,7 +359,134 @@ const RUN: readonly WorkoutTemplate[] = [
   },
 ]
 
-export const LIBRARY: readonly WorkoutTemplate[] = [...BIKE, ...RUN]
+const warmupSwim = (duration: string): Step =>
+  step(duration, '60-68% Pace', { label: 'Einschwimmen' })
+
+/**
+ * Swim targets are percentages of critical swim speed, the pace an athlete can
+ * hold for roughly 30 minutes. Technique work carries as much of the adaptation
+ * as the intervals do, so every set keeps a drill block.
+ */
+const SWIM: readonly WorkoutTemplate[] = [
+  {
+    id: 'swim-thr-10x100',
+    sport: 'Swim',
+    stimulus: 'THRESHOLD',
+    name: 'CSS 10x100m',
+    minutes: 50,
+    load: 62,
+    phases: ['BASE', 'BUILD', 'SPECIFIC'],
+    coachNote: 'Die Standardeinheit an der kritischen Schwimmgeschwindigkeit. Gleichmäßig, letzte 100 nicht schneller als die erste.',
+    blocks: [
+      warmupSwim('300mtr'),
+      repeat(4, [step('50mtr', '55-62% Pace', { label: 'Technik' }), step('20s', '50% Pace')]),
+      repeat(10, [step('100mtr', '98-102% Pace'), step('20s', '50% Pace')]),
+      cooldown('200mtr', '60% Pace'),
+    ],
+  },
+  {
+    id: 'swim-css-5x200',
+    sport: 'Swim',
+    stimulus: 'THRESHOLD',
+    name: 'CSS 5x200m',
+    minutes: 55,
+    load: 70,
+    phases: ['BUILD', 'SPECIFIC'],
+    coachNote: 'Längere Intervalle, gleicher Reiz. Näher am Renntempo für alles ab 750 m.',
+    blocks: [
+      warmupSwim('300mtr'),
+      repeat(4, [step('50mtr', '55-62% Pace', { label: 'Technik' }), step('20s', '50% Pace')]),
+      repeat(5, [step('200mtr', '96-100% Pace'), step('30s', '50% Pace')]),
+      cooldown('200mtr', '60% Pace'),
+    ],
+  },
+  {
+    id: 'swim-vo2-16x50',
+    sport: 'Swim',
+    stimulus: 'VO2',
+    name: 'VO2max 16x50m',
+    minutes: 45,
+    load: 58,
+    phases: ['BUILD', 'SPECIFIC'],
+    coachNote: 'Kurz und schnell bei sauberer Technik. Sobald der Zug zerfällt, ist die Serie zu Ende — egal wie viele übrig sind.',
+    blocks: [
+      warmupSwim('300mtr'),
+      repeat(4, [step('50mtr', '55-62% Pace', { label: 'Technik' }), step('20s', '50% Pace')]),
+      repeat(16, [step('50mtr', '110-118% Pace'), step('20s', '50% Pace')]),
+      cooldown('200mtr', '60% Pace'),
+    ],
+  },
+  {
+    id: 'swim-tempo-3x400',
+    sport: 'Swim',
+    stimulus: 'TEMPO',
+    name: 'Tempo 3x400m',
+    minutes: 50,
+    load: 55,
+    phases: ['BASE', 'BUILD'],
+    coachNote: 'Aerober Block ohne die Kosten harter Intervalle. Gut am Tag nach einer harten Lauf- oder Radeinheit.',
+    blocks: [
+      warmupSwim('300mtr'),
+      repeat(3, [step('400mtr', '88-93% Pace'), step('45s', '50% Pace')]),
+      cooldown('200mtr', '60% Pace'),
+    ],
+  },
+  {
+    id: 'swim-technique',
+    sport: 'Swim',
+    stimulus: 'NEURO',
+    name: 'Technik 40min',
+    minutes: 40,
+    load: 30,
+    phases: ['BASE', 'BUILD', 'SPECIFIC', 'TAPER', 'RECOVERY'],
+    coachNote: 'Im Schwimmen kommt der Fortschritt aus dem Wasserwiderstand, nicht aus der Kraft. Technik ist hier keine Zusatzeinheit, sondern die eigentliche Arbeit.',
+    blocks: [
+      warmupSwim('300mtr'),
+      repeat(8, [step('50mtr', '55-62% Pace', { label: 'Technik' }), step('20s', '50% Pace')]),
+      repeat(8, [step('50mtr', '95-100% Pace', { label: 'Umsetzen' }), step('30s', '50% Pace')]),
+      cooldown('200mtr', '60% Pace'),
+    ],
+  },
+  {
+    id: 'swim-endurance-1500',
+    sport: 'Swim',
+    stimulus: 'ENDURANCE',
+    name: 'Grundlage 1500m',
+    minutes: 45,
+    load: 40,
+    phases: ['BASE', 'BUILD', 'SPECIFIC', 'RECOVERY'],
+    coachNote: 'Durchgehend locker. Auf gleichmäßige Zugfrequenz achten, nicht auf die Uhr.',
+    blocks: [warmupSwim('200mtr'), step('1500mtr', '78-85% Pace'), cooldown('200mtr', '60% Pace')],
+  },
+  {
+    id: 'swim-thr-short-6x100',
+    sport: 'Swim',
+    stimulus: 'THRESHOLD',
+    name: 'CSS kompakt 6x100m',
+    minutes: 35,
+    load: 45,
+    phases: ['BASE', 'BUILD', 'SPECIFIC', 'TAPER'],
+    coachNote: 'Die 35-Minuten-Version, wenn die Bahn nur kurz frei ist.',
+    blocks: [
+      warmupSwim('200mtr'),
+      repeat(6, [step('100mtr', '98-102% Pace'), step('20s', '50% Pace')]),
+      cooldown('150mtr', '60% Pace'),
+    ],
+  },
+  {
+    id: 'swim-recovery-800',
+    sport: 'Swim',
+    stimulus: 'RECOVERY',
+    name: 'Lockeres Schwimmen 800m',
+    minutes: 25,
+    load: 18,
+    phases: ['BASE', 'BUILD', 'SPECIFIC', 'TAPER', 'RECOVERY'],
+    coachNote: 'Regeneration im Wasser entlastet die Beine vollständig — nach harten Lauftagen oft die bessere Wahl als ein Regenerationslauf.',
+    blocks: [step('800mtr', '58-66% Pace')],
+  },
+]
+
+export const LIBRARY: readonly WorkoutTemplate[] = [...BIKE, ...RUN, ...SWIM]
 
 export const templatesFor = (sport: Sport): readonly WorkoutTemplate[] =>
   LIBRARY.filter((template) => template.sport === sport)
@@ -386,15 +513,16 @@ export const intensityClass = (stimulus: Stimulus): IntensityClass => CLASS_BY_S
  * controlled on the trainer. This is a preference the scoring leans on, never a
  * rule — an athlete who did VO2max on the bike simply moves the rotation on.
  */
-const PREFERRED_SPORT: Partial<Record<Stimulus, Sport>> = {
-  VO2: 'Run',
-  THRESHOLD: 'Ride',
-  SWEETSPOT: 'Ride',
-  LONG: 'Run',
+const PREFERRED_SPORTS: Partial<Record<Stimulus, readonly Sport[]>> = {
+  VO2: ['Run'],
+  THRESHOLD: ['Ride', 'Swim'],
+  SWEETSPOT: ['Ride'],
+  LONG: ['Run', 'Ride'],
+  NEURO: ['Swim'],
 }
 
 export const isPreferredSport = (stimulus: Stimulus, sport: Sport): boolean =>
-  PREFERRED_SPORT[stimulus] === sport
+  PREFERRED_SPORTS[stimulus]?.includes(sport) ?? false
 
 export const STRENGTH_SESSION: StrengthSuggestion = {
   name: 'Krafttraining',

@@ -2,11 +2,8 @@ import { useState } from 'react'
 import type { CoachConfig, Goal } from '../../coach/types.ts'
 import { formatSeconds } from '../../coach/dates.ts'
 import { putConfig, syncSettings } from '../api.ts'
-
-const parseMmSs = (value: string): number => {
-  const [minutes = '0', seconds = '0'] = value.split(':')
-  return Number(minutes) * 60 + Number(seconds)
-}
+import { parseMmSs } from '../format-input.ts'
+import { SportPicker } from './SportPicker.tsx'
 
 type Props = {
   readonly config: CoachConfig
@@ -49,23 +46,10 @@ export const SettingsPanel = ({ config, onSaved, onClose }: Props) => {
         </button>
       </div>
 
+      <h3>Sportarten</h3>
+      <SportPicker sports={draft.profile.sports} onChange={(sports) => patchProfile({ sports })} />
+
       <div className="grid">
-        <label>
-          FTP (W)
-          <input
-            type="number"
-            value={draft.profile.ftp}
-            onChange={(event) => patchProfile({ ftp: Number(event.target.value) })}
-          />
-        </label>
-        <label>
-          Schwellenpace (min/km)
-          <input
-            type="text"
-            defaultValue={formatSeconds(draft.profile.thresholdPaceSecPerKm)}
-            onBlur={(event) => patchProfile({ thresholdPaceSecPerKm: parseMmSs(event.target.value) })}
-          />
-        </label>
         <label>
           Gewicht (kg)
           <input
