@@ -1,4 +1,11 @@
-import type { Activity, CoachConfig, Sport, SportThreshold, Wellness } from '../src/coach/types.ts'
+import type {
+  Activity,
+  CoachConfig,
+  PlannedEvent,
+  Sport,
+  SportThreshold,
+  Wellness,
+} from '../src/coach/types.ts'
 import { addDays } from '../src/coach/dates.ts'
 
 // A Wednesday, so the current calendar week already contains earlier days.
@@ -18,6 +25,8 @@ export const activity = (
   intensity: 80,
   movingTimeSec: 3600,
   isStrength: false,
+  pairedEventId: null,
+  compliance: null,
   ...overrides,
 })
 
@@ -88,3 +97,17 @@ export const triConfig: CoachConfig = {
     ],
   },
 }
+
+export const plannedEvent = (
+  daysAgo: number,
+  name: string,
+  overrides: Partial<PlannedEvent> = {},
+): PlannedEvent => ({
+  id: `e-${daysAgo}-${name}`,
+  date: addDays(TODAY, -daysAgo),
+  name,
+  sport: 'Ride',
+  externalId: `coach:${addDays(TODAY, -daysAgo)}:tpl`,
+  pairedActivityId: null,
+  ...overrides,
+})

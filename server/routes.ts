@@ -3,11 +3,19 @@ import type { Context } from 'hono'
 import type { ConfigStore } from '../src/coach/config-schema.ts'
 import { MissingConfigError, ValidationError, validateConfig } from '../src/coach/config-schema.ts'
 import type { IntervalsAuth } from './intervals.ts'
-import { IntervalsError, createWorkoutEvent, fetchActivities, fetchSportSettings, fetchWellness } from './intervals.ts'
+import {
+  IntervalsError,
+  createWorkoutEvent,
+  fetchActivities,
+  fetchEvents,
+  fetchSportSettings,
+  fetchWellness,
+} from './intervals.ts'
 import { addDays } from '../src/coach/dates.ts'
 import { buildState } from '../src/coach/state.ts'
 import { planDays } from '../src/coach/engine.ts'
 import { assessGoals } from '../src/coach/feasibility.ts'
+import { buildHistory } from '../src/coach/adherence.ts'
 import { findTemplate } from '../src/coach/library.ts'
 import { describeWorkout } from '../src/coach/format.ts'
 import type { Plan } from '../src/coach/types.ts'
@@ -15,6 +23,7 @@ import type { Plan } from '../src/coach/types.ts'
 const TIMEZONE = 'Europe/Berlin'
 const ACTIVITY_HISTORY_DAYS = 180
 const WELLNESS_HISTORY_DAYS = 60
+const ADHERENCE_DAYS = 7
 
 /** Local calendar date in the athlete's timezone — sv-SE formats as YYYY-MM-DD. */
 export const localToday = (now: Date = new Date()): string =>
@@ -34,15 +43,17 @@ export type DepsResolver = (context: Context) => Promise<RouteDeps>
 const buildPlan = async (deps: RouteDeps, days: number): Promise<Plan> => {
   const today = localToday()
   const config = await deps.store.load()
-  const [activities, wellness] = await Promise.all([
+  const [activities, wellness, events] = await Promise.all([
     fetchActivities(deps.auth, addDays(today, -ACTIVITY_HISTORY_DAYS), today),
     fetchWellness(deps.auth, addDays(today, -WELLNESS_HISTORY_DAYS), today),
+    fetchEvents(deps.auth, addDays(today, -ADHERENCE_DAYS), today),
   ])
   const state = buildState(activities, wellness, today)
 
   return {
     generatedAt: new Date().toISOString(),
     state,
+    history: buildHistory(events, activities, today, ADHERENCE_DAYS),
     days: planDays(state, config, days),
     feasibility: assessGoals(config.goals, config.profile, today),
   }
@@ -142,6 +153,7 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
     await createWorkoutEvent(deps.auth, {
       date: body.date,
       sport: template.sport,
+      templateId: template.id,
       name: template.name,
       description: planned?.description ?? describeWorkout(template, 'manuell ausgewählt'),
       movingTimeSec: template.minutes * 60,

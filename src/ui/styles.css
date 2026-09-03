@@ -190,6 +190,42 @@ label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color:
 .loading { color: var(--muted); }
 .footer { color: var(--muted); font-size: 12px; text-align: center; }
 
+.history {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.history__head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.history__summary { color: var(--muted); font-size: 13px; }
+.history__strip { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin: 0; padding: 0; list-style: none; }
+.history__day {
+  border-radius: 8px;
+  padding: 8px 4px;
+  text-align: center;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  cursor: default;
+}
+.history__weekday { display: block; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.history__load { display: block; font-size: 15px; font-variant-numeric: tabular-nums; margin-top: 2px; }
+.history__day--done { background: rgba(77, 219, 154, 0.18); border-color: rgba(77, 219, 154, 0.5); }
+.history__day--switched { background: rgba(77, 163, 255, 0.16); border-color: rgba(77, 163, 255, 0.45); }
+.history__day--unplanned { background: rgba(77, 163, 255, 0.08); border-color: rgba(77, 163, 255, 0.25); }
+.history__day--missed { background: rgba(255, 176, 32, 0.14); border-color: rgba(255, 176, 32, 0.45); }
+.history__day--rest { background: var(--surface-2); }
+.history__last { margin: 0; font-size: 13.5px; color: var(--muted); }
+.history__last strong { color: var(--text); }
+.history__ok { color: var(--green); }
+.history__alt { color: var(--accent); }
+.history__miss { color: var(--amber); }
+.history__legend { margin: 0; display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--muted); }
+.history__legend span { display: inline-flex; align-items: center; gap: 5px; }
+.history__dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+
 .sports { display: flex; flex-direction: column; gap: 8px; }
 .sports__row {
   display: flex;

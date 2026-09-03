@@ -1,4 +1,4 @@
-import type { Activity, Sport, Wellness } from '../src/coach/types.ts'
+import type { Activity, PlannedEvent, Sport, Wellness } from '../src/coach/types.ts'
 
 /**
  * Credentials for one athlete. A personal API key covers the single user setup;
@@ -82,6 +82,17 @@ const mapActivity = (raw: RawActivity): Activity => ({
   intensity: num(raw['icu_intensity']),
   movingTimeSec: num(raw['moving_time']),
   isStrength: typeof raw['type'] === 'string' && STRENGTH_TYPES.has(raw['type']),
+  pairedEventId: raw['paired_event_id'] == null ? null : String(raw['paired_event_id']),
+  compliance: nullableNum(raw['compliance']),
+})
+
+const mapEvent = (raw: Record<string, unknown>): PlannedEvent => ({
+  id: String(raw['id'] ?? ''),
+  date: String(raw['start_date_local'] ?? '').slice(0, 10),
+  name: String(raw['name'] ?? ''),
+  sport: toSport(raw['type']),
+  externalId: typeof raw['external_id'] === 'string' ? raw['external_id'] : null,
+  pairedActivityId: raw['paired_activity_id'] == null ? null : String(raw['paired_activity_id']),
 })
 
 const mapWellness = (raw: RawWellness): Wellness => ({
@@ -115,6 +126,22 @@ export const fetchWellness = async (
     `/athlete/${auth.athleteId}/wellness?oldest=${oldest}&newest=${newest}`,
   )
   return (raw ?? []).map(mapWellness).filter((entry) => entry.date.length === 10)
+}
+
+/** Planned workouts on the calendar, used to tell what was actually followed. */
+export const fetchEvents = async (
+  auth: IntervalsAuth,
+  oldest: string,
+  newest: string,
+): Promise<readonly PlannedEvent[]> => {
+  const raw = await request<Record<string, unknown>[]>(
+    auth,
+    `/athlete/${auth.athleteId}/events?oldest=${oldest}&newest=${newest}`,
+  )
+  return (raw ?? [])
+    .filter((event) => event['category'] === 'WORKOUT')
+    .map(mapEvent)
+    .filter((event) => event.date.length === 10)
 }
 
 export type SportSettings = {
@@ -153,6 +180,7 @@ export const fetchSportSettings = async (auth: IntervalsAuth): Promise<SportSett
 export type CalendarEvent = {
   readonly date: string
   readonly sport: Sport
+  readonly templateId: string
   readonly name: string
   readonly description: string
   readonly movingTimeSec: number
@@ -168,5 +196,7 @@ export const createWorkoutEvent = async (auth: IntervalsAuth, event: CalendarEve
       name: event.name,
       description: event.description,
       moving_time: event.movingTimeSec,
+      // Marks the event as ours, so adherence only judges this app's proposals.
+      external_id: `coach:${event.date}:${event.templateId}`,
     }),
   })

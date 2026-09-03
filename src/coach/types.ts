@@ -90,6 +90,35 @@ export type Activity = {
   readonly intensity: number
   readonly movingTimeSec: number
   readonly isStrength: boolean
+  /** Set by intervals.icu when this activity fulfilled a planned workout. */
+  readonly pairedEventId: string | null
+  /** Percentage match against the planned workout, 0–100. */
+  readonly compliance: number | null
+}
+
+/** A workout on the intervals.icu calendar. */
+export type PlannedEvent = {
+  readonly id: string
+  readonly date: string
+  readonly name: string
+  readonly sport: Sport | 'Other'
+  readonly externalId: string | null
+  readonly pairedActivityId: string | null
+}
+
+export type AdherenceStatus = 'done' | 'switched' | 'missed' | 'unplanned' | 'rest'
+
+export type AdherenceDay = {
+  readonly date: string
+  readonly weekday: string
+  readonly status: AdherenceStatus
+  /** Names of the sessions this app proposed for that day. */
+  readonly planned: readonly string[]
+  /** What was actually trained, if anything. */
+  readonly completed: string | null
+  readonly completedSport: Sport | 'Other' | null
+  readonly compliance: number | null
+  readonly load: number
 }
 
 export type StrengthExercise = {
@@ -237,6 +266,7 @@ export type Feasibility = {
 export type Plan = {
   readonly generatedAt: string
   readonly state: TrainingState
+  readonly history: readonly AdherenceDay[]
   readonly days: readonly PlannedDay[]
   readonly feasibility: readonly Feasibility[]
 }

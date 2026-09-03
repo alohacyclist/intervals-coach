@@ -3,6 +3,7 @@ import type { CoachConfig, Plan } from '../coach/types.ts'
 import { ApiError, getConfig, getPlan } from './api.ts'
 import type { Me } from './api.ts'
 import { DataIssueBanner } from './components/DataIssueBanner.tsx'
+import { HistoryStrip } from './components/HistoryStrip.tsx'
 import { StateHeader } from './components/StateHeader.tsx'
 import { DayCard } from './components/DayCard.tsx'
 import { GoalsPanel } from './components/GoalsPanel.tsx'
@@ -67,6 +68,8 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
       )}
 
       {plan?.state.dataIssue && <DataIssueBanner issue={plan.state.dataIssue} />}
+
+      {plan && plan.history.length > 0 && <HistoryStrip history={plan.history} />}
 
       {error && (
         <p className="error error--block">
