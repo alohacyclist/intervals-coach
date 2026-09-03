@@ -89,7 +89,19 @@ export const inferStimulus = (activity: Activity): Stimulus => {
 
 export const HARD_STIMULI: readonly Stimulus[] = ['VO2', 'THRESHOLD', 'SWEETSPOT']
 
+/**
+ * A quality session needs time in the zone, not just a high intensity factor.
+ * Below this load the session was too short to have cost a recovery slot — the
+ * shortest workout this app proposes as hard carries 48.
+ */
+const MIN_QUALITY_LOAD = 40
+
+/**
+ * Whether an activity used up one of the week's hard slots. Intensity alone is
+ * not enough: a 25 minute run at 86% is a brisk run, not a key session.
+ */
 export const isHardActivity = (activity: Activity): boolean =>
-  HARD_STIMULI.includes(inferStimulus(activity)) || activity.load >= 90
+  activity.load >= 90 ||
+  (HARD_STIMULI.includes(inferStimulus(activity)) && activity.load >= MIN_QUALITY_LOAD)
 
 const round = (value: number): number => Math.round(value * 10) / 10

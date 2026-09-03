@@ -52,3 +52,22 @@ describe('fitness', () => {
     expect(computeFitness([], TODAY)).toEqual({ ctl: 0, atl: 0, tsb: 0 })
   })
 })
+
+describe('what counts as a hard session', () => {
+  it('ignores a short run however intense it felt', () => {
+    expect(isHardActivity(activity(1, 'Run', { intensity: 86, load: 37 }))).toBe(false)
+  })
+
+  it('counts a quality session of normal length', () => {
+    expect(isHardActivity(activity(1, 'Ride', { intensity: 85, load: 51 }))).toBe(true)
+  })
+
+  it('counts a very long session even at moderate intensity', () => {
+    expect(isHardActivity(activity(1, 'Ride', { intensity: 70, load: 95 }))).toBe(true)
+  })
+
+  it('still describes the character of a short intense effort', () => {
+    // The stimulus stays sweetspot; only the weekly hard budget ignores it.
+    expect(inferStimulus(activity(1, 'Run', { intensity: 86, load: 37 }))).toBe('SWEETSPOT')
+  })
+})
