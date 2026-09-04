@@ -255,6 +255,8 @@ export type PlannedDay = {
   readonly recommended: Sport | 'REST'
   readonly options: readonly PlannedSession[]
   readonly notes: readonly string[]
+  /** Beyond the athlete's stated weekly capacity — a suggestion, not a plan. */
+  readonly optional: boolean
   /** Strength belongs on a hard day, never the day before one. */
   readonly strength: StrengthSuggestion | null
 }

@@ -277,6 +277,7 @@ select {
 .strength summary::before { content: '▸'; color: var(--muted); }
 .strength[open] summary::before { content: '▾'; }
 .strength__meta { margin-left: auto; color: var(--muted); font-size: 12px; }
+.badge--optional { color: var(--accent); border-color: rgba(77, 163, 255, 0.5); }
 .badge--strength { color: var(--accent); border-color: rgba(77, 163, 255, 0.45); }
 .strength__table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13.5px; }
 .strength__table td { padding: 4px 0; border-bottom: 1px solid var(--line); }

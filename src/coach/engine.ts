@@ -73,7 +73,10 @@ const minDaysSinceHard = (simulation: Simulation, sports: readonly Sport[]): num
 type DayDecision = {
   readonly dayType: DayType
   readonly reason: string
+  readonly optional: boolean
 }
+
+const plan = (dayType: DayType, reason: string): DayDecision => ({ dayType, reason, optional: false })
 
 /**
  * Rest days come out of the weekly session budget, not only out of fatigue.
@@ -81,23 +84,34 @@ type DayDecision = {
  * say so instead of proposing something every single day.
  */
 /**
- * The weekly ceiling says how much fits into a week, not that everything beyond
- * it is forbidden. Left alone it produced runs of rest days that cost fitness,
- * so once the athlete is recovered a light aerobic day replaces the third one.
+ * The weekly ceiling says how much fits into a week, not that everything past it
+ * is forbidden. Applied last, so what the athlete is actually ready for is
+ * decided first: once two rest days have passed, the session that breaks the run
+ * is whatever the recovery state calls for — often a hard one — offered as a
+ * suggestion rather than as plan.
  */
-const capRest = (
+const applyWeeklyCapacity = (
   decision: DayDecision,
   simulation: Simulation,
   state: TrainingState,
+  config: CoachConfig,
 ): DayDecision => {
-  if (decision.dayType !== 'REST') return decision
-  if (simulation.consecutiveRest < MAX_CONSECUTIVE_REST) return decision
-  // Two days of rest have already shed most of the acute fatigue, so only a
-  // genuine recovery signal keeps the athlete off their feet any longer.
-  if (state.readiness.score === 'red') return decision
+  const { max } = config.profile.weeklySessions
+  if (simulation.sessionsThisWeek < max) return decision
+  if (decision.dayType === 'REST') return decision
+
+  const restedEnough = simulation.consecutiveRest >= MAX_CONSECUTIVE_REST
+  if (!restedEnough || state.readiness.score === 'red') {
+    return plan(
+      'REST',
+      `Wochenpensum erfüllt (${Math.min(simulation.sessionsThisWeek, max)} von ${max}) — heute ist Pause eingeplant`,
+    )
+  }
+
   return {
-    dayType: 'EASY',
-    reason: `${simulation.consecutiveRest} Ruhetage in Folge — heute locker. Aerobe Grundlage hält man nicht durch Nichtstun, und eine ruhige Einheit kostet keine Erholung.`,
+    ...decision,
+    optional: true,
+    reason: `${simulation.consecutiveRest} Ruhetage in Folge, Wochenpensum bereits erfüllt — freiwillig, nicht eingeplant. ${decision.reason}`,
   }
 }
 
@@ -119,17 +133,11 @@ const decideDay = (
 
   if (readinessRed && dayIndex === 0) {
     return simulation.fitness.tsb < -25
-      ? { dayType: 'REST', reason: 'Erholungssignale und tiefe Form — heute gar nichts' }
-      : { dayType: 'RECOVERY', reason: 'Erholungssignale sprechen gegen Belastung' }
-  }
-  if (planned >= max) {
-    return {
-      dayType: 'REST',
-      reason: `Wochenpensum erfüllt (${Math.min(planned, max)} von ${max}) — heute ist Pause eingeplant`,
-    }
+      ? plan('REST', 'Erholungssignale und tiefe Form — heute gar nichts')
+      : plan('RECOVERY', 'Erholungssignale sprechen gegen Belastung')
   }
   if (simulation.fitness.tsb < -30) {
-    return { dayType: 'RECOVERY', reason: 'Form deutlich im Minus — nur Regeneration' }
+    return plan('RECOVERY', 'Form deutlich im Minus — nur Regeneration')
   }
   if (minDaysSinceHard(simulation, sports) < HARD_SPACING_DAYS) {
     // A hard day is followed by rest. The weekly minimum is reached by spreading
@@ -138,27 +146,23 @@ const decideDay = (
     const needed = min - planned
     const room = daysLeftInWeek(date)
     if (needed < room) {
-      return {
-        dayType: 'REST',
-        reason:
-          planned >= min
-            ? `Mindestpensum erfüllt (${planned} von ${min}) und keine 48h seit der letzten harten Einheit`
-            : `Pause nach harter Einheit — für die fehlende${needed === 1 ? '' : 'n'} ${needed} Einheit${needed === 1 ? '' : 'en'} bleiben noch ${room - 1} Tage`,
-      }
+      return plan(
+        'REST',
+        planned >= min
+          ? 'Mindestpensum erfüllt und keine 48h seit der letzten harten Einheit'
+          : `Pause nach harter Einheit — für die fehlende${needed === 1 ? '' : 'n'} ${needed} Einheit${needed === 1 ? '' : 'en'} bleiben noch ${room - 1} Tage`,
+      )
     }
-    return {
-      dayType: 'EASY',
-      reason: `Keine 48h seit der letzten harten Einheit, aber die Woche läuft aus — locker statt Pause`,
-    }
+    return plan('EASY', 'Keine 48h seit der letzten harten Einheit, aber die Woche läuft aus — locker statt Pause')
   }
   if (simulation.hardThisWeek >= budget) {
-    return { dayType: 'EASY', reason: `Wochenbudget harter Einheiten erreicht (${simulation.hardThisWeek}/${budget})` }
+    return plan('EASY', `Wochenbudget harter Einheiten erreicht (${simulation.hardThisWeek}/${budget})`)
   }
-  if (simulation.fitness.tsb < -18) return { dayType: 'EASY', reason: 'Hohe Ermüdung — locker halten' }
+  if (simulation.fitness.tsb < -18) return plan('EASY', 'Hohe Ermüdung — locker halten')
   if (readinessRed || (state.readiness.score === 'amber' && dayIndex === 0)) {
-    return { dayType: 'EASY', reason: 'Erholungswerte unter deiner Baseline' }
+    return plan('EASY', 'Erholungswerte unter deiner Baseline')
   }
-  return { dayType: 'KEY', reason: 'Erholt und im Wochenbudget — heute darf es wehtun' }
+  return plan('KEY', 'Erholt und im Wochenbudget — heute darf es wehtun')
 }
 
 /** How well a stimulus serves the current phase — keeps the block focused. */
@@ -368,7 +372,12 @@ export const planDays = (
       const primarySport = primaryGoal(config.goals, date)?.sport ?? 'Ride'
       const phase = phases[primarySport]
       const budget = weeklyHardBudget(phase, config.profile)
-      const decision = capRest(decideDay(simulation, state, config, budget, dayIndex, date, sports), simulation, state)
+      const decision = applyWeeklyCapacity(
+        decideDay(simulation, state, config, budget, dayIndex, date, sports),
+        simulation,
+        state,
+        config,
+      )
       const { dayType } = decision
 
       const options = sports.map((sport) => {
@@ -395,6 +404,7 @@ export const planDays = (
         recommended,
         options,
         notes: notesFor(decision, state, simulation, config, dayIndex),
+        optional: decision.optional,
         strength,
       }
 

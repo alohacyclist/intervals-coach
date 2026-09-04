@@ -277,11 +277,11 @@ describe('runs of rest days', () => {
     }
   })
 
-  it('replaces the third rest day with a light session', () => {
+  it('breaks the run with whatever the recovery state calls for', () => {
     const days = planDays(stateFrom(fullWeek), config, 5)
     const third = days.find((day) => day.notes.join(' ').includes('Ruhetage in Folge'))
-    expect(third?.dayType).toBe('EASY')
-    expect(third?.options.every((option) => intensityClass(option.template.stimulus) !== 'hard')).toBe(true)
+    expect(third?.dayType).not.toBe('REST')
+    expect(third?.optional).toBe(true)
   })
 
   it('keeps resting when the athlete is not recovered', () => {
@@ -300,5 +300,43 @@ describe('runs of rest days', () => {
     const stale = [activity(6, 'Ride', { load: 60, intensity: 70 })]
     const [today] = planDays(stateFrom(stale), config)
     expect(today?.dayType).not.toBe('REST')
+  })
+})
+
+describe('training beyond the weekly ceiling', () => {
+  const fullWeek = [
+    activity(0, 'Ride', { load: 60, intensity: 70 }),
+    activity(1, 'Run', { load: 55, intensity: 70 }),
+    activity(2, 'Ride', { load: 70, intensity: 75 }),
+  ]
+
+  it('offers quality once rested, rather than defaulting to easy', () => {
+    const days = planDays(stateFrom(fullWeek), config, 5)
+    const breaker = days.find((day) => day.optional)
+    expect(breaker?.dayType).toBe('KEY')
+    expect(breaker?.options.every((option) => intensityClass(option.template.stimulus) === 'hard')).toBe(true)
+  })
+
+  it('marks anything past the ceiling as voluntary', () => {
+    const days = planDays(stateFrom(fullWeek), config, 5)
+    const breaker = days.find((day) => day.optional)
+    expect(breaker?.notes.join(' ')).toContain('freiwillig, nicht eingeplant')
+  })
+
+  it('keeps days inside the ceiling as plan, not suggestion', () => {
+    const days = planDays(stateFrom(rested), config, 3)
+    expect(days.every((day) => day.optional === false)).toBe(true)
+  })
+
+  it('still respects the hard budget when breaking a rest run', () => {
+    // Two genuine quality sessions already done, so the extra day stays easy.
+    const spent = [
+      activity(2, 'Ride', { load: 90, intensity: 98 }),
+      activity(3, 'Run', { load: 85, intensity: 96 }),
+      activity(4, 'Ride', { load: 60, intensity: 70 }),
+    ]
+    const days = planDays(stateFrom(spent), config, 4)
+    const breaker = days.find((day) => day.optional)
+    if (breaker) expect(breaker.dayType).not.toBe('KEY')
   })
 })

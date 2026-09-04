@@ -18,6 +18,7 @@ export const DayCard = ({ day, index }: { readonly day: PlannedDay; readonly ind
         <span className="day__date">{day.date.slice(8, 10)}.{day.date.slice(5, 7)}.</span>
       </h2>
       <div className="day__tags">
+        {day.optional && <span className="badge badge--optional">freiwillig</span>}
         <span className={`badge badge--${day.dayType.toLowerCase()}`}>{DAY_TYPE_LABEL[day.dayType]}</span>
         <span className="badge">{PHASE_LABELS[day.phase]}</span>
       </div>
@@ -28,6 +29,14 @@ export const DayCard = ({ day, index }: { readonly day: PlannedDay; readonly ind
         <li key={note}>{note}</li>
       ))}
     </ul>
+
+    {day.optional && (
+      <p className="rest-hint">
+        <strong>Über deinem Wochenpensum.</strong> Eingeplant ist heute nichts mehr — nach zwei
+        Ruhetagen bist du aber erholt und dein Budget für harte Einheiten ist noch nicht ausgeschöpft.
+        Nimm es, wenn du Lust hast; lass es aus, ohne dass der Plan darunter leidet.
+      </p>
+    )}
 
     {day.recommended === 'REST' && (
       <p className="rest-hint">
