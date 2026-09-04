@@ -9,7 +9,7 @@ import type {
   Wellness,
 } from './types.ts'
 import { ALL_SPORTS } from './types.ts'
-import { diffDays, startOfWeek } from './dates.ts'
+import { addDays, diffDays, startOfWeek } from './dates.ts'
 import { computeFitness, inferStimulus, isHardActivity, rampRate } from './fitness.ts'
 import { computeReadiness } from './readiness.ts'
 
@@ -21,6 +21,18 @@ const daysSinceHard = (activities: readonly Activity[], today: string, sport: Sp
     .map((activity) => diffDays(activity.date, today))
     .filter((age) => age >= 0)
   return ages.length === 0 ? NEVER : Math.min(...ages)
+}
+
+const RECENT_DAYS = 14
+
+const consecutiveRestDays = (activities: readonly Activity[], today: string): number => {
+  const trained = new Set(
+    activities.filter((activity) => activity.load > 0).map((activity) => activity.date),
+  )
+  const gap = Array.from({ length: RECENT_DAYS }, (_unused, index) =>
+    addDays(today, -(index + 1)),
+  ).findIndex((date) => trained.has(date))
+  return gap === -1 ? RECENT_DAYS : gap
 }
 
 const daysSinceAny = (activities: readonly Activity[], today: string): number => {
@@ -149,6 +161,7 @@ export const buildState = (
     loadedActivityCount: activities.filter((activity) => activity.load > 0).length,
     dataIssue: detectDataIssue(activities),
     daysSinceAnySession: daysSinceAny(activities, today),
+    consecutiveRestDays: consecutiveRestDays(activities, today),
     strengthSessionsThisWeek: thisWeek.filter((activity) => activity.isStrength).length,
   }
 }

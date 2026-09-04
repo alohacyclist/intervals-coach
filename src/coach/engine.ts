@@ -26,6 +26,8 @@ const STALE_STIMULUS_DAYS = 28
 /** A gap this long means the body has detrained; VO2max is the wrong way back in. */
 const LAYOFF_DAYS = 10
 const MAX_STRENGTH_PER_WEEK = 2
+/** Beyond this, rest stops being recovery and starts being detraining. */
+const MAX_CONSECUTIVE_REST = 2
 
 type Simulation = {
   readonly fitness: Fitness
@@ -36,6 +38,7 @@ type Simulation = {
   readonly stimulusAge: Readonly<Record<string, number>>
   readonly usedTemplateIds: readonly string[]
   readonly strengthThisWeek: number
+  readonly consecutiveRest: number
   readonly weekStart: string
 }
 
@@ -57,6 +60,7 @@ const initSimulation = (state: TrainingState): Simulation => ({
   ),
   usedTemplateIds: [],
   strengthThisWeek: state.strengthSessionsThisWeek,
+  consecutiveRest: state.consecutiveRestDays,
   weekStart: startOfWeek(state.today),
 })
 
@@ -76,6 +80,27 @@ type DayDecision = {
  * An athlete training three times a week rests four days, and the plan has to
  * say so instead of proposing something every single day.
  */
+/**
+ * The weekly ceiling says how much fits into a week, not that everything beyond
+ * it is forbidden. Left alone it produced runs of rest days that cost fitness,
+ * so once the athlete is recovered a light aerobic day replaces the third one.
+ */
+const capRest = (
+  decision: DayDecision,
+  simulation: Simulation,
+  state: TrainingState,
+): DayDecision => {
+  if (decision.dayType !== 'REST') return decision
+  if (simulation.consecutiveRest < MAX_CONSECUTIVE_REST) return decision
+  // Two days of rest have already shed most of the acute fatigue, so only a
+  // genuine recovery signal keeps the athlete off their feet any longer.
+  if (state.readiness.score === 'red') return decision
+  return {
+    dayType: 'EASY',
+    reason: `${simulation.consecutiveRest} Ruhetage in Folge — heute locker. Aerobe Grundlage hält man nicht durch Nichtstun, und eine ruhige Einheit kostet keine Erholung.`,
+  }
+}
+
 /** Days left in the Monday-based week, including the given day. */
 const daysLeftInWeek = (date: string): number => 7 - diffDays(startOfWeek(date), date)
 
@@ -100,7 +125,7 @@ const decideDay = (
   if (planned >= max) {
     return {
       dayType: 'REST',
-      reason: `Wochenpensum erreicht (${planned} von ${max}) — heute ist Pause eingeplant`,
+      reason: `Wochenpensum erfüllt (${Math.min(planned, max)} von ${max}) — heute ist Pause eingeplant`,
     }
   }
   if (simulation.fitness.tsb < -30) {
@@ -318,6 +343,7 @@ const advance = (
       ...offered.map((option) => option.template.id),
     ],
     strengthThisWeek: (sameWeek ? simulation.strengthThisWeek : 0) + (strengthAdded ? 1 : 0),
+    consecutiveRest: session ? 0 : simulation.consecutiveRest + 1,
     weekStart: sameWeek ? simulation.weekStart : startOfWeek(nextDate),
   }
 }
@@ -342,7 +368,7 @@ export const planDays = (
       const primarySport = primaryGoal(config.goals, date)?.sport ?? 'Ride'
       const phase = phases[primarySport]
       const budget = weeklyHardBudget(phase, config.profile)
-      const decision = decideDay(simulation, state, config, budget, dayIndex, date, sports)
+      const decision = capRest(decideDay(simulation, state, config, budget, dayIndex, date, sports), simulation, state)
       const { dayType } = decision
 
       const options = sports.map((sport) => {

@@ -80,7 +80,7 @@ describe('plan engine', () => {
     const [today] = planDays(stateFrom(fullWeek), config)
     expect(today?.dayType).toBe('REST')
     expect(today?.recommended).toBe('REST')
-    expect(today?.notes.join(' ')).toContain('Wochenpensum erreicht (3 von 3)')
+    expect(today?.notes.join(' ')).toContain('Wochenpensum erfüllt (3 von 3)')
   })
 
   it('rests rather than adding volume after a hard day once the minimum is met', () => {
@@ -259,5 +259,46 @@ describe('sport selection', () => {
     const days = planDays(stateFrom(rested), triConfig, 3)
     const swim = days.flatMap((day) => day.options).find((option) => option.sport === 'Swim')
     expect(swim?.humanSteps.join(' ')).toContain('/100m')
+  })
+})
+
+describe('runs of rest days', () => {
+  const fullWeek = [
+    activity(0, 'Ride', { load: 60, intensity: 70 }),
+    activity(1, 'Run', { load: 55, intensity: 70 }),
+    activity(2, 'Ride', { load: 70, intensity: 75 }),
+  ]
+
+  it('never plans three rest days in a row', () => {
+    const days = planDays(stateFrom(fullWeek), config, 5)
+    const rest = days.map((day) => day.dayType === 'REST')
+    for (let index = 2; index < rest.length; index += 1) {
+      expect(rest[index] && rest[index - 1] && rest[index - 2]).toBeFalsy()
+    }
+  })
+
+  it('replaces the third rest day with a light session', () => {
+    const days = planDays(stateFrom(fullWeek), config, 5)
+    const third = days.find((day) => day.notes.join(' ').includes('Ruhetage in Folge'))
+    expect(third?.dayType).toBe('EASY')
+    expect(third?.options.every((option) => intensityClass(option.template.stimulus) !== 'hard')).toBe(true)
+  })
+
+  it('keeps resting when the athlete is not recovered', () => {
+    const drained = [
+      activity(0, 'Ride', { load: 140, intensity: 95 }),
+      activity(1, 'Ride', { load: 140, intensity: 95 }),
+      activity(2, 'Ride', { load: 140, intensity: 95 }),
+      activity(3, 'Ride', { load: 140, intensity: 95 }),
+    ]
+    const days = planDays(stateFrom(drained), config, 4)
+    expect(days.every((day) => day.dayType !== 'KEY')).toBe(true)
+  })
+
+  it('counts rest days that already happened before today', () => {
+    // Last session six days ago, so today is already the sixth rest day.
+    const stale = [activity(6, 'Ride', { load: 60, intensity: 70 })]
+    const [today] = planDays(stateFrom(stale), config)
+    expect(today?.dayType).not.toBe('REST')
   })
 })

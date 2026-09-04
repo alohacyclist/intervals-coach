@@ -187,6 +187,8 @@ export type TrainingState = {
   /** Days since any session at all — a long gap changes how training resumes. */
   readonly daysSinceAnySession: number
   readonly strengthSessionsThisWeek: number
+  /** Rest days immediately before today — three in a row start to cost fitness. */
+  readonly consecutiveRestDays: number
 }
 
 /**
