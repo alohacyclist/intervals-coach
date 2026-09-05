@@ -375,3 +375,39 @@ describe('levels in the plan', () => {
     expect(today?.options.some((option) => option.reason.includes('Stufe'))).toBe(true)
   })
 })
+
+describe('strength progression', () => {
+  const withLog = (dates: readonly string[]) => ({ ...config, strengthLog: dates })
+
+  it('starts in the intro phase with two exercises', () => {
+    const [today] = planDays(stateFrom(rested), config)
+    expect(today?.strength?.phase).toBe('intro')
+    expect(today?.strength?.exercises).toHaveLength(2)
+  })
+
+  it('moves to the full programme once six sessions are logged', () => {
+    const log = Array.from({ length: 6 }, (_unused, index) => `2026-06-${String(index + 1).padStart(2, '0')}`)
+    const [today] = planDays(stateFrom(rested), withLog(log))
+    expect(today?.strength?.phase).toBe('full')
+    expect(today?.strength?.exercises.length).toBeGreaterThan(2)
+  })
+
+  it('drops to one session a week in the maintenance phase', () => {
+    const log = Array.from({ length: 25 }, (_unused, index) => `2026-0${1 + Math.floor(index / 28)}-${String((index % 28) + 1).padStart(2, '0')}`)
+    const [today] = planDays(stateFrom(rested), withLog(log))
+    expect(today?.strength?.phase).toBe('maintain')
+    expect(today?.strength?.perWeek).toBe(1)
+  })
+
+  it('counts logged sessions of the current week against the weekly cap', () => {
+    // Two entries in the week containing TODAY, so no further strength today.
+    const [today] = planDays(stateFrom(rested), withLog(['2026-08-31', '2026-09-01']))
+    expect(today?.strength).toBeNull()
+  })
+
+  it('progresses on what was logged, not on elapsed weeks', () => {
+    const stale = withLog(['2024-01-01', '2024-01-03'])
+    const [today] = planDays(stateFrom(rested), stale)
+    expect(today?.strength?.phase).toBe('intro')
+  })
+})

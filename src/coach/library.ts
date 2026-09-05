@@ -1,5 +1,7 @@
 import type {
   Block,
+  StrengthExercise,
+  StrengthPhase,
   IntensityClass,
   Repeat,
   Sport,
@@ -550,18 +552,47 @@ const PREFERRED_SPORTS: Partial<Record<Stimulus, readonly Sport[]>> = {
 export const isPreferredSport = (stimulus: Stimulus, sport: Sport): boolean =>
   PREFERRED_SPORTS[stimulus]?.includes(sport) ?? false
 
-export const STRENGTH_SESSION: StrengthSuggestion = {
-  name: 'Krafttraining',
-  minutes: 28,
-  note: 'Direkt nach der Ausdauereinheit oder mindestens 6h später — nie am Tag davor. 2 Wiederholungen in Reserve, kein Muskelversagen. Ziel ist neuromuskuläre Anpassung, nicht Masse.',
-  exercises: [
-    { name: 'Kniebeuge / Beinpresse', sets: '4 × 5', load: '~85 % 1RM' },
-    { name: 'Rumänisches Kreuzheben', sets: '3 × 6', load: 'schwer' },
-    { name: 'Bulgarian Split Squat', sets: '3 × 6 je Seite', load: 'schwer' },
-    { name: 'Einbeiniges Wadenheben', sets: '3 × 8', load: 'schwer' },
-    { name: 'Rumpf (Plank, Pallof Press)', sets: '2 Sätze', load: '—' },
-    { name: 'Optional vorweg: Hops / Drop Jumps', sets: '3 × 10', load: 'Körpergewicht' },
-  ],
+/**
+ * Strength progresses by sessions actually done, not by calendar weeks: someone
+ * who skipped a month should not land in the full programme. The intro phase
+ * keeps volume low so soreness never reaches the next quality endurance day.
+ */
+const CORE_EXERCISES: readonly StrengthExercise[] = [
+  { name: 'Kniebeuge / Beinpresse', sets: '4 × 5', load: '~85 % 1RM' },
+  { name: 'Rumänisches Kreuzheben', sets: '3 × 6', load: 'schwer' },
+]
+
+const FULL_EXERCISES: readonly StrengthExercise[] = [
+  ...CORE_EXERCISES,
+  { name: 'Bulgarian Split Squat', sets: '3 × 6 je Seite', load: 'schwer' },
+  { name: 'Einbeiniges Wadenheben', sets: '3 × 8', load: 'schwer' },
+  { name: 'Rumpf (Plank, Pallof Press)', sets: '2 Sätze', load: '—' },
+  { name: 'Optional vorweg: Hops / Drop Jumps', sets: '3 × 10', load: 'Körpergewicht' },
+]
+
+const INTRO_SESSIONS = 6
+const FULL_SESSIONS = 20
+
+export const strengthPhaseFor = (completed: number): StrengthPhase =>
+  completed < INTRO_SESSIONS ? 'intro' : completed < FULL_SESSIONS ? 'full' : 'maintain'
+
+const PHASE_NOTE: Readonly<Record<StrengthPhase, string>> = {
+  intro: 'Einstieg: nur zwei Übungen, moderate Last. Muskelkater darf die nächste Qualitätseinheit nicht treffen.',
+  full: 'Volles Programm, zweimal pro Woche. 2 Wiederholungen in Reserve, kein Muskelversagen — Ziel ist neuromuskuläre Anpassung, nicht Masse.',
+  maintain: 'Erhalt: einmal pro Woche genügt jetzt. Die frei werdende Zeit gehört wieder der Ausdauer.',
+}
+
+export const strengthSession = (completed: number): StrengthSuggestion => {
+  const phase = strengthPhaseFor(completed)
+  return {
+    name: 'Krafttraining',
+    phase,
+    minutes: phase === 'intro' ? 20 : 28,
+    note: `${PHASE_NOTE[phase]} Am selben Tag wie die harte Ausdauereinheit — direkt danach oder mindestens 6h später, nie am Tag davor.`,
+    exercises: phase === 'intro' ? CORE_EXERCISES : FULL_EXERCISES,
+    completed,
+    perWeek: phase === 'maintain' ? 1 : 2,
+  }
 }
 
 export const flattenBlocks = (blocks: readonly Block[]): readonly Step[] =>

@@ -43,6 +43,7 @@ const DEFAULT_CONFIG: CoachConfig = {
       priority: 'A',
     },
   ],
+  strengthLog: [],
   planStart: new Date().toISOString().slice(0, 10),
 }
 
@@ -171,6 +172,14 @@ const validateGoal = (raw: unknown, index: number, issues: string[]): Goal => {
   }
 }
 
+/** Dates only, deduplicated, newest last, and bounded so KV never grows unchecked. */
+const MAX_STRENGTH_LOG = 400
+
+const validateStrengthLog = (raw: unknown): readonly string[] => {
+  const entries = Array.isArray(raw) ? raw : []
+  return [...new Set(entries.filter(isIsoDate))].sort().slice(-MAX_STRENGTH_LOG)
+}
+
 export const validateConfig = (raw: unknown): CoachConfig => {
   const issues: string[] = []
   const input = (raw ?? {}) as Record<string, unknown>
@@ -180,6 +189,7 @@ export const validateConfig = (raw: unknown): CoachConfig => {
   const config: CoachConfig = {
     profile: validateProfile(input['profile'], issues),
     goals: goalsInput.map((goal, index) => validateGoal(goal, index, issues)),
+    strengthLog: validateStrengthLog(input['strengthLog']),
     planStart: isIsoDate(input['planStart']) ? input['planStart'] : DEFAULT_CONFIG.planStart,
   }
 

@@ -79,6 +79,7 @@ export const config: CoachConfig = {
       priority: 'A',
     },
   ],
+  strengthLog: [],
   planStart: '2026-08-31',
 }
 

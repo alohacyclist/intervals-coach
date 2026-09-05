@@ -10,7 +10,14 @@ const DAY_TYPE_LABEL: Record<PlannedDay['dayType'], string> = {
   REST: 'Ruhetag',
 }
 
-export const DayCard = ({ day, index }: { readonly day: PlannedDay; readonly index: number }) => (
+type Props = {
+  readonly day: PlannedDay
+  readonly index: number
+  readonly strengthDone: boolean
+  readonly onStrengthLogged: () => void
+}
+
+export const DayCard = ({ day, index, strengthDone, onStrengthLogged }: Props) => (
   <section className="day">
     <div className="day__head">
       <h2>
@@ -57,6 +64,13 @@ export const DayCard = ({ day, index }: { readonly day: PlannedDay; readonly ind
       ))}
     </div>
 
-    {day.strength && <StrengthCard strength={day.strength} />}
+    {day.strength && (
+      <StrengthCard
+        strength={day.strength}
+        date={day.date}
+        done={strengthDone}
+        onLogged={onStrengthLogged}
+      />
+    )}
   </section>
 )

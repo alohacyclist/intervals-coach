@@ -115,6 +115,7 @@ export const Onboarding = ({ onDone }: { readonly onDone: () => void }) => {
     const config: CoachConfig = {
       profile,
       goals: buildGoals(draft, ftpOf(profile)),
+      strengthLog: [],
       planStart: new Date().toISOString().slice(0, 10),
     }
     if (config.profile.sports.length === 0) {

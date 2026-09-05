@@ -75,6 +75,11 @@ export type Goal = {
 export type CoachConfig = {
   readonly profile: AthleteProfile
   readonly goals: readonly Goal[]
+  /**
+   * Dates of completed strength sessions. intervals.icu does not carry them for
+   * most athletes, so the app keeps its own record and progresses from it.
+   */
+  readonly strengthLog: readonly string[]
   /** ISO date the plan started, anchors the 3:1 build/recovery cycle. */
   readonly planStart: string
 }
@@ -127,11 +132,17 @@ export type StrengthExercise = {
   readonly load: string
 }
 
+export type StrengthPhase = 'intro' | 'full' | 'maintain'
+
 export type StrengthSuggestion = {
   readonly name: string
+  readonly phase: StrengthPhase
   readonly minutes: number
   readonly note: string
   readonly exercises: readonly StrengthExercise[]
+  /** Sessions logged so far, which is what moves the phase along. */
+  readonly completed: number
+  readonly perWeek: number
 }
 
 export type Wellness = {

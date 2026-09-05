@@ -19,7 +19,7 @@ import { PHASE_LABELS, phaseForSport, primaryGoal, weeklyHardBudget } from './ph
 import { defaultThreshold, selectedSports, thresholdFor } from './thresholds.ts'
 import { levelCeilings } from './progression.ts'
 import type { Completion } from './progression.ts'
-import { STRENGTH_SESSION, flattenBlocks, intensityClass, isPreferredSport, templatesFor } from './library.ts'
+import { flattenBlocks, intensityClass, isPreferredSport, strengthSession, templatesFor } from './library.ts'
 import { describeWorkout, toHumanSteps } from './format.ts'
 
 /** Minimum days between two hard sessions, regardless of sport. */
@@ -27,7 +27,6 @@ const HARD_SPACING_DAYS = 2
 const STALE_STIMULUS_DAYS = 28
 /** A gap this long means the body has detrained; VO2max is the wrong way back in. */
 const LAYOFF_DAYS = 10
-const MAX_STRENGTH_PER_WEEK = 2
 /** Beyond this, rest stops being recovery and starts being detraining. */
 const MAX_CONSECUTIVE_REST = 2
 
@@ -51,7 +50,14 @@ const ALLOWED_CLASSES: Readonly<Record<DayType, readonly IntensityClass[]>> = {
   REST: ['easy'],
 }
 
-const initSimulation = (state: TrainingState): Simulation => ({
+/** Strength is counted from both sources, whichever knows more about the week. */
+const strengthThisWeekFrom = (state: TrainingState, config: CoachConfig): number => {
+  const weekStart = startOfWeek(state.today)
+  const logged = config.strengthLog.filter((date) => date >= weekStart && date <= state.today).length
+  return Math.max(state.strengthSessionsThisWeek, logged)
+}
+
+const initSimulation = (state: TrainingState, config: CoachConfig): Simulation => ({
   fitness: state.overall,
   daysSinceHard: state.daysSinceHard,
   hardThisWeek: state.hardSessionsThisWeek,
@@ -61,7 +67,7 @@ const initSimulation = (state: TrainingState): Simulation => ({
     state.recency.map((entry) => [`${entry.sport}:${entry.stimulus}`, entry.daysAgo]),
   ),
   usedTemplateIds: [],
-  strengthThisWeek: state.strengthSessionsThisWeek,
+  strengthThisWeek: strengthThisWeekFrom(state, config),
   consecutiveRest: state.consecutiveRestDays,
   weekStart: startOfWeek(state.today),
 })
@@ -325,8 +331,15 @@ const notesFor = (
 }
 
 /** Strength rides along with a hard day, which keeps it off the day before one. */
-const strengthFor = (dayType: DayType, simulation: Simulation): StrengthSuggestion | null =>
-  dayType === 'KEY' && simulation.strengthThisWeek < MAX_STRENGTH_PER_WEEK ? STRENGTH_SESSION : null
+const strengthFor = (
+  dayType: DayType,
+  simulation: Simulation,
+  config: CoachConfig,
+): StrengthSuggestion | null => {
+  if (dayType !== 'KEY') return null
+  const session = strengthSession(config.strengthLog.length)
+  return simulation.strengthThisWeek < session.perWeek ? session : null
+}
 
 const advance = (
   simulation: Simulation,
@@ -414,7 +427,7 @@ export const planDays = (
       }).filter((session): session is PlannedSession => session !== null)
 
       const recommended = chooseRecommended(dayType, simulation, config, date, sports)
-      const strength = strengthFor(dayType, simulation)
+      const strength = strengthFor(dayType, simulation, config)
       const chosen = options.find((session) => session.sport === recommended) ?? null
 
       const day: PlannedDay = {
@@ -434,7 +447,7 @@ export const planDays = (
         plan: [...plan, day],
       }
     },
-    { simulation: initSimulation(state), plan: [] },
+    { simulation: initSimulation(state, config), plan: [] },
   )
 
   return plan

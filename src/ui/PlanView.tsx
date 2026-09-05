@@ -100,7 +100,13 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
       {!plan && !error && <p className="loading">Lade Daten von intervals.icu…</p>}
 
       {plan?.days.map((day, index) => (
-        <DayCard key={day.date} day={day} index={index} />
+        <DayCard
+          key={day.date}
+          day={day}
+          index={index}
+          strengthDone={config?.strengthLog.includes(day.date) ?? false}
+          onStrengthLogged={() => void load()}
+        />
       ))}
 
       {plan && config && <GoalsPanel goals={config.goals} feasibility={plan.feasibility} />}

@@ -181,6 +181,21 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
     return context.json(saved)
   })
 
+  /** Records or removes a completed strength session; progression follows the log. */
+  app.post('/api/strength', async (context) => {
+    const body = (await context.req.json()) as { date?: string; done?: boolean }
+    if (!body.date || !/^\d{4}-\d{2}-\d{2}$/.test(body.date)) {
+      return context.json({ error: 'date muss YYYY-MM-DD sein' }, 400)
+    }
+    const { store } = await resolve(context)
+    const config = await store.load()
+    const strengthLog =
+      body.done === false
+        ? config.strengthLog.filter((entry) => entry !== body.date)
+        : [...config.strengthLog, body.date]
+    return context.json(await store.save(validateConfig({ ...config, strengthLog })))
+  })
+
   app.post('/api/push', async (context) => {
     const body = (await context.req.json()) as { date?: string; templateId?: string }
     const template = body.templateId ? findTemplate(body.templateId) : undefined

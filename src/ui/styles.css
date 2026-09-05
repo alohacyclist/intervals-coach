@@ -283,6 +283,8 @@ select {
 .strength__table td { padding: 4px 0; border-bottom: 1px solid var(--line); }
 .strength__table td:nth-child(2) { text-align: right; white-space: nowrap; padding-left: 10px; }
 .strength__table td:nth-child(3) { text-align: right; color: var(--muted); white-space: nowrap; padding-left: 10px; }
+.strength__done { flex-direction: row; align-items: center; gap: 8px; margin-top: 10px; color: var(--text); font-size: 13.5px; cursor: pointer; }
+.strength__done input { width: auto; accent-color: var(--accent); }
 .strength__note { margin: 10px 0 0; font-size: 13px; color: var(--muted); }
 
 .issue {
