@@ -2,12 +2,14 @@ import { describe, expect, it } from 'vitest'
 import { planDays } from '../src/coach/engine.ts'
 import { buildState } from '../src/coach/state.ts'
 import { intensityClass } from '../src/coach/library.ts'
+import { completionsFrom } from '../src/coach/progression.ts'
 import {
   BIKE_THRESHOLD,
   RUN_THRESHOLD,
   SWIM_THRESHOLD,
   activity,
   baselineWellness,
+  plannedEvent,
   config,
   triConfig,
   TODAY,
@@ -338,5 +340,38 @@ describe('training beyond the weekly ceiling', () => {
     const days = planDays(stateFrom(spent), config, 4)
     const breaker = days.find((day) => day.optional)
     if (breaker) expect(breaker.dayType).not.toBe('KEY')
+  })
+})
+
+describe('levels in the plan', () => {
+  const clearedLevelOne = (templateId: string) => {
+    const event = plannedEvent(6, 'egal', { externalId: `coach:2026-01-01:${templateId}` })
+    const act = activity(6, 'Ride', { load: 80, pairedEventId: event.id, compliance: 90 })
+    return completionsFrom([event], [act])
+  }
+
+  it('offers only the entry level before anything has been completed', () => {
+    const days = planDays(stateFrom(rested), config, 3, [])
+    const bike = days.flatMap((day) => day.options).filter((option) => option.sport === 'Ride')
+    expect(bike.every((option) => (option.template.level ?? 1) === 1)).toBe(true)
+  })
+
+  it('unlocks the harder version once the entry level was done properly', () => {
+    const days = planDays(stateFrom(rested), config, 3, clearedLevelOne('bike-thr-short-3x8'))
+    const bike = days.flatMap((day) => day.options).filter((option) => option.sport === 'Ride')
+    expect(bike.some((option) => (option.template.level ?? 1) === 2)).toBe(true)
+  })
+
+  it('keeps the short version available for a tight day', () => {
+    const tight = { ...config, profile: { ...config.profile, maxSessionMinutes: 50 } }
+    const days = planDays(stateFrom(rested), tight, 3, clearedLevelOne('bike-thr-short-3x8'))
+    for (const day of days) {
+      for (const option of day.options) expect(option.template.minutes).toBeLessThanOrEqual(50)
+    }
+  })
+
+  it('names the level on a quality day', () => {
+    const [today] = planDays(stateFrom(rested), config, 1, [])
+    expect(today?.options.some((option) => option.reason.includes('Stufe'))).toBe(true)
   })
 })

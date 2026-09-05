@@ -27,6 +27,8 @@ const cooldown = (duration: string, target: string): Step =>
 const BIKE: readonly WorkoutTemplate[] = [
   {
     id: 'bike-vo2-5x4',
+    family: 'bike-vo2',
+    level: 2,
     sport: 'Ride',
     stimulus: 'VO2',
     name: 'VO2max 5x4min',
@@ -61,6 +63,8 @@ const BIKE: readonly WorkoutTemplate[] = [
   },
   {
     id: 'bike-thr-3x12',
+    family: 'bike-threshold',
+    level: 2,
     sport: 'Ride',
     stimulus: 'THRESHOLD',
     name: 'Schwelle 3x12min',
@@ -76,6 +80,8 @@ const BIKE: readonly WorkoutTemplate[] = [
   },
   {
     id: 'bike-thr-2x20',
+    family: 'bike-threshold',
+    level: 3,
     sport: 'Ride',
     stimulus: 'THRESHOLD',
     name: 'Schwelle 2x20min',
@@ -142,6 +148,8 @@ const BIKE: readonly WorkoutTemplate[] = [
   },
   {
     id: 'bike-thr-short-3x8',
+    family: 'bike-threshold',
+    level: 1,
     sport: 'Ride',
     stimulus: 'THRESHOLD',
     name: 'Schwelle kompakt 3x8min',
@@ -157,6 +165,8 @@ const BIKE: readonly WorkoutTemplate[] = [
   },
   {
     id: 'bike-vo2-short-4x3',
+    family: 'bike-vo2',
+    level: 1,
     sport: 'Ride',
     stimulus: 'VO2',
     name: 'VO2max kompakt 4x3min',
@@ -201,6 +211,8 @@ const BIKE: readonly WorkoutTemplate[] = [
 const RUN: readonly WorkoutTemplate[] = [
   {
     id: 'run-thr-5x1k',
+    family: 'run-threshold',
+    level: 2,
     sport: 'Run',
     stimulus: 'THRESHOLD',
     name: 'Schwelle 5x1km',
@@ -216,6 +228,8 @@ const RUN: readonly WorkoutTemplate[] = [
   },
   {
     id: 'run-cv-4x2k',
+    family: 'run-threshold',
+    level: 3,
     sport: 'Run',
     stimulus: 'THRESHOLD',
     name: 'Critical Velocity 4x2km',
@@ -231,6 +245,8 @@ const RUN: readonly WorkoutTemplate[] = [
   },
   {
     id: 'run-vo2-8x800',
+    family: 'run-vo2',
+    level: 2,
     sport: 'Run',
     stimulus: 'VO2',
     name: 'VO2max 8x800m',
@@ -247,12 +263,14 @@ const RUN: readonly WorkoutTemplate[] = [
   },
   {
     id: 'run-vo2-10x400',
+    family: 'run-vo2',
+    level: 1,
     sport: 'Run',
     stimulus: 'VO2',
     name: 'VO2max 10x400m',
     minutes: 45,
     load: 60,
-    phases: ['SPECIFIC', 'TAPER'],
+    phases: ['BUILD', 'SPECIFIC', 'TAPER'],
     coachNote: 'Kurze, schnelle Reize bei geringer Ermüdung. Ideal in der letzten Woche vor einem Wettkampf.',
     blocks: [
       step('12m', '72-78% Pace', { label: 'Einlaufen' }),
@@ -333,6 +351,8 @@ const RUN: readonly WorkoutTemplate[] = [
   },
   {
     id: 'run-thr-short-3x1k',
+    family: 'run-threshold',
+    level: 1,
     sport: 'Run',
     stimulus: 'THRESHOLD',
     name: 'Schwelle kompakt 3x1km',
@@ -370,6 +390,8 @@ const warmupSwim = (duration: string): Step =>
 const SWIM: readonly WorkoutTemplate[] = [
   {
     id: 'swim-thr-10x100',
+    family: 'swim-threshold',
+    level: 2,
     sport: 'Swim',
     stimulus: 'THRESHOLD',
     name: 'CSS 10x100m',
@@ -386,6 +408,8 @@ const SWIM: readonly WorkoutTemplate[] = [
   },
   {
     id: 'swim-css-5x200',
+    family: 'swim-threshold',
+    level: 3,
     sport: 'Swim',
     stimulus: 'THRESHOLD',
     name: 'CSS 5x200m',
@@ -460,6 +484,8 @@ const SWIM: readonly WorkoutTemplate[] = [
   },
   {
     id: 'swim-thr-short-6x100',
+    family: 'swim-threshold',
+    level: 1,
     sport: 'Swim',
     stimulus: 'THRESHOLD',
     name: 'CSS kompakt 6x100m',

@@ -237,6 +237,9 @@ export type WorkoutTemplate = {
   readonly blocks: readonly Block[]
   readonly phases: readonly Phase[]
   readonly coachNote: string
+  /** Progression family; harder levels unlock once the previous one was done. */
+  readonly family?: string
+  readonly level?: number
 }
 
 export type DayType = 'KEY' | 'EASY' | 'RECOVERY' | 'REST'

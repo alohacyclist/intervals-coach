@@ -17,6 +17,8 @@ import { addDays, diffDays, startOfWeek, weekdayDe } from './dates.ts'
 import { projectFitness } from './fitness.ts'
 import { PHASE_LABELS, phaseForSport, primaryGoal, weeklyHardBudget } from './phase.ts'
 import { defaultThreshold, selectedSports, thresholdFor } from './thresholds.ts'
+import { levelCeilings } from './progression.ts'
+import type { Completion } from './progression.ts'
 import { STRENGTH_SESSION, flattenBlocks, intensityClass, isPreferredSport, templatesFor } from './library.ts'
 import { describeWorkout, toHumanSteps } from './format.ts'
 
@@ -208,14 +210,24 @@ const scoreTemplate = (
   )
 }
 
+/** A level is a ceiling, not an exact match, so the short version stays available. */
+const withinLevel = (
+  template: WorkoutTemplate,
+  ceilings: Readonly<Record<string, number>>,
+): boolean =>
+  template.family === undefined || (template.level ?? 1) <= (ceilings[template.family] ?? 1)
+
 const candidatesFor = (
   sport: Sport,
   dayType: DayType,
   phase: Phase,
   budgetMinutes: number,
+  ceilings: Readonly<Record<string, number>>,
 ): readonly WorkoutTemplate[] => {
   const allowed = ALLOWED_CLASSES[dayType]
-  const pool = templatesFor(sport).filter((template) => allowed.includes(intensityClass(template.stimulus)))
+  const pool = templatesFor(sport)
+    .filter((template) => allowed.includes(intensityClass(template.stimulus)))
+    .filter((template) => withinLevel(template, ceilings))
   const inPhase = pool.filter((template) => template.phases.includes(phase))
   const fitting = (list: readonly WorkoutTemplate[]) =>
     list.filter((template) => template.minutes <= budgetMinutes)
@@ -223,18 +235,25 @@ const candidatesFor = (
   return [fitting(inPhase), fitting(pool), inPhase, pool].find((list) => list.length > 0) ?? pool
 }
 
+const levelNote = (template: WorkoutTemplate, ceilings: Readonly<Record<string, number>>): string => {
+  if (template.family === undefined) return ''
+  const level = ceilings[template.family] ?? 1
+  return ` · Stufe ${template.level ?? 1}${(template.level ?? 1) < level ? ` von ${level} verfügbar` : ''}`
+}
+
 const reasonFor = (
   template: WorkoutTemplate,
   dayType: DayType,
   phase: Phase,
   simulation: Simulation,
+  ceilings: Readonly<Record<string, number>>,
 ): string => {
   const age = stimulusAge(simulation, template.sport, template.stimulus)
   const ageText =
     age >= STALE_STIMULUS_DAYS
       ? 'dieser Reiz fehlt seit über vier Wochen'
       : `letzter ${template.stimulus}-Reiz vor ${age} Tagen`
-  if (dayType === 'KEY') return `${PHASE_LABELS[phase]}, Qualitätstag — ${ageText}`
+  if (dayType === 'KEY') return `${PHASE_LABELS[phase]}, Qualitätstag — ${ageText}${levelNote(template, ceilings)}`
   if (dayType === 'EASY') return `Lockerer Tag zwischen zwei harten Einheiten (${PHASE_LABELS[phase]})`
   return `Regeneration hat Vorrang (${PHASE_LABELS[phase]})`
 }
@@ -356,9 +375,11 @@ export const planDays = (
   state: TrainingState,
   config: CoachConfig,
   days = 3,
+  completions: readonly Completion[] = [],
 ): readonly PlannedDay[] => {
   const budgetMinutes = config.profile.maxSessionMinutes
   const sports = selectedSports(config.profile)
+  const ceilings = levelCeilings(completions)
 
   const { plan } = Array.from({ length: days }).reduce<{
     simulation: Simulation
@@ -382,14 +403,14 @@ export const planDays = (
 
       const options = sports.map((sport) => {
         const sportPhase = phases[sport]
-        const candidates = candidatesFor(sport, dayType, sportPhase, budgetMinutes)
+        const candidates = candidatesFor(sport, dayType, sportPhase, budgetMinutes, ceilings)
         const best = [...candidates].sort(
           (left, right) =>
             scoreTemplate(right, simulation, state, sportPhase, budgetMinutes) -
             scoreTemplate(left, simulation, state, sportPhase, budgetMinutes),
         )[0]
         if (!best) return null
-        return buildSession(best, config, reasonFor(best, dayType, sportPhase, simulation))
+        return buildSession(best, config, reasonFor(best, dayType, sportPhase, simulation, ceilings))
       }).filter((session): session is PlannedSession => session !== null)
 
       const recommended = chooseRecommended(dayType, simulation, config, date, sports)

@@ -16,6 +16,7 @@ import { buildState } from '../src/coach/state.ts'
 import { planDays } from '../src/coach/engine.ts'
 import { assessGoals } from '../src/coach/feasibility.ts'
 import { buildHistory } from '../src/coach/adherence.ts'
+import { completionsFrom } from '../src/coach/progression.ts'
 import { adoptThreshold, thresholdSuggestions } from '../src/coach/threshold-drift.ts'
 import type { ObservedThresholds } from '../src/coach/threshold-drift.ts'
 import type { Sport } from '../src/coach/types.ts'
@@ -27,6 +28,8 @@ const TIMEZONE = 'Europe/Berlin'
 const ACTIVITY_HISTORY_DAYS = 180
 const WELLNESS_HISTORY_DAYS = 60
 const ADHERENCE_DAYS = 7
+/** Progression looks further back than the visible history strip. */
+const PROGRESSION_DAYS = 120
 
 /** Local calendar date in the athlete's timezone — sv-SE formats as YYYY-MM-DD. */
 export const localToday = (now: Date = new Date()): string =>
@@ -68,7 +71,7 @@ const buildPlan = async (deps: RouteDeps, days: number): Promise<Plan> => {
   const [activities, wellness, events, settings] = await Promise.all([
     fetchActivities(deps.auth, addDays(today, -ACTIVITY_HISTORY_DAYS), today),
     fetchWellness(deps.auth, addDays(today, -WELLNESS_HISTORY_DAYS), today),
-    fetchEvents(deps.auth, addDays(today, -ADHERENCE_DAYS), today),
+    fetchEvents(deps.auth, addDays(today, -PROGRESSION_DAYS), today),
     // Optional: a missing scope must not take the whole plan down.
     fetchSportSettings(deps.auth).catch(() => null),
   ])
@@ -79,7 +82,7 @@ const buildPlan = async (deps: RouteDeps, days: number): Promise<Plan> => {
     state,
     history: buildHistory(events, activities, today, ADHERENCE_DAYS),
     thresholdSuggestions: thresholdSuggestions(config.profile, observedThresholds(wellness, settings)),
-    days: planDays(state, config, days),
+    days: planDays(state, config, days, completionsFrom(events, activities)),
     feasibility: assessGoals(config.goals, config.profile, today),
   }
 }
