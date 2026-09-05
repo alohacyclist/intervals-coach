@@ -27,6 +27,7 @@ export const activity = (
   isStrength: false,
   pairedEventId: null,
   compliance: null,
+  averageHr: null,
   ...overrides,
 })
 

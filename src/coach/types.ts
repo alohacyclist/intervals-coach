@@ -99,6 +99,7 @@ export type Activity = {
   readonly pairedEventId: string | null
   /** Percentage match against the planned workout, 0–100. */
   readonly compliance: number | null
+  readonly averageHr: number | null
 }
 
 /** A workout on the intervals.icu calendar. */
@@ -251,6 +252,8 @@ export type WorkoutTemplate = {
   /** Progression family; harder levels unlock once the previous one was done. */
   readonly family?: string
   readonly level?: number
+  /** Fixed reference session, repeated unchanged so results stay comparable. */
+  readonly benchmark?: boolean
 }
 
 export type DayType = 'KEY' | 'EASY' | 'RECOVERY' | 'REST'
@@ -293,11 +296,30 @@ export type ThresholdSuggestion = {
   readonly message: string
 }
 
+export type BenchmarkResult = {
+  readonly sport: Sport
+  readonly date: string
+  readonly averageHr: number | null
+  readonly previousDate: string | null
+  readonly previousAverageHr: number | null
+  readonly verdict: 'first' | 'better' | 'unchanged' | 'worse' | 'unknown'
+  readonly message: string
+}
+
+export type BenchmarkStatus = {
+  readonly due: boolean
+  readonly weeksSinceLast: number | null
+  readonly intervalWeeks: number
+  readonly sessions: readonly { readonly sport: Sport; readonly templateId: string; readonly name: string }[]
+  readonly results: readonly BenchmarkResult[]
+}
+
 export type Plan = {
   readonly generatedAt: string
   readonly state: TrainingState
   readonly history: readonly AdherenceDay[]
   readonly thresholdSuggestions: readonly ThresholdSuggestion[]
+  readonly benchmark: BenchmarkStatus
   readonly days: readonly PlannedDay[]
   readonly feasibility: readonly Feasibility[]
 }

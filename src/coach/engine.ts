@@ -232,6 +232,8 @@ const candidatesFor = (
 ): readonly WorkoutTemplate[] => {
   const allowed = ALLOWED_CLASSES[dayType]
   const pool = templatesFor(sport)
+    // Benchmarks are scheduled deliberately, never offered as ordinary work.
+    .filter((template) => template.benchmark !== true)
     .filter((template) => allowed.includes(intensityClass(template.stimulus)))
     .filter((template) => withinLevel(template, ceilings))
   const inPhase = pool.filter((template) => template.phases.includes(phase))

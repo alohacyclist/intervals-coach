@@ -514,7 +514,63 @@ const SWIM: readonly WorkoutTemplate[] = [
   },
 ]
 
-export const LIBRARY: readonly WorkoutTemplate[] = [...BIKE, ...RUN, ...SWIM]
+/**
+ * Reference sessions. They never change and never progress, because their whole
+ * value is comparability: same work, same targets, and the heart rate needed to
+ * hold them tells you more than a fresh threshold test would.
+ */
+const BENCHMARKS: readonly WorkoutTemplate[] = [
+  {
+    id: 'bench-bike-4x4',
+    sport: 'Ride',
+    stimulus: 'VO2',
+    name: 'Referenz Rad 4x4min',
+    minutes: 52,
+    load: 68,
+    benchmark: true,
+    phases: ['BASE', 'BUILD', 'SPECIFIC', 'TAPER', 'RECOVERY'],
+    coachNote: 'Vergleichseinheit. Immer identisch fahren — gleiche Watt, gleiche Trittfrequenz. Sinkt die Herzfrequenz bei gleicher Leistung, bist du besser geworden.',
+    blocks: [
+      warmupBike('15m'),
+      repeat(4, [step('4m', '105-110%', { cadence: '90-100rpm' }), step('4m', '50%')]),
+      cooldown('9m', '55%'),
+    ],
+  },
+  {
+    id: 'bench-run-4x4',
+    sport: 'Run',
+    stimulus: 'VO2',
+    name: 'Referenz Lauf 4x4min',
+    minutes: 48,
+    load: 62,
+    benchmark: true,
+    phases: ['BASE', 'BUILD', 'SPECIFIC', 'TAPER', 'RECOVERY'],
+    coachNote: 'Vergleichseinheit. Gleiche Pace wie beim letzten Mal, nicht schneller. Die Herzfrequenz ist das Ergebnis, nicht die Zeit.',
+    blocks: [
+      step('12m', '72-78% Pace', { label: 'Einlaufen' }),
+      repeat(4, [step('4m', '104-108% Pace'), step('3m', '62-68% Pace')]),
+      cooldown('8m', '72% Pace'),
+    ],
+  },
+  {
+    id: 'bench-swim-400',
+    sport: 'Swim',
+    stimulus: 'THRESHOLD',
+    name: 'Referenz Schwimmen 400m',
+    minutes: 35,
+    load: 45,
+    benchmark: true,
+    phases: ['BASE', 'BUILD', 'SPECIFIC', 'TAPER', 'RECOVERY'],
+    coachNote: 'Vergleichseinheit. 400 m gleichmäßig auf CSS-Tempo, danach dieselbe Auswertung wie bei Rad und Lauf.',
+    blocks: [
+      warmupSwim('300mtr'),
+      step('400mtr', '98-102% Pace'),
+      cooldown('200mtr', '60% Pace'),
+    ],
+  },
+]
+
+export const LIBRARY: readonly WorkoutTemplate[] = [...BIKE, ...RUN, ...SWIM, ...BENCHMARKS]
 
 export const templatesFor = (sport: Sport): readonly WorkoutTemplate[] =>
   LIBRARY.filter((template) => template.sport === sport)

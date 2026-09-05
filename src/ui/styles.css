@@ -190,6 +190,21 @@ label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color:
 .loading { color: var(--muted); }
 .footer { color: var(--muted); font-size: 12px; text-align: center; }
 
+.benchmark {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.benchmark__head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.benchmark__meta { color: var(--muted); font-size: 13px; margin: 0; }
+.benchmark__result { margin: 0; font-size: 13.5px; }
+.benchmark__due { margin: 0; font-size: 13.5px; color: var(--text); max-width: 78ch; }
+.benchmark__actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
 .history {
   background: var(--surface);
   border: 1px solid var(--line);

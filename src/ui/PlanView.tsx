@@ -5,6 +5,7 @@ import type { Me } from './api.ts'
 import { DataIssueBanner } from './components/DataIssueBanner.tsx'
 import { HistoryStrip } from './components/HistoryStrip.tsx'
 import { ThresholdCard } from './components/ThresholdCard.tsx'
+import { BenchmarkCard } from './components/BenchmarkCard.tsx'
 import { StateHeader } from './components/StateHeader.tsx'
 import { DayCard } from './components/DayCard.tsx'
 import { GoalsPanel } from './components/GoalsPanel.tsx'
@@ -108,6 +109,10 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
           onStrengthLogged={() => void load()}
         />
       ))}
+
+      {plan && (plan.benchmark.due || plan.benchmark.results.length > 0) && (
+        <BenchmarkCard status={plan.benchmark} />
+      )}
 
       {plan && config && <GoalsPanel goals={config.goals} feasibility={plan.feasibility} />}
 

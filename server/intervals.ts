@@ -84,6 +84,7 @@ const mapActivity = (raw: RawActivity): Activity => ({
   isStrength: typeof raw['type'] === 'string' && STRENGTH_TYPES.has(raw['type']),
   pairedEventId: raw['paired_event_id'] == null ? null : String(raw['paired_event_id']),
   compliance: nullableNum(raw['compliance']),
+  averageHr: nullableNum(raw['average_heartrate']),
 })
 
 const mapEvent = (raw: Record<string, unknown>): PlannedEvent => ({

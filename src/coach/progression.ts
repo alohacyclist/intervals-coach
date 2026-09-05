@@ -9,6 +9,7 @@ export type Completion = {
   readonly templateId: string
   readonly date: string
   readonly compliance: number | null
+  readonly activityId: string
 }
 
 /** `coach:<date>:<templateId>` is written when the app pushes a workout. */
@@ -33,7 +34,9 @@ export const completionsFrom = (
     const activity =
       activities.find((candidate) => candidate.pairedEventId === event.id) ??
       activities.find((candidate) => candidate.id === event.pairedActivityId)
-    return activity ? [{ templateId, date: event.date, compliance: activity.compliance }] : []
+    return activity
+      ? [{ templateId, date: event.date, compliance: activity.compliance, activityId: activity.id }]
+      : []
   })
 
 const levelsIn = (family: string): readonly number[] =>

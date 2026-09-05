@@ -17,6 +17,7 @@ import { planDays } from '../src/coach/engine.ts'
 import { assessGoals } from '../src/coach/feasibility.ts'
 import { buildHistory } from '../src/coach/adherence.ts'
 import { completionsFrom } from '../src/coach/progression.ts'
+import { benchmarkStatus } from '../src/coach/benchmark.ts'
 import { adoptThreshold, thresholdSuggestions } from '../src/coach/threshold-drift.ts'
 import type { ObservedThresholds } from '../src/coach/threshold-drift.ts'
 import type { Sport } from '../src/coach/types.ts'
@@ -76,13 +77,15 @@ const buildPlan = async (deps: RouteDeps, days: number): Promise<Plan> => {
     fetchSportSettings(deps.auth).catch(() => null),
   ])
   const state = buildState(activities, wellness, today)
+  const completions = completionsFrom(events, activities)
 
   return {
     generatedAt: new Date().toISOString(),
     state,
     history: buildHistory(events, activities, today, ADHERENCE_DAYS),
     thresholdSuggestions: thresholdSuggestions(config.profile, observedThresholds(wellness, settings)),
-    days: planDays(state, config, days, completionsFrom(events, activities)),
+    benchmark: benchmarkStatus(config, completions, activities, today),
+    days: planDays(state, config, days, completions),
     feasibility: assessGoals(config.goals, config.profile, today),
   }
 }
