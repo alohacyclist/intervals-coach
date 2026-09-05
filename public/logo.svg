@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Intervals Coach">
+  <rect width="512" height="512" rx="112" fill="#12151b"/>
+  <rect x="8" y="8" width="496" height="496" rx="106" fill="none" stroke="#2a2f3a" stroke-width="4"/>
+  <g>
+    <rect x="96"  y="306" width="44" height="110" rx="14" fill="#3d4657"/>
+    <rect x="165" y="126" width="44" height="290" rx="14" fill="#4da3ff"/>
+    <rect x="234" y="256" width="44" height="160" rx="14" fill="#3d4657"/>
+    <rect x="303" y="126" width="44" height="290" rx="14" fill="#4da3ff"/>
+    <rect x="372" y="306" width="44" height="110" rx="14" fill="#3d4657"/>
+  </g>
+</svg>
