@@ -136,6 +136,8 @@ export type StrengthSuggestion = {
 
 export type Wellness = {
   readonly date: string
+  /** intervals.icu carries its estimated FTP per sport on the daily record. */
+  readonly eftpBySport: Partial<Record<Sport, number>>
   readonly hrv: number | null
   readonly restingHr: number | null
   readonly sleepSecs: number | null
@@ -267,10 +269,21 @@ export type Feasibility = {
   readonly message: string
 }
 
+/** Configured threshold has drifted away from what intervals.icu observes. */
+export type ThresholdSuggestion = {
+  readonly sport: Sport
+  readonly metric: SportThreshold['metric']
+  readonly configured: number
+  readonly observed: number
+  readonly driftPercent: number
+  readonly message: string
+}
+
 export type Plan = {
   readonly generatedAt: string
   readonly state: TrainingState
   readonly history: readonly AdherenceDay[]
+  readonly thresholdSuggestions: readonly ThresholdSuggestion[]
   readonly days: readonly PlannedDay[]
   readonly feasibility: readonly Feasibility[]
 }

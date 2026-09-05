@@ -294,6 +294,8 @@ select {
   flex-direction: column;
   gap: 10px;
 }
+.threshold { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.threshold p { margin: 0; flex: 1; min-width: 260px; }
 .issue h2 { font-size: 16px; margin: 0; color: var(--amber); }
 .issue p { margin: 0; font-size: 14px; color: var(--text); max-width: 78ch; }
 .issue a { color: var(--amber); }

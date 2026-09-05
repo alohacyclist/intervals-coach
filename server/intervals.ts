@@ -95,8 +95,19 @@ const mapEvent = (raw: Record<string, unknown>): PlannedEvent => ({
   pairedActivityId: raw['paired_activity_id'] == null ? null : String(raw['paired_activity_id']),
 })
 
+const mapEftp = (raw: unknown): Partial<Record<Sport, number>> => {
+  if (!Array.isArray(raw)) return {}
+  return Object.fromEntries(
+    raw
+      .map((entry) => entry as Record<string, unknown>)
+      .map((entry) => [toSport(entry['type']), nullableNum(entry['eftp'])] as const)
+      .filter((pair): pair is readonly [Sport, number] => pair[0] !== 'Other' && pair[1] !== null),
+  )
+}
+
 const mapWellness = (raw: RawWellness): Wellness => ({
   date: String(raw['id'] ?? '').slice(0, 10),
+  eftpBySport: mapEftp(raw['sportInfo']),
   hrv: nullableNum(raw['hrv']),
   restingHr: nullableNum(raw['restingHR']),
   sleepSecs: nullableNum(raw['sleepSecs']),

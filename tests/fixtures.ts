@@ -32,6 +32,7 @@ export const activity = (
 
 export const wellness = (daysAgo: number, overrides: Partial<Wellness> = {}): Wellness => ({
   date: addDays(TODAY, -daysAgo),
+  eftpBySport: {},
   hrv: 70,
   restingHr: 45,
   sleepSecs: 7 * 3600,

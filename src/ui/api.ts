@@ -61,6 +61,9 @@ export const putConfig = (config: CoachConfig): Promise<CoachConfig> =>
 export const syncSettings = (): Promise<{ config: CoachConfig }> =>
   request<{ config: CoachConfig }>('/api/sync-settings', { method: 'POST' })
 
+export const adoptThreshold = (sport: string, observed: number): Promise<unknown> =>
+  request('/api/threshold', { method: 'POST', body: JSON.stringify({ sport, observed }) })
+
 export const pushWorkout = (date: string, templateId: string): Promise<{ name: string }> =>
   request<{ name: string }>('/api/push', {
     method: 'POST',

@@ -16,6 +16,9 @@ import { buildState } from '../src/coach/state.ts'
 import { planDays } from '../src/coach/engine.ts'
 import { assessGoals } from '../src/coach/feasibility.ts'
 import { buildHistory } from '../src/coach/adherence.ts'
+import { adoptThreshold, thresholdSuggestions } from '../src/coach/threshold-drift.ts'
+import type { ObservedThresholds } from '../src/coach/threshold-drift.ts'
+import type { Sport } from '../src/coach/types.ts'
 import { findTemplate } from '../src/coach/library.ts'
 import { describeWorkout } from '../src/coach/format.ts'
 import type { Plan } from '../src/coach/types.ts'
@@ -40,13 +43,34 @@ export type RouteDeps = {
  */
 export type DepsResolver = (context: Context) => Promise<RouteDeps>
 
+/**
+ * What intervals.icu currently measures. The estimated FTP comes from actual
+ * rides, so it beats the manually entered value; pace has no estimate and falls
+ * back to the athlete's own setting.
+ */
+const observedThresholds = (
+  wellness: readonly { readonly eftpBySport: Partial<Record<Sport, number>> }[],
+  settings: { readonly thresholdPaceSecPerKm: number | null; readonly cssSecPer100m: number | null } | null,
+): ObservedThresholds => {
+  const latestEftp = [...wellness]
+    .reverse()
+    .find((entry) => Object.keys(entry.eftpBySport).length > 0)?.eftpBySport
+  return {
+    ...(latestEftp ?? {}),
+    ...(settings?.thresholdPaceSecPerKm ? { Run: settings.thresholdPaceSecPerKm } : {}),
+    ...(settings?.cssSecPer100m ? { Swim: settings.cssSecPer100m } : {}),
+  }
+}
+
 const buildPlan = async (deps: RouteDeps, days: number): Promise<Plan> => {
   const today = localToday()
   const config = await deps.store.load()
-  const [activities, wellness, events] = await Promise.all([
+  const [activities, wellness, events, settings] = await Promise.all([
     fetchActivities(deps.auth, addDays(today, -ACTIVITY_HISTORY_DAYS), today),
     fetchWellness(deps.auth, addDays(today, -WELLNESS_HISTORY_DAYS), today),
     fetchEvents(deps.auth, addDays(today, -ADHERENCE_DAYS), today),
+    // Optional: a missing scope must not take the whole plan down.
+    fetchSportSettings(deps.auth).catch(() => null),
   ])
   const state = buildState(activities, wellness, today)
 
@@ -54,6 +78,7 @@ const buildPlan = async (deps: RouteDeps, days: number): Promise<Plan> => {
     generatedAt: new Date().toISOString(),
     state,
     history: buildHistory(events, activities, today, ADHERENCE_DAYS),
+    thresholdSuggestions: thresholdSuggestions(config.profile, observedThresholds(wellness, settings)),
     days: planDays(state, config, days),
     feasibility: assessGoals(config.goals, config.profile, today),
   }
@@ -134,6 +159,23 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
   app.get('/api/sport-settings', async (context) => {
     const { auth } = await resolve(context)
     return context.json(await fetchSportSettings(auth))
+  })
+
+  /** Adopts one drifted threshold, leaving every other sport untouched. */
+  app.post('/api/threshold', async (context) => {
+    const body = (await context.req.json()) as { sport?: string; observed?: number }
+    if (body.sport !== 'Ride' && body.sport !== 'Run' && body.sport !== 'Swim') {
+      return context.json({ error: 'sport muss Ride, Run oder Swim sein' }, 400)
+    }
+    if (typeof body.observed !== 'number' || body.observed <= 0) {
+      return context.json({ error: 'observed muss > 0 sein' }, 400)
+    }
+    const { store } = await resolve(context)
+    const config = await store.load()
+    const saved = await store.save(
+      validateConfig({ ...config, profile: adoptThreshold(config.profile, body.sport, body.observed) }),
+    )
+    return context.json(saved)
   })
 
   app.post('/api/push', async (context) => {
