@@ -40,7 +40,10 @@ back to the intervals.icu calendar as structured workouts.
 - http://localhost:8787/auth/callback
 
 **Scopes requested**
-`ACTIVITY:READ WELLNESS:READ CALENDAR:WRITE`
+`ACTIVITY:READ WELLNESS:READ CALENDAR:WRITE` plus whichever scope covers
+`PUT /athlete/{id}/sport-settings/{type}` — I could not find it documented, so
+please let me know the correct one (or whether that endpoint is off limits to
+OAuth clients).
 
 - `ACTIVITY:READ` — compute fitness, fatigue and form per sport, and detect when the
   last hard session was
@@ -48,6 +51,11 @@ back to the intervals.icu calendar as structured workouts.
   own baseline, to decide whether today should be a quality day
 - `CALENDAR:WRITE` — write the selected workout to the athlete's calendar so it syncs to
   their trainer or watch
+
+- sport settings write — only to keep FTP and threshold pace in step with what
+  the app has adopted, so that intervals.icu computes load, intensity and
+  workout compliance against the same numbers the plan uses. Written only when
+  the athlete explicitly confirms, never in the background.
 
 No write access to activities and no delete access is needed.
 

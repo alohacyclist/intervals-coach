@@ -198,6 +198,31 @@ export type CalendarEvent = {
   readonly movingTimeSec: number
 }
 
+/**
+ * Writes a threshold back to intervals.icu. It matters because intervals.icu
+ * computes training load, intensity and workout compliance with its own values —
+ * leaving them stale means the plan reads numbers built on the wrong basis.
+ * The path accepts an activity type in place of the numeric settings id.
+ */
+export const updateSportThreshold = async (
+  auth: IntervalsAuth,
+  sport: Sport,
+  value: number,
+): Promise<unknown> => {
+  const body =
+    sport === 'Ride'
+      ? // Indoor and outdoor are kept together; a split only distorts the load.
+        { ftp: Math.round(value), indoor_ftp: Math.round(value) }
+      : sport === 'Run'
+        ? { threshold_pace: 1000 / value }
+        : { threshold_pace: 100 / value }
+
+  return request(auth, `/athlete/${auth.athleteId}/sport-settings/${sport}`, {
+    method: 'PUT',
+    body: JSON.stringify(body),
+  })
+}
+
 export const createWorkoutEvent = async (auth: IntervalsAuth, event: CalendarEvent): Promise<unknown> =>
   request(auth, `/athlete/${auth.athleteId}/events`, {
     method: 'POST',

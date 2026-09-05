@@ -3,6 +3,12 @@ import { formatSeconds } from './dates.ts'
 
 /** Below this the difference is noise, not drift. */
 const REPORT_THRESHOLD_PERCENT = 3
+/**
+ * A drop has to be larger before it is worth mentioning: the estimate is bounded
+ * by what the athlete has attempted, so it falls whenever hard efforts are
+ * missing — which looks exactly like a loss of form but is not one.
+ */
+const REPORT_DROP_PERCENT = 6
 
 /** What intervals.icu currently observes, in each sport's own unit. */
 export type ObservedThresholds = Partial<Record<Sport, number>>
@@ -20,7 +26,6 @@ const improvementPercent = (metric: SportThreshold['metric'], configured: number
 }
 
 const describe = (
-  sport: Sport,
   metric: SportThreshold['metric'],
   configured: number,
   observed: number,
@@ -30,12 +35,11 @@ const describe = (
     metric === 'power'
       ? `${Math.round(value)} W`
       : `${formatSeconds(value)}${metric === 'swimPace' ? '/100m' : '/km'}`
-  const direction = drift > 0 ? 'besser' : 'schwächer'
-  const consequence =
-    drift > 0
-      ? 'Deine Vorgaben sind dadurch zu leicht — der Reiz fällt kleiner aus als geplant.'
-      : 'Deine Vorgaben sind dadurch zu hart — was als Schwelle geplant ist, liegt faktisch darüber.'
-  return `intervals.icu misst ${render(observed)}, eingestellt sind ${render(configured)} — ${Math.abs(drift).toFixed(1)} % ${direction}. ${consequence}`
+  const measured = `intervals.icu misst ${render(observed)}, eingestellt sind ${render(configured)} — ${Math.abs(drift).toFixed(1)} %`
+
+  return drift > 0
+    ? `${measured} besser. Diese Leistung hast du nachweislich erbracht, deine Vorgaben sind also zu leicht geworden.`
+    : `${measured} schwächer. Der Schätzwert kann aber nur abbilden, was du versucht hast — fehlen maximale Belastungen, sinkt er von selbst. Bestätige ihn mit der Standortbestimmung, bevor du den Wert senkst.`
 }
 
 /**
@@ -51,7 +55,8 @@ export const thresholdSuggestions = (
     if (measured === undefined || measured <= 0) return []
     const configured = valueOf(setting.threshold)
     const drift = improvementPercent(setting.threshold.metric, configured, measured)
-    if (Math.abs(drift) < REPORT_THRESHOLD_PERCENT) return []
+    const limit = drift > 0 ? REPORT_THRESHOLD_PERCENT : REPORT_DROP_PERCENT
+    if (Math.abs(drift) < limit) return []
     return [
       {
         sport: setting.sport,
@@ -59,7 +64,8 @@ export const thresholdSuggestions = (
         configured,
         observed: measured,
         driftPercent: Math.round(drift * 10) / 10,
-        message: describe(setting.sport, setting.threshold.metric, configured, measured, drift),
+        action: drift > 0 ? 'adopt' : 'verify',
+        message: describe(setting.threshold.metric, configured, measured, drift),
       },
     ]
   })

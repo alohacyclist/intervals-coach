@@ -10,6 +10,7 @@ import {
   fetchEvents,
   fetchSportSettings,
   fetchWellness,
+  updateSportThreshold,
 } from './intervals.ts'
 import { addDays } from '../src/coach/dates.ts'
 import { buildState } from '../src/coach/state.ts'
@@ -176,12 +177,17 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
     if (typeof body.observed !== 'number' || body.observed <= 0) {
       return context.json({ error: 'observed muss > 0 sein' }, 400)
     }
-    const { store } = await resolve(context)
+    const { auth, store } = await resolve(context)
     const config = await store.load()
     const saved = await store.save(
       validateConfig({ ...config, profile: adoptThreshold(config.profile, body.sport, body.observed) }),
     )
-    return context.json(saved)
+    // Keep intervals.icu in step, but never let a failed write lose the local change.
+    const synced = await updateSportThreshold(auth, body.sport, body.observed).then(
+      () => true,
+      () => false,
+    )
+    return context.json({ ...saved, syncedToIntervals: synced })
   })
 
   /** Records or removes a completed strength session; progression follows the log. */

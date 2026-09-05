@@ -293,6 +293,8 @@ export type ThresholdSuggestion = {
   readonly configured: number
   readonly observed: number
   readonly driftPercent: number
+  /** Adopt a proven gain; verify a drop before believing it. */
+  readonly action: 'adopt' | 'verify'
   readonly message: string
 }
 

@@ -9,16 +9,26 @@ describe('threshold drift', () => {
     expect(thresholdSuggestions(profile, { Ride: 282, Run: 238 })).toEqual([])
   })
 
-  it('reports a lower measured FTP as a harder than intended plan', () => {
-    const [suggestion] = thresholdSuggestions(config.profile, { Ride: 264 })
-    expect(suggestion?.driftPercent).toBeCloseTo(-5.7, 1)
-    expect(suggestion?.message).toContain('zu hart')
+  it('adopts a gain, because the power was demonstrably produced', () => {
+    const [suggestion] = thresholdSuggestions(config.profile, { Ride: 305 })
+    expect(suggestion?.action).toBe('adopt')
+    expect(suggestion?.message).toContain('nachweislich')
   })
 
-  it('reports a higher measured FTP as a plan gone too easy', () => {
-    const [suggestion] = thresholdSuggestions(config.profile, { Ride: 305 })
-    expect(suggestion?.driftPercent).toBeGreaterThan(0)
-    expect(suggestion?.message).toContain('zu leicht')
+  it('asks for verification before believing a drop', () => {
+    // The estimate is bounded by what was attempted, so a fall proves nothing.
+    const [suggestion] = thresholdSuggestions(config.profile, { Ride: 255 })
+    expect(suggestion?.action).toBe('verify')
+    expect(suggestion?.message).toContain('Standortbestimmung')
+  })
+
+  it('stays silent on a small drop that a missing hard effort explains', () => {
+    // 280 configured against 264 measured: below the drop reporting threshold.
+    expect(thresholdSuggestions(config.profile, { Ride: 264 })).toEqual([])
+  })
+
+  it('still reports a small gain', () => {
+    expect(thresholdSuggestions(config.profile, { Ride: 292 })).toHaveLength(1)
   })
 
   it('treats a faster measured pace as an improvement', () => {

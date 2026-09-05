@@ -29,8 +29,9 @@ export const ThresholdCard = ({ suggestions, onAdopted }: Props) => {
     <aside className="issue">
       <h2>Deine Schwellenwerte stimmen nicht mehr</h2>
       <p>
-        Sämtliche Watt- und Pace-Vorgaben werden aus diesen Werten berechnet. Weichen sie ab, trainierst
-        du an der falschen Intensität — ohne dass es im Plan auffällt.
+        Sämtliche Watt- und Pace-Vorgaben werden aus diesen Werten berechnet — und intervals.icu
+        rechnet Belastung und Übereinstimmung mit seinen eigenen. Übernehmen setzt beide Seiten auf
+        denselben Wert.
       </p>
       {suggestions.map((suggestion) => (
         <div key={suggestion.sport} className="threshold">
@@ -38,7 +39,11 @@ export const ThresholdCard = ({ suggestions, onAdopted }: Props) => {
             <strong>{SPORT_LABELS[suggestion.sport]}:</strong> {suggestion.message}
           </p>
           <button type="button" disabled={busy !== null} onClick={() => void adopt(suggestion)}>
-            {busy === suggestion.sport ? 'Übernimmt…' : 'Wert übernehmen'}
+            {busy === suggestion.sport
+              ? 'Übernimmt…'
+              : suggestion.action === 'adopt'
+                ? 'Übernehmen und synchronisieren'
+                : 'Trotzdem übernehmen'}
           </button>
         </div>
       ))}
