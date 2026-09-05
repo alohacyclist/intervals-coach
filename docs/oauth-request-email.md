@@ -17,14 +17,17 @@ intervals.icu API. Details as requested in the API guide:
 Intervals Coach
 
 **Description**
-A training planner that reads an athlete's recent activities and wellness data from
-intervals.icu and proposes the next three days. Each day offers one cycling and one
-running session as equivalent alternatives, so athletes with limited or unpredictable
-time can pick whichever fits that day without losing the training stimulus. Sessions are
-selected from a fixed workout library based on form (CTL/ATL/TSB per sport), time since
-the last hard session, HRV and resting heart rate against the athlete's own 30-day
-baseline, and the phase derived from their goal date. Planned workouts can be written
-back to the intervals.icu calendar as structured workouts.
+A training planner for athletes whose training time is short and unpredictable. It reads
+an athlete's recent activities and wellness data from intervals.icu and proposes the next
+three days. For every sport the athlete trains — cycling, running, swimming, in any
+combination — each day carries one session, so they can take whichever fits that day
+without losing the training stimulus. Sessions come from a fixed workout library and are
+chosen from form (CTL/ATL/TSB per sport), time since the last hard session, HRV and
+resting heart rate against the athlete's own 30-day baseline, and the phase derived from
+their goal date. Rest days are part of the plan rather than the absence of one. Selected
+workouts can be written to the intervals.icu calendar as structured workouts, and the
+pairing intervals.icu performs between a planned workout and the activity that fulfilled
+it is read back, so the plan progresses on what was actually completed.
 
 **Website URL**
 [https://your-domain.example]
