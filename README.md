@@ -213,3 +213,13 @@ scripts/demo.ts  Plan aus synthetischen Daten, läuft ohne API-Zugang
 der App editierbar (FTP, Schwellenpace, Gewicht, Einheiten pro Woche, Zeitbudget, Ziele
 mit optionalem Zieldatum). „FTP & Pace von intervals.icu holen“ übernimmt die Werte aus
 den dortigen Sport-Settings.
+
+Einstellbar sind außerdem die trainierten Sportarten samt Schwellenwert je Sportart, die
+Ausrüstung fürs Krafttraining und ein Bereich statt einer festen Zahl an Einheiten pro
+Woche (`min`/`max`).
+
+## Lizenz
+
+**Alle Rechte vorbehalten.** Der Quellcode ist einsehbar, aber nicht zur Nutzung,
+Vervielfältigung oder Abwandlung freigegeben. Ohne ausdrückliche Lizenz gilt das
+gesetzliche Urheberrecht.
