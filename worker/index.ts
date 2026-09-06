@@ -148,6 +148,18 @@ app.get('/api/me', async (context) => {
 
 // ------------------------------------------------------------- access control
 
+/**
+ * Readable without the password even in single user mode. intervals.icu checks
+ * the privacy URL before it issues an OAuth client, and a visitor is entitled to
+ * read the notice before signing in. Only the shell and the legal text are open —
+ * every data route stays behind the password.
+ */
+const PUBLIC_PATHS = ['/datenschutz', '/impressum']
+const PUBLIC_FILES = ['/logo.svg', '/logo.png', '/favicon.png', '/apple-touch-icon.png']
+
+const isPublicPath = (path: string): boolean =>
+  PUBLIC_PATHS.includes(path) || PUBLIC_FILES.includes(path) || path.startsWith('/assets/')
+
 app.use('*', async (context, next) => {
   const env = context.env as Bindings
 
@@ -159,6 +171,8 @@ app.use('*', async (context, next) => {
     if (!athleteId) return context.json({ error: 'Nicht angemeldet', needsLogin: true }, 401)
     return next()
   }
+
+  if (isPublicPath(context.req.path)) return next()
 
   if (!env.APP_PASSWORD || !env.INTERVALS_API_KEY || !env.INTERVALS_ATHLETE_ID) {
     return context.text(
