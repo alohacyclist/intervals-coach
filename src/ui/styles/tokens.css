@@ -1,0 +1,225 @@
+/*
+ * Direction "Messgerät": the app is an instrument, not a document.
+ *
+ * The palette has one idea. In the dark a number *emits* — sodium amber on
+ * near-black, the way a bike computer lights its display. In the light the same
+ * number is *printed* — the amber becomes burnt ochre ink on cool paper. Same
+ * hue, opposite role. Prose stays grey in both, so the data always leads.
+ *
+ * Light is the default palette on bare :root; dark arrives through the system
+ * preference and through an explicit stamp, so both directions of the switch
+ * beat the operating system.
+ */
+
+:root {
+  --bg: #f1f3f2;
+  --bg-lift: #e6eae9;
+  --bg-sink: #e9ecec;
+  --rule: #d2d8d7;
+  --rule-soft: #e0e5e4;
+  --rule-loud: #b4bdbc;
+
+  --ink: #12181a;
+  --text: #2b3335;
+  --dim: #545f60;
+  --faint: #5e6968;
+
+  --data: #a85a00;
+  --on-data: #fbfcfb;
+
+  --ride: #a85a00;
+  --run: #0d6f80;
+  --swim: #6b4fd8;
+
+  --good: #1c7a4f;
+  --on-good: #f1f3f2;
+  --warn: #a05a00;
+  --bad: #b3352a;
+
+  --mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --sans: 'IBM Plex Sans Condensed', 'Helvetica Neue', Arial, sans-serif;
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: #0a0d0e;
+    --bg-lift: #0e1314;
+    --bg-sink: #070a0b;
+    --rule: #1e2526;
+    --rule-soft: #171d1e;
+    --rule-loud: #2a3233;
+
+    --ink: #eef2f2;
+    --text: #cfd6d6;
+    --dim: #7d8887;
+    --faint: #6b7676;
+
+    --data: #ffa62b;
+    --on-data: #0a0d0e;
+
+    --ride: #ffa62b;
+    --run: #5fc9d8;
+    --swim: #a68cff;
+
+    --good: #58c98a;
+    --on-good: #0a0d0e;
+    --warn: #ffa62b;
+    --bad: #ff6b5f;
+
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme='dark'] {
+  --bg: #0a0d0e;
+  --bg-lift: #0e1314;
+  --bg-sink: #070a0b;
+  --rule: #1e2526;
+  --rule-soft: #171d1e;
+  --rule-loud: #2a3233;
+
+  --ink: #eef2f2;
+  --text: #cfd6d6;
+  --dim: #7d8887;
+  --faint: #6b7676;
+
+  --data: #ffa62b;
+  --on-data: #0a0d0e;
+
+  --ride: #ffa62b;
+  --run: #5fc9d8;
+  --swim: #a68cff;
+
+  --good: #58c98a;
+  --on-good: #0a0d0e;
+  --warn: #ffa62b;
+  --bad: #ff6b5f;
+
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Labels are stencilled, the way a panel labels its fields. */
+.metrics dt {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+/* Every readout is monospaced and aligned, never proportional. */
+.readout {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 0;
+  color: var(--ink);
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+
+h1 {
+  font-size: 19px;
+}
+h2 {
+  font-size: 16px;
+}
+h3 {
+  font-size: 16px;
+}
+h4 {
+  font-size: 15px;
+}
+
+p {
+  margin: 0;
+}
+
+a {
+  color: var(--data);
+}
+
+/* Sharp corners everywhere: an instrument has no rounded panels. */
+button {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--rule-loud);
+  border-radius: 0;
+  padding: 7px 12px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+button:hover:not(:disabled) {
+  border-color: var(--data);
+  color: var(--data);
+}
+button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+input,
+select {
+  background: var(--bg-sink);
+  color: var(--ink);
+  border: 1px solid var(--rule-loud);
+  border-radius: 0;
+  padding: 7px 9px;
+  font-family: var(--mono);
+  font-size: 13px;
+  width: 100%;
+}
+input:focus,
+select:focus {
+  outline: none;
+  border-color: var(--data);
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+:focus-visible {
+  outline: 2px solid var(--data);
+  outline-offset: 1px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}

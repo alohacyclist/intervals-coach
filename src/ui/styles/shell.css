@@ -1,0 +1,399 @@
+/* Shell: page frame, instrument bar, readouts, week strip, intent switch. */
+
+.app {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 0 16px 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+/* A three-position mode switch, the way an instrument carries one. */
+.mode {
+  display: flex;
+  border: 1px solid var(--rule);
+}
+.mode button {
+  border: 0;
+  border-right: 1px solid var(--rule);
+  padding: 4px 9px;
+  font-size: 9.5px;
+  letter-spacing: 0.13em;
+  color: var(--faint);
+}
+.mode button:last-child {
+  border-right: 0;
+}
+.mode button:hover:not(:disabled) {
+  color: var(--ink);
+}
+.mode button[aria-pressed='true'] {
+  background: var(--data);
+  color: var(--on-data);
+  font-weight: 600;
+}
+
+/* ------------------------------------------------------------ header panel */
+
+.header {
+  border: 1px solid var(--rule);
+  display: flex;
+  flex-direction: column;
+}
+
+.header__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--rule);
+}
+.header__top h1 {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.header__actions {
+  display: flex;
+  gap: 8px;
+}
+
+.chip {
+  align-self: flex-start;
+  margin: 0;
+  padding: 3px 9px;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.chip--green {
+  background: var(--good);
+  color: var(--on-good);
+}
+.chip--amber {
+  background: var(--warn);
+  color: var(--on-data);
+}
+.chip--red {
+  background: var(--bad);
+  color: var(--on-data);
+}
+.header .chip {
+  margin: 12px 14px 0;
+}
+
+/* Six data fields divided by hairlines, not six tiles. */
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  margin: 12px 0 0;
+  border-top: 1px solid var(--rule);
+}
+.metrics div {
+  padding: 11px 14px;
+  border-right: 1px solid var(--rule);
+  min-width: 0;
+}
+.metrics div:last-child {
+  border-right: 0;
+}
+.metrics dt {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.metrics dd {
+  margin: 3px 0 0;
+  font-family: var(--mono);
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--data);
+  font-variant-numeric: tabular-nums;
+}
+.metrics--sport {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  margin: 0;
+}
+.metrics--sport dd {
+  font-size: 15px;
+  color: var(--text);
+}
+
+.datasource {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-top: 1px solid var(--rule);
+  font-size: 12.5px;
+  color: var(--dim);
+}
+.datasource strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+.datasource__count {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--faint);
+  font-variant-numeric: tabular-nums;
+}
+
+/* -------------------------------------------------------------- week strip */
+
+.history {
+  border: 1px solid var(--rule);
+  display: flex;
+  flex-direction: column;
+}
+.history__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--rule);
+}
+.history__summary {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  color: var(--faint);
+  font-variant-numeric: tabular-nums;
+}
+.history__strip {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* The signal is a bar under the cell, not a coloured tile: it reads as a
+   channel indicator rather than as decoration. */
+.history__day {
+  position: relative;
+  padding: 10px 4px 12px;
+  text-align: center;
+  border-right: 1px solid var(--rule);
+}
+.history__day:last-child {
+  border-right: 0;
+}
+.history__day::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: var(--rule);
+}
+.history__day--done::after {
+  background: var(--good);
+}
+.history__day--switched::after {
+  background: var(--run);
+}
+.history__day--unplanned::after {
+  background: var(--swim);
+}
+.history__day--missed::after {
+  background: var(--warn);
+}
+.history__weekday {
+  display: block;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.history__load {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--mono);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.history__last {
+  padding: 10px 14px;
+  border-top: 1px solid var(--rule);
+  font-size: 12.5px;
+  color: var(--dim);
+}
+.history__last strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+.history__ok {
+  color: var(--good);
+}
+.history__alt {
+  color: var(--run);
+}
+.history__miss {
+  color: var(--warn);
+}
+.history__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  padding: 9px 14px;
+  border-top: 1px solid var(--rule);
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.history__legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.history__dot {
+  width: 10px;
+  height: 3px;
+  display: inline-block;
+}
+
+/* ------------------------------------------------------------ intent switch */
+
+.intent {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex-wrap: wrap;
+  border: 1px solid var(--rule);
+}
+.intent__label {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--faint);
+  padding: 0 12px;
+  border-right: 1px solid var(--rule);
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+}
+.intent button {
+  border: 0;
+  border-right: 1px solid var(--rule);
+  padding: 9px 14px;
+  flex: 1;
+}
+.intent button:last-child {
+  border-right: 0;
+}
+.intent__on {
+  background: var(--data);
+  color: var(--on-data);
+  font-weight: 600;
+}
+.intent__on:hover:not(:disabled) {
+  color: var(--on-data);
+}
+
+/* ----------------------------------------------------------------- states */
+
+.error {
+  color: var(--bad);
+  font-size: 13px;
+}
+.error--block {
+  border: 1px solid var(--bad);
+  border-left-width: 3px;
+  padding: 12px 14px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--text);
+}
+.loading {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--faint);
+  padding: 24px 0;
+}
+
+.account {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  color: var(--faint);
+}
+
+.footer {
+  padding-top: 14px;
+  border-top: 1px solid var(--rule);
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--faint);
+  text-align: center;
+}
+
+@media (max-width: 860px) {
+  .metrics {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .metrics div:nth-child(3n) {
+    border-right: 0;
+  }
+  .metrics div:nth-child(-n + 3) {
+    border-bottom: 1px solid var(--rule);
+  }
+  .metrics--sport {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .metrics--sport div:nth-child(-n + 3) {
+    border-bottom: 0;
+  }
+}
+
+@media (max-width: 560px) {
+  .metrics,
+  .metrics--sport {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .metrics div:nth-child(3n) {
+    border-right: 1px solid var(--rule);
+  }
+  .metrics div:nth-child(2n) {
+    border-right: 0;
+  }
+  .intent__label {
+    display: none;
+  }
+}

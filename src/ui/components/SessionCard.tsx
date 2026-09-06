@@ -68,13 +68,20 @@ export const SessionCard = ({ session, date, recommended, destinations }: Props)
           </button>
         </div>
       ) : (
-        <p className="session__meta">{minutes} min</p>
+        <p className="session__duration readout">{minutes} min</p>
       )}
 
       <ol className="steps">
-        {steps.map((step, index) => (
-          <li key={`${session.template.id}-${variant}-${index}`}>{step}</li>
-        ))}
+        {steps.map((step, index) => {
+          // "12min @ 276-291 W" reads as a table, so the duration keeps its own column.
+          const [duration, ...target] = step.split(' @ ')
+          return (
+            <li key={`${session.template.id}-${variant}-${index}`}>
+              <span>{duration}</span>
+              {target.length > 0 && <em>{target.join(' @ ')}</em>}
+            </li>
+          )
+        })}
       </ol>
 
       {active ? (

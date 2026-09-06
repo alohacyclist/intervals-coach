@@ -3,11 +3,23 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="color-scheme" content="dark light" />
+    <meta name="color-scheme" content="light dark" />
     <link rel="icon" href="/logo.svg" type="image/svg+xml" />
     <link rel="icon" href="/favicon.png" sizes="64x64" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <title>Intervals Coach</title>
+    <script>
+      // Applied before first paint so the page never flashes the other theme.
+      // The key is repeated from src/ui/theme.ts: this has to run before any module.
+      try {
+        var stored = localStorage.getItem('coach:theme')
+        if (stored === 'light' || stored === 'dark') {
+          document.documentElement.setAttribute('data-theme', stored)
+        }
+      } catch (error) {
+        /* storage blocked: the system preference decides */
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

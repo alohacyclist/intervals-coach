@@ -1,0 +1,243 @@
+/* Landing, onboarding and the legal pages, in the same instrument language. */
+
+.landing {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 8px 0 24px;
+}
+
+.landing__hero {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 40px 0 36px;
+  border-bottom: 1px solid var(--rule);
+}
+.landing__eyebrow {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--data);
+}
+.landing h1 {
+  font-size: clamp(30px, 6vw, 46px);
+  font-weight: 600;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  max-width: 22ch;
+  text-wrap: balance;
+}
+.landing__lead {
+  font-size: 17px;
+  color: var(--dim);
+  max-width: 58ch;
+}
+.landing__lead em {
+  color: var(--ink);
+  font-style: normal;
+  font-weight: 600;
+}
+.landing__hint {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  color: var(--faint);
+}
+
+.cta {
+  align-self: flex-start;
+  background: var(--data);
+  color: var(--on-data);
+  border: 1px solid var(--data);
+  padding: 12px 22px;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+}
+.cta:hover {
+  background: transparent;
+  color: var(--data);
+}
+.cta--button {
+  font-size: 12px;
+}
+
+.landing__section {
+  border-bottom: 1px solid var(--rule);
+  padding: 26px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.landing__section h2 {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.landing__section p {
+  color: var(--dim);
+  max-width: 66ch;
+}
+.landing__section--muted {
+  color: var(--faint);
+  font-size: 13.5px;
+}
+
+/* The setup really is a sequence, so the numbers carry information. */
+.landing__steps {
+  list-style: none;
+  counter-reset: step;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.landing__steps li {
+  counter-increment: step;
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  gap: 14px;
+  padding: 12px 0;
+  border-top: 1px solid var(--rule-soft);
+}
+.landing__steps li::before {
+  content: counter(step, decimal-leading-zero);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--data);
+  padding-top: 2px;
+}
+.landing__steps strong {
+  display: block;
+  color: var(--ink);
+}
+.landing__steps span {
+  color: var(--dim);
+  font-size: 14px;
+}
+
+.landing__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--dim);
+}
+.landing__list li {
+  padding-left: 16px;
+  position: relative;
+}
+.landing__list li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.62em;
+  width: 7px;
+  height: 1px;
+  background: var(--data);
+}
+.landing__legal {
+  font-size: 12.5px;
+  border-bottom: 0;
+}
+
+/* ------------------------------------------------------------- onboarding */
+
+.onboarding {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 28px 0;
+}
+.onboarding h1 {
+  font-size: 26px;
+  letter-spacing: -0.015em;
+}
+.onboarding__lead {
+  color: var(--dim);
+  max-width: 62ch;
+}
+.onboarding fieldset {
+  border: 1px solid var(--rule);
+  padding: 14px;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.onboarding legend {
+  padding: 0 6px;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--data);
+}
+.hint {
+  font-size: 12.5px;
+  color: var(--dim);
+  max-width: 68ch;
+}
+
+/* ------------------------------------------------------------------- legal */
+
+.legal {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 28px 0;
+  max-width: 70ch;
+}
+.legal h1 {
+  font-size: 26px;
+  letter-spacing: -0.015em;
+}
+.legal h2 {
+  margin-top: 14px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.legal p,
+.legal li {
+  color: var(--dim);
+  font-size: 14.5px;
+}
+.legal ul {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.legal__todo {
+  border: 1px solid var(--warn);
+  border-left-width: 3px;
+  padding: 10px 12px;
+  color: var(--warn) !important;
+  font-family: var(--mono);
+  font-size: 11.5px;
+}
+.legal__back {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}

@@ -1,10 +1,22 @@
 import { useCallback, useEffect, useState } from 'react'
+import type { ReactNode } from 'react'
 import { getMe } from './api.ts'
 import type { Me } from './api.ts'
 import { Landing } from './Landing.tsx'
 import { Onboarding } from './Onboarding.tsx'
 import { PlanView } from './PlanView.tsx'
 import { Imprint, Privacy } from './Legal.tsx'
+import { ThemeSwitch } from './components/ThemeSwitch.tsx'
+
+/** Every view carries the mode switch, so the choice is never buried in settings. */
+const Shell = ({ children }: { readonly children: ReactNode }) => (
+  <main className="app">
+    <div className="topbar">
+      <ThemeSwitch />
+    </div>
+    {children}
+  </main>
+)
 
 /** The signed-in state decides what is shown; the path only carries the legal pages. */
 export const App = () => {
@@ -24,36 +36,36 @@ export const App = () => {
   }, [load])
 
   const path = window.location.pathname
-  if (path === '/datenschutz') return <main className="app"><Privacy /></main>
-  if (path === '/impressum') return <main className="app"><Imprint /></main>
+  if (path === '/datenschutz') return <Shell><Privacy /></Shell>
+  if (path === '/impressum') return <Shell><Imprint /></Shell>
 
-  if (error) return <main className="app"><p className="error error--block">{error}</p></main>
-  if (!me) return <main className="app"><p className="loading">Einen Moment…</p></main>
+  if (error) return <Shell><p className="error error--block">{error}</p></Shell>
+  if (!me) return <Shell><p className="loading">Einen Moment…</p></Shell>
 
   if (!me.authenticated) {
     return (
-      <main className="app">
+      <Shell>
         <Landing error={new URLSearchParams(window.location.search).get('fehler')} />
-      </main>
+      </Shell>
     )
   }
 
   if (!me.onboarded) {
     return (
-      <main className="app">
+      <Shell>
         <Onboarding
           onDone={() => {
             window.history.replaceState(null, '', '/app')
             setMe({ ...me, onboarded: true })
           }}
         />
-      </main>
+      </Shell>
     )
   }
 
   return (
-    <main className="app">
+    <Shell>
       <PlanView me={me} onNeedsOnboarding={() => setMe({ ...me, onboarded: false })} />
-    </main>
+    </Shell>
   )
 }
