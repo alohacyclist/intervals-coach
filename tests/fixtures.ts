@@ -48,6 +48,7 @@ export const baselineWellness = (days = 30): readonly Wellness[] =>
 
 export const config: CoachConfig = {
   profile: {
+    equipment: 'dumbbells',
     sports: [
       { sport: 'Ride', threshold: { metric: 'power', ftp: 280 } },
       { sport: 'Run', threshold: { metric: 'pace', thresholdSecPerKm: 236 } },

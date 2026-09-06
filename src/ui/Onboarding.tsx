@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import type { CoachConfig, Goal, Sport, SportSetting } from '../coach/types.ts'
-import { SPORT_LABELS } from '../coach/types.ts'
+import type { CoachConfig, Equipment, Goal, Sport, SportSetting } from '../coach/types.ts'
+import { EQUIPMENT_LABELS, SPORT_LABELS } from '../coach/types.ts'
 import { ftpOf } from '../coach/thresholds.ts'
 import { getSportSettings, putConfig } from './api.ts'
 import { parseMmSs } from './format-input.ts'
@@ -8,6 +8,7 @@ import { SportPicker } from './components/SportPicker.tsx'
 
 type Draft = {
   sports: readonly SportSetting[]
+  equipment: Equipment
   weightKg: string
   ftpTarget: string
   ftpDate: string
@@ -26,6 +27,7 @@ const EMPTY: Draft = {
     { sport: 'Ride', threshold: { metric: 'power', ftp: 250 } },
     { sport: 'Run', threshold: { metric: 'pace', thresholdSecPerKm: 270 } },
   ],
+  equipment: 'dumbbells',
   weightKg: '75',
   ftpTarget: '',
   ftpDate: '',
@@ -103,6 +105,7 @@ export const Onboarding = ({ onDone }: { readonly onDone: () => void }) => {
 
   const profile = {
     sports: draft.sports,
+    equipment: draft.equipment,
     weightKg: Number(draft.weightKg),
     maxHr: null,
     lthr: null,
@@ -154,6 +157,16 @@ export const Onboarding = ({ onDone }: { readonly onDone: () => void }) => {
           <label>
             Gewicht (kg)
             <input type="number" value={draft.weightKg} onChange={set('weightKg')} />
+          </label>
+          <label>
+            Krafttraining mit
+            <select value={draft.equipment} onChange={set('equipment')}>
+              {(Object.keys(EQUIPMENT_LABELS) as Equipment[]).map((option) => (
+                <option key={option} value={option}>
+                  {EQUIPMENT_LABELS[option]}
+                </option>
+              ))}
+            </select>
           </label>
         </div>
       </fieldset>

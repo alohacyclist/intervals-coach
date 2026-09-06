@@ -526,3 +526,42 @@ describe('offering quality once the athlete has recovered', () => {
     expect(today?.recommended).toBe('Run')
   })
 })
+
+describe('strength with the equipment at hand', () => {
+  const withEquipment = (equipment: 'gym' | 'dumbbells' | 'bodyweight') => ({
+    ...config,
+    profile: { ...config.profile, equipment },
+  })
+
+  it('never prescribes barbell loads to someone without a barbell', () => {
+    for (const equipment of ['dumbbells', 'bodyweight'] as const) {
+      const [today] = planDays(stateFrom(rested), withEquipment(equipment))
+      const loads = today?.strength?.exercises.map((exercise) => exercise.load).join(' ') ?? ''
+      expect(loads).not.toContain('1RM')
+    }
+  })
+
+  it('loads one leg at a time when the weights are light', () => {
+    const [today] = planDays(stateFrom(rested), withEquipment('dumbbells'))
+    expect(today?.strength?.exercises.every((exercise) => exercise.sets.includes('je Seite'))).toBe(true)
+  })
+
+  it('replaces load with slow eccentrics when there is none', () => {
+    const [today] = planDays(stateFrom(rested), withEquipment('bodyweight'))
+    const loads = today?.strength?.exercises.map((exercise) => exercise.load).join(' ') ?? ''
+    expect(loads).toContain('3s abwärts')
+    expect(today?.strength?.note).toContain('Sprünge')
+  })
+
+  it('keeps the barbell programme for someone with a gym', () => {
+    const [today] = planDays(stateFrom(rested), withEquipment('gym'))
+    expect(today?.strength?.exercises[0]?.load).toContain('1RM')
+  })
+
+  it('progresses the same way whatever the equipment', () => {
+    const log = Array.from({ length: 8 }, (_unused, index) => `2026-06-0${(index % 9) + 1}`)
+    const [today] = planDays(stateFrom(rested), { ...withEquipment('bodyweight'), strengthLog: log })
+    expect(today?.strength?.phase).toBe('full')
+    expect(today?.strength?.exercises.length).toBeGreaterThan(2)
+  })
+})

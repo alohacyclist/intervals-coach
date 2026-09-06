@@ -1,5 +1,6 @@
 import type {
   Block,
+  Equipment,
   StrengthExercise,
   StrengthPhase,
   IntensityClass,
@@ -613,18 +614,56 @@ export const isPreferredSport = (stimulus: Stimulus, sport: Sport): boolean =>
  * who skipped a month should not land in the full programme. The intro phase
  * keeps volume low so soreness never reaches the next quality endurance day.
  */
-const CORE_EXERCISES: readonly StrengthExercise[] = [
-  { name: 'Kniebeuge / Beinpresse', sets: '4 × 5', load: '~85 % 1RM' },
-  { name: 'Rumänisches Kreuzheben', sets: '3 × 6', load: 'schwer' },
-]
+/**
+ * Without heavy loads the stimulus has to come from somewhere else: single-leg
+ * work halves the resistance needed, slow eccentrics extend time under tension,
+ * and plyometrics carry the best evidence for running economy — which is why
+ * jumps move from optional extra to core work once weights run out.
+ */
+const EXERCISES: Readonly<Record<Equipment, { core: readonly StrengthExercise[]; extra: readonly StrengthExercise[] }>> = {
+  gym: {
+    core: [
+      { name: 'Kniebeuge / Beinpresse', sets: '4 × 5', load: '~85 % 1RM' },
+      { name: 'Rumänisches Kreuzheben', sets: '3 × 6', load: 'schwer' },
+    ],
+    extra: [
+      { name: 'Bulgarian Split Squat', sets: '3 × 6 je Seite', load: 'schwer' },
+      { name: 'Einbeiniges Wadenheben', sets: '3 × 8', load: 'schwer' },
+      { name: 'Rumpf (Plank, Pallof Press)', sets: '2 Sätze', load: '—' },
+      { name: 'Vorweg: Hops / Drop Jumps', sets: '3 × 10', load: 'Körpergewicht' },
+    ],
+  },
+  dumbbells: {
+    core: [
+      { name: 'Bulgarian Split Squat', sets: '4 × 6 je Seite', load: '2 × 10 kg' },
+      { name: 'Einbeiniges Kreuzheben', sets: '3 × 8 je Seite', load: '2 × 10 kg' },
+    ],
+    extra: [
+      { name: 'Wadenheben einbeinig, Ferse erhöht', sets: '4 × 10 je Seite', load: '1 × 10 kg' },
+      { name: 'Step-up auf hohe Stufe', sets: '3 × 8 je Seite', load: '2 × 10 kg' },
+      { name: 'Rumpf (Plank, Pallof Press)', sets: '2 Sätze', load: '—' },
+      { name: 'Vorweg: Drop Jumps / Bounding', sets: '3 × 10', load: 'Körpergewicht' },
+    ],
+  },
+  bodyweight: {
+    core: [
+      { name: 'Einbeinige Kniebeuge zum Stuhl', sets: '4 × 6 je Seite', load: '3s abwärts' },
+      { name: 'Nordic Hamstring Curl (Füße fixiert)', sets: '3 × 5', load: 'so langsam wie möglich' },
+    ],
+    extra: [
+      { name: 'Wadenheben einbeinig, Ferse erhöht', sets: '4 × 15 je Seite', load: '3s abwärts' },
+      { name: 'Split-Squat-Isometrie', sets: '3 × 30s je Seite', load: 'tiefe Position halten' },
+      { name: 'Rumpf (Plank, Pallof Press mit Band)', sets: '2 Sätze', load: '—' },
+      { name: 'Vorweg: Drop Jumps / Bounding', sets: '4 × 10', load: 'Körpergewicht' },
+    ],
+  },
+}
 
-const FULL_EXERCISES: readonly StrengthExercise[] = [
-  ...CORE_EXERCISES,
-  { name: 'Bulgarian Split Squat', sets: '3 × 6 je Seite', load: 'schwer' },
-  { name: 'Einbeiniges Wadenheben', sets: '3 × 8', load: 'schwer' },
-  { name: 'Rumpf (Plank, Pallof Press)', sets: '2 Sätze', load: '—' },
-  { name: 'Optional vorweg: Hops / Drop Jumps', sets: '3 × 10', load: 'Körpergewicht' },
-]
+const EQUIPMENT_NOTE: Readonly<Record<Equipment, string>> = {
+  gym: '',
+  dumbbells: ' Bei leichten Hanteln entsteht der Reiz durch die einbeinige Ausführung — die letzte Wiederholung muss hart sein, sonst geht das Gewicht hoch oder die Stufe höher.',
+  bodyweight: ' Ohne Zusatzgewicht tragen die langsame Absenkphase und die Sprünge den Reiz. Sprünge immer ausgeruht zu Beginn, nie am Ende der Einheit.',
+}
 
 const INTRO_SESSIONS = 6
 const FULL_SESSIONS = 20
@@ -638,14 +677,15 @@ const PHASE_NOTE: Readonly<Record<StrengthPhase, string>> = {
   maintain: 'Erhalt: einmal pro Woche genügt jetzt. Die frei werdende Zeit gehört wieder der Ausdauer.',
 }
 
-export const strengthSession = (completed: number): StrengthSuggestion => {
+export const strengthSession = (completed: number, equipment: Equipment): StrengthSuggestion => {
   const phase = strengthPhaseFor(completed)
+  const { core, extra } = EXERCISES[equipment]
   return {
     name: 'Krafttraining',
     phase,
     minutes: phase === 'intro' ? 20 : 28,
-    note: `${PHASE_NOTE[phase]} Am selben Tag wie die harte Ausdauereinheit — direkt danach oder mindestens 6h später, nie am Tag davor.`,
-    exercises: phase === 'intro' ? CORE_EXERCISES : FULL_EXERCISES,
+    note: `${PHASE_NOTE[phase]}${EQUIPMENT_NOTE[equipment]} Am selben Tag wie die harte Ausdauereinheit — direkt danach oder mindestens 6h später, nie am Tag davor.`,
+    exercises: phase === 'intro' ? core : [...core, ...extra],
     completed,
     perWeek: phase === 'maintain' ? 1 : 2,
   }

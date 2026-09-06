@@ -46,6 +46,7 @@ export type WeeklySessions = {
 export type AthleteProfile = {
   /** The sports this athlete trains, in the order they are shown. */
   readonly sports: readonly SportSetting[]
+  readonly equipment: Equipment
   readonly weightKg: number
   readonly maxHr: number | null
   readonly lthr: number | null
@@ -136,6 +137,15 @@ export type StrengthExercise = {
 }
 
 export type StrengthPhase = 'intro' | 'full' | 'maintain'
+
+/** What the athlete can actually train with. */
+export type Equipment = 'gym' | 'dumbbells' | 'bodyweight'
+
+export const EQUIPMENT_LABELS: Readonly<Record<Equipment, string>> = {
+  gym: 'Studio / Langhantel',
+  dumbbells: 'Kurzhanteln bis 10 kg',
+  bodyweight: 'Nur Körpergewicht',
+}
 
 export type StrengthSuggestion = {
   readonly name: string

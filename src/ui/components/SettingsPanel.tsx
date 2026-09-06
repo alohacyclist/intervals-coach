@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import type { CoachConfig, Goal } from '../../coach/types.ts'
+import type { CoachConfig, Equipment, Goal } from '../../coach/types.ts'
+import { EQUIPMENT_LABELS } from '../../coach/types.ts'
 import { formatSeconds } from '../../coach/dates.ts'
 import { putConfig, syncSettings } from '../api.ts'
 import { parseMmSs } from '../format-input.ts'
@@ -50,6 +51,19 @@ export const SettingsPanel = ({ config, onSaved, onClose }: Props) => {
       <SportPicker sports={draft.profile.sports} onChange={(sports) => patchProfile({ sports })} />
 
       <div className="grid">
+        <label>
+          Krafttraining mit
+          <select
+            value={draft.profile.equipment}
+            onChange={(event) => patchProfile({ equipment: event.target.value as Equipment })}
+          >
+            {(Object.keys(EQUIPMENT_LABELS) as Equipment[]).map((option) => (
+              <option key={option} value={option}>
+                {EQUIPMENT_LABELS[option]}
+              </option>
+            ))}
+          </select>
+        </label>
         <label>
           Gewicht (kg)
           <input

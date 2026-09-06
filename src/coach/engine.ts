@@ -395,7 +395,7 @@ const strengthFor = (
   config: CoachConfig,
 ): StrengthSuggestion | null => {
   if (dayType !== 'KEY') return null
-  const session = strengthSession(config.strengthLog.length)
+  const session = strengthSession(config.strengthLog.length, config.profile.equipment)
   return simulation.strengthThisWeek < session.perWeek ? session : null
 }
 

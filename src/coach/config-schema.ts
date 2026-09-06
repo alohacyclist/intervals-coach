@@ -1,5 +1,6 @@
 import type { AthleteProfile, CoachConfig, Goal, Sport, SportSetting, SportThreshold } from './types.ts'
 import { ALL_SPORTS } from './types.ts'
+import type { Equipment } from './types.ts'
 
 export class ValidationError extends Error {
   constructor(readonly issues: readonly string[]) {
@@ -10,6 +11,7 @@ export class ValidationError extends Error {
 
 const DEFAULT_CONFIG: CoachConfig = {
   profile: {
+    equipment: 'dumbbells',
     sports: [
       { sport: 'Ride', threshold: { metric: 'power', ftp: 285 } },
       { sport: 'Run', threshold: { metric: 'pace', thresholdSecPerKm: 236 } },
@@ -138,8 +140,16 @@ const validateProfile = (raw: unknown, issues: string[]): AthleteProfile => {
   }
   if (!positive(profile['maxSessionMinutes'])) issues.push('profile.maxSessionMinutes muss > 0 sein')
 
+  const equipment = profile['equipment']
+  const validEquipment: Equipment =
+    equipment === 'gym' || equipment === 'dumbbells' || equipment === 'bodyweight'
+      ? equipment
+      : // Assume the least equipment rather than prescribing what cannot be done.
+        'dumbbells'
+
   return {
     sports,
+    equipment: validEquipment,
     weightKg: Number(profile['weightKg']),
     maxHr: positive(profile['maxHr']) ? Number(profile['maxHr']) : null,
     lthr: positive(profile['lthr']) ? Number(profile['lthr']) : null,
