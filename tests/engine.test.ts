@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { planDays } from '../src/coach/engine.ts'
 import { buildState } from '../src/coach/state.ts'
+import { addDays } from '../src/coach/dates.ts'
 import { intensityClass } from '../src/coach/library.ts'
 import { completionsFrom } from '../src/coach/progression.ts'
 import {
@@ -461,5 +462,67 @@ describe('what the athlete wants today', () => {
     const withoutWish = planDays(stateFrom(rested), config, 3, [])
     const withUndefined = planDays(stateFrom(rested), config, 3, [], undefined)
     expect(withUndefined.map((day) => day.dayType)).toEqual(withoutWish.map((day) => day.dayType))
+  })
+})
+
+describe('offering quality once the athlete has recovered', () => {
+  // Sunday, both hard sessions of the week already done, Friday and Saturday off.
+  const SUNDAY = '2026-09-06'
+  // Both were rides, exactly as in the week that surfaced this: quality is
+  // spent, but running has had none of it.
+  const week = () => [
+    { ...activity(0, 'Ride', { load: 90, intensity: 98 }), date: '2026-08-31' },
+    { ...activity(0, 'Ride', { load: 85, intensity: 96 }), date: '2026-09-03' },
+  ]
+  const stateOn = (wellnessEntries: Parameters<typeof buildState>[1] = []) =>
+    buildState(week(), wellnessEntries, SUNDAY)
+
+  it('offers a third quality session when the budget is spent but the legs are not', () => {
+    const [today] = planDays(stateOn(), config, 1)
+    expect(today?.dayType).toBe('KEY')
+    expect(today?.optional).toBe(true)
+    expect(today?.notes.join(' ')).toContain('Wochenbudget harter Einheiten erreicht')
+    expect(today?.notes.join(' ')).toContain('vertretbar')
+  })
+
+  it('does so without being asked', () => {
+    const withoutWish = planDays(stateOn(), config, 1)
+    const asked = planDays(stateOn(), config, 1, [], 'hard')
+    expect(withoutWish[0]?.dayType).toBe(asked[0]?.dayType)
+  })
+
+  it('keeps it easy while the budget is spent and no rest has happened', () => {
+    const backToBack = buildState(
+      [
+        { ...activity(0, 'Ride', { load: 90, intensity: 98 }), date: '2026-09-04' },
+        { ...activity(0, 'Run', { load: 85, intensity: 96 }), date: '2026-09-04' },
+      ],
+      [],
+      SUNDAY,
+    )
+    const [today] = planDays(backToBack, config, 1)
+    expect(today?.dayType).not.toBe('KEY')
+  })
+
+  it('does not offer it when the recovery signals say no', () => {
+    const tired = [
+      { date: SUNDAY, eftpBySport: {}, hrv: 40, restingHr: 62, sleepSecs: 4 * 3600, fatigue: 4, soreness: 4 },
+      ...Array.from({ length: 30 }, (_unused, index) => ({
+        date: addDays(SUNDAY, -(index + 1)),
+        eftpBySport: {},
+        hrv: 70,
+        restingHr: 45,
+        sleepSecs: 7 * 3600,
+        fatigue: 1,
+        soreness: 1,
+      })),
+    ]
+    const [today] = planDays(stateOn(tired), config, 1)
+    expect(today?.dayType).not.toBe('KEY')
+  })
+
+  it('recommends the sport that has had no quality work this week', () => {
+    const [today] = planDays(stateOn(), config, 1)
+    expect(today?.recommended).toBe('Run')
   })
 })

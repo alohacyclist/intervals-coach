@@ -87,6 +87,13 @@ type DayDecision = {
 
 const plan = (dayType: DayType, reason: string): DayDecision => ({ dayType, reason, optional: false })
 
+/** Past what the athlete signed up for, but supported by how they have recovered. */
+const beyondPlan = (dayType: DayType, reason: string): DayDecision => ({
+  dayType,
+  reason: `${reason} Freiwillig, nicht eingeplant.`,
+  optional: true,
+})
+
 /**
  * Rest days come out of the weekly session budget, not only out of fatigue.
  * An athlete training three times a week rests four days, and the plan has to
@@ -109,6 +116,7 @@ const applyWeeklyCapacity = (
   if (simulation.sessionsThisWeek < max) return decision
   if (decision.dayType === 'REST') return decision
 
+  if (decision.optional) return decision
   const restedEnough = simulation.consecutiveRest >= MAX_CONSECUTIVE_REST
   if (!restedEnough || state.readiness.score === 'red') {
     return plan(
@@ -199,7 +207,20 @@ const decideDay = (
     return plan('EASY', 'Keine 48h seit der letzten harten Einheit, aber die Woche läuft aus — locker statt Pause')
   }
   if (simulation.hardThisWeek >= budget) {
-    return plan('EASY', `Wochenbudget harter Einheiten erreicht (${simulation.hardThisWeek}/${budget})`)
+    const spent = `Wochenbudget harter Einheiten erreicht (${simulation.hardThisWeek}/${budget})`
+    // The budget is a weekly count and knows nothing about recovery. Once the
+    // athlete has plainly recovered, another quality session is defensible and
+    // should be offered rather than waited out until the calendar rolls over.
+    const restedOut =
+      simulation.consecutiveRest >= MAX_CONSECUTIVE_REST ||
+      minDaysSinceHard(simulation, sports) >= 4
+    const fresh = simulation.fitness.tsb > -12 && !readinessRed
+    return restedOut && fresh
+      ? beyondPlan(
+          'KEY',
+          `${spent}, aber nach ${simulation.consecutiveRest} Ruhetagen und mit Form ${simulation.fitness.tsb} ist eine weitere Qualitätseinheit vertretbar.`,
+        )
+      : plan('EASY', spent)
   }
   if (simulation.fitness.tsb < -18) return plan('EASY', 'Hohe Ermüdung — locker halten')
   if (readinessRed || (state.readiness.score === 'amber' && dayIndex === 0)) {
