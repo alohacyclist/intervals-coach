@@ -28,6 +28,7 @@ export const activity = (
   pairedEventId: null,
   compliance: null,
   averageHr: null,
+  zoneSeconds: {},
   ...overrides,
 })
 

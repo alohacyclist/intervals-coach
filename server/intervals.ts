@@ -85,6 +85,7 @@ const mapActivity = (raw: RawActivity): Activity => ({
   pairedEventId: raw['paired_event_id'] == null ? null : String(raw['paired_event_id']),
   compliance: nullableNum(raw['compliance']),
   averageHr: nullableNum(raw['average_heartrate']),
+  zoneSeconds: mapZoneTimes(raw['icu_zone_times'] ?? raw['icu_hr_zone_times']),
 })
 
 const mapEvent = (raw: Record<string, unknown>): PlannedEvent => ({
@@ -95,6 +96,17 @@ const mapEvent = (raw: Record<string, unknown>): PlannedEvent => ({
   externalId: typeof raw['external_id'] === 'string' ? raw['external_id'] : null,
   pairedActivityId: raw['paired_activity_id'] == null ? null : String(raw['paired_activity_id']),
 })
+
+/** Power zones when a meter was used, heart rate zones otherwise. */
+const mapZoneTimes = (raw: unknown): Record<string, number> => {
+  if (!Array.isArray(raw)) return {}
+  return Object.fromEntries(
+    raw
+      .map((entry) => entry as Record<string, unknown>)
+      .map((entry) => [String(entry['id'] ?? ''), num(entry['secs'])] as const)
+      .filter(([id, secs]) => id.length > 0 && secs > 0),
+  )
+}
 
 const mapEftp = (raw: unknown): Partial<Record<Sport, number>> => {
   if (!Array.isArray(raw)) return {}

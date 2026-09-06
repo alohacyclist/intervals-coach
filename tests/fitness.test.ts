@@ -71,3 +71,38 @@ describe('what counts as a hard session', () => {
     expect(inferStimulus(activity(1, 'Run', { intensity: 86, load: 37 }))).toBe('SWEETSPOT')
   })
 })
+
+describe('classifying by time in zone', () => {
+  const zoned = (zones: Record<string, number>, overrides = {}) =>
+    activity(1, 'Ride', { intensity: 85, movingTimeSec: 2940, zoneSeconds: zones, ...overrides })
+
+  it('reads a threshold session that averages out as sweetspot', () => {
+    // The real shape of 3x8min at threshold: 23 minutes in Z4, IF only 85.
+    expect(inferStimulus(zoned({ Z1: 844, Z2: 260, Z3: 11, Z4: 1427, SS: 1432 }))).toBe('THRESHOLD')
+  })
+
+  it('reads a VO2max session that averages out as threshold', () => {
+    expect(inferStimulus(zoned({ Z1: 900, Z2: 400, Z4: 300, Z5: 900 }))).toBe('VO2')
+  })
+
+  it('still calls a genuine sweetspot session sweetspot', () => {
+    expect(inferStimulus(zoned({ Z1: 600, Z2: 400, Z3: 500, Z4: 200, SS: 1100 }))).toBe('SWEETSPOT')
+  })
+
+  it('calls a steady tempo ride tempo', () => {
+    expect(inferStimulus(zoned({ Z1: 500, Z2: 400, Z3: 1400 }))).toBe('TEMPO')
+  })
+
+  it('calls an easy spin recovery', () => {
+    expect(inferStimulus(zoned({ Z1: 2600, Z2: 200 }, { movingTimeSec: 2800 }))).toBe('RECOVERY')
+  })
+
+  it('falls back to intensity when no zone data arrived', () => {
+    expect(inferStimulus(activity(1, 'Ride', { intensity: 95, zoneSeconds: {} }))).toBe('THRESHOLD')
+  })
+
+  it('makes such a session count as hard again', () => {
+    const session = zoned({ Z1: 844, Z2: 260, Z4: 1427 }, { load: 51 })
+    expect(isHardActivity(session)).toBe(true)
+  })
+})

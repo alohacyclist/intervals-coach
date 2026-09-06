@@ -100,6 +100,8 @@ export type Activity = {
   /** Percentage match against the planned workout, 0–100. */
   readonly compliance: number | null
   readonly averageHr: number | null
+  /** Seconds per training zone, keyed Z1..Z7 and SS, from power or heart rate. */
+  readonly zoneSeconds: Readonly<Record<string, number>>
 }
 
 /** A workout on the intervals.icu calendar. */

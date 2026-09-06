@@ -72,11 +72,35 @@ export const projectFitness = (fitness: Fitness, load: number): Fitness => {
   return { ctl: round(ctl), atl: round(atl), tsb: round(fitness.ctl - fitness.atl) }
 }
 
+const MINUTE = 60
+
+const secondsIn = (activity: Activity, ...zones: readonly string[]): number =>
+  zones.reduce((sum, zone) => sum + (activity.zoneSeconds[zone] ?? 0), 0)
+
 /**
- * Infers the training stimulus of a completed activity. intervals.icu does not
- * store the intent, so intensity factor and duration have to stand in for it.
+ * Classifies a session by time spent in each zone rather than by its average
+ * intensity. An interval session never averages its own stimulus — warm-up,
+ * recoveries and cool-down drag it down, so a threshold workout reads as
+ * sweetspot and a VO2max workout reads as threshold. Time in zone also survives
+ * a mis-set FTP far better, because zones are wide.
  */
-export const inferStimulus = (activity: Activity): Stimulus => {
+const fromZones = (activity: Activity): Stimulus | null => {
+  if (Object.keys(activity.zoneSeconds).length === 0) return null
+  const vo2 = secondsIn(activity, 'Z5', 'Z6', 'Z7')
+  const threshold = secondsIn(activity, 'Z4')
+  const sweetSpot = secondsIn(activity, 'SS')
+  const tempo = secondsIn(activity, 'Z3')
+
+  if (vo2 >= 6 * MINUTE) return 'VO2'
+  if (threshold >= 10 * MINUTE) return 'THRESHOLD'
+  if (sweetSpot >= 15 * MINUTE) return 'SWEETSPOT'
+  if (tempo >= 15 * MINUTE) return 'TEMPO'
+  if (activity.movingTimeSec >= 5400) return 'LONG'
+  return secondsIn(activity, 'Z1') > activity.movingTimeSec * 0.8 ? 'RECOVERY' : 'ENDURANCE'
+}
+
+/** Fallback for activities that arrive without zone data. */
+const fromIntensity = (activity: Activity): Stimulus => {
   const { intensity, movingTimeSec } = activity
   if (intensity >= 100) return 'VO2'
   if (intensity >= 92) return 'THRESHOLD'
@@ -86,6 +110,9 @@ export const inferStimulus = (activity: Activity): Stimulus => {
   if (intensity > 0 && intensity < 62) return 'RECOVERY'
   return 'ENDURANCE'
 }
+
+export const inferStimulus = (activity: Activity): Stimulus =>
+  fromZones(activity) ?? fromIntensity(activity)
 
 export const HARD_STIMULI: readonly Stimulus[] = ['VO2', 'THRESHOLD', 'SWEETSPOT']
 
