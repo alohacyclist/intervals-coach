@@ -1,5 +1,6 @@
 import type {
   CoachConfig,
+  Intent,
   StrengthSuggestion,
   DayType,
   Fitness,
@@ -120,6 +121,40 @@ const applyWeeklyCapacity = (
     ...decision,
     optional: true,
     reason: `${simulation.consecutiveRest} Ruhetage in Folge, Wochenpensum bereits erfüllt — freiwillig, nicht eingeplant. ${decision.reason}`,
+  }
+}
+
+const INTENT_TYPE: Readonly<Record<Intent, DayType>> = {
+  hard: 'KEY',
+  easy: 'EASY',
+  rest: 'REST',
+}
+
+/**
+ * The athlete knows things the model cannot see — how the legs feel, what the
+ * week ahead looks like. An explicit wish wins, but the plan says plainly what
+ * it would have done and what the wish costs.
+ */
+const applyIntent = (
+  decision: DayDecision,
+  intent: Intent | undefined,
+  simulation: Simulation,
+  sports: readonly Sport[],
+): DayDecision => {
+  if (intent === undefined) return decision
+  const wanted = INTENT_TYPE[intent]
+  if (wanted === decision.dayType) return decision
+
+  const spacing = minDaysSinceHard(simulation, sports)
+  const warning =
+    intent === 'hard' && spacing < HARD_SPACING_DAYS
+      ? ` Achtung: erst ${spacing === 0 ? 'heute' : `vor ${spacing} Tag${spacing === 1 ? '' : 'en'}`} eine harte Einheit — zwei harte Tage hintereinander kosten mehr, als sie bringen.`
+      : ''
+
+  return {
+    dayType: wanted,
+    optional: true,
+    reason: `Von dir gewählt: ${intent === 'hard' ? 'harte Einheit' : intent === 'easy' ? 'lockere Einheit' : 'Pause'}. Der Plan hätte vorgesehen: ${decision.reason}${warning}`,
   }
 }
 
@@ -391,6 +426,7 @@ export const planDays = (
   config: CoachConfig,
   days = 3,
   completions: readonly Completion[] = [],
+  intent?: Intent,
 ): readonly PlannedDay[] => {
   const budgetMinutes = config.profile.maxSessionMinutes
   const sports = selectedSports(config.profile)
@@ -408,11 +444,17 @@ export const planDays = (
       const primarySport = primaryGoal(config.goals, date)?.sport ?? 'Ride'
       const phase = phases[primarySport]
       const budget = weeklyHardBudget(phase, config.profile)
-      const decision = applyWeeklyCapacity(
-        decideDay(simulation, state, config, budget, dayIndex, date, sports),
+      const decision = applyIntent(
+        applyWeeklyCapacity(
+          decideDay(simulation, state, config, budget, dayIndex, date, sports),
+          simulation,
+          state,
+          config,
+        ),
+        // A wish applies to today only; the days after follow from what it costs.
+        dayIndex === 0 ? intent : undefined,
         simulation,
-        state,
-        config,
+        sports,
       )
       const { dayType } = decision
 

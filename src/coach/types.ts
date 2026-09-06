@@ -260,6 +260,9 @@ export type WorkoutTemplate = {
 
 export type DayType = 'KEY' | 'EASY' | 'RECOVERY' | 'REST'
 
+/** What the athlete wants today, overriding what the plan worked out. */
+export type Intent = 'hard' | 'easy' | 'rest'
+
 export type PlannedSession = {
   readonly sport: Sport
   readonly template: WorkoutTemplate

@@ -24,7 +24,7 @@ import type { ObservedThresholds } from '../src/coach/threshold-drift.ts'
 import type { Sport } from '../src/coach/types.ts'
 import { findTemplate } from '../src/coach/library.ts'
 import { describeWorkout } from '../src/coach/format.ts'
-import type { Plan } from '../src/coach/types.ts'
+import type { Intent, Plan } from '../src/coach/types.ts'
 
 const TIMEZONE = 'Europe/Berlin'
 const ACTIVITY_HISTORY_DAYS = 180
@@ -67,7 +67,7 @@ const observedThresholds = (
   }
 }
 
-const buildPlan = async (deps: RouteDeps, days: number): Promise<Plan> => {
+const buildPlan = async (deps: RouteDeps, days: number, intent?: Intent): Promise<Plan> => {
   const today = localToday()
   const config = await deps.store.load()
   const [activities, wellness, events, settings] = await Promise.all([
@@ -86,7 +86,7 @@ const buildPlan = async (deps: RouteDeps, days: number): Promise<Plan> => {
     history: buildHistory(events, activities, today, ADHERENCE_DAYS),
     thresholdSuggestions: thresholdSuggestions(config.profile, observedThresholds(wellness, settings)),
     benchmark: benchmarkStatus(config, completions, activities, today),
-    days: planDays(state, config, days, completions),
+    days: planDays(state, config, days, completions, intent),
     feasibility: assessGoals(config.goals, config.profile, today),
   }
 }
@@ -122,7 +122,9 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
   app.get('/api/plan', async (context) => {
     const requested = Number(context.req.query('days') ?? 3)
     const days = Number.isFinite(requested) ? Math.min(Math.max(Math.trunc(requested), 1), 7) : 3
-    return context.json(await buildPlan(await resolve(context), days))
+    const wish = context.req.query('intent')
+    const intent = wish === 'hard' || wish === 'easy' || wish === 'rest' ? wish : undefined
+    return context.json(await buildPlan(await resolve(context), days, intent))
   })
 
   /** Pulls FTP and threshold pace from intervals.icu into the stored profile. */

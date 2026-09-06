@@ -411,3 +411,55 @@ describe('strength progression', () => {
     expect(today?.strength?.phase).toBe('intro')
   })
 })
+
+describe('what the athlete wants today', () => {
+  // Both on Monday of the current week: the hard budget is spent, but the
+  // 48 hour spacing is satisfied, so only the budget stands in the way.
+  const spentBudget = [
+    activity(2, 'Ride', { load: 90, intensity: 98 }),
+    activity(2, 'Run', { load: 88, intensity: 96 }),
+  ]
+
+  it('turns a planned easy day into a hard one on request', () => {
+    const [planned] = planDays(stateFrom(spentBudget), config, 1, [])
+    expect(planned?.dayType).toBe('EASY')
+    const [wanted] = planDays(stateFrom(spentBudget), config, 1, [], 'hard')
+    expect(wanted?.dayType).toBe('KEY')
+    expect(wanted?.options.every((option) => intensityClass(option.template.stimulus) === 'hard')).toBe(true)
+  })
+
+  it('says what it overrode', () => {
+    const [wanted] = planDays(stateFrom(spentBudget), config, 1, [], 'hard')
+    expect(wanted?.notes.join(' ')).toContain('Von dir gewählt')
+    expect(wanted?.notes.join(' ')).toContain('Der Plan hätte vorgesehen')
+  })
+
+  it('marks a chosen day as voluntary', () => {
+    const [wanted] = planDays(stateFrom(spentBudget), config, 1, [], 'hard')
+    expect(wanted?.optional).toBe(true)
+  })
+
+  it('warns when hard would break the 48 hour rule but still complies', () => {
+    const [wanted] = planDays(stateFrom([activity(1, 'Ride', { load: 90, intensity: 98 })]), config, 1, [], 'hard')
+    expect(wanted?.dayType).toBe('KEY')
+    expect(wanted?.notes.join(' ')).toContain('zwei harte Tage hintereinander')
+  })
+
+  it('accepts a wish for rest just as readily', () => {
+    const [wanted] = planDays(stateFrom(rested), config, 1, [], 'rest')
+    expect(wanted?.dayType).toBe('REST')
+  })
+
+  it('leaves the following days to follow from the choice', () => {
+    const days = planDays(stateFrom(spentBudget), config, 3, [], 'hard')
+    expect(days[0]?.optional).toBe(true)
+    expect(days[1]?.optional).toBe(false)
+    expect(days[1]?.dayType).not.toBe('KEY')
+  })
+
+  it('changes nothing without a wish', () => {
+    const withoutWish = planDays(stateFrom(rested), config, 3, [])
+    const withUndefined = planDays(stateFrom(rested), config, 3, [], undefined)
+    expect(withUndefined.map((day) => day.dayType)).toEqual(withoutWish.map((day) => day.dayType))
+  })
+})

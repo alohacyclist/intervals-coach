@@ -18,7 +18,15 @@ type Props = {
   readonly onNeedsOnboarding: () => void
 }
 
+const INTENTS = [
+  { key: undefined, label: 'Wie geplant' },
+  { key: 'hard', label: 'Heute hart' },
+  { key: 'easy', label: 'Heute locker' },
+  { key: 'rest', label: 'Heute Pause' },
+] as const
+
 export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
+  const [intent, setIntent] = useState<'hard' | 'easy' | 'rest' | undefined>(undefined)
   const [plan, setPlan] = useState<Plan | null>(null)
   const [config, setConfig] = useState<CoachConfig | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -29,7 +37,7 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
     setBusy(true)
     setError(null)
     try {
-      const [nextPlan, nextConfig] = await Promise.all([getPlan(PLAN_DAYS), getConfig()])
+      const [nextPlan, nextConfig] = await Promise.all([getPlan(PLAN_DAYS, intent), getConfig()])
       setPlan(nextPlan)
       setConfig(nextConfig)
     } catch (caught) {
@@ -45,7 +53,7 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
     } finally {
       setBusy(false)
     }
-  }, [onNeedsOnboarding])
+  }, [onNeedsOnboarding, intent])
 
   useEffect(() => {
     void load()
@@ -76,6 +84,22 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
       )}
 
       {plan && plan.history.length > 0 && <HistoryStrip history={plan.history} />}
+
+      {plan && (
+        <div className="intent">
+          <span className="intent__label">Heute</span>
+          {INTENTS.map((option) => (
+            <button
+              key={option.label}
+              type="button"
+              className={intent === option.key ? 'intent__on' : ''}
+              onClick={() => setIntent(option.key)}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {error && (
         <p className="error error--block">

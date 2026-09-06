@@ -51,7 +51,8 @@ export const getMe = (): Promise<Me> => request<Me>('/api/me')
 export const getSportSettings = (): Promise<SportSettings> =>
   request<SportSettings>('/api/sport-settings')
 
-export const getPlan = (days: number): Promise<Plan> => request<Plan>(`/api/plan?days=${days}`)
+export const getPlan = (days: number, intent?: string): Promise<Plan> =>
+  request<Plan>(`/api/plan?days=${days}${intent ? `&intent=${intent}` : ''}`)
 
 export const getConfig = (): Promise<CoachConfig> => request<CoachConfig>('/api/config')
 
