@@ -228,12 +228,19 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
   })
 
   app.post('/api/push', async (context) => {
-    const body = (await context.req.json()) as { date?: string; templateId?: string }
+    const body = (await context.req.json()) as {
+      date?: string
+      templateId?: string
+      variant?: string
+    }
     const template = body.templateId ? findTemplate(body.templateId) : undefined
     if (!body.date || !/^\d{4}-\d{2}-\d{2}$/.test(body.date)) {
       return context.json({ error: 'date muss YYYY-MM-DD sein' }, 400)
     }
     if (!template) return context.json({ error: `Unbekanntes Workout: ${body.templateId}` }, 400)
+    if (body.variant !== undefined && body.variant !== 'full' && body.variant !== 'short') {
+      return context.json({ error: "variant muss 'full' oder 'short' sein" }, 400)
+    }
 
     const deps = await resolve(context)
     const plan = await buildPlan(deps, 7)
@@ -241,16 +248,24 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
       .find((day) => day.date === body.date)
       ?.options.find((option) => option.template.id === template.id)
 
+    const short = body.variant === 'short' ? planned?.short : undefined
+    if (body.variant === 'short' && !short) {
+      return context.json({ error: `Keine Kurzfassung für ${template.name}` }, 400)
+    }
+
+    const name = short ? `${template.name} (kurz)` : template.name
     await createWorkoutEvent(deps.auth, {
       date: body.date,
       sport: template.sport,
       templateId: template.id,
-      name: template.name,
-      description: planned?.description ?? describeWorkout(template, 'manuell ausgewählt'),
-      movingTimeSec: template.minutes * 60,
+      name,
+      description:
+        short?.description ?? planned?.description ?? describeWorkout(template, 'manuell ausgewählt'),
+      movingTimeSec: (short?.minutes ?? template.minutes) * 60,
+      variant: short ? 'short' : 'full',
     })
 
-    return context.json({ ok: true, date: body.date, name: template.name })
+    return context.json({ ok: true, date: body.date, name })
   })
 
   return app

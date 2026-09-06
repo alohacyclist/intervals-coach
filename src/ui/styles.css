@@ -153,6 +153,21 @@ input {
 .session__reason { margin: 0; color: var(--muted); font-size: 13px; }
 .session__note { margin: 0; font-size: 13px; color: var(--muted); font-style: italic; }
 
+.variants { display: flex; gap: 6px; }
+.variants__pick {
+  flex: 1;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--muted);
+  padding: 6px 8px;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+.variants__pick span { display: block; font-size: 11px; opacity: 0.8; }
+.variants__pick--on { border-color: var(--accent); color: var(--text); background: rgba(77, 163, 255, 0.12); }
+
 .steps { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 3px; font-size: 13.5px; }
 .steps li { font-variant-numeric: tabular-nums; }
 

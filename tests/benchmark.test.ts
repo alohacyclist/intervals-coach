@@ -9,6 +9,7 @@ const completion = (templateId: string, daysAgo: number, activityId: string): Co
   date: addDays(TODAY, -daysAgo),
   compliance: 90,
   activityId,
+  variant: 'full',
 })
 
 const ride = (daysAgo: number, id: string, hr: number | null) => ({

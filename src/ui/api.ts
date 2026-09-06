@@ -71,8 +71,12 @@ export const logStrength = (date: string, done: boolean): Promise<unknown> =>
 export const setDestination = (destination: string, enabled: boolean): Promise<unknown> =>
   request('/api/destination', { method: 'POST', body: JSON.stringify({ destination, enabled }) })
 
-export const pushWorkout = (date: string, templateId: string): Promise<{ name: string }> =>
+export const pushWorkout = (
+  date: string,
+  templateId: string,
+  variant: 'full' | 'short' = 'full',
+): Promise<{ name: string }> =>
   request<{ name: string }>('/api/push', {
     method: 'POST',
-    body: JSON.stringify({ date, templateId }),
+    body: JSON.stringify({ date, templateId, variant }),
   })

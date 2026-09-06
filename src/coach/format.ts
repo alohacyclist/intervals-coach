@@ -89,8 +89,15 @@ export const toHumanSteps = (
       : `${block.times}× [ ${block.steps.map((step) => humanStep(step, threshold)).join(' | ')} ]`,
   )
 
+export const describeBlocks = (
+  blocks: readonly Block[],
+  note: string,
+  reason: string,
+): string =>
+  `${toIntervalsText(blocks)}\n\n${note}\n\nWarum heute: ${reason}\n\n(automatisch erstellt von intervals-coach)`
+
 export const describeWorkout = (template: WorkoutTemplate, reason: string): string =>
-  `${toIntervalsText(template.blocks)}\n\n${template.coachNote}\n\nWarum heute: ${reason}\n\n(automatisch erstellt von intervals-coach)`
+  describeBlocks(template.blocks, template.coachNote, reason)
 
 /** Race pace per km for a target time over a distance. */
 export const racePaceSecPerKm = (targetTimeSec: number, distanceKm: number): number =>

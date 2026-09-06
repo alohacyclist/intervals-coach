@@ -8,7 +8,9 @@ import type {
   Phase,
   PlannedDay,
   PlannedSession,
+  SessionVariant,
   Sport,
+  SportThreshold,
   Stimulus,
   TrainingState,
   WorkoutTemplate,
@@ -21,7 +23,8 @@ import { defaultThreshold, selectedSports, thresholdFor } from './thresholds.ts'
 import { levelCeilings } from './progression.ts'
 import type { Completion } from './progression.ts'
 import { flattenBlocks, intensityClass, isPreferredSport, strengthSession, templatesFor } from './library.ts'
-import { describeWorkout, toHumanSteps } from './format.ts'
+import { describeBlocks, describeWorkout, toHumanSteps } from './format.ts'
+import { MIN_SAVING_MINUTES, SHORT_TARGET_MINUTES, shorten, totalSeconds } from './variant.ts'
 
 /** Minimum days between two hard sessions, regardless of sport. */
 const HARD_SPACING_DAYS = 2
@@ -322,20 +325,50 @@ const reasonFor = (
   return `Regeneration hat Vorrang (${PHASE_LABELS[phase]})`
 }
 
+const SHORT_NOTE =
+  'Kurzfassung: gleiche Intervalllänge, gleiche Zielwerte, weniger Volumen. Der Reiz bleibt, die Zeit nicht.'
+
+/**
+ * The short version is derived, never hand written, so it exists for every
+ * session and always keeps the intensity the full one asks for.
+ */
+const shortVariant = (
+  template: WorkoutTemplate,
+  threshold: SportThreshold,
+  reason: string,
+): SessionVariant | null => {
+  const fullSec = totalSeconds(template.blocks, threshold)
+  if (fullSec === 0 || template.minutes <= SHORT_TARGET_MINUTES) return null
+  const { blocks, cuts } = shorten(template.blocks, threshold, SHORT_TARGET_MINUTES / template.minutes)
+  const shortSec = totalSeconds(blocks, threshold)
+  // The authored duration stays authoritative; the short one scales off it.
+  const minutes = Math.round((template.minutes * shortSec) / fullSec)
+  if (template.minutes - minutes < MIN_SAVING_MINUTES) return null
+  return {
+    minutes,
+    load: Math.round((template.load * shortSec) / fullSec),
+    blocks,
+    description: describeBlocks(blocks, `${template.coachNote}\n\n${SHORT_NOTE}`, reason),
+    humanSteps: toHumanSteps(blocks, threshold),
+    cuts,
+  }
+}
+
 const buildSession = (
   template: WorkoutTemplate,
   config: CoachConfig,
   reason: string,
-): PlannedSession => ({
-  sport: template.sport,
-  template,
-  reason,
-  description: describeWorkout(template, reason),
-  humanSteps: toHumanSteps(
-    template.blocks,
-    thresholdFor(config.profile, template.sport) ?? defaultThreshold(template.sport),
-  ),
-})
+): PlannedSession => {
+  const threshold = thresholdFor(config.profile, template.sport) ?? defaultThreshold(template.sport)
+  return {
+    sport: template.sport,
+    template,
+    reason,
+    description: describeWorkout(template, reason),
+    humanSteps: toHumanSteps(template.blocks, threshold),
+    short: shortVariant(template, threshold, reason),
+  }
+}
 
 const chooseRecommended = (
   dayType: DayType,

@@ -10,14 +10,18 @@ export type Completion = {
   readonly date: string
   readonly compliance: number | null
   readonly activityId: string
+  readonly variant: 'full' | 'short'
 }
 
-/** `coach:<date>:<templateId>` is written when the app pushes a workout. */
+/** `coach:<date>:<templateId>[:short]` is written when the app pushes a workout. */
 const templateIdOf = (event: PlannedEvent): string | null => {
   if (event.externalId?.startsWith(EXTERNAL_ID_PREFIX) !== true) return null
   const id = event.externalId.split(':')[2]
   return id && id.length > 0 ? id : null
 }
+
+const variantOf = (event: PlannedEvent): 'full' | 'short' =>
+  event.externalId?.split(':')[3] === 'short' ? 'short' : 'full'
 
 /**
  * Sessions this app proposed that intervals.icu paired with a real activity.
@@ -35,7 +39,15 @@ export const completionsFrom = (
       activities.find((candidate) => candidate.pairedEventId === event.id) ??
       activities.find((candidate) => candidate.id === event.pairedActivityId)
     return activity
-      ? [{ templateId, date: event.date, compliance: activity.compliance, activityId: activity.id }]
+      ? [
+          {
+            templateId,
+            date: event.date,
+            compliance: activity.compliance,
+            activityId: activity.id,
+            variant: variantOf(event),
+          },
+        ]
       : []
   })
 
@@ -47,11 +59,14 @@ const levelsIn = (family: string): readonly number[] =>
 /**
  * The level an athlete has earned in one progression family: one above the
  * highest level they have completed closely enough, capped by what exists.
+ * Short versions do not count — doing half the intervals proves the athlete
+ * can hold the pace, not that they can hold it for the whole session.
  */
 export const levelFor = (family: string, completions: readonly Completion[]): number => {
   const levels = levelsIn(family)
   const top = levels[levels.length - 1] ?? 1
   const cleared = completions
+    .filter((completion) => completion.variant === 'full')
     .filter((completion) => (completion.compliance ?? 0) >= GOOD_COMPLIANCE)
     .map((completion) => LIBRARY.find((template) => template.id === completion.templateId))
     .filter((template) => template?.family === family)

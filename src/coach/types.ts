@@ -273,12 +273,28 @@ export type DayType = 'KEY' | 'EASY' | 'RECOVERY' | 'REST'
 /** What the athlete wants today, overriding what the plan worked out. */
 export type Intent = 'hard' | 'easy' | 'rest'
 
+/**
+ * The same session in less time. Offered alongside the full version so a short
+ * day does not become a skipped day.
+ */
+export type SessionVariant = {
+  readonly minutes: number
+  readonly load: number
+  readonly blocks: readonly Block[]
+  readonly description: string
+  readonly humanSteps: readonly string[]
+  /** What was removed, so the athlete can see the stimulus survived. */
+  readonly cuts: readonly string[]
+}
+
 export type PlannedSession = {
   readonly sport: Sport
   readonly template: WorkoutTemplate
   readonly reason: string
   readonly description: string
   readonly humanSteps: readonly string[]
+  /** null when the session is already short enough to be worth only one version. */
+  readonly short: SessionVariant | null
 }
 
 export type PlannedDay = {

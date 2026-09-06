@@ -15,11 +15,24 @@ type PushState = { readonly status: 'idle' | 'busy' | 'done' | 'error'; readonly
 
 export const SessionCard = ({ session, date, recommended, destinations }: Props) => {
   const [push, setPush] = useState<PushState>({ status: 'idle' })
+  const [variant, setVariant] = useState<'full' | 'short'>('full')
+
+  const short = session.short
+  const active = variant === 'short' ? short : null
+  const minutes = active?.minutes ?? session.template.minutes
+  const load = active?.load ?? session.template.load
+  const steps = active?.humanSteps ?? session.humanSteps
+
+  // A pushed workout belongs to one version, so switching starts the choice over.
+  const choose = (next: 'full' | 'short') => {
+    setVariant(next)
+    setPush({ status: 'idle' })
+  }
 
   const onPush = async () => {
     setPush({ status: 'busy' })
     try {
-      await pushWorkout(date, session.template.id)
+      await pushWorkout(date, session.template.id, variant)
       setPush({ status: 'done', message: 'Im Kalender' })
     } catch (error) {
       setPush({ status: 'error', message: error instanceof Error ? error.message : 'Fehler' })
@@ -31,21 +44,47 @@ export const SessionCard = ({ session, date, recommended, destinations }: Props)
       <div className="session__head">
         <span className={`badge badge--${session.sport.toLowerCase()}`}>{SPORT_LABELS[session.sport]}</span>
         {recommended && <span className="badge badge--pick">Empfehlung</span>}
-        <span className="session__meta">
-          {session.template.minutes} min · {session.template.load} TSS
-        </span>
+        <span className="session__meta">{load} TSS</span>
       </div>
 
       <h3>{session.template.name}</h3>
       <p className="session__reason">{session.reason}</p>
 
+      {short ? (
+        <div className="variants" role="group" aria-label="Dauer wählen">
+          <button
+            type="button"
+            className={variant === 'full' ? 'variants__pick variants__pick--on' : 'variants__pick'}
+            onClick={() => choose('full')}
+          >
+            {session.template.minutes} min <span>komplett</span>
+          </button>
+          <button
+            type="button"
+            className={variant === 'short' ? 'variants__pick variants__pick--on' : 'variants__pick'}
+            onClick={() => choose('short')}
+          >
+            {short.minutes} min <span>kurz</span>
+          </button>
+        </div>
+      ) : (
+        <p className="session__meta">{minutes} min</p>
+      )}
+
       <ol className="steps">
-        {session.humanSteps.map((step, index) => (
-          <li key={`${session.template.id}-${index}`}>{step}</li>
+        {steps.map((step, index) => (
+          <li key={`${session.template.id}-${variant}-${index}`}>{step}</li>
         ))}
       </ol>
 
-      <p className="session__note">{session.template.coachNote}</p>
+      {active ? (
+        <p className="session__note">
+          {active.cuts.join(' · ')}. Intervalllänge und Zielwerte bleiben unverändert — nur das
+          Volumen sinkt. Zählt nicht für die Progression zur nächsten Stufe.
+        </p>
+      ) : (
+        <p className="session__note">{session.template.coachNote}</p>
+      )}
 
       <button type="button" onClick={onPush} disabled={push.status === 'busy' || push.status === 'done'}>
         {push.status === 'busy'
