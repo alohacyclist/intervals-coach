@@ -1,8 +1,12 @@
 # intervals-coach
 
 Browser-App, die auf Basis der letzten Trainingseinheiten aus intervals.icu die nächsten
-drei Tage plant. Jeder Tag zeigt **eine Rad- und eine Laufeinheit** als gleichwertige
-Alternativen plus eine Empfehlung, welche der beiden heute mehr bringt.
+drei Tage plant. Jeder Tag zeigt **jede gewählte Sportart** (Rad, Lauf, Schwimmen) als
+gleichwertige Alternative plus eine Empfehlung, welche davon heute am meisten bringt —
+und jede Einheit zusätzlich als Kurzfassung, falls der Tag knapper wird als gedacht.
+
+Der Plan hält sich an das, was tatsächlich passiert ist: eine andere Sportart, eine
+ausgefallene Woche oder ein spontaner harter Tag verschieben ihn, statt ihn zu brechen.
 
 ## Setup
 
@@ -59,15 +63,57 @@ Einstellungen in der App.
    Erholungswoche. Ziele ohne Datum durchlaufen 4-Wochen-Blöcke Grundlage/Aufbau.
 3. **Tagestyp** — Regeln in dieser Reihenfolge: Readiness rot → Regeneration/Ruhe;
    Form < −30 → Regeneration; weniger als 48 h seit der letzten harten Einheit → locker;
-   Wochenbudget harter Einheiten erschöpft → locker; sonst Qualitätstag.
+   Wochenbudget harter Einheiten erschöpft → locker; sonst Qualitätstag. Nach zwei vollen
+   Ruhetagen kippt die Budgetregel: ist die Form gut, wird trotzdem eine Qualitätseinheit
+   angeboten — als freiwillig markiert, nicht eingeplant. Drei Ruhetage am Stück kann der
+   Plan nicht vorschlagen, das wäre Formverlust statt Erholung.
 4. **Auswahl** — pro Sportart wird aus der Workout-Bibliothek der Reiz gewählt, der am
    längsten zurückliegt, zur Phase passt und ins Zeitbudget fällt. Zuletzt absolvierte
    und bereits vorgeschlagene Workouts werden abgewertet, damit sich nichts wiederholt.
 5. **Simulation** — Tag 2 und 3 werden auf Basis der für Tag 1 empfohlenen Einheit
    gerechnet, damit nie zwei harte Tage hintereinander stehen.
 
-Das Wochenbudget harter Einheiten ist auf `weeklySessions − 1` gedeckelt: bei drei
-Einheiten pro Woche also zwei Qualitätseinheiten plus eine lockere oder lange.
+Das Wochenbudget harter Einheiten leitet sich aus `weeklySessions` ab: bei drei Einheiten
+pro Woche zwei Qualitätseinheiten plus eine lockere oder lange. Die Obergrenze bestimmt,
+was *eingeplant* wird — nicht, was der Körper verträgt: alles darüber erscheint weiter,
+nur als freiwillig markiert.
+
+**Reiz-Erkennung.** Ob eine vergangene Einheit hart war, entscheidet die Zeit in den
+Zonen, nicht die Durchschnittsintensität — ein Intervalltraining hat über die ganze
+Einheit gemittelt oft nur 85 %, enthält aber 25 Minuten an der Schwelle. Ohne die
+Zonenauswertung würden genau die Einheiten übersehen, die zählen.
+
+**Heute anders.** Über „Heute hart / locker / Pause“ lässt sich der Tagestyp überschreiben.
+Der Wunsch gilt nur für heute; was er kostet, rechnen die Folgetage mit ein.
+
+## Kurzfassung jeder Einheit
+
+Jede Einheit ab etwa einer Stunde gibt es zusätzlich als 45-Minuten-Version. Was gekürzt
+wird, hängt am Reiz: Intervalltrainings behalten Intervalllänge und Zielwerte und
+verlieren Wiederholungen, Dauerbelastungen werden schlicht kürzer — dort *ist* die Dauer
+der Reiz. Auf- und Auswärmen geht zuerst. Nichts verliert mehr als die Hälfte von sich,
+und eine Kurzfassung schaltet keine Progressionsstufe frei.
+
+## Progression, Kraft, Benchmarks
+
+**Stufen.** Workouts gehören zu Familien (`bike-threshold`, `run-vo2`, …). Die nächste
+Stufe wird frei, wenn die vorige mit mindestens 75 % Compliance absolviert wurde — belegt
+über die Verknüpfung von Kalendereintrag und tatsächlicher Aktivität, nicht über den Plan.
+
+**Krafttraining** erscheint optional an geeigneten Tagen (nie am Tag vor einer harten
+Einheit) und passt sich an die vorhandene Ausrüstung an: Studio, Kurzhanteln bis 10 kg
+oder nur Körpergewicht. Ohne Gewichte übernehmen einbeinige Arbeit, langsame Absenkphasen
+und Plyometrie die Rolle der Last.
+
+**Benchmarks.** Alle 8 Wochen schlägt die App eine feste Referenzeinheit vor (4×4 min),
+immer unverändert, damit die Ergebnisse vergleichbar bleiben. Verglichen wird Leistung
+gegen Herzfrequenz.
+
+**Schwellenwerte.** Weichen die in intervals.icu beobachteten Werte von den eingestellten
+ab, schlägt die App eine Korrektur vor — Zuwächse ab 3 %, Rückgänge erst ab 6 %. Eine
+Schätzung beweist eine Untergrenze, nie eine Obergrenze: dass eine Leistung *nicht*
+erreicht wurde, kann auch heißen, dass sie nie versucht wurde. Übernommene Werte werden
+nach intervals.icu zurückgeschrieben (`ftp` und `indoor_ftp` gemeinsam).
 
 ## Workouts in den Kalender
 
@@ -76,6 +122,18 @@ Jede Einheit hat einen Button „→ intervals.icu Kalender“. Der Server erzeu
 auf Rolle bzw. Uhr. Zielangaben sind Prozentwerte von FTP bzw. Schwellenpace, damit
 intervals.icu immer mit den dort hinterlegten Werten rechnet; die App zeigt zusätzlich
 die absoluten Watt- und Pace-Bereiche an.
+
+**Zielgeräte** (Garmin Connect, Wahoo, Zwift) lassen sich direkt in der App schalten. Die
+Weiterleitung macht intervals.icu selbst; die App setzt nur die entsprechenden Flags am
+Athletenprofil.
+
+## Darstellung
+
+Hell, dunkel oder nach Systemeinstellung, umschaltbar in der Kopfzeile jeder Ansicht. Die
+Wahl liegt im `localStorage` und wird vor dem ersten Rendern angewendet, damit die Seite
+nie kurz im falschen Modus aufblitzt. Die Schriften (IBM Plex Mono und Sans Condensed)
+sind mit ausgeliefert und werden nicht von Google geladen — bei Gesundheitsdaten auf der
+Seite wäre die Übertragung der Besucher-IP an Dritte nicht vertretbar.
 
 ## Mehrbenutzer-Betrieb
 
@@ -127,8 +185,14 @@ src/coach/     reine Trainingslogik, ohne IO — hier liegt die gesamte Fachlich
   fitness.ts   CTL/ATL/TSB, Reiz-Erkennung aus vergangenen Aktivitäten
   readiness.ts HRV-, Ruhepuls-, Schlaf- und Form-Flags gegen die 30-Tage-Baseline
   phase.ts     Periodisierung und Wochenbudget
-  library.ts   Workout-Bibliothek (Rad auf Rolle, Lauf)
+  library.ts   Workout-Bibliothek (Rad, Lauf, Schwimmen) und Kraftübungen
+  variant.ts   leitet aus jeder Einheit die Kurzfassung ab
   engine.ts    Regel-Engine für die nächsten Tage
+  progression.ts  Stufen je Workout-Familie, aus tatsächlich absolvierten Einheiten
+  adherence.ts absolviert, getauscht, ausgefallen — die letzten sieben Tage
+  benchmark.ts Referenzeinheit alle acht Wochen
+  threshold-drift.ts  Abgleich der Schwellenwerte mit intervals.icu
+  config-schema.ts    Validierung und Migration der gespeicherten Konfiguration
   feasibility.ts  Realismus-Check der Ziele
 server/        intervals.icu-Client, HTTP-Routen, Node-Entry für die Entwicklung
 worker/        Cloudflare-Worker-Entry
@@ -137,6 +201,8 @@ worker/        Cloudflare-Worker-Entry
   crypto.ts    HMAC-Signatur und AES-GCM-Verschlüsselung (Web Crypto)
   users.ts     Nutzer- und Konfigurationsspeicher in KV, je Athlet
 src/ui/        React-Oberfläche
+  styles/      Designrichtung „Messgerät“, Tokens für hell und dunkel
+  theme.ts     Moduswahl, gespeichert je Browser
 tests/         Vitest (npm test)
 scripts/demo.ts  Plan aus synthetischen Daten, läuft ohne API-Zugang
 ```
