@@ -43,24 +43,34 @@ it is read back, so the plan progresses on what was actually completed.
 - http://localhost:8787/auth/callback
 
 **Scopes requested**
-`ACTIVITY:READ WELLNESS:READ CALENDAR:WRITE` plus whichever scope covers
-`PUT /athlete/{id}/sport-settings/{type}` — I could not find it documented, so
-please let me know the correct one (or whether that endpoint is off limits to
-OAuth clients).
+Reading: `ACTIVITY:READ WELLNESS:READ`
+Writing: `CALENDAR:WRITE`, plus whichever scopes cover the two settings writes
+below — I could not find them documented, so please tell me the right ones, or
+whether those endpoints are off limits to OAuth clients and I should drop the
+features.
 
-- `ACTIVITY:READ` — compute fitness, fatigue and form per sport, and detect when the
-  last hard session was
-- `WELLNESS:READ` — HRV, resting heart rate and sleep, compared against the athlete's
-  own baseline, to decide whether today should be a quality day
-- `CALENDAR:WRITE` — write the selected workout to the athlete's calendar so it syncs to
-  their trainer or watch
+- `ACTIVITY:READ` — compute fitness, fatigue and form per sport, detect when the
+  last hard session was, and read the pairing between a planned workout and the
+  activity that fulfilled it so the plan progresses on what was really done
+- `WELLNESS:READ` — HRV, resting heart rate and sleep against the athlete's own
+  baseline, to decide whether today should be a quality day
+- `CALENDAR:WRITE` — write the selected workout to the athlete's calendar
 
-- sport settings write — only to keep FTP and threshold pace in step with what
-  the app has adopted, so that intervals.icu computes load, intensity and
-  workout compliance against the same numbers the plan uses. Written only when
-  the athlete explicitly confirms, never in the background.
+Two settings writes, both only on an explicit click by the athlete, never in the
+background:
 
-No write access to activities and no delete access is needed.
+- `PUT /athlete/{id}/sport-settings/{type}` — keep FTP and threshold pace in step
+  with the value the athlete has just adopted in the app. It matters because
+  intervals.icu computes load, intensity and workout compliance from its own
+  numbers; leaving them stale feeds wrong figures back into the plan.
+- `PUT /athlete/{id}` — toggle the `*_upload_workouts` flags so a planned session
+  reaches the athlete's watch, head unit or trainer. I am aware this endpoint
+  covers the whole athlete record: the app reads the record, changes only that
+  one flag and writes it back unchanged otherwise. If you would rather not hand
+  out that endpoint, a narrower one would work just as well — or I will simply
+  point athletes at your settings page instead.
+
+No write access to activities and no delete access anywhere is needed.
 
 **Scale**
 Currently myself plus a handful of training partners. No commercial use, no data resale.
