@@ -15,9 +15,10 @@ type Props = {
   readonly index: number
   readonly strengthDone: boolean
   readonly onStrengthLogged: () => void
+  readonly destinations: readonly string[]
 }
 
-export const DayCard = ({ day, index, strengthDone, onStrengthLogged }: Props) => (
+export const DayCard = ({ day, index, strengthDone, onStrengthLogged, destinations }: Props) => (
   <section className="day">
     <div className="day__head">
       <h2>
@@ -60,6 +61,7 @@ export const DayCard = ({ day, index, strengthDone, onStrengthLogged }: Props) =
           session={session}
           date={day.date}
           recommended={day.recommended === session.sport}
+          destinations={destinations}
         />
       ))}
     </div>

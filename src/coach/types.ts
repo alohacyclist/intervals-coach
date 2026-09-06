@@ -321,12 +321,22 @@ export type BenchmarkStatus = {
   readonly results: readonly BenchmarkResult[]
 }
 
+/** Where intervals.icu forwards planned workouts. Global per athlete, not per session. */
+export type WorkoutDestination = 'garmin' | 'wahoo' | 'zwift' | 'coros' | 'suunto'
+
+export type DestinationState = {
+  readonly destination: WorkoutDestination
+  readonly label: string
+  readonly enabled: boolean
+}
+
 export type Plan = {
   readonly generatedAt: string
   readonly state: TrainingState
   readonly history: readonly AdherenceDay[]
   readonly thresholdSuggestions: readonly ThresholdSuggestion[]
   readonly benchmark: BenchmarkStatus
+  readonly destinations: readonly DestinationState[]
   readonly days: readonly PlannedDay[]
   readonly feasibility: readonly Feasibility[]
 }

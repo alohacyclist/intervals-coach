@@ -7,11 +7,13 @@ type Props = {
   readonly session: PlannedSession
   readonly date: string
   readonly recommended: boolean
+  /** Named so the button says where the workout actually ends up. */
+  readonly destinations: readonly string[]
 }
 
 type PushState = { readonly status: 'idle' | 'busy' | 'done' | 'error'; readonly message?: string }
 
-export const SessionCard = ({ session, date, recommended }: Props) => {
+export const SessionCard = ({ session, date, recommended, destinations }: Props) => {
   const [push, setPush] = useState<PushState>({ status: 'idle' })
 
   const onPush = async () => {
@@ -46,7 +48,13 @@ export const SessionCard = ({ session, date, recommended }: Props) => {
       <p className="session__note">{session.template.coachNote}</p>
 
       <button type="button" onClick={onPush} disabled={push.status === 'busy' || push.status === 'done'}>
-        {push.status === 'busy' ? 'Sende…' : push.status === 'done' ? '✓ Im Kalender' : '→ intervals.icu Kalender'}
+        {push.status === 'busy'
+          ? 'Sende…'
+          : push.status === 'done'
+            ? '✓ Übertragen'
+            : destinations.length > 0
+              ? `→ Kalender + ${destinations.join(', ')}`
+              : '→ intervals.icu Kalender'}
       </button>
       {push.status === 'error' && <p className="error">{push.message}</p>}
     </article>

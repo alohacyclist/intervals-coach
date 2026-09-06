@@ -8,8 +8,10 @@ import {
   createWorkoutEvent,
   fetchActivities,
   fetchEvents,
+  fetchDestinations,
   fetchSportSettings,
   fetchWellness,
+  setDestination,
   updateSportThreshold,
 } from './intervals.ts'
 import { addDays } from '../src/coach/dates.ts'
@@ -70,12 +72,13 @@ const observedThresholds = (
 const buildPlan = async (deps: RouteDeps, days: number, intent?: Intent): Promise<Plan> => {
   const today = localToday()
   const config = await deps.store.load()
-  const [activities, wellness, events, settings] = await Promise.all([
+  const [activities, wellness, events, settings, destinations] = await Promise.all([
     fetchActivities(deps.auth, addDays(today, -ACTIVITY_HISTORY_DAYS), today),
     fetchWellness(deps.auth, addDays(today, -WELLNESS_HISTORY_DAYS), today),
     fetchEvents(deps.auth, addDays(today, -PROGRESSION_DAYS), today),
     // Optional: a missing scope must not take the whole plan down.
     fetchSportSettings(deps.auth).catch(() => null),
+    fetchDestinations(deps.auth).catch(() => []),
   ])
   const state = buildState(activities, wellness, today)
   const completions = completionsFrom(events, activities)
@@ -86,6 +89,7 @@ const buildPlan = async (deps: RouteDeps, days: number, intent?: Intent): Promis
     history: buildHistory(events, activities, today, ADHERENCE_DAYS),
     thresholdSuggestions: thresholdSuggestions(config.profile, observedThresholds(wellness, settings)),
     benchmark: benchmarkStatus(config, completions, activities, today),
+    destinations,
     days: planDays(state, config, days, completions, intent),
     feasibility: assessGoals(config.goals, config.profile, today),
   }
@@ -205,6 +209,22 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
         ? config.strengthLog.filter((entry) => entry !== body.date)
         : [...config.strengthLog, body.date]
     return context.json(await store.save(validateConfig({ ...config, strengthLog })))
+  })
+
+  /** Turns one forwarding destination on or off in intervals.icu. */
+  app.post('/api/destination', async (context) => {
+    const body = (await context.req.json()) as { destination?: string; enabled?: boolean }
+    const known = ['garmin', 'wahoo', 'zwift', 'coros', 'suunto']
+    if (!body.destination || !known.includes(body.destination)) {
+      return context.json({ error: `destination muss eines von ${known.join(', ')} sein` }, 400)
+    }
+    const { auth } = await resolve(context)
+    const updated = await setDestination(
+      auth,
+      body.destination as Parameters<typeof setDestination>[1],
+      body.enabled !== false,
+    )
+    return context.json({ destinations: updated })
   })
 
   app.post('/api/push', async (context) => {

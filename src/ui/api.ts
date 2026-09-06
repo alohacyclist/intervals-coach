@@ -68,6 +68,9 @@ export const adoptThreshold = (sport: string, observed: number): Promise<unknown
 export const logStrength = (date: string, done: boolean): Promise<unknown> =>
   request('/api/strength', { method: 'POST', body: JSON.stringify({ date, done }) })
 
+export const setDestination = (destination: string, enabled: boolean): Promise<unknown> =>
+  request('/api/destination', { method: 'POST', body: JSON.stringify({ destination, enabled }) })
+
 export const pushWorkout = (date: string, templateId: string): Promise<{ name: string }> =>
   request<{ name: string }>('/api/push', {
     method: 'POST',

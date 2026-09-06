@@ -1,4 +1,11 @@
-import type { Activity, PlannedEvent, Sport, Wellness } from '../src/coach/types.ts'
+import type {
+  Activity,
+  DestinationState,
+  PlannedEvent,
+  Sport,
+  Wellness,
+  WorkoutDestination,
+} from '../src/coach/types.ts'
 
 /**
  * Credentials for one athlete. A personal API key covers the single user setup;
@@ -233,6 +240,51 @@ export const updateSportThreshold = async (
     method: 'PUT',
     body: JSON.stringify(body),
   })
+}
+
+const DESTINATION_FIELDS: Readonly<Record<WorkoutDestination, string>> = {
+  garmin: 'icu_garmin_upload_workouts',
+  wahoo: 'wahoo_upload_workouts',
+  zwift: 'zwift_upload_workouts',
+  coros: 'coros_upload_workouts',
+  suunto: 'suunto_upload_workouts',
+}
+
+const DESTINATION_LABELS: Readonly<Record<WorkoutDestination, string>> = {
+  garmin: 'Garmin Connect',
+  wahoo: 'Wahoo',
+  zwift: 'Zwift',
+  coros: 'Coros',
+  suunto: 'Suunto',
+}
+
+const readAthlete = (auth: IntervalsAuth) =>
+  request<Record<string, unknown>>(auth, `/athlete/${auth.athleteId}`)
+
+export const fetchDestinations = async (auth: IntervalsAuth): Promise<readonly DestinationState[]> => {
+  const athlete = await readAthlete(auth)
+  return (Object.keys(DESTINATION_FIELDS) as WorkoutDestination[]).map((destination) => ({
+    destination,
+    label: DESTINATION_LABELS[destination],
+    enabled: athlete[DESTINATION_FIELDS[destination]] === true,
+  }))
+}
+
+/**
+ * Reads the whole athlete record and writes it back with one flag changed. A
+ * partial PUT would risk clearing settings this app knows nothing about.
+ */
+export const setDestination = async (
+  auth: IntervalsAuth,
+  destination: WorkoutDestination,
+  enabled: boolean,
+): Promise<readonly DestinationState[]> => {
+  const athlete = await readAthlete(auth)
+  await request(auth, `/athlete/${auth.athleteId}`, {
+    method: 'PUT',
+    body: JSON.stringify({ ...athlete, [DESTINATION_FIELDS[destination]]: enabled }),
+  })
+  return fetchDestinations(auth)
 }
 
 export const createWorkoutEvent = async (auth: IntervalsAuth, event: CalendarEvent): Promise<unknown> =>
