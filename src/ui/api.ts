@@ -39,6 +39,8 @@ export type Me = {
   readonly onboarded: boolean
   readonly name?: string
   readonly athleteId?: string
+  /** Proof that consent was given, shown back to the athlete who gave it. */
+  readonly consentAt?: string | null
 }
 
 export type SportSettings = {
@@ -80,3 +82,6 @@ export const pushWorkout = (
     method: 'POST',
     body: JSON.stringify({ date, templateId, variant }),
   })
+
+export const deleteAccount = (): Promise<{ ok: boolean }> =>
+  request<{ ok: boolean }>('/api/account', { method: 'DELETE' })

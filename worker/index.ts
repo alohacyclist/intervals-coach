@@ -4,7 +4,7 @@ import { basicAuth } from 'hono/basic-auth'
 import { createApiRoutes } from '../server/routes.ts'
 import type { RouteDeps } from '../server/routes.ts'
 import { kvConfigStore } from './config-store-kv.ts'
-import { loadUser, saveUser, userConfigStore, hasConfig } from './users.ts'
+import { deleteUser, loadUser, needsTouch, saveUser, touchUser, userConfigStore, hasConfig } from './users.ts'
 import { authorizeUrl, exchangeCode, fetchAthlete, refreshTokens } from './oauth.ts'
 import type { OAuthApp } from './oauth.ts'
 import { randomToken } from './crypto.ts'
@@ -52,7 +52,15 @@ const multiUserDeps = async (context: Context, athleteId: string): Promise<Route
     expiringSoon && user.tokens.refreshToken
       ? await refreshTokens(oauthApp(context), user.tokens.refreshToken)
       : user.tokens
-  if (tokens !== user.tokens) await saveUser(env.COACH_CONFIG, secret, { ...user, tokens })
+
+  // One write covers both jobs: the new token and the renewed retention window.
+  if (tokens !== user.tokens || needsTouch(user)) {
+    await touchUser(env.COACH_CONFIG, secret, {
+      ...user,
+      tokens,
+      lastSeenAt: new Date().toISOString(),
+    })
+  }
 
   return {
     auth: { kind: 'bearer', accessToken: tokens.accessToken, athleteId },
@@ -76,6 +84,9 @@ const singleUserDeps = (context: Context): RouteDeps => {
 
 app.get('/auth/login', async (context) => {
   if (!isMultiUser(context.env)) return context.text('Anmeldung ist nicht konfiguriert', 404)
+  // Health data needs explicit consent (Art. 9 (2) (a) GDPR), so the login refuses
+  // without it rather than trusting the page to have asked.
+  if (context.req.query('einwilligung') !== 'ja') return context.redirect('/?fehler=einwilligung', 302)
   const state = randomToken()
   context.header('Set-Cookie', createStateCookie(state))
   return context.redirect(authorizeUrl(oauthApp(context), state), 302)
@@ -97,11 +108,15 @@ app.get('/auth/callback', async (context) => {
   const secret = context.env.SESSION_SECRET
 
   const existing = await loadUser(context.env.COACH_CONFIG, secret, athlete.id)
+  const now = new Date().toISOString()
   await saveUser(context.env.COACH_CONFIG, secret, {
     athleteId: athlete.id,
     name: athlete.name,
     tokens,
-    createdAt: existing?.createdAt ?? new Date().toISOString(),
+    createdAt: existing?.createdAt ?? now,
+    // Reaching this point required the consent gate above; the first pass is the record.
+    consentAt: existing?.consentAt ?? now,
+    lastSeenAt: now,
   })
 
   context.header('Set-Cookie', await createSessionCookie(athlete.id, secret), { append: true })
@@ -127,6 +142,7 @@ app.get('/api/me', async (context) => {
     onboarded: await hasConfig(env.COACH_CONFIG, athleteId),
     name: user?.name ?? 'Athlet',
     athleteId,
+    consentAt: user?.consentAt ?? null,
   })
 })
 
@@ -153,6 +169,18 @@ app.use('*', async (context, next) => {
     )
   }
   return basicAuth({ username: env.APP_USER ?? 'coach', password: env.APP_PASSWORD })(context, next)
+})
+
+/** Art. 17 in one request: erase the account, then end the session. */
+app.delete('/api/account', async (context) => {
+  const env = context.env as Bindings
+  if (!isMultiUser(env)) return context.json({ error: 'Nur im Mehrbenutzer-Betrieb' }, 400)
+  const athleteId = await sessionAthlete(context)
+  if (!athleteId) return context.json({ error: 'Nicht angemeldet', needsLogin: true }, 401)
+
+  await deleteUser(env.COACH_CONFIG, athleteId)
+  context.header('Set-Cookie', clearSessionCookie())
+  return context.json({ ok: true })
 })
 
 app.route(

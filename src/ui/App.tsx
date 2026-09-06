@@ -5,7 +5,8 @@ import type { Me } from './api.ts'
 import { Landing } from './Landing.tsx'
 import { Onboarding } from './Onboarding.tsx'
 import { PlanView } from './PlanView.tsx'
-import { Imprint, Privacy } from './Legal.tsx'
+import { Imprint } from './legal/Imprint.tsx'
+import { Privacy } from './legal/Privacy.tsx'
 import { ThemeSwitch } from './components/ThemeSwitch.tsx'
 
 /** Every view carries the mode switch, so the choice is never buried in settings. */

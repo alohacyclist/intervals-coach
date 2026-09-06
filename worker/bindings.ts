@@ -2,9 +2,12 @@
  * Minimal shapes of the Cloudflare runtime objects this Worker touches.
  * Declared locally so the project keeps a single, Node-flavoured type setup.
  */
+/** `expirationTtl` is how the retention promise is kept: the store forgets on its own. */
+export type KVPutOptions = { readonly expirationTtl?: number }
+
 export type KVNamespace = {
   get(key: string, type: 'text'): Promise<string | null>
-  put(key: string, value: string): Promise<void>
+  put(key: string, value: string, options?: KVPutOptions): Promise<void>
   delete(key: string): Promise<void>
 }
 

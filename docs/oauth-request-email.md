@@ -1,7 +1,7 @@
 # OAuth client request — email to david@intervals.icu
 
-Fill in every `[...]` before sending. The five bracketed items are the only things
-missing; everything else is ready.
+Ready to send as it stands. Check that `https://formkurve.org/logo.png` resolves and is
+square before sending — the SVG mark is the source, the PNG is generated from it.
 
 ---
 
@@ -30,16 +30,16 @@ pairing intervals.icu performs between a planned workout and the activity that f
 it is read back, so the plan progresses on what was actually completed.
 
 **Website URL**
-[https://your-domain.example]
+https://formkurve.org
 
 **Logo image URL**
-[https://your-domain.example/logo.png — square, at least 128x128]
+https://formkurve.org/logo.png
 
 **Privacy policy URL**
-[https://your-domain.example/datenschutz]
+https://formkurve.org/datenschutz
 
 **Redirect URIs**
-- [https://your-domain.example/auth/callback]
+- https://formkurve.org/auth/callback
 - http://localhost:8787/auth/callback
 
 **Scopes requested**
@@ -80,4 +80,4 @@ Training and wellness data are fetched per request and not stored; only the OAut
 Thanks for building and maintaining intervals.icu — and for keeping the API open.
 
 Best regards,
-[Your name]
+Christian Müller

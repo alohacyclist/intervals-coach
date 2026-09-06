@@ -64,7 +64,11 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
     <>
       {me.mode === 'multi' && (
         <div className="account">
-          <span>Angemeldet als {me.name}</span>
+          <span>
+            Angemeldet als {me.name}
+            {me.consentAt &&
+              ` · Einwilligung ${new Date(me.consentAt).toLocaleDateString('de-DE')}`}
+          </span>
           <a href="/auth/logout">Abmelden</a>
         </div>
       )}
@@ -114,6 +118,7 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
       {showSettings && config && (
         <SettingsPanel
           config={config}
+          canDelete={me.mode === 'multi'}
           onClose={() => setShowSettings(false)}
           onSaved={(saved) => {
             setConfig(saved)

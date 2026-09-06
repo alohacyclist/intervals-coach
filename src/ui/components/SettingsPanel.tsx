@@ -5,14 +5,17 @@ import { formatSeconds } from '../../coach/dates.ts'
 import { putConfig, syncSettings } from '../api.ts'
 import { parseMmSs } from '../format-input.ts'
 import { SportPicker } from './SportPicker.tsx'
+import { DeleteAccount } from './DeleteAccount.tsx'
 
 type Props = {
   readonly config: CoachConfig
   readonly onSaved: (config: CoachConfig) => void
   readonly onClose: () => void
+  /** Single user mode has no account to erase — the key lives in a secret. */
+  readonly canDelete: boolean
 }
 
-export const SettingsPanel = ({ config, onSaved, onClose }: Props) => {
+export const SettingsPanel = ({ config, onSaved, onClose, canDelete }: Props) => {
   const [draft, setDraft] = useState<CoachConfig>(config)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -180,6 +183,8 @@ export const SettingsPanel = ({ config, onSaved, onClose }: Props) => {
           FTP & Pace von intervals.icu holen
         </button>
       </div>
+
+      {canDelete && <DeleteAccount />}
     </section>
   )
 }
