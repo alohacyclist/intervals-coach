@@ -24,11 +24,15 @@ import { benchmarkStatus } from '../src/coach/benchmark.ts'
 import { adoptThreshold, thresholdSuggestions } from '../src/coach/threshold-drift.ts'
 import type { ObservedThresholds } from '../src/coach/threshold-drift.ts'
 import type { Sport } from '../src/coach/types.ts'
+import { ALL_BREAK_KINDS } from '../src/coach/types.ts'
+import { activeBreak, endedBefore } from '../src/coach/breaks.ts'
 import { findTemplate } from '../src/coach/library.ts'
 import { describeWorkout } from '../src/coach/format.ts'
 import type { Intent, Plan } from '../src/coach/types.ts'
 
 const TIMEZONE = 'Europe/Berlin'
+/** Longer than this is not a break any more, it is a different training year. */
+const MAX_BREAK_DAYS = 120
 const ACTIVITY_HISTORY_DAYS = 180
 const WELLNESS_HISTORY_DAYS = 60
 const ADHERENCE_DAYS = 7
@@ -209,6 +213,42 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
         ? config.strengthLog.filter((entry) => entry !== body.date)
         : [...config.strengthLog, body.date]
     return context.json(await store.save(validateConfig({ ...config, strengthLog })))
+  })
+
+  /** Declares a break: illness, a vaccination, an injury, or plain absence. */
+  app.post('/api/break', async (context) => {
+    const body = (await context.req.json()) as { kind?: string; days?: number }
+    const kind = ALL_BREAK_KINDS.find((known) => known === body.kind)
+    const days = Math.round(Number(body.days))
+    if (!kind) {
+      return context.json({ error: `kind muss eines von ${ALL_BREAK_KINDS.join(', ')} sein` }, 400)
+    }
+    if (!Number.isFinite(days) || days < 1 || days > MAX_BREAK_DAYS) {
+      return context.json({ error: `days muss zwischen 1 und ${MAX_BREAK_DAYS} liegen` }, 400)
+    }
+
+    const today = localToday()
+    const { store } = await resolve(context)
+    const config = await store.load()
+    // A new break replaces one already running; two at once would only conflict.
+    const kept = config.breaks.filter((entry) => entry.until < today)
+    const entry = { id: `${kind}-${today}`, kind, from: today, until: addDays(today, days - 1) }
+    return context.json(await store.save(validateConfig({ ...config, breaks: [...kept, entry] })))
+  })
+
+  /** Ends the running break from today, for an athlete who recovered early. */
+  app.post('/api/break/end', async (context) => {
+    const today = localToday()
+    const { store } = await resolve(context)
+    const config = await store.load()
+    const running = activeBreak(config.breaks, today)
+    if (!running) return context.json({ error: 'Keine Pause eingetragen' }, 400)
+
+    const shortened = endedBefore(running, today)
+    const breaks = config.breaks
+      .filter((entry) => entry.id !== running.id)
+      .concat(shortened ? [shortened] : [])
+    return context.json(await store.save(validateConfig({ ...config, breaks })))
   })
 
   /** Turns one forwarding destination on or off in intervals.icu. */

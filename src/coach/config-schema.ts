@@ -1,5 +1,13 @@
-import type { AthleteProfile, CoachConfig, Goal, Sport, SportSetting, SportThreshold } from './types.ts'
-import { ALL_SPORTS } from './types.ts'
+import type {
+  AthleteProfile,
+  CoachConfig,
+  Goal,
+  Sport,
+  SportSetting,
+  SportThreshold,
+  TrainingBreak,
+} from './types.ts'
+import { ALL_BREAK_KINDS, ALL_SPORTS } from './types.ts'
 import type { Equipment } from './types.ts'
 
 export class ValidationError extends Error {
@@ -46,6 +54,7 @@ const DEFAULT_CONFIG: CoachConfig = {
     },
   ],
   strengthLog: [],
+  breaks: [],
   planStart: new Date().toISOString().slice(0, 10),
 }
 
@@ -190,6 +199,31 @@ const validateStrengthLog = (raw: unknown): readonly string[] => {
   return [...new Set(entries.filter(isIsoDate))].sort().slice(-MAX_STRENGTH_LOG)
 }
 
+const MAX_BREAKS = 60
+
+/** A malformed entry is dropped rather than rejected: a break is not worth a 400. */
+const validateBreaks = (raw: unknown): readonly TrainingBreak[] => {
+  const entries = Array.isArray(raw) ? raw : []
+  return entries
+    .map((entry) => (entry ?? {}) as Record<string, unknown>)
+    .filter(
+      (entry) =>
+        typeof entry['id'] === 'string' &&
+        ALL_BREAK_KINDS.includes(entry['kind'] as TrainingBreak['kind']) &&
+        isIsoDate(entry['from']) &&
+        isIsoDate(entry['until']) &&
+        String(entry['until']) >= String(entry['from']),
+    )
+    .map((entry) => ({
+      id: String(entry['id']),
+      kind: entry['kind'] as TrainingBreak['kind'],
+      from: String(entry['from']),
+      until: String(entry['until']),
+    }))
+    .sort((left, right) => left.from.localeCompare(right.from))
+    .slice(-MAX_BREAKS)
+}
+
 export const validateConfig = (raw: unknown): CoachConfig => {
   const issues: string[] = []
   const input = (raw ?? {}) as Record<string, unknown>
@@ -200,6 +234,7 @@ export const validateConfig = (raw: unknown): CoachConfig => {
     profile: validateProfile(input['profile'], issues),
     goals: goalsInput.map((goal, index) => validateGoal(goal, index, issues)),
     strengthLog: validateStrengthLog(input['strengthLog']),
+    breaks: validateBreaks(input['breaks']),
     planStart: isIsoDate(input['planStart']) ? input['planStart'] : DEFAULT_CONFIG.planStart,
   }
 

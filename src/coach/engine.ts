@@ -20,6 +20,7 @@ import { addDays, diffDays, startOfWeek, weekdayDe } from './dates.ts'
 import { projectFitness } from './fitness.ts'
 import { PHASE_LABELS, phaseForSport, primaryGoal, weeklyHardBudget } from './phase.ts'
 import { defaultThreshold, selectedSports, thresholdFor } from './thresholds.ts'
+import { breakLimit, returnWindow } from './breaks.ts'
 import { levelCeilings } from './progression.ts'
 import type { Completion } from './progression.ts'
 import { flattenBlocks, intensityClass, isPreferredSport, strengthSession, templatesFor } from './library.ts'
@@ -151,10 +152,20 @@ const applyIntent = (
   intent: Intent | undefined,
   simulation: Simulation,
   sports: readonly Sport[],
+  onBreak: boolean,
 ): DayDecision => {
   if (intent === undefined) return decision
   const wanted = INTENT_TYPE[intent]
   if (wanted === decision.dayType) return decision
+
+  // Overriding a declared break from the day view would defeat its purpose. The
+  // athlete entered it and can end it; that is the deliberate way back.
+  if (onBreak && intent === 'hard') {
+    return {
+      ...decision,
+      reason: `${decision.reason} Solange die Pause eingetragen ist, gibt es keine harte Einheit — beende sie oben, wenn du wieder fit bist.`,
+    }
+  }
 
   const spacing = minDaysSinceHard(simulation, sports)
   const warning =
@@ -184,6 +195,13 @@ const decideDay = (
   const { min, max } = config.profile.weeklySessions
   const readinessRed = state.readiness.score === 'red'
   const planned = simulation.sessionsThisWeek
+
+  // A break the athlete declared beats every measurement, because it knows
+  // something no measurement does yet.
+  const limit = breakLimit(config.breaks, date)
+  if (limit) {
+    return { dayType: limit.dayType, reason: limit.reason, optional: limit.dayType !== 'REST' }
+  }
 
   if (readinessRed && dayIndex === 0) {
     return simulation.fitness.tsb < -25
@@ -250,15 +268,17 @@ const scoreTemplate = (
   state: TrainingState,
   phase: Phase,
   budgetMinutes: number,
+  returning: boolean,
 ): number => {
   const dueness = Math.min(stimulusAge(simulation, template.sport, template.stimulus), STALE_STIMULUS_DAYS) / STALE_STIMULUS_DAYS
   const fit = template.minutes <= budgetMinutes ? 1 : -5
   const usesBudget = template.minutes / budgetMinutes
   // The sport that normally carries this stimulus gets the nod, all else equal.
   const roleBonus = isPreferredSport(template.stimulus, template.sport) ? 1 : 0
-  // Coming back from a break, the first hard session is threshold, not VO2max.
+  // Coming back, the first hard session is threshold, not VO2max — whether the
+  // gap was measured or declared.
   const layoffPenalty =
-    state.daysSinceAnySession >= LAYOFF_DAYS && template.stimulus === 'VO2' ? -4 : 0
+    (state.daysSinceAnySession >= LAYOFF_DAYS || returning) && template.stimulus === 'VO2' ? -4 : 0
   const repeatPenalty =
     simulation.usedTemplateIds.includes(template.id) ||
     state.recentWorkoutNames.some((name) => name.includes(template.name))
@@ -402,6 +422,7 @@ const notesFor = (
   simulation: Simulation,
   config: CoachConfig,
   dayIndex: number,
+  date: string,
 ): readonly string[] => {
   const notes: string[] = [decision.reason]
   if (dayIndex === 0 && state.readiness.reasons[0] !== 'Keine Warnsignale') {
@@ -413,8 +434,12 @@ const notesFor = (
       `${state.daysSinceAnySession} Tage ohne Training — Wiedereinstieg über die Schwelle, VO₂max erst danach`,
     )
   }
+  const coming = returnWindow(config.breaks, date)
+  if (coming) notes.push(coming.note)
+
   const { min } = config.profile.weeklySessions
-  if (simulation.sessionsThisWeek < min) {
+  // A break is not a shortfall, so the weekly count stays quiet during and just after one.
+  if (simulation.sessionsThisWeek < min && !breakLimit(config.breaks, date) && !coming) {
     notes.push(`Diese Woche ${simulation.sessionsThisWeek} von mindestens ${min} Einheiten`)
   }
   if (state.rampRate > 6) notes.push(`Fitness steigt schnell (+${state.rampRate}/Woche) — Verletzungsrisiko beachten`)
@@ -509,16 +534,19 @@ export const planDays = (
         dayIndex === 0 ? intent : undefined,
         simulation,
         sports,
+        breakLimit(config.breaks, date) !== null,
       )
       const { dayType } = decision
+
+      const returning = returnWindow(config.breaks, date) !== null
 
       const options = sports.map((sport) => {
         const sportPhase = phases[sport]
         const candidates = candidatesFor(sport, dayType, sportPhase, budgetMinutes, ceilings)
         const best = [...candidates].sort(
           (left, right) =>
-            scoreTemplate(right, simulation, state, sportPhase, budgetMinutes) -
-            scoreTemplate(left, simulation, state, sportPhase, budgetMinutes),
+            scoreTemplate(right, simulation, state, sportPhase, budgetMinutes, returning) -
+            scoreTemplate(left, simulation, state, sportPhase, budgetMinutes, returning),
         )[0]
         if (!best) return null
         return buildSession(best, config, reasonFor(best, dayType, sportPhase, simulation, ceilings))
@@ -535,7 +563,7 @@ export const planDays = (
         phase,
         recommended,
         options,
-        notes: notesFor(decision, state, simulation, config, dayIndex),
+        notes: notesFor(decision, state, simulation, config, dayIndex, date),
         optional: decision.optional,
         strength,
       }

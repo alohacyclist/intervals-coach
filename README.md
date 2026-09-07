@@ -86,6 +86,14 @@ Zonenauswertung würden genau die Einheiten übersehen, die zählen.
 **Heute anders.** Über „Heute hart / locker / Pause“ lässt sich der Tagestyp überschreiben.
 Der Wunsch gilt nur für heute; was er kostet, rechnen die Folgetage mit ein.
 
+**Längere Pausen** — Krankheit, Impfung, Verletzung oder schlicht keine Zeit — werden
+eingetragen und schlagen jede Messung: eine Impfreaktion zeigt sich in der HRV erst, wenn
+die Einheit längst gelaufen ist. Solange die Pause läuft, plant der Coach nichts Hartes,
+zeigt Lockeres nur als freiwillig an und zählt die Woche nicht als verpasst. Wie lange gar
+nichts vorgeschlagen wird und wie lange danach die Intensität zurückgehalten wird, hängt
+vom Grund ab: bei Krankheit drei Tage nichts und eine Woche Rücksicht danach, bei einer
+Impfung zwei Tage und drei. Wer früher wieder fit ist, beendet die Pause mit einem Klick.
+
 ## Kurzfassung jeder Einheit
 
 Jede Einheit ab etwa einer Stunde gibt es zusätzlich als 45-Minuten-Version. Was gekürzt

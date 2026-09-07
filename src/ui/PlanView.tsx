@@ -11,6 +11,7 @@ import { StateHeader } from './components/StateHeader.tsx'
 import { DayCard } from './components/DayCard.tsx'
 import { GoalsPanel } from './components/GoalsPanel.tsx'
 import { SettingsPanel } from './components/SettingsPanel.tsx'
+import { BreakBar } from './components/BreakBar.tsx'
 
 const PLAN_DAYS = 3
 
@@ -89,6 +90,10 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
       )}
 
       {plan && plan.history.length > 0 && <HistoryStrip history={plan.history} />}
+
+      {plan && config && (
+        <BreakBar config={config} today={plan.days[0]?.date ?? ''} onChanged={() => void load()} />
+      )}
 
       {plan && (
         <div className="intent">

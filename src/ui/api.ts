@@ -70,6 +70,11 @@ export const adoptThreshold = (sport: string, observed: number): Promise<unknown
 export const logStrength = (date: string, done: boolean): Promise<unknown> =>
   request('/api/strength', { method: 'POST', body: JSON.stringify({ date, done }) })
 
+export const declareBreak = (kind: string, days: number): Promise<unknown> =>
+  request('/api/break', { method: 'POST', body: JSON.stringify({ kind, days }) })
+
+export const endBreak = (): Promise<unknown> => request('/api/break/end', { method: 'POST' })
+
 export const setDestination = (destination: string, enabled: boolean): Promise<unknown> =>
   request('/api/destination', { method: 'POST', body: JSON.stringify({ destination, enabled }) })
 

@@ -73,6 +73,19 @@ export type Goal = {
   readonly priority: 'A' | 'B'
 }
 
+/** Why training is on hold. Each kind recovers differently — see coach/breaks.ts. */
+export type BreakKind = 'illness' | 'vaccination' | 'injury' | 'pause'
+
+export const ALL_BREAK_KINDS: readonly BreakKind[] = ['illness', 'vaccination', 'injury', 'pause']
+
+export type TrainingBreak = {
+  readonly id: string
+  readonly kind: BreakKind
+  readonly from: string
+  /** Inclusive: the last day the break still restricts. */
+  readonly until: string
+}
+
 export type CoachConfig = {
   readonly profile: AthleteProfile
   readonly goals: readonly Goal[]
@@ -81,6 +94,8 @@ export type CoachConfig = {
    * most athletes, so the app keeps its own record and progresses from it.
    */
   readonly strengthLog: readonly string[]
+  /** Declared interruptions — illness, a vaccination, an injury, plain absence. */
+  readonly breaks: readonly TrainingBreak[]
   /** ISO date the plan started, anchors the 3:1 build/recovery cycle. */
   readonly planStart: string
 }
