@@ -123,12 +123,20 @@ export const HARD_STIMULI: readonly Stimulus[] = ['VO2', 'THRESHOLD', 'SWEETSPOT
  */
 const MIN_QUALITY_LOAD = 40
 
+const hasZones = (activity: Activity): boolean => Object.keys(activity.zoneSeconds).length > 0
+
 /**
- * Whether an activity used up one of the week's hard slots. Intensity alone is
- * not enough: a 25 minute run at 86% is a brisk run, not a key session.
+ * Whether an activity used up one of the week's hard slots.
+ *
+ * Where the time in each zone is known, that *is* the dose: seven minutes above
+ * threshold is a key session whether the session lasted thirty minutes or two
+ * hours, and training load says little about it. Where it is missing, only the
+ * average intensity remains, and that systematically flatters interval work — so
+ * there a minimum load has to stand in for evidence.
  */
 export const isHardActivity = (activity: Activity): boolean =>
   activity.load >= 90 ||
-  (HARD_STIMULI.includes(inferStimulus(activity)) && activity.load >= MIN_QUALITY_LOAD)
+  (HARD_STIMULI.includes(inferStimulus(activity)) &&
+    (hasZones(activity) || activity.load >= MIN_QUALITY_LOAD))
 
 const round = (value: number): number => Math.round(value * 10) / 10

@@ -104,15 +104,21 @@ const mapEvent = (raw: Record<string, unknown>): PlannedEvent => ({
   pairedActivityId: raw['paired_activity_id'] == null ? null : String(raw['paired_activity_id']),
 })
 
-/** Power zones when a meter was used, heart rate zones otherwise. */
-const mapZoneTimes = (raw: unknown): Record<string, number> => {
+/**
+ * Power zones when a meter was used, heart rate zones otherwise — and the two
+ * arrive in different shapes. Power comes as `{ id: 'Z4', secs }` objects, heart
+ * rate as a bare array of seconds where the position is the zone. Reading only
+ * the first shape silently dropped every run, because a runner has no power meter.
+ */
+export const mapZoneTimes = (raw: unknown): Record<string, number> => {
   if (!Array.isArray(raw)) return {}
-  return Object.fromEntries(
-    raw
-      .map((entry) => entry as Record<string, unknown>)
-      .map((entry) => [String(entry['id'] ?? ''), num(entry['secs'])] as const)
-      .filter(([id, secs]) => id.length > 0 && secs > 0),
-  )
+  const positional = raw.every((entry) => typeof entry === 'number')
+  const pairs = positional
+    ? raw.map((secs, index) => [`Z${index + 1}`, num(secs)] as const)
+    : raw
+        .map((entry) => entry as Record<string, unknown>)
+        .map((entry) => [String(entry['id'] ?? ''), num(entry['secs'])] as const)
+  return Object.fromEntries(pairs.filter(([id, secs]) => id.length > 0 && secs > 0))
 }
 
 const mapEftp = (raw: unknown): Partial<Record<Sport, number>> => {
