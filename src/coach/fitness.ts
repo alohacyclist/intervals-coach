@@ -114,6 +114,24 @@ const fromIntensity = (activity: Activity): Stimulus => {
 export const inferStimulus = (activity: Activity): Stimulus =>
   fromZones(activity) ?? fromIntensity(activity)
 
+/**
+ * Every stimulus the session actually delivered, not only the dominant one.
+ * A run of 3x1km above threshold spends five minutes in Z5 and five in Z4: it
+ * is filed as VO2max, but the threshold work happened too, and calling that
+ * stimulus overdue two days later is how the plan ends up proposing the session
+ * the athlete has just finished.
+ */
+export const deliveredStimuli = (activity: Activity): readonly Stimulus[] => {
+  const dominant = inferStimulus(activity)
+  if (Object.keys(activity.zoneSeconds).length === 0) return [dominant]
+
+  const also: Stimulus[] = []
+  if (secondsIn(activity, 'Z4') >= 5 * MINUTE) also.push('THRESHOLD')
+  if (secondsIn(activity, 'SS') >= 8 * MINUTE) also.push('SWEETSPOT')
+  if (secondsIn(activity, 'Z3') >= 10 * MINUTE) also.push('TEMPO')
+  return [...new Set([dominant, ...also])]
+}
+
 export const HARD_STIMULI: readonly Stimulus[] = ['VO2', 'THRESHOLD', 'SWEETSPOT']
 
 /**

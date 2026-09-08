@@ -10,7 +10,7 @@ import type {
 } from './types.ts'
 import { ALL_SPORTS } from './types.ts'
 import { addDays, diffDays, startOfWeek } from './dates.ts'
-import { computeFitness, inferStimulus, isHardActivity, rampRate } from './fitness.ts'
+import { computeFitness, deliveredStimuli, isHardActivity, rampRate } from './fitness.ts'
 import { computeReadiness } from './readiness.ts'
 
 const NEVER = 99
@@ -53,11 +53,12 @@ export const stimulusRecency = (
     if (activity.sport === 'Other' || activity.load <= 0) continue
     const daysAgo = diffDays(activity.date, today)
     if (daysAgo < 0) continue
-    const stimulus = inferStimulus(activity)
-    const key = `${activity.sport}:${stimulus}`
-    const existing = freshest.get(key)
-    if (!existing || daysAgo < existing.daysAgo) {
-      freshest.set(key, { sport: activity.sport, stimulus, daysAgo })
+    for (const stimulus of deliveredStimuli(activity)) {
+      const key = `${activity.sport}:${stimulus}`
+      const existing = freshest.get(key)
+      if (!existing || daysAgo < existing.daysAgo) {
+        freshest.set(key, { sport: activity.sport, stimulus, daysAgo })
+      }
     }
   }
   return [...freshest.values()]
@@ -149,9 +150,11 @@ export const buildState = (
         thisWeek.filter((activity) => activity.sport === sport && isHardActivity(activity)).length,
       ]),
     ) as Record<Sport, number>,
-    recentWorkoutNames: activities
+    recentWorkouts: activities
       .filter((activity) => diffDays(activity.date, today) >= 0 && diffDays(activity.date, today) < 10)
-      .map((activity) => activity.name),
+      .flatMap((activity) =>
+        activity.sport === 'Other' ? [] : [{ sport: activity.sport, name: activity.name }],
+      ),
     loadLast7: Math.round(last7.reduce((sum, activity) => sum + activity.load, 0)),
     rampRate: rampRate(activities, today),
     readiness: computeReadiness(wellness, today, overall.tsb),

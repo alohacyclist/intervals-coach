@@ -234,7 +234,8 @@ export type TrainingState = {
   readonly hardSessionsThisWeek: number
   readonly sessionsThisWeek: number
   readonly hardThisWeekBySport: Readonly<Record<Sport, number>>
-  readonly recentWorkoutNames: readonly string[]
+  /** Named sessions of the last ten days, by sport — a run cannot repeat a ride. */
+  readonly recentWorkouts: readonly RecentWorkout[]
   readonly loadLast7: number
   /** CTL change over the last 7 days. */
   readonly rampRate: number
@@ -258,6 +259,11 @@ export type TrainingState = {
  * Something is wrong with the incoming data itself, not with the plan. Surfaced
  * to the athlete because the fix is in their intervals.icu account, not here.
  */
+export type RecentWorkout = {
+  readonly sport: Sport
+  readonly name: string
+}
+
 export type DataIssue = {
   readonly kind: 'strava-blocked' | 'no-load'
   readonly affected: number

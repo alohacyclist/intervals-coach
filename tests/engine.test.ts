@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { planDays } from '../src/coach/engine.ts'
 import { buildState } from '../src/coach/state.ts'
-import { addDays } from '../src/coach/dates.ts'
+import { addDays, startOfWeek } from '../src/coach/dates.ts'
 import { intensityClass } from '../src/coach/library.ts'
 import { completionsFrom } from '../src/coach/progression.ts'
 import {
@@ -23,6 +23,16 @@ const stateFrom = (
 ) => buildState(activities, wellnessEntries, TODAY)
 
 const rested = [activity(9, 'Ride', { load: 60, intensity: 70 }), activity(11, 'Run', { load: 50, intensity: 70 })]
+
+/**
+ * Recent thresholds tests for both sports, so the plan prescribes ordinary
+ * quality work instead of rightly spending the day measuring.
+ */
+const measured = ['test-bike-ftp20', 'test-run-thr20'].flatMap((templateId) => {
+  const event = plannedEvent(20, templateId, { externalId: `coach:2026-08-01:${templateId}` })
+  const act = activity(20, 'Ride', { load: 80, pairedEventId: event.id, compliance: 95 })
+  return completionsFrom([event], [act])
+})
 
 const withMinutes = (sessionMinutes: { min: number; normal: number; max: number }) => ({
   ...config,
@@ -199,7 +209,7 @@ describe('sport roles and returning to training', () => {
     day?.options.find((option) => option.sport === sport)
 
   it('gives running the VO2max work and cycling the threshold work', () => {
-    const [today] = planDays(stateFrom(rested), buildPhase)
+    const [today] = planDays(stateFrom(rested), buildPhase, 3, measured)
     expect(today?.dayType).toBe('KEY')
     expect(optionFor(today, 'Run')?.template.stimulus).toBe('VO2')
     expect(optionFor(today, 'Ride')?.template.stimulus).toBe('THRESHOLD')
@@ -404,7 +414,7 @@ describe('levels in the plan', () => {
   })
 
   it('names the level on a quality day', () => {
-    const [today] = planDays(stateFrom(rested), config, 1, [])
+    const [today] = planDays(stateFrom(rested), config, 1, measured)
     expect(today?.options.some((option) => option.reason.includes('Stufe'))).toBe(true)
   })
 })
@@ -595,5 +605,64 @@ describe('strength with the equipment at hand', () => {
     const [today] = planDays(stateFrom(rested), { ...withEquipment('bodyweight'), strengthLog: log })
     expect(today?.strength?.phase).toBe('full')
     expect(today?.strength?.exercises.length).toBeGreaterThan(2)
+  })
+})
+
+describe('recognising a workout that was already done', () => {
+  // The watch names it, not the library: "Cologne - Schwelle kompakt 3x1@3:50/km".
+  const doneOnSunday = [
+    activity(2, 'Run', {
+      load: 34,
+      intensity: 83,
+      name: 'Cologne - Schwelle kompakt 3x1@3:50/km',
+      zoneSeconds: { Z1: 787, Z2: 80, Z3: 160, Z4: 293, Z5: 308, Z6: 103 },
+    }),
+    activity(9, 'Ride', { load: 60, intensity: 70 }),
+  ]
+
+  it('does not offer the same session two days later', () => {
+    const days = planDays(stateFrom(doneOnSunday), config, 3, measured)
+    const runs = days.flatMap((day) => day.options).filter((option) => option.sport === 'Run')
+    expect(runs.length).toBeGreaterThan(0)
+    expect(runs.map((option) => option.template.name)).not.toContain('Schwelle kompakt 3x1km')
+  })
+
+  it('does not let a run rule out the ride that shares its wording', () => {
+    // A workout name means one session on a bike and another in running shoes;
+    // only the sport that actually did it should be steered away from it.
+    const named = (sport: 'Ride' | 'Run') => [
+      activity(2, sport, { load: 55, intensity: 88, name: 'Sweetspot 3x12min' }),
+      activity(9, sport === 'Ride' ? 'Run' : 'Ride', { load: 50, intensity: 70 }),
+    ]
+    const ridesAfter = (sport: 'Ride' | 'Run') =>
+      planDays(stateFrom(named(sport)), config, 3, measured)
+        .flatMap((day) => day.options)
+        .filter((option) => option.sport === 'Ride')
+        .map((option) => option.template.name)
+
+    expect(ridesAfter('Run')).toContain('Sweetspot 3x12min')
+    expect(ridesAfter('Ride')).not.toContain('Sweetspot 3x12min')
+  })
+})
+
+describe('choosing which threshold to measure', () => {
+  it('offers the test for every sport it is due for, not only the recommendation', () => {
+    const [today] = planDays(stateFrom(rested), config, 1, [])
+    expect(today?.dayType).toBe('KEY')
+    const measuring = (today?.options ?? []).filter(
+      (option) => option.template.measures === 'threshold',
+    )
+    expect(measuring.map((option) => option.sport).sort()).toEqual(['Ride', 'Run'])
+  })
+
+  it('still allows only one test inside a week', () => {
+    const days = planDays(stateFrom(rested), config, 7, [])
+    const measuring = days.filter((day) =>
+      day.options.some((option) => option.template.measures === 'threshold'),
+    )
+    // TODAY is a Wednesday, so seven days reach into the next week, which may
+    // rightly carry its own test — but never two in the same one.
+    const weeks = new Set(measuring.map((day) => startOfWeek(day.date)))
+    expect(weeks.size).toBe(measuring.length)
   })
 })

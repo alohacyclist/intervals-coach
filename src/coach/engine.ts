@@ -8,6 +8,7 @@ import type {
   Phase,
   PlannedDay,
   PlannedSession,
+  RecentWorkout,
   SessionMinutes,
   SessionTier,
   SessionVariant,
@@ -57,6 +58,18 @@ const ALLOWED_CLASSES: Readonly<Record<DayType, readonly IntensityClass[]>> = {
   KEY: ['hard'],
   EASY: ['easy', 'moderate'],
   RECOVERY: ['easy'],
+  REST: ['easy'],
+}
+
+/**
+ * What a day may fall back to when everything it would normally offer is the
+ * session the athlete has just done. Repeating a workout two days later is worse
+ * than dropping one notch in intensity, which is what a coach would say too.
+ */
+const FALLBACK_CLASSES: Readonly<Record<DayType, readonly IntensityClass[]>> = {
+  KEY: ['hard', 'moderate'],
+  EASY: ['easy', 'moderate'],
+  RECOVERY: ['easy', 'moderate'],
   REST: ['easy'],
 }
 
@@ -256,6 +269,33 @@ const decideDay = (
   return plan('KEY', 'Erholt und im Wochenbudget — heute darf es wehtun')
 }
 
+/** Words worth comparing: real terms and rep patterns, not units or filler. */
+const SIGNIFICANT = /[a-zäöüß]{4,}|\d+x\d+/g
+
+const signature = (name: string): readonly string[] => name.toLowerCase().match(SIGNIFICANT) ?? []
+
+/**
+ * A session done outside the app carries the device's own name: "Cologne —
+ * Schwelle kompakt 3x1@3:50/km" is what this library calls "Schwelle kompakt
+ * 3x1km". A substring test misses that and offers the same workout two days
+ * later, so two shared terms count as a repeat — one common word like
+ * "Schwelle" does not, or every threshold session would block the next.
+ */
+const looksLikeRepeat = (
+  template: WorkoutTemplate,
+  recent: readonly RecentWorkout[],
+): boolean => {
+  const wanted = signature(template.name)
+  return recent
+    // Only within one sport: "Schwelle kompakt" means a different session on a
+    // bike than in running shoes, and the words alone cannot tell them apart.
+    .filter((workout) => workout.sport === template.sport)
+    .some((workout) => {
+      const seen = new Set(signature(workout.name))
+      return wanted.filter((term) => seen.has(term)).length >= 2
+    })
+}
+
 /** How well a stimulus serves the current phase — keeps the block focused. */
 const phaseAffinity = (phase: Phase, stimulus: Stimulus): number => {
   const affinities: Readonly<Record<Phase, Partial<Record<Stimulus, number>>>> = {
@@ -285,11 +325,10 @@ const scoreTemplate = (
   // gap was measured or declared.
   const layoffPenalty =
     (state.daysSinceAnySession >= LAYOFF_DAYS || returning) && template.stimulus === 'VO2' ? -4 : 0
-  const repeatPenalty =
-    simulation.usedTemplateIds.includes(template.id) ||
-    state.recentWorkoutNames.some((name) => name.includes(template.name))
-      ? -2.5
-      : 0
+  const alreadyOffered = simulation.usedTemplateIds.includes(template.id) ? -2.5 : 0
+  // Doing the same workout again days later is a different matter from seeing it
+  // twice in the three day view, and needs to lose against anything else on offer.
+  const alreadyDone = looksLikeRepeat(template, state.recentWorkouts) ? -5 : 0
   return (
     3 * dueness +
     phaseAffinity(phase, template.stimulus) +
@@ -297,7 +336,8 @@ const scoreTemplate = (
     layoffPenalty +
     fit +
     0.5 * usesBudget +
-    repeatPenalty
+    alreadyOffered +
+    alreadyDone
   )
 }
 
@@ -314,18 +354,36 @@ const candidatesFor = (
   phase: Phase,
   budgetMinutes: number,
   ceilings: Readonly<Record<string, number>>,
+  recent: readonly RecentWorkout[],
 ): readonly WorkoutTemplate[] => {
-  const allowed = ALLOWED_CLASSES[dayType]
-  const pool = templatesFor(sport)
+  const available = templatesFor(sport)
     // Benchmarks are scheduled deliberately, never offered as ordinary work.
     .filter((template) => template.benchmark !== true)
-    .filter((template) => allowed.includes(intensityClass(template.stimulus)))
     .filter((template) => withinLevel(template, ceilings))
-  const inPhase = pool.filter((template) => template.phases.includes(phase))
+
+  const byClass = (classes: readonly IntensityClass[]) =>
+    available.filter((template) => classes.includes(intensityClass(template.stimulus)))
+  const inPhase = (list: readonly WorkoutTemplate[]) =>
+    list.filter((template) => template.phases.includes(phase))
   const fitting = (list: readonly WorkoutTemplate[]) =>
     list.filter((template) => template.minutes <= budgetMinutes)
+  const fresh = (list: readonly WorkoutTemplate[]) =>
+    list.filter((template) => !looksLikeRepeat(template, recent))
 
-  return [fitting(inPhase), fitting(pool), inPhase, pool].find((list) => list.length > 0) ?? pool
+  const pool = byClass(ALLOWED_CLASSES[dayType])
+  const wider = byClass(FALLBACK_CLASSES[dayType])
+
+  return (
+    [
+      fresh(fitting(inPhase(pool))),
+      fresh(fitting(inPhase(wider))),
+      fresh(fitting(pool)),
+      fitting(inPhase(pool)),
+      fitting(pool),
+      inPhase(pool),
+      pool,
+    ].find((list) => list.length > 0) ?? pool
+  )
 }
 
 const levelNote = (template: WorkoutTemplate, ceilings: Readonly<Record<string, number>>): string => {
@@ -594,28 +652,37 @@ export const planDays = (
       const recommended = chooseRecommended(dayType, simulation, config, date, sports)
 
       // A quality day is the only slot a maximal test can have, and the plan
-      // takes it rather than waiting for the athlete to volunteer.
-      const test =
-        dayType === 'KEY' && recommended !== 'REST' && !simulation.testedThisWeek
+      // takes it rather than waiting for the athlete to volunteer. Every sport
+      // that is due gets its own, because which one to test is the athlete's
+      // choice exactly as which one to train is.
+      const testable = dayType === 'KEY' && !simulation.testedThisWeek
+
+      const options = sports.map((sport) => {
+        const sportPhase = phases[sport]
+        const test = testable
           ? thresholdTestDue(
-              recommended,
+              sport,
               completions,
               date,
               simulation.fitness,
-              phases[recommended],
+              sportPhase,
               returning,
               budgetMinutes,
               state.daysSinceAnySession,
             )
           : null
-
-      const options = sports.map((sport) => {
-        const sportPhase = phases[sport]
-        if (test && test.sport === sport) {
+        if (test) {
           const template = findTemplate(test.templateId)
           if (template) return buildSession(template, config, test.reason)
         }
-        const candidates = candidatesFor(sport, dayType, sportPhase, budgetMinutes, ceilings)
+        const candidates = candidatesFor(
+          sport,
+          dayType,
+          sportPhase,
+          budgetMinutes,
+          ceilings,
+          state.recentWorkouts,
+        )
         const best = [...candidates].sort(
           (left, right) =>
             scoreTemplate(right, simulation, state, sportPhase, budgetMinutes, returning) -
@@ -646,7 +713,7 @@ export const planDays = (
           options,
           strength !== null,
           addDays(state.today, dayIndex + 1),
-          test !== null,
+          options.some((option) => option.template.measures === 'threshold'),
         ),
         plan: [...plan, day],
       }
