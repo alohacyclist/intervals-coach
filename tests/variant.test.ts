@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { estimateSeconds, shorten, totalSeconds, SHORT_TARGET_MINUTES } from '../src/coach/variant.ts'
-import { LIBRARY, findTemplate } from '../src/coach/library.ts'
+import { LIBRARY, findTemplate, thresholdTestFor } from '../src/coach/library.ts'
 import { defaultThreshold } from '../src/coach/thresholds.ts'
 import { toIntervalsText } from '../src/coach/format.ts'
 import { planDays } from '../src/coach/engine.ts'
 import { buildState } from '../src/coach/state.ts'
 import { levelFor, completionsFrom } from '../src/coach/progression.ts'
+import { benchmarkTemplateFor } from '../src/coach/benchmark.ts'
 import type { Block, Repeat, Step, WorkoutTemplate } from '../src/coach/types.ts'
 import { activity, baselineWellness, config, plannedEvent, wellness } from './fixtures.ts'
 
@@ -158,5 +159,28 @@ describe('progression after a short session', () => {
     const done = completions('coach:2026-08-20:bike-thr-3x12')
     expect(done[0]?.variant).toBe('full')
     expect(levelFor('bike-threshold', done)).toBe(3)
+  })
+})
+
+describe('the threshold test', () => {
+  it('is a sustained maximal effort, not intervals', () => {
+    const test = findTemplate('test-bike-ftp20')
+    if (!test) throw new Error('threshold test missing')
+    const main = test.blocks.find(
+      (block) => block.kind === 'step' && block.duration === '20m',
+    )
+    expect(main, 'no twenty minute block').toBeDefined()
+    expect(test.measures).toBe('threshold')
+  })
+
+  it('stays out of the eight week rotation, which tracks something else', () => {
+    // benchmarkFor picks per sport, so a second Ride benchmark must not shadow it.
+    expect(benchmarkTemplateFor('Ride')?.id).toBe('bench-bike-4x4')
+    expect(thresholdTestFor('Ride')?.id).toBe('test-bike-ftp20')
+  })
+
+  it('is never offered as ordinary training', () => {
+    const sessions = planDays(state(), config, 3).flatMap((day) => day.options)
+    expect(sessions.map((session) => session.template.id)).not.toContain('test-bike-ftp20')
   })
 })

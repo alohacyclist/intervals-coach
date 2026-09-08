@@ -281,6 +281,12 @@ export type WorkoutTemplate = {
   readonly level?: number
   /** Fixed reference session, repeated unchanged so results stay comparable. */
   readonly benchmark?: boolean
+  /**
+   * What the reference session answers. The eight week rotation tracks 'vo2';
+   * 'threshold' is the sustained maximal effort that settles an FTP, and is
+   * offered when the configured value is in doubt rather than on a schedule.
+   */
+  readonly measures?: 'vo2' | 'threshold'
 }
 
 export type DayType = 'KEY' | 'EASY' | 'RECOVERY' | 'REST'

@@ -522,6 +522,26 @@ const SWIM: readonly WorkoutTemplate[] = [
  */
 const BENCHMARKS: readonly WorkoutTemplate[] = [
   {
+    id: 'test-bike-ftp20',
+    sport: 'Ride',
+    stimulus: 'THRESHOLD',
+    name: 'Standortbestimmung FTP 20min',
+    minutes: 54,
+    load: 75,
+    benchmark: true,
+    measures: 'threshold',
+    phases: ['BASE', 'BUILD', 'SPECIFIC', 'TAPER', 'RECOVERY'],
+    coachNote:
+      'Ein einziger maximaler Block, gleichmäßig gefahren — nicht die ersten fünf Minuten verheizen. Die FTP sind 95 % der Durchschnittsleistung über die 20 Minuten. Nur so ein Wert nach oben begrenzt die Schätzung; Intervalle können das nicht.',
+    blocks: [
+      warmupBike('15m'),
+      repeat(3, [step('1m', '105%', { cadence: '95-105rpm' }), step('1m', '50%')]),
+      step('5m', '50%'),
+      step('20m', '100-108%', { label: 'Maximal, gleichmäßig' }),
+      cooldown('8m', '55%'),
+    ],
+  },
+  {
     id: 'bench-bike-4x4',
     sport: 'Ride',
     stimulus: 'VO2',
@@ -529,6 +549,7 @@ const BENCHMARKS: readonly WorkoutTemplate[] = [
     minutes: 52,
     load: 68,
     benchmark: true,
+    measures: 'vo2',
     phases: ['BASE', 'BUILD', 'SPECIFIC', 'TAPER', 'RECOVERY'],
     coachNote: 'Vergleichseinheit. Immer identisch fahren — gleiche Watt, gleiche Trittfrequenz. Sinkt die Herzfrequenz bei gleicher Leistung, bist du besser geworden.',
     blocks: [
@@ -542,6 +563,7 @@ const BENCHMARKS: readonly WorkoutTemplate[] = [
     sport: 'Run',
     stimulus: 'VO2',
     name: 'Referenz Lauf 4x4min',
+    measures: 'vo2',
     minutes: 48,
     load: 62,
     benchmark: true,
@@ -578,6 +600,13 @@ export const templatesFor = (sport: Sport): readonly WorkoutTemplate[] =>
 
 export const findTemplate = (id: string): WorkoutTemplate | undefined =>
   LIBRARY.find((template) => template.id === id)
+
+/** The sustained maximal effort that settles a sport's threshold, where one exists. */
+export const thresholdTestFor = (sport: Sport): WorkoutTemplate | undefined =>
+  LIBRARY.find(
+    (template) =>
+      template.benchmark === true && template.sport === sport && template.measures === 'threshold',
+  )
 
 const CLASS_BY_STIMULUS: Readonly<Record<Stimulus, IntensityClass>> = {
   VO2: 'hard',

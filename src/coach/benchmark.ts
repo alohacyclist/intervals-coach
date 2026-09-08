@@ -8,8 +8,11 @@ export const BENCHMARK_INTERVAL_WEEKS = 8
 /** Heart rate wanders a couple of beats day to day; less than this proves nothing. */
 const MEANINGFUL_HR_DELTA = 2
 
-const benchmarkFor = (sport: Sport) =>
-  LIBRARY.find((template) => template.benchmark === true && template.sport === sport)
+export const benchmarkTemplateFor = (sport: Sport) =>
+  LIBRARY.find(
+    (template) =>
+      template.benchmark === true && template.sport === sport && template.measures !== 'threshold',
+  )
 
 const isBenchmark = (templateId: string): boolean =>
   LIBRARY.some((template) => template.id === templateId && template.benchmark === true)
@@ -53,7 +56,7 @@ const resultFor = (
   completions: readonly Completion[],
   activities: readonly Activity[],
 ): BenchmarkResult | null => {
-  const template = benchmarkFor(sport)
+  const template = benchmarkTemplateFor(sport)
   if (!template) return null
   const done = completions
     .filter((completion) => completion.templateId === template.id)
@@ -100,7 +103,7 @@ export const benchmarkStatus = (
     weeksSinceLast,
     intervalWeeks: BENCHMARK_INTERVAL_WEEKS,
     sessions: sports.flatMap((sport) => {
-      const template = benchmarkFor(sport)
+      const template = benchmarkTemplateFor(sport)
       return template ? [{ sport, templateId: template.id, name: template.name }] : []
     }),
     results: sports.flatMap((sport) => {

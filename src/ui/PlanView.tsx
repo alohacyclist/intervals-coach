@@ -86,7 +86,11 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
       {plan?.state.dataIssue && <DataIssueBanner issue={plan.state.dataIssue} />}
 
       {plan && plan.thresholdSuggestions.length > 0 && (
-        <ThresholdCard suggestions={plan.thresholdSuggestions} onAdopted={() => void load()} />
+        <ThresholdCard
+          suggestions={plan.thresholdSuggestions}
+          date={plan.days[0]?.date ?? ''}
+          onAdopted={() => void load()}
+        />
       )}
 
       {plan && plan.history.length > 0 && <HistoryStrip history={plan.history} />}
