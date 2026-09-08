@@ -24,7 +24,7 @@
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 10px;
+  gap: 6px 10px;
   flex-wrap: wrap;
   padding-bottom: 10px;
   border-bottom: 1px solid var(--rule);
@@ -156,7 +156,7 @@
 }
 .threshold p {
   flex: 1;
-  min-width: 260px;
+  min-width: min(260px, 100%);
 }
 
 /* --------------------------------------------------------------- sport rows */

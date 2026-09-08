@@ -8,6 +8,7 @@ import { PlanView } from './PlanView.tsx'
 import { Imprint } from './legal/Imprint.tsx'
 import { Privacy } from './legal/Privacy.tsx'
 import { ThemeSwitch } from './components/ThemeSwitch.tsx'
+import { ErrorBoundary } from './components/ErrorBoundary.tsx'
 
 /** Every view carries the mode switch, so the choice is never buried in settings. */
 const Shell = ({ children }: { readonly children: ReactNode }) => (
@@ -15,7 +16,7 @@ const Shell = ({ children }: { readonly children: ReactNode }) => (
     <div className="topbar">
       <ThemeSwitch />
     </div>
-    {children}
+    <ErrorBoundary>{children}</ErrorBoundary>
   </main>
 )
 

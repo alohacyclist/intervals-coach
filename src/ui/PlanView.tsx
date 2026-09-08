@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { CoachConfig, Plan } from '../coach/types.ts'
 import { ApiError, getConfig, getPlan } from './api.ts'
 import type { Me } from './api.ts'
@@ -34,6 +34,12 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
+  const settingsRef = useRef<HTMLDivElement | null>(null)
+
+  // On a phone the panel opens below the fold, which looks like nothing happened.
+  useEffect(() => {
+    if (showSettings) settingsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [showSettings])
 
   const load = useCallback(async () => {
     setBusy(true)
@@ -125,16 +131,18 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
       )}
 
       {showSettings && config && (
-        <SettingsPanel
-          config={config}
-          canDelete={me.mode === 'multi'}
-          onClose={() => setShowSettings(false)}
-          onSaved={(saved) => {
-            setConfig(saved)
-            setShowSettings(false)
-            void load()
-          }}
-        />
+        <div ref={settingsRef}>
+          <SettingsPanel
+            config={config}
+            canDelete={me.mode === 'multi'}
+            onClose={() => setShowSettings(false)}
+            onSaved={(saved) => {
+              setConfig(saved)
+              setShowSettings(false)
+              void load()
+            }}
+          />
+        </div>
       )}
 
       {!plan && !error && <p className="loading">Lade Daten von intervals.icu…</p>}
