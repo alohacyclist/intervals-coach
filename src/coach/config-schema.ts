@@ -4,6 +4,7 @@ import type {
   Goal,
   Sport,
   SportSetting,
+  SessionMinutes,
   SportThreshold,
   TrainingBreak,
 } from './types.ts'
@@ -28,7 +29,7 @@ const DEFAULT_CONFIG: CoachConfig = {
     maxHr: null,
     lthr: null,
     weeklySessions: { min: 2, max: 3 },
-    maxSessionMinutes: 75,
+    sessionMinutes: { min: 45, normal: 60, max: 90 },
   },
   goals: [
     {
@@ -63,6 +64,26 @@ const isIsoDate = (value: unknown): value is string =>
 
 const positive = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value) && value > 0
+
+/**
+ * Earlier versions stored one session length, which meant the ceiling. A single
+ * number was never the truth — there is a length that always works and one for
+ * a good day — so it becomes the middle tier and the others are derived around it.
+ */
+const normaliseSessionMinutes = (profile: Record<string, unknown>): SessionMinutes => {
+  const stored = profile['sessionMinutes']
+  if (stored && typeof stored === 'object') {
+    const entry = stored as Record<string, unknown>
+    return {
+      min: Number(entry['min']),
+      normal: Number(entry['normal']),
+      max: Number(entry['max']),
+    }
+  }
+  const legacy = Number(profile['maxSessionMinutes'])
+  if (!Number.isFinite(legacy) || legacy <= 0) return DEFAULT_CONFIG.profile.sessionMinutes
+  return { min: Math.max(30, Math.round(legacy * 0.7)), normal: legacy, max: legacy }
+}
 
 /**
  * Earlier versions stored a single "sessions per week" number, which meant the
@@ -147,7 +168,10 @@ const validateProfile = (raw: unknown, issues: string[]): AthleteProfile => {
   if (positive(sessions['min']) && positive(sessions['max']) && Number(sessions['min']) > Number(sessions['max'])) {
     issues.push('profile.weeklySessions.min darf nicht über max liegen')
   }
-  if (!positive(profile['maxSessionMinutes'])) issues.push('profile.maxSessionMinutes muss > 0 sein')
+  const sessionMinutes = normaliseSessionMinutes(profile)
+  for (const [tier, value] of Object.entries(sessionMinutes)) {
+    if (!positive(value)) issues.push(`profile.sessionMinutes.${tier} muss > 0 sein`)
+  }
 
   const equipment = profile['equipment']
   const validEquipment: Equipment =
@@ -163,7 +187,7 @@ const validateProfile = (raw: unknown, issues: string[]): AthleteProfile => {
     maxHr: positive(profile['maxHr']) ? Number(profile['maxHr']) : null,
     lthr: positive(profile['lthr']) ? Number(profile['lthr']) : null,
     weeklySessions: { min: Number(sessions['min']), max: Number(sessions['max']) },
-    maxSessionMinutes: Number(profile['maxSessionMinutes']),
+    sessionMinutes,
   }
 }
 

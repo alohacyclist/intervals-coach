@@ -5,6 +5,12 @@ import { formatSeconds } from '../../coach/dates.ts'
 import { putConfig, syncSettings } from '../api.ts'
 import { parseMmSs } from '../format-input.ts'
 import { SportPicker } from './SportPicker.tsx'
+
+const MINUTE_LABELS = {
+  min: 'Min. — schaffe ich immer',
+  normal: 'Min. — normalerweise',
+  max: 'Min. — wenn viel Zeit ist',
+} as const
 import { DeleteAccount } from './DeleteAccount.tsx'
 
 type Props = {
@@ -103,14 +109,23 @@ export const SettingsPanel = ({ config, onSaved, onClose, canDelete }: Props) =>
             }
           />
         </label>
-        <label>
-          Max. Dauer (min)
-          <input
-            type="number"
-            value={draft.profile.maxSessionMinutes}
-            onChange={(event) => patchProfile({ maxSessionMinutes: Number(event.target.value) })}
-          />
-        </label>
+        {(['min', 'normal', 'max'] as const).map((tier) => (
+          <label key={tier}>
+            {MINUTE_LABELS[tier]}
+            <input
+              type="number"
+              value={draft.profile.sessionMinutes[tier]}
+              onChange={(event) =>
+                patchProfile({
+                  sessionMinutes: {
+                    ...draft.profile.sessionMinutes,
+                    [tier]: Number(event.target.value),
+                  },
+                })
+              }
+            />
+          </label>
+        ))}
         <label>
           Planstart
           <input

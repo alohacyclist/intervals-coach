@@ -118,26 +118,56 @@ const state = () =>
     '2026-09-02',
   )
 
-describe('short variants in the plan', () => {
-  it('offers a shorter version that costs less than the full one', () => {
-    const sessions = planDays(state(), config, 3).flatMap((day) => day.options)
-    const withShort = sessions.filter((session) => session.short !== null)
-    expect(withShort.length).toBeGreaterThan(0)
+describe('one version per configured time budget', () => {
+  const sessions = () => planDays(state(), config, 3).flatMap((day) => day.options)
 
-    for (const session of withShort) {
-      const short = session.short
-      if (!short) continue
-      expect(short.minutes).toBeLessThan(session.template.minutes)
-      expect(short.load).toBeLessThan(session.template.load)
-      expect(short.minutes).toBeLessThanOrEqual(SHORT_TARGET_MINUTES + 10)
-      expect(short.cuts.length).toBeGreaterThan(0)
+  it('offers the shorter versions cheaper and ordered', () => {
+    for (const session of sessions()) {
+      const minutes = session.variants.map((variant) => variant.minutes)
+      expect(minutes.length, session.template.id).toBeGreaterThan(0)
+      expect([...minutes].sort((a, b) => a - b)).toEqual(minutes)
+      for (const variant of session.variants) {
+        expect(variant.minutes).toBeLessThanOrEqual(session.template.minutes)
+        expect(variant.load).toBeLessThanOrEqual(session.template.load)
+      }
     }
   })
 
-  it('offers no second version for a session that is already short', () => {
-    const sessions = planDays(state(), config, 3).flatMap((day) => day.options)
-    for (const session of sessions) {
-      if (session.template.minutes <= SHORT_TARGET_MINUTES) expect(session.short).toBeNull()
+  it('never stretches a session past what its author wrote', () => {
+    const roomy = { ...config, profile: { ...config.profile, sessionMinutes: { min: 45, normal: 60, max: 180 } } }
+    for (const session of planDays(state(), roomy, 3).flatMap((day) => day.options)) {
+      const longest = session.variants[session.variants.length - 1]
+      expect(longest?.minutes).toBe(session.template.minutes)
+      expect(longest?.cuts).toEqual([])
+    }
+  })
+
+  it('does not offer two versions that are the same session twice', () => {
+    for (const session of sessions()) {
+      const minutes = session.variants.map((variant) => variant.minutes)
+      for (let index = 1; index < minutes.length; index += 1) {
+        expect((minutes[index] ?? 0) - (minutes[index - 1] ?? 0)).toBeGreaterThanOrEqual(12)
+      }
+    }
+  })
+
+  it('never trims a reference session, which has to stay comparable', () => {
+    for (const template of LIBRARY.filter((entry) => entry.benchmark === true)) {
+      const session = planDays(state(), config, 1)[0]?.options.find(
+        (option) => option.template.id === template.id,
+      )
+      if (!session) continue
+      expect(session.variants).toHaveLength(1)
+      expect(session.variants[0]?.minutes).toBe(template.minutes)
+    }
+  })
+
+  it('says what was cut from a trimmed version and nothing from a whole one', () => {
+    for (const session of sessions()) {
+      for (const variant of session.variants) {
+        const whole = variant.minutes === session.template.minutes
+        expect(variant.cuts.length === 0, `${session.template.id} ${variant.tier}`).toBe(whole)
+      }
     }
   })
 })

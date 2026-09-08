@@ -25,6 +25,9 @@ import { adoptThreshold, thresholdSuggestions } from '../src/coach/threshold-dri
 import type { ObservedThresholds } from '../src/coach/threshold-drift.ts'
 import type { Sport } from '../src/coach/types.ts'
 import { ALL_BREAK_KINDS } from '../src/coach/types.ts'
+import type { SessionTier } from '../src/coach/types.ts'
+
+const TIERS: readonly SessionTier[] = ['min', 'normal', 'max']
 import { activeBreak, endedBefore } from '../src/coach/breaks.ts'
 import { findTemplate } from '../src/coach/library.ts'
 import { describeWorkout } from '../src/coach/format.ts'
@@ -278,8 +281,8 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
       return context.json({ error: 'date muss YYYY-MM-DD sein' }, 400)
     }
     if (!template) return context.json({ error: `Unbekanntes Workout: ${body.templateId}` }, 400)
-    if (body.variant !== undefined && body.variant !== 'full' && body.variant !== 'short') {
-      return context.json({ error: "variant muss 'full' oder 'short' sein" }, 400)
+    if (body.variant !== undefined && !TIERS.includes(body.variant as SessionTier)) {
+      return context.json({ error: `variant muss eines von ${TIERS.join(', ')} sein` }, 400)
     }
 
     const deps = await resolve(context)
@@ -288,12 +291,13 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
       .find((day) => day.date === body.date)
       ?.options.find((option) => option.template.id === template.id)
 
-    const short = body.variant === 'short' ? planned?.short : undefined
-    if (body.variant === 'short' && !short) {
-      return context.json({ error: `Keine Kurzfassung für ${template.name}` }, 400)
+    const chosen = planned?.variants.find((variant) => variant.tier === body.variant)
+    if (body.variant !== undefined && !chosen) {
+      return context.json({ error: `Keine ${body.variant}-Fassung für ${template.name}` }, 400)
     }
+    const short = chosen && chosen.minutes < template.minutes ? chosen : undefined
 
-    const name = short ? `${template.name} (kurz)` : template.name
+    const name = short ? `${template.name} (${short.minutes} min)` : template.name
     await createWorkoutEvent(deps.auth, {
       date: body.date,
       sport: template.sport,

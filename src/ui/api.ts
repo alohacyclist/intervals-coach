@@ -1,3 +1,4 @@
+import type { SessionTier } from '../coach/types.ts'
 import type { CoachConfig, Plan } from '../coach/types.ts'
 
 export class ApiError extends Error {
@@ -81,7 +82,7 @@ export const setDestination = (destination: string, enabled: boolean): Promise<u
 export const pushWorkout = (
   date: string,
   templateId: string,
-  variant: 'full' | 'short' = 'full',
+  variant: SessionTier = 'max',
 ): Promise<{ name: string }> =>
   request<{ name: string }>('/api/push', {
     method: 'POST',

@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import type { PlannedSession } from '../../coach/types.ts'
-import { SPORT_LABELS } from '../../coach/types.ts'
+import type { PlannedSession, SessionTier } from '../../coach/types.ts'
+import { SPORT_LABELS, TIER_LABELS } from '../../coach/types.ts'
 import { pushWorkout } from '../api.ts'
 
 type Props = {
@@ -13,26 +13,32 @@ type Props = {
 
 type PushState = { readonly status: 'idle' | 'busy' | 'done' | 'error'; readonly message?: string }
 
+/** The usual day is what the athlete sees first; the others are one tap away. */
+const preferredTier = (session: PlannedSession): SessionTier => {
+  const variants = session.variants
+  const normal = variants.find((variant) => variant.tier === 'normal')
+  return normal?.tier ?? variants[variants.length - 1]?.tier ?? 'max'
+}
+
 export const SessionCard = ({ session, date, recommended, destinations }: Props) => {
   const [push, setPush] = useState<PushState>({ status: 'idle' })
-  const [variant, setVariant] = useState<'full' | 'short'>('full')
+  const [tier, setTier] = useState<SessionTier>(() => preferredTier(session))
 
-  const short = session.short
-  const active = variant === 'short' ? short : null
-  const minutes = active?.minutes ?? session.template.minutes
-  const load = active?.load ?? session.template.load
+  const variants = session.variants
+  const active = variants.find((variant) => variant.tier === tier) ?? variants[variants.length - 1]
   const steps = active?.humanSteps ?? session.humanSteps
+  const trimmed = active !== undefined && active.cuts.length > 0
 
   // A pushed workout belongs to one version, so switching starts the choice over.
-  const choose = (next: 'full' | 'short') => {
-    setVariant(next)
+  const choose = (next: SessionTier) => {
+    setTier(next)
     setPush({ status: 'idle' })
   }
 
   const onPush = async () => {
     setPush({ status: 'busy' })
     try {
-      await pushWorkout(date, session.template.id, variant)
+      await pushWorkout(date, session.template.id, tier)
       setPush({ status: 'done', message: 'Im Kalender' })
     } catch (error) {
       setPush({ status: 'error', message: error instanceof Error ? error.message : 'Fehler' })
@@ -44,31 +50,29 @@ export const SessionCard = ({ session, date, recommended, destinations }: Props)
       <div className="session__head">
         <span className={`badge badge--${session.sport.toLowerCase()}`}>{SPORT_LABELS[session.sport]}</span>
         {recommended && <span className="badge badge--pick">Empfehlung</span>}
-        <span className="session__meta">{load} TSS</span>
+        <span className="session__meta">{active?.load ?? session.template.load} TSS</span>
       </div>
 
       <h3>{session.template.name}</h3>
       <p className="session__reason">{session.reason}</p>
 
-      {short ? (
+      {variants.length > 1 ? (
         <div className="variants" role="group" aria-label="Dauer wählen">
-          <button
-            type="button"
-            className={variant === 'full' ? 'variants__pick variants__pick--on' : 'variants__pick'}
-            onClick={() => choose('full')}
-          >
-            {session.template.minutes} min <span>komplett</span>
-          </button>
-          <button
-            type="button"
-            className={variant === 'short' ? 'variants__pick variants__pick--on' : 'variants__pick'}
-            onClick={() => choose('short')}
-          >
-            {short.minutes} min <span>kurz</span>
-          </button>
+          {variants.map((variant) => (
+            <button
+              key={variant.tier}
+              type="button"
+              className={
+                variant.tier === tier ? 'variants__pick variants__pick--on' : 'variants__pick'
+              }
+              onClick={() => choose(variant.tier)}
+            >
+              {variant.minutes} min <span>{TIER_LABELS[variant.tier]}</span>
+            </button>
+          ))}
         </div>
       ) : (
-        <p className="session__duration readout">{minutes} min</p>
+        <p className="session__duration readout">{active?.minutes ?? session.template.minutes} min</p>
       )}
 
       <ol className="steps">
@@ -76,7 +80,7 @@ export const SessionCard = ({ session, date, recommended, destinations }: Props)
           // "12min @ 276-291 W" reads as a table, so the duration keeps its own column.
           const [duration, ...target] = step.split(' @ ')
           return (
-            <li key={`${session.template.id}-${variant}-${index}`}>
+            <li key={`${session.template.id}-${tier}-${index}`}>
               <span>{duration}</span>
               {target.length > 0 && <em>{target.join(' @ ')}</em>}
             </li>
@@ -84,9 +88,9 @@ export const SessionCard = ({ session, date, recommended, destinations }: Props)
         })}
       </ol>
 
-      {active ? (
+      {trimmed ? (
         <p className="session__note">
-          {active.cuts.join(' · ')}. Intervalllänge und Zielwerte bleiben unverändert — nur das
+          {active?.cuts.join(' · ')}. Intervalllänge und Zielwerte bleiben unverändert — nur das
           Volumen sinkt. Zählt nicht für die Progression zur nächsten Stufe.
         </p>
       ) : (

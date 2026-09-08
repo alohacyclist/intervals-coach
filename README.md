@@ -94,13 +94,23 @@ nichts vorgeschlagen wird und wie lange danach die Intensität zurückgehalten w
 vom Grund ab: bei Krankheit drei Tage nichts und eine Woche Rücksicht danach, bei einer
 Impfung zwei Tage und drei. Wer früher wieder fit ist, beendet die Pause mit einem Klick.
 
-## Kurzfassung jeder Einheit
+## Drei Zeitfenster statt einer Obergrenze
 
-Jede Einheit ab etwa einer Stunde gibt es zusätzlich als 45-Minuten-Version. Was gekürzt
-wird, hängt am Reiz: Intervalltrainings behalten Intervalllänge und Zielwerte und
-verlieren Wiederholungen, Dauerbelastungen werden schlicht kürzer — dort *ist* die Dauer
-der Reiz. Auf- und Auswärmen geht zuerst. Nichts verliert mehr als die Hälfte von sich,
-und eine Kurzfassung schaltet keine Progressionsstufe frei.
+Eine Zahl war nie die Wahrheit. Konfiguriert werden drei: die Zeit, die **immer** geht,
+die **normale** und die für einen **guten Tag**. Jede Einheit wird in allen dreien
+angeboten; vorausgewählt ist die normale.
+
+Die Bibliothek wird bis zur Obergrenze durchsucht, damit auch die langen Einheiten
+erreichbar bleiben — die kürzeren Fassungen entstehen daraus. Was gekürzt wird, hängt am
+Reiz: Intervalltrainings behalten Intervalllänge und Zielwerte und verlieren
+Wiederholungen, Dauerbelastungen werden schlicht kürzer — dort *ist* die Dauer der Reiz.
+Auf- und Auswärmen geht zuerst.
+
+Vier Regeln halten das ehrlich: nichts verliert mehr als die Hälfte von sich; eine Einheit
+wird nie gestreckt, nur getrimmt; zwei Fassungen, die weniger als zwölf Minuten
+auseinanderliegen, sind dieselbe Einheit und werden zu einer; und Referenzeinheiten
+werden gar nicht gekürzt, weil sie sonst nicht mehr mit sich selbst vergleichbar wären.
+Eine gekürzte Fassung schaltet keine Progressionsstufe frei.
 
 ## Progression, Kraft, Benchmarks
 

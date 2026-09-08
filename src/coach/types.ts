@@ -38,6 +38,28 @@ export type Stimulus =
 
 export type IntensityClass = 'hard' | 'moderate' | 'easy'
 
+/**
+ * Three honest answers to "how long have you got", because one number is never
+ * true: the time that always works, the time that usually works, and the time
+ * on a good day. Every session is offered at each of them.
+ */
+export type SessionMinutes = {
+  /** Always doable — the version that keeps a bad week from becoming a lost one. */
+  readonly min: number
+  /** The usual day, and what the plan shows first. */
+  readonly normal: number
+  /** When there is room, and the ceiling for what gets picked from the library. */
+  readonly max: number
+}
+
+export type SessionTier = keyof SessionMinutes
+
+export const TIER_LABELS: Readonly<Record<SessionTier, string>> = {
+  min: 'knapp',
+  normal: 'normal',
+  max: 'lang',
+}
+
 export type WeeklySessions = {
   readonly min: number
   readonly max: number
@@ -53,7 +75,7 @@ export type AthleteProfile = {
   /** Sessions per week: `min` is the commitment, `max` the ceiling time allows. */
   readonly weeklySessions: WeeklySessions
   /** Time budget for a single session in minutes. */
-  readonly maxSessionMinutes: number
+  readonly sessionMinutes: SessionMinutes
 }
 
 export type GoalKind = 'ftp' | 'raceTime'
@@ -299,6 +321,7 @@ export type Intent = 'hard' | 'easy' | 'rest'
  * day does not become a skipped day.
  */
 export type SessionVariant = {
+  readonly tier: SessionTier
   readonly minutes: number
   readonly load: number
   readonly blocks: readonly Block[]
@@ -314,8 +337,8 @@ export type PlannedSession = {
   readonly reason: string
   readonly description: string
   readonly humanSteps: readonly string[]
-  /** null when the session is already short enough to be worth only one version. */
-  readonly short: SessionVariant | null
+  /** The same session at each configured time budget, shortest first. */
+  readonly variants: readonly SessionVariant[]
 }
 
 export type PlannedDay = {

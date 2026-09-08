@@ -24,6 +24,11 @@ const stateFrom = (
 
 const rested = [activity(9, 'Ride', { load: 60, intensity: 70 }), activity(11, 'Run', { load: 50, intensity: 70 })]
 
+const withMinutes = (sessionMinutes: { min: number; normal: number; max: number }) => ({
+  ...config,
+  profile: { ...config.profile, sessionMinutes },
+})
+
 describe('plan engine', () => {
   it('always offers exactly one bike and one run option per day', () => {
     const days = planDays(stateFrom(rested), config, 3)
@@ -127,12 +132,29 @@ describe('plan engine', () => {
     expect(today?.recommended).toBe('Run')
   })
 
-  it('never proposes a session longer than the time budget', () => {
-    const short = { ...config, profile: { ...config.profile, maxSessionMinutes: 50 } }
-    const days = planDays(stateFrom(rested), short, 3)
-    for (const day of days) {
+  it('never proposes a session longer than the athlete has on a good day', () => {
+    const tight = withMinutes({ min: 35, normal: 45, max: 50 })
+    for (const day of planDays(stateFrom(rested), tight, 3)) {
       for (const option of day.options) {
-        expect(option.template.minutes).toBeLessThanOrEqual(50)
+        expect(option.template.minutes, option.template.id).toBeLessThanOrEqual(50)
+        for (const variant of option.variants) {
+          expect(variant.minutes, option.template.id).toBeLessThanOrEqual(50)
+        }
+      }
+    }
+  })
+
+  it('always has a version for the time that always works', () => {
+    const tight = withMinutes({ min: 40, normal: 60, max: 80 })
+    for (const day of planDays(stateFrom(rested), tight, 3)) {
+      for (const option of day.options) {
+        // A reference session is offered whole or not at all, so it is exempt.
+        if (option.template.benchmark === true) continue
+        const shortest = option.variants[0]?.minutes ?? Infinity
+        // Nothing is cut below half of itself, and two versions within twelve
+        // minutes of each other collapse into one, so that is the honest floor.
+        const floor = Math.max(40, Math.round(option.template.minutes / 2), option.template.minutes - 11)
+        expect(shortest, option.template.id).toBeLessThanOrEqual(floor)
       }
     }
   })
@@ -371,7 +393,10 @@ describe('levels in the plan', () => {
   })
 
   it('keeps the short version available for a tight day', () => {
-    const tight = { ...config, profile: { ...config.profile, maxSessionMinutes: 50 } }
+    const tight = {
+      ...withMinutes({ min: 35, normal: 45, max: 50 }),
+      goals: config.goals,
+    }
     const days = planDays(stateFrom(rested), tight, 3, clearedLevelOne('bike-thr-short-3x8'))
     for (const day of days) {
       for (const option of day.options) expect(option.template.minutes).toBeLessThanOrEqual(50)

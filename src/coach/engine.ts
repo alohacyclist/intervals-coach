@@ -8,6 +8,8 @@ import type {
   Phase,
   PlannedDay,
   PlannedSession,
+  SessionMinutes,
+  SessionTier,
   SessionVariant,
   Sport,
   SportThreshold,
@@ -26,7 +28,7 @@ import { levelCeilings } from './progression.ts'
 import type { Completion } from './progression.ts'
 import { findTemplate, flattenBlocks, intensityClass, isPreferredSport, strengthSession, templatesFor } from './library.ts'
 import { describeBlocks, describeWorkout, toHumanSteps } from './format.ts'
-import { MIN_SAVING_MINUTES, SHORT_TARGET_MINUTES, shorten, totalSeconds } from './variant.ts'
+import { MIN_SAVING_MINUTES, shorten, totalSeconds } from './variant.ts'
 
 /** Minimum days between two hard sessions, regardless of sport. */
 const HARD_SPACING_DAYS = 2
@@ -350,32 +352,76 @@ const reasonFor = (
 }
 
 const SHORT_NOTE =
-  'Kurzfassung: gleiche Intervalllänge, gleiche Zielwerte, weniger Volumen. Der Reiz bleibt, die Zeit nicht.'
+  'Gekürzte Fassung: gleiche Intervalllänge, gleiche Zielwerte, weniger Volumen. Der Reiz bleibt, die Zeit nicht.'
 
 /**
- * The short version is derived, never hand written, so it exists for every
- * session and always keeps the intensity the full one asks for.
+ * One tier's version of a session. The full template is the top of what is
+ * offered — a workout is never stretched, only trimmed, because adding
+ * intervals to a session designed with three of them makes it another session.
  */
-const shortVariant = (
+const variantFor = (
+  tier: SessionTier,
+  targetMinutes: number,
   template: WorkoutTemplate,
   threshold: SportThreshold,
   reason: string,
 ): SessionVariant | null => {
   const fullSec = totalSeconds(template.blocks, threshold)
-  if (fullSec === 0 || template.minutes <= SHORT_TARGET_MINUTES) return null
-  const { blocks, cuts } = shorten(template.blocks, threshold, SHORT_TARGET_MINUTES / template.minutes)
+  if (fullSec === 0) return null
+
+  if (targetMinutes >= template.minutes) {
+    return {
+      tier,
+      minutes: template.minutes,
+      load: template.load,
+      blocks: template.blocks,
+      description: describeWorkout(template, reason),
+      humanSteps: toHumanSteps(template.blocks, threshold),
+      cuts: [],
+    }
+  }
+
+  const { blocks, cuts } = shorten(template.blocks, threshold, targetMinutes / template.minutes)
   const shortSec = totalSeconds(blocks, threshold)
-  // The authored duration stays authoritative; the short one scales off it.
-  const minutes = Math.round((template.minutes * shortSec) / fullSec)
-  if (template.minutes - minutes < MIN_SAVING_MINUTES) return null
+  // The authored duration stays authoritative; the trimmed one scales off it.
   return {
-    minutes,
+    tier,
+    minutes: Math.round((template.minutes * shortSec) / fullSec),
     load: Math.round((template.load * shortSec) / fullSec),
     blocks,
     description: describeBlocks(blocks, `${template.coachNote}\n\n${SHORT_NOTE}`, reason),
     humanSteps: toHumanSteps(blocks, threshold),
     cuts,
   }
+}
+
+/**
+ * One variant per configured time budget, shortest first. Two tiers that land
+ * within a few minutes of each other are the same session twice, so only the
+ * longer of them is kept — a choice between 58 and 60 minutes is not a choice.
+ */
+const buildVariants = (
+  template: WorkoutTemplate,
+  threshold: SportThreshold,
+  reason: string,
+  minutes: SessionMinutes,
+): readonly SessionVariant[] => {
+  // A reference session exists to be compared with itself. Trimmed, it would
+  // measure a different workout, so it is offered whole or not at all.
+  if (template.benchmark === true) {
+    const whole = variantFor('max', template.minutes, template, threshold, reason)
+    return whole ? [whole] : []
+  }
+
+  const tiers: readonly SessionTier[] = ['min', 'normal', 'max']
+  const built = tiers
+    .map((tier) => variantFor(tier, minutes[tier], template, threshold, reason))
+    .filter((variant): variant is SessionVariant => variant !== null)
+
+  return built.filter((variant, index) => {
+    const next = built[index + 1]
+    return next === undefined || next.minutes - variant.minutes >= MIN_SAVING_MINUTES
+  })
 }
 
 const buildSession = (
@@ -390,7 +436,7 @@ const buildSession = (
     reason,
     description: describeWorkout(template, reason),
     humanSteps: toHumanSteps(template.blocks, threshold),
-    short: shortVariant(template, threshold, reason),
+    variants: buildVariants(template, threshold, reason, config.profile.sessionMinutes),
   }
 }
 
@@ -513,7 +559,7 @@ export const planDays = (
   completions: readonly Completion[] = [],
   intent?: Intent,
 ): readonly PlannedDay[] => {
-  const budgetMinutes = config.profile.maxSessionMinutes
+  const budgetMinutes = config.profile.sessionMinutes.max
   const sports = selectedSports(config.profile)
   const ceilings = levelCeilings(completions)
 

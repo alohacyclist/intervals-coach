@@ -57,7 +57,7 @@ export const config: CoachConfig = {
     maxHr: null,
     lthr: null,
     weeklySessions: { min: 2, max: 3 },
-    maxSessionMinutes: 75,
+    sessionMinutes: { min: 45, normal: 60, max: 75 },
   },
   goals: [
     {

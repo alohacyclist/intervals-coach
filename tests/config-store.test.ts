@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { validateConfig, ValidationError, DEFAULT_CONFIG } from '../src/coach/config-schema.ts'
+import { config } from './fixtures.ts'
 
 describe('config validation', () => {
   it('accepts the default configuration', () => {
@@ -126,5 +127,24 @@ describe('configuration migration', () => {
   it('still rejects a zero or negative legacy value', () => {
     const broken = { ...DEFAULT_CONFIG, profile: { ...DEFAULT_CONFIG.profile, weeklySessions: 0 } }
     expect(() => validateConfig(broken)).toThrow(ValidationError)
+  })
+})
+
+describe('migrating the time budget', () => {
+  it('turns one stored session length into three tiers', () => {
+    const stored = { ...JSON.parse(JSON.stringify(config)), profile: { ...config.profile } }
+    delete (stored.profile as Record<string, unknown>)['sessionMinutes']
+    ;(stored.profile as Record<string, unknown>)['maxSessionMinutes'] = 80
+
+    const migrated = validateConfig(stored)
+    expect(migrated.profile.sessionMinutes).toEqual({ min: 56, normal: 80, max: 80 })
+  })
+
+  it('keeps three tiers that are already stored', () => {
+    const migrated = validateConfig({
+      ...config,
+      profile: { ...config.profile, sessionMinutes: { min: 45, normal: 60, max: 90 } },
+    })
+    expect(migrated.profile.sessionMinutes).toEqual({ min: 45, normal: 60, max: 90 })
   })
 })

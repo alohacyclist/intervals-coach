@@ -19,6 +19,8 @@ type Draft = {
   raceDate: string
   sessionsMin: string
   sessionsMax: string
+  minMinutes: string
+  normalMinutes: string
   maxMinutes: string
 }
 
@@ -38,7 +40,9 @@ const EMPTY: Draft = {
   raceDate: '',
   sessionsMin: '2',
   sessionsMax: '4',
-  maxMinutes: '75',
+  minMinutes: '45',
+  normalMinutes: '60',
+  maxMinutes: '90',
 }
 
 const buildGoals = (draft: Draft, ftp: number | null): readonly Goal[] => {
@@ -110,7 +114,11 @@ export const Onboarding = ({ onDone }: { readonly onDone: () => void }) => {
     maxHr: null,
     lthr: null,
     weeklySessions: { min: Number(draft.sessionsMin), max: Number(draft.sessionsMax) },
-    maxSessionMinutes: Number(draft.maxMinutes),
+    sessionMinutes: {
+      min: Number(draft.minMinutes),
+      normal: Number(draft.normalMinutes),
+      max: Number(draft.maxMinutes),
+    },
   }
   const ridesBike = draft.sports.some((setting) => setting.sport === 'Ride')
 
@@ -233,7 +241,15 @@ export const Onboarding = ({ onDone }: { readonly onDone: () => void }) => {
             <input type="number" min={1} max={14} value={draft.sessionsMax} onChange={set('sessionsMax')} />
           </label>
           <label>
-            Minuten pro Einheit (max.)
+            Minuten — schaffe ich immer
+            <input type="number" value={draft.minMinutes} onChange={set('minMinutes')} />
+          </label>
+          <label>
+            Minuten — normalerweise
+            <input type="number" value={draft.normalMinutes} onChange={set('normalMinutes')} />
+          </label>
+          <label>
+            Minuten — wenn viel Zeit ist
             <input type="number" value={draft.maxMinutes} onChange={set('maxMinutes')} />
           </label>
         </div>
