@@ -3,6 +3,7 @@ import { breakLimit, endedBefore, returnWindow } from '../src/coach/breaks.ts'
 import { planDays } from '../src/coach/engine.ts'
 import { buildState } from '../src/coach/state.ts'
 import { addDays } from '../src/coach/dates.ts'
+import { thresholdTestDue } from '../src/coach/threshold-test.ts'
 import type { CoachConfig, TrainingBreak } from '../src/coach/types.ts'
 import { activity, baselineWellness, config, TODAY, wellness } from './fixtures.ts'
 
@@ -105,5 +106,54 @@ describe('ending a break early', () => {
 
   it('drops a break stopped on the day it started', () => {
     expect(endedBefore(entry('illness', 0, 14), TODAY)).toBeNull()
+  })
+})
+
+describe('when the plan measures instead of estimating', () => {
+  const fit = { ctl: 40, atl: 42, tsb: -2 }
+  const tired = { ctl: 40, atl: 62, tsb: -22 }
+
+  it('measures a threshold that has never been measured', () => {
+    const due = thresholdTestDue('Ride', [], TODAY, fit, 'BUILD', false, 90, 2)
+    expect(due?.templateId).toBe('test-bike-ftp20')
+    expect(due?.reason).toContain('nie gemessen')
+  })
+
+  it('waits ten weeks before asking again', () => {
+    const done = (daysAgo: number) => [
+      {
+        templateId: 'test-bike-ftp20',
+        date: addDays(TODAY, -daysAgo),
+        compliance: 95,
+        activityId: 'a',
+        variant: 'full' as const,
+      },
+    ]
+    expect(thresholdTestDue('Ride', done(40), TODAY, fit, 'BUILD', false, 90, 2)).toBeNull()
+    expect(thresholdTestDue('Ride', done(80), TODAY, fit, 'BUILD', false, 90, 2)).not.toBeNull()
+  })
+
+  it('refuses to measure what fatigue would distort', () => {
+    expect(thresholdTestDue('Ride', [], TODAY, tired, 'BUILD', false, 90, 2)).toBeNull()
+  })
+
+  it('leaves a taper and a recovery week alone', () => {
+    expect(thresholdTestDue('Ride', [], TODAY, fit, 'TAPER', false, 90, 2)).toBeNull()
+    expect(thresholdTestDue('Ride', [], TODAY, fit, 'RECOVERY', false, 90, 2)).toBeNull()
+  })
+
+  it('waits until the athlete is properly back from a break', () => {
+    expect(thresholdTestDue('Ride', [], TODAY, fit, 'BUILD', true, 90, 2)).toBeNull()
+    expect(thresholdTestDue('Ride', [], TODAY, fit, 'BUILD', false, 90, 14)).toBeNull()
+  })
+
+  it('never breaks the time budget the athlete stated', () => {
+    expect(thresholdTestDue('Ride', [], TODAY, fit, 'BUILD', false, 40, 2)).toBeNull()
+  })
+
+  it('measures running too', () => {
+    expect(thresholdTestDue('Run', [], TODAY, fit, 'BUILD', false, 90, 2)?.templateId).toBe(
+      'test-run-thr20',
+    )
   })
 })

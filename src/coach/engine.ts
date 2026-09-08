@@ -21,9 +21,10 @@ import { projectFitness } from './fitness.ts'
 import { PHASE_LABELS, phaseForSport, primaryGoal, weeklyHardBudget } from './phase.ts'
 import { defaultThreshold, selectedSports, thresholdFor } from './thresholds.ts'
 import { breakLimit, returnWindow } from './breaks.ts'
+import { thresholdTestDue } from './threshold-test.ts'
 import { levelCeilings } from './progression.ts'
 import type { Completion } from './progression.ts'
-import { flattenBlocks, intensityClass, isPreferredSport, strengthSession, templatesFor } from './library.ts'
+import { findTemplate, flattenBlocks, intensityClass, isPreferredSport, strengthSession, templatesFor } from './library.ts'
 import { describeBlocks, describeWorkout, toHumanSteps } from './format.ts'
 import { MIN_SAVING_MINUTES, SHORT_TARGET_MINUTES, shorten, totalSeconds } from './variant.ts'
 
@@ -44,6 +45,8 @@ type Simulation = {
   readonly stimulusAge: Readonly<Record<string, number>>
   readonly usedTemplateIds: readonly string[]
   readonly strengthThisWeek: number
+  /** One maximal test a week at most — the second would measure the first. */
+  readonly testedThisWeek: boolean
   readonly consecutiveRest: number
   readonly weekStart: string
 }
@@ -73,6 +76,7 @@ const initSimulation = (state: TrainingState, config: CoachConfig): Simulation =
   ),
   usedTemplateIds: [],
   strengthThisWeek: strengthThisWeekFrom(state, config),
+  testedThisWeek: false,
   consecutiveRest: state.consecutiveRestDays,
   weekStart: startOfWeek(state.today),
 })
@@ -463,6 +467,7 @@ const advance = (
   offered: readonly PlannedSession[],
   strengthAdded: boolean,
   nextDate: string,
+  tested: boolean,
 ): Simulation => {
   const isHard = session !== null && intensityClass(session.template.stimulus) === 'hard'
   const sameWeek = startOfWeek(nextDate) === simulation.weekStart
@@ -495,6 +500,7 @@ const advance = (
       ...offered.map((option) => option.template.id),
     ],
     strengthThisWeek: (sameWeek ? simulation.strengthThisWeek : 0) + (strengthAdded ? 1 : 0),
+    testedThisWeek: (sameWeek && simulation.testedThisWeek) || tested,
     consecutiveRest: session ? 0 : simulation.consecutiveRest + 1,
     weekStart: sameWeek ? simulation.weekStart : startOfWeek(nextDate),
   }
@@ -539,9 +545,30 @@ export const planDays = (
       const { dayType } = decision
 
       const returning = returnWindow(config.breaks, date) !== null
+      const recommended = chooseRecommended(dayType, simulation, config, date, sports)
+
+      // A quality day is the only slot a maximal test can have, and the plan
+      // takes it rather than waiting for the athlete to volunteer.
+      const test =
+        dayType === 'KEY' && recommended !== 'REST' && !simulation.testedThisWeek
+          ? thresholdTestDue(
+              recommended,
+              completions,
+              date,
+              simulation.fitness,
+              phases[recommended],
+              returning,
+              budgetMinutes,
+              state.daysSinceAnySession,
+            )
+          : null
 
       const options = sports.map((sport) => {
         const sportPhase = phases[sport]
+        if (test && test.sport === sport) {
+          const template = findTemplate(test.templateId)
+          if (template) return buildSession(template, config, test.reason)
+        }
         const candidates = candidatesFor(sport, dayType, sportPhase, budgetMinutes, ceilings)
         const best = [...candidates].sort(
           (left, right) =>
@@ -551,8 +578,6 @@ export const planDays = (
         if (!best) return null
         return buildSession(best, config, reasonFor(best, dayType, sportPhase, simulation, ceilings))
       }).filter((session): session is PlannedSession => session !== null)
-
-      const recommended = chooseRecommended(dayType, simulation, config, date, sports)
       const strength = strengthFor(dayType, simulation, config)
       const chosen = options.find((session) => session.sport === recommended) ?? null
 
@@ -569,7 +594,14 @@ export const planDays = (
       }
 
       return {
-        simulation: advance(simulation, chosen, options, strength !== null, addDays(state.today, dayIndex + 1)),
+        simulation: advance(
+          simulation,
+          chosen,
+          options,
+          strength !== null,
+          addDays(state.today, dayIndex + 1),
+          test !== null,
+        ),
         plan: [...plan, day],
       }
     },

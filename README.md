@@ -117,6 +117,14 @@ und Plyometrie die Rolle der Last.
 immer unverändert, damit die Ergebnisse vergleichbar bleiben. Verglichen wird Leistung
 gegen Herzfrequenz.
 
+**Standortbestimmung.** Jede Schätzung einer Schwelle ist durch das begrenzt, was der
+Athlet versucht hat: Intervalle belegen eine Untergrenze, nie eine Obergrenze. Wer gut
+trainiert, aber nie testet, sieht seinen Schätzwert deshalb sinken — und bekommt dann zu
+leichte Vorgaben, die den nächsten Schätzwert weiter drücken. Die App plant den Ausweg
+selbst ein: einen 20-Minuten-Maximalblock, alle 10 Wochen und immer auf einem Qualitätstag.
+Nicht in Tapering- oder Erholungswochen, nicht bei Form unter −15, nicht direkt nach einer
+Pause, nie über dem angegebenen Zeitbudget und höchstens einmal pro Woche.
+
 **Schwellenwerte.** Weichen die in intervals.icu beobachteten Werte von den eingestellten
 ab, schlägt die App eine Korrektur vor — Zuwächse ab 3 %, Rückgänge erst ab 6 %. Eine
 Schätzung beweist eine Untergrenze, nie eine Obergrenze: dass eine Leistung *nicht*

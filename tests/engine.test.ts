@@ -345,11 +345,18 @@ describe('training beyond the weekly ceiling', () => {
 })
 
 describe('levels in the plan', () => {
-  const clearedLevelOne = (templateId: string) => {
-    const event = plannedEvent(6, 'egal', { externalId: `coach:2026-01-01:${templateId}` })
-    const act = activity(6, 'Ride', { load: 80, pairedEventId: event.id, compliance: 90 })
+  const completedOn = (templateId: string, daysAgo: number, id: string) => {
+    const event = plannedEvent(daysAgo, id, { externalId: `coach:2026-01-01:${templateId}` })
+    const act = activity(daysAgo, 'Ride', { load: 80, pairedEventId: event.id, compliance: 90 })
     return completionsFrom([event], [act])
   }
+
+  // A recent threshold test, so the plan is free to prescribe ordinary quality
+  // work rather than spending the day measuring.
+  const clearedLevelOne = (templateId: string) => [
+    ...completedOn(templateId, 6, 'stufe'),
+    ...completedOn('test-bike-ftp20', 20, 'test'),
+  ]
 
   it('offers only the entry level before anything has been completed', () => {
     const days = planDays(stateFrom(rested), config, 3, [])

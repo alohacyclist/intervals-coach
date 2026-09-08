@@ -179,8 +179,19 @@ describe('the threshold test', () => {
     expect(thresholdTestFor('Ride')?.id).toBe('test-bike-ftp20')
   })
 
-  it('is never offered as ordinary training', () => {
-    const sessions = planDays(state(), config, 3).flatMap((day) => day.options)
-    expect(sessions.map((session) => session.template.id)).not.toContain('test-bike-ftp20')
+  it('is prescribed by the plan, not left to the athlete to volunteer', () => {
+    const days = planDays(state(), config, 3)
+    const measuring = days.filter((day) =>
+      day.options.some((option) => option.template.id === 'test-bike-ftp20'),
+    )
+    expect(measuring).toHaveLength(1)
+    expect(measuring[0]?.dayType).toBe('KEY')
+  })
+
+  it('never lands on an easy or rest day', () => {
+    for (const day of planDays(state(), config, 7)) {
+      if (day.dayType === 'KEY') continue
+      expect(day.options.map((option) => option.template.measures)).not.toContain('threshold')
+    }
   })
 })
