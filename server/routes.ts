@@ -7,6 +7,7 @@ import {
   IntervalsError,
   createWorkoutEvent,
   fetchActivities,
+  fetchActivityIntervals,
   fetchEvents,
   fetchDestinations,
   fetchSportSettings,
@@ -14,14 +15,16 @@ import {
   setDestination,
   updateSportThreshold,
 } from './intervals.ts'
-import { addDays } from '../src/coach/dates.ts'
+import { addDays, diffDays } from '../src/coach/dates.ts'
 import { buildState } from '../src/coach/state.ts'
 import { planDays } from '../src/coach/engine.ts'
 import { assessGoals } from '../src/coach/feasibility.ts'
 import { buildHistory } from '../src/coach/adherence.ts'
 import { completionsFrom } from '../src/coach/progression.ts'
+import type { Completion } from '../src/coach/progression.ts'
 import { benchmarkStatus } from '../src/coach/benchmark.ts'
-import { adoptThreshold, thresholdSuggestions } from '../src/coach/threshold-drift.ts'
+import { adoptThreshold, measuredSuggestion, thresholdSuggestions } from '../src/coach/threshold-drift.ts'
+import { thresholdFromTest } from '../src/coach/test-result.ts'
 import type { ObservedThresholds } from '../src/coach/threshold-drift.ts'
 import type { Sport } from '../src/coach/types.ts'
 import { ALL_BREAK_KINDS } from '../src/coach/types.ts'
@@ -31,7 +34,7 @@ const TIERS: readonly SessionTier[] = ['min', 'normal', 'max']
 import { activeBreak, endedBefore } from '../src/coach/breaks.ts'
 import { findTemplate } from '../src/coach/library.ts'
 import { describeWorkout } from '../src/coach/format.ts'
-import type { Intent, Plan } from '../src/coach/types.ts'
+import type { CoachConfig, Intent, Plan, ThresholdSuggestion } from '../src/coach/types.ts'
 
 const TIMEZONE = 'Europe/Berlin'
 /** Longer than this is not a break any more, it is a different training year. */
@@ -76,6 +79,42 @@ const observedThresholds = (
   }
 }
 
+/** How long a completed test still speaks for itself before the estimate takes over. */
+const TEST_RESULT_DAYS = 21
+
+/**
+ * Reads the threshold off the tests the athlete actually completed. The app
+ * prescribed the maximal block, so it knows which effort was the measurement —
+ * waiting for someone else's estimate to move would defeat the point of testing.
+ */
+const measuredThresholds = async (
+  deps: RouteDeps,
+  config: CoachConfig,
+  completions: readonly Completion[],
+  today: string,
+): Promise<readonly ThresholdSuggestion[]> => {
+  const recent = completions
+    .filter((completion) => findTemplate(completion.templateId)?.measures === 'threshold')
+    .filter((completion) => diffDays(completion.date, today) <= TEST_RESULT_DAYS)
+    .sort((left, right) => right.date.localeCompare(left.date))
+
+  const newestPerSport = new Map<Sport, Completion>()
+  for (const completion of recent) {
+    const sport = findTemplate(completion.templateId)?.sport
+    if (sport && !newestPerSport.has(sport)) newestPerSport.set(sport, completion)
+  }
+
+  const measured = await Promise.all(
+    [...newestPerSport].map(async ([sport, completion]) => {
+      // One extra call, only for a test that was actually done.
+      const efforts = await fetchActivityIntervals(deps.auth, completion.activityId).catch(() => [])
+      const result = thresholdFromTest(sport, efforts)
+      return result ? measuredSuggestion(config.profile, sport, result.value) : null
+    }),
+  )
+  return measured.filter((entry): entry is ThresholdSuggestion => entry !== null)
+}
+
 const buildPlan = async (deps: RouteDeps, days: number, intent?: Intent): Promise<Plan> => {
   const today = localToday()
   const config = await deps.store.load()
@@ -90,11 +129,19 @@ const buildPlan = async (deps: RouteDeps, days: number, intent?: Intent): Promis
   const state = buildState(activities, wellness, today)
   const completions = completionsFrom(events, activities)
 
+  const measured = await measuredThresholds(deps, config, completions, today)
+  const estimated = thresholdSuggestions(config.profile, observedThresholds(wellness, settings))
+  // A measurement outranks an estimate for the same sport, always.
+  const suggestions = [
+    ...measured,
+    ...estimated.filter((entry) => !measured.some((hit) => hit.sport === entry.sport)),
+  ]
+
   return {
     generatedAt: new Date().toISOString(),
     state,
     history: buildHistory(events, activities, today, ADHERENCE_DAYS),
-    thresholdSuggestions: thresholdSuggestions(config.profile, observedThresholds(wellness, settings)),
+    thresholdSuggestions: suggestions,
     benchmark: benchmarkStatus(config, completions, activities, today),
     destinations,
     days: planDays(state, config, days, completions, intent),

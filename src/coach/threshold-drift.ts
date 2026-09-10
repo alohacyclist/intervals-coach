@@ -70,6 +70,38 @@ export const thresholdSuggestions = (
     ]
   })
 
+/**
+ * A suggestion the athlete measured rather than one a model inferred. It always
+ * says adopt: a completed maximal effort is evidence, not a guess that fell
+ * because hard efforts were missing.
+ */
+export const measuredSuggestion = (
+  profile: AthleteProfile,
+  sport: Sport,
+  value: number,
+): ThresholdSuggestion | null => {
+  const setting = profile.sports.find((entry) => entry.sport === sport)
+  if (!setting || value <= 0) return null
+  const configured = valueOf(setting.threshold)
+  const drift = improvementPercent(setting.threshold.metric, configured, value)
+  const render = (amount: number) =>
+    setting.threshold.metric === 'power'
+      ? `${Math.round(amount)} W`
+      : `${formatSeconds(amount)}${setting.threshold.metric === 'swimPace' ? '/100m' : '/km'}`
+
+  return {
+    sport,
+    metric: setting.threshold.metric,
+    configured,
+    observed: value,
+    driftPercent: Math.round(drift * 10) / 10,
+    action: 'adopt',
+    message:
+      `Aus deiner Standortbestimmung: ${render(value)} statt ${render(configured)}. ` +
+      'Das ist gemessen, nicht geschätzt — alle Vorgaben sollten jetzt darauf stehen.',
+  }
+}
+
 /** Applies a suggestion, leaving every other sport untouched. */
 export const adoptThreshold = (
   profile: AthleteProfile,

@@ -14,8 +14,18 @@ export const benchmarkTemplateFor = (sport: Sport) =>
       template.benchmark === true && template.sport === sport && template.measures !== 'threshold',
   )
 
+/**
+ * Only the repeated reference session counts towards its own cadence. A
+ * threshold test is also a benchmark, but it answers a different question and
+ * must not push the comparison session eight weeks into the future.
+ */
 const isBenchmark = (templateId: string): boolean =>
-  LIBRARY.some((template) => template.id === templateId && template.benchmark === true)
+  LIBRARY.some(
+    (template) =>
+      template.id === templateId &&
+      template.benchmark === true &&
+      template.measures !== 'threshold',
+  )
 
 const verdictFor = (
   current: number | null,

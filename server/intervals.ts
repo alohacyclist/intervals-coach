@@ -295,6 +295,33 @@ export const setDestination = async (
   return fetchDestinations(auth)
 }
 
+export type WorkInterval = {
+  readonly seconds: number
+  readonly averageWatts: number | null
+  readonly averageSpeedMps: number | null
+}
+
+/**
+ * The work intervals of one activity. Fetched only for a completed threshold
+ * test: the app prescribed a maximal block, so it should read what the block
+ * actually produced instead of waiting for someone else's estimate to move.
+ */
+export const fetchActivityIntervals = async (
+  auth: IntervalsAuth,
+  activityId: string,
+): Promise<readonly WorkInterval[]> => {
+  const raw = (await request(auth, `/activity/${activityId}/intervals`)) as Record<string, unknown>
+  const list = Array.isArray(raw['icu_intervals']) ? raw['icu_intervals'] : []
+  return list
+    .map((entry) => entry as Record<string, unknown>)
+    .filter((entry) => entry['type'] === 'WORK')
+    .map((entry) => ({
+      seconds: num(entry['moving_time']),
+      averageWatts: nullableNum(entry['average_watts']),
+      averageSpeedMps: nullableNum(entry['average_speed']),
+    }))
+}
+
 export const createWorkoutEvent = async (auth: IntervalsAuth, event: CalendarEvent): Promise<unknown> =>
   request(auth, `/athlete/${auth.athleteId}/events`, {
     method: 'POST',

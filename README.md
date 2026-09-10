@@ -135,6 +135,13 @@ selbst ein: einen 20-Minuten-Maximalblock, alle 10 Wochen und immer auf einem Qu
 Nicht in Tapering- oder Erholungswochen, nicht bei Form unter −15, nicht direkt nach einer
 Pause, nie über dem angegebenen Zeitbudget und höchstens einmal pro Woche.
 
+**Danach** liest die App das Ergebnis selbst aus: sie holt die Intervalle der absolvierten
+Einheit, nimmt den längsten Block ab 15 Minuten und rechnet daraus die Schwelle — 95 % der
+Durchschnittsleistung beim Rad, 5 % langsamer als die Testpace beim Laufen. Der Vorschlag
+sagt dann „gemessen, nicht geschätzt" und schlägt jeden Schätzwert für dieselbe Sportart.
+Übernehmen schreibt den Wert auch nach intervals.icu zurück. Ist kein durchgehaltener Block
+in der Einheit, wird nichts hineingelesen — dann war es kein Test.
+
 **Schwellenwerte.** Weichen die in intervals.icu beobachteten Werte von den eingestellten
 ab, schlägt die App eine Korrektur vor — Zuwächse ab 3 %, Rückgänge erst ab 6 %. Eine
 Schätzung beweist eine Untergrenze, nie eine Obergrenze: dass eine Leistung *nicht*
