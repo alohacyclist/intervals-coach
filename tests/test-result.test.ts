@@ -15,13 +15,27 @@ describe('reading a threshold off the test', () => {
   })
 
   it('ignores the openers and reads the sustained block', () => {
-    const test = [effort(1, 320), effort(1, 315), effort(20, 300)]
+    const test = [effort(1, 320), effort(1, 120), effort(1, 315), effort(1, 120), effort(20, 300)]
     expect(thresholdFromTest('Ride', test)?.value).toBe(285)
   })
 
-  it('says nothing when the block was never held', () => {
-    // Intervals are not a test, however hard they were.
-    expect(thresholdFromTest('Ride', [effort(8, 320), effort(8, 318)])).toBeNull()
+  it('finds the block even when it comes back cut into pieces', () => {
+    // intervals.icu detects intervals from the data, so a twenty minute block
+    // arrives as five four minute ones with the recoveries typed as work too.
+    const test = [
+      effort(6, 150),
+      effort(4, 300),
+      effort(4, 302),
+      effort(4, 298),
+      effort(4, 301),
+      effort(4, 299),
+      effort(7, 140),
+    ]
+    expect(thresholdFromTest('Ride', test)?.value).toBe(285)
+  })
+
+  it('says nothing when there was never fifteen minutes of it', () => {
+    expect(thresholdFromTest('Ride', [effort(8, 320), effort(4, 318)])).toBeNull()
     expect(thresholdFromTest('Ride', [])).toBeNull()
   })
 

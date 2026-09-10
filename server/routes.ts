@@ -81,6 +81,8 @@ const observedThresholds = (
 
 /** How long a completed test still speaks for itself before the estimate takes over. */
 const TEST_RESULT_DAYS = 21
+/** Below this the prescribed block was not actually held, so it measured nothing. */
+const MIN_TEST_COMPLIANCE = 75
 
 /**
  * Reads the threshold off the tests the athlete actually completed. The app
@@ -96,6 +98,9 @@ const measuredThresholds = async (
   const recent = completions
     .filter((completion) => findTemplate(completion.templateId)?.measures === 'threshold')
     .filter((completion) => diffDays(completion.date, today) <= TEST_RESULT_DAYS)
+    // Half a test is not a measurement: if the block was not held as prescribed,
+    // the number would describe something else entirely.
+    .filter((completion) => (completion.compliance ?? 0) >= MIN_TEST_COMPLIANCE)
     .sort((left, right) => right.date.localeCompare(left.date))
 
   const newestPerSport = new Map<Sport, Completion>()
