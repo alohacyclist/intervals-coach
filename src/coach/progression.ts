@@ -1,5 +1,5 @@
-import type { Activity, PlannedEvent } from './types.ts'
-import { LIBRARY } from './library.ts'
+import type { Activity, PlannedEvent, ScheduledWorkout } from './types.ts'
+import { LIBRARY, findTemplate } from './library.ts'
 
 /** Below this the session was not executed closely enough to earn the next level. */
 const GOOD_COMPLIANCE = 75
@@ -11,41 +11,68 @@ export type Completion = {
   readonly compliance: number | null
   readonly activityId: string
   readonly variant: 'full' | 'short'
+  /**
+   * How it is known: paired on the calendar, or recognised from the activity —
+   * `exact` when it delivered the proposal's own stimulus, `similar` when it only
+   * came close enough to call the day done.
+   */
+  readonly evidence: 'calendar' | 'exact' | 'similar'
 }
 
-/** `coach:<date>:<templateId>[:short]` is written when the app pushes a workout. */
-const templateIdOf = (event: PlannedEvent): string | null => {
-  if (event.externalId?.startsWith(EXTERNAL_ID_PREFIX) !== true) return null
-  const id = event.externalId.split(':')[2]
-  return id && id.length > 0 ? id : null
+type Pushed = {
+  readonly templateId: string
+  readonly minutes: number | null
+  readonly variant: 'full' | 'short'
 }
-
-const variantOf = (event: PlannedEvent): 'full' | 'short' =>
-  event.externalId?.split(':')[3] === 'short' ? 'short' : 'full'
 
 /**
- * Sessions this app proposed that intervals.icu paired with a real activity.
- * Only these can move an athlete up a level — a workout that was planned but
- * skipped proves nothing.
+ * `coach:<date>:<templateId>:<minutes>` is written when the app pushes a workout.
+ * Older pushes end in `:short` or nothing, which says less about the duration.
+ */
+const pushedOf = (event: PlannedEvent): Pushed | null => {
+  if (event.externalId?.startsWith(EXTERNAL_ID_PREFIX) !== true) return null
+  const [, , templateId, suffix] = event.externalId.split(':')
+  if (!templateId) return null
+  if (suffix === 'short') return { templateId, minutes: null, variant: 'short' }
+  const full = findTemplate(templateId)?.minutes ?? null
+  const pushed = Number(suffix)
+  const minutes = suffix !== undefined && Number.isFinite(pushed) && pushed > 0 ? pushed : full
+  const variant = minutes !== null && full !== null && minutes < full ? 'short' : 'full'
+  return { templateId, minutes, variant }
+}
+
+/** Every version of a proposal already sent to the calendar, by its duration. */
+export const scheduledFrom = (events: readonly PlannedEvent[]): readonly ScheduledWorkout[] =>
+  events.flatMap((event) => {
+    const pushed = pushedOf(event)
+    return pushed?.minutes != null
+      ? [{ date: event.date, templateId: pushed.templateId, minutes: pushed.minutes }]
+      : []
+  })
+
+/**
+ * Pushed sessions that intervals.icu paired with a real activity. A workout that
+ * was planned but skipped proves nothing.
  */
 export const completionsFrom = (
   events: readonly PlannedEvent[],
   activities: readonly Activity[],
 ): readonly Completion[] =>
   events.flatMap((event) => {
-    const templateId = templateIdOf(event)
-    if (!templateId) return []
+    const pushed = pushedOf(event)
+    if (!pushed) return []
     const activity =
       activities.find((candidate) => candidate.pairedEventId === event.id) ??
       activities.find((candidate) => candidate.id === event.pairedActivityId)
     return activity
       ? [
           {
-            templateId,
+            templateId: pushed.templateId,
             date: event.date,
             compliance: activity.compliance,
             activityId: activity.id,
-            variant: variantOf(event),
+            variant: pushed.variant,
+            evidence: 'calendar' as const,
           },
         ]
       : []
@@ -67,7 +94,11 @@ export const levelFor = (family: string, completions: readonly Completion[]): nu
   const top = levels[levels.length - 1] ?? 1
   const cleared = completions
     .filter((completion) => completion.variant === 'full')
-    .filter((completion) => (completion.compliance ?? 0) >= GOOD_COMPLIANCE)
+    .filter((completion) =>
+      completion.compliance !== null
+        ? completion.compliance >= GOOD_COMPLIANCE
+        : completion.evidence === 'exact',
+    )
     .map((completion) => LIBRARY.find((template) => template.id === completion.templateId))
     .filter((template) => template?.family === family)
     .map((template) => template?.level ?? 1)

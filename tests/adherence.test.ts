@@ -80,3 +80,38 @@ describe('adherence history', () => {
     expect(day?.status).toBe('missed')
   })
 })
+
+describe('adherence without the calendar', () => {
+  const proposal = { date: '2026-08-31', recommended: 'bike-thr-short-3x8', templateIds: ['bike-thr-short-3x8'] }
+
+  it('counts a recognised session as done', () => {
+    const ride = activity(2, 'Ride', { load: 70 })
+    const completion = {
+      templateId: 'bike-thr-short-3x8',
+      date: ride.date,
+      compliance: null,
+      activityId: ride.id,
+      variant: 'full' as const,
+      evidence: 'exact' as const,
+    }
+    const day = dayOn(buildHistory([], [ride], TODAY, 7, [proposal], [completion]), 2)
+    expect(day?.status).toBe('done')
+    expect(day?.planned).toEqual(['Schwelle kompakt 3x8min'])
+  })
+
+  it('knows what was recommended even when nothing was sent', () => {
+    const day = dayOn(buildHistory([], [], TODAY, 7, [proposal], []), 2)
+    expect(day?.status).toBe('missed')
+  })
+
+  it('names a recommendation that was also sent only once', () => {
+    const event = plannedEvent(2, 'Schwelle kompakt 3x8min (30 min)')
+    const day = dayOn(buildHistory([event], [], TODAY, 7, [proposal], []), 2)
+    expect(day?.planned).toEqual(['Schwelle kompakt 3x8min (30 min)'])
+  })
+
+  it('leaves today open instead of calling it missed', () => {
+    const today = { ...proposal, date: TODAY }
+    expect(dayOn(buildHistory([], [], TODAY, 7, [today], []), 0)?.status).toBe('open')
+  })
+})

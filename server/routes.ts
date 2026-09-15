@@ -7,7 +7,6 @@ import {
   IntervalsError,
   createWorkoutEvent,
   fetchActivities,
-  fetchActivityIntervals,
   fetchEvents,
   fetchDestinations,
   fetchSportSettings,
@@ -15,18 +14,19 @@ import {
   setDestination,
   updateSportThreshold,
 } from './intervals.ts'
-import { addDays, diffDays } from '../src/coach/dates.ts'
+import { addDays } from '../src/coach/dates.ts'
 import { buildState } from '../src/coach/state.ts'
 import { planFromMorning } from '../src/coach/today.ts'
 import { assessGoals } from '../src/coach/feasibility.ts'
 import { buildHistory } from '../src/coach/adherence.ts'
-import { completionsFrom } from '../src/coach/progression.ts'
-import type { Completion } from '../src/coach/progression.ts'
+import { completionsFrom, scheduledFrom } from '../src/coach/progression.ts'
 import { benchmarkStatus } from '../src/coach/benchmark.ts'
-import { adoptThreshold, measuredSuggestion, thresholdSuggestions } from '../src/coach/threshold-drift.ts'
-import { thresholdFromTest } from '../src/coach/test-result.ts'
+import { adoptThreshold, thresholdSuggestions } from '../src/coach/threshold-drift.ts'
 import type { ObservedThresholds } from '../src/coach/threshold-drift.ts'
-import type { Sport } from '../src/coach/types.ts'
+import { matchedCompletions, mergeCompletions } from '../src/coach/matching.ts'
+import { withProposal } from '../src/coach/proposals.ts'
+import type { DayProposal, PlannedDay, Sport } from '../src/coach/types.ts'
+import { readThresholdTests } from './threshold-tests.ts'
 import { ALL_BREAK_KINDS } from '../src/coach/types.ts'
 import type { SessionTier } from '../src/coach/types.ts'
 
@@ -34,7 +34,7 @@ const TIERS: readonly SessionTier[] = ['min', 'normal', 'max']
 import { activeBreak, endedBefore } from '../src/coach/breaks.ts'
 import { findTemplate } from '../src/coach/library.ts'
 import { describeWorkout } from '../src/coach/format.ts'
-import type { CoachConfig, Intent, Plan, ThresholdSuggestion } from '../src/coach/types.ts'
+import type { Intent, Plan } from '../src/coach/types.ts'
 
 const TIMEZONE = 'Europe/Berlin'
 /** Longer than this is not a break any more, it is a different training year. */
@@ -79,45 +79,14 @@ const observedThresholds = (
   }
 }
 
-/** How long a completed test still speaks for itself before the estimate takes over. */
-const TEST_RESULT_DAYS = 21
-/** Below this the prescribed block was not actually held, so it measured nothing. */
-const MIN_TEST_COMPLIANCE = 75
-
 /**
- * Reads the threshold off the tests the athlete actually completed. The app
- * prescribed the maximal block, so it knows which effort was the measurement —
- * waiting for someone else's estimate to move would defeat the point of testing.
+ * Re-reads the stored config before writing, so a settings change saved while
+ * the plan was being built is not rolled back by this write.
  */
-const measuredThresholds = async (
-  deps: RouteDeps,
-  config: CoachConfig,
-  completions: readonly Completion[],
-  today: string,
-): Promise<readonly ThresholdSuggestion[]> => {
-  const recent = completions
-    .filter((completion) => findTemplate(completion.templateId)?.measures === 'threshold')
-    .filter((completion) => diffDays(completion.date, today) <= TEST_RESULT_DAYS)
-    // Half a test is not a measurement: if the block was not held as prescribed,
-    // the number would describe something else entirely.
-    .filter((completion) => (completion.compliance ?? 0) >= MIN_TEST_COMPLIANCE)
-    .sort((left, right) => right.date.localeCompare(left.date))
-
-  const newestPerSport = new Map<Sport, Completion>()
-  for (const completion of recent) {
-    const sport = findTemplate(completion.templateId)?.sport
-    if (sport && !newestPerSport.has(sport)) newestPerSport.set(sport, completion)
-  }
-
-  const measured = await Promise.all(
-    [...newestPerSport].map(async ([sport, completion]) => {
-      // One extra call, only for a test that was actually done.
-      const efforts = await fetchActivityIntervals(deps.auth, completion.activityId).catch(() => [])
-      const result = thresholdFromTest(sport, efforts)
-      return result ? measuredSuggestion(config.profile, sport, result.value) : null
-    }),
-  )
-  return measured.filter((entry): entry is ThresholdSuggestion => entry !== null)
+const rememberProposals = async (store: ConfigStore, days: readonly PlannedDay[]): Promise<void> => {
+  const latest = await store.load()
+  const proposals = days.reduce(withProposal, latest.proposals)
+  if (proposals !== latest.proposals) await store.save(validateConfig({ ...latest, proposals }))
 }
 
 const buildPlan = async (deps: RouteDeps, days: number, intent?: Intent): Promise<Plan> => {
@@ -126,31 +95,48 @@ const buildPlan = async (deps: RouteDeps, days: number, intent?: Intent): Promis
   const [activities, wellness, events, settings, destinations] = await Promise.all([
     fetchActivities(deps.auth, addDays(today, -ACTIVITY_HISTORY_DAYS), today),
     fetchWellness(deps.auth, addDays(today, -WELLNESS_HISTORY_DAYS), today),
-    fetchEvents(deps.auth, addDays(today, -PROGRESSION_DAYS), today),
+    // Ahead too, so the plan knows which versions are already on the calendar.
+    fetchEvents(deps.auth, addDays(today, -PROGRESSION_DAYS), addDays(today, days)),
     // Optional: a missing scope must not take the whole plan down.
     fetchSportSettings(deps.auth).catch(() => null),
     fetchDestinations(deps.auth).catch(() => []),
   ])
   const state = buildState(activities, wellness, today)
-  const completions = completionsFrom(events, activities)
+  const calendar = completionsFrom(events, activities)
+  const recognised = (proposals: readonly DayProposal[]) =>
+    mergeCompletions(calendar, matchedCompletions(proposals, activities, config.profile))
 
-  const measured = await measuredThresholds(deps, config, completions, today)
+  // Today has to be on record before training done today can be recognised against it.
+  const [morning] = planFromMorning(activities, wellness, recognised(config.proposals), config, today, 1, intent)
+  const proposals = morning ? withProposal(config.proposals, morning) : config.proposals
+
+  const tests = await readThresholdTests(deps.auth, config, recognised(proposals), today)
+  const completions = tests.completions
   const estimated = thresholdSuggestions(config.profile, observedThresholds(wellness, settings))
   // A measurement outranks an estimate for the same sport, always.
   const suggestions = [
-    ...measured,
-    ...estimated.filter((entry) => !measured.some((hit) => hit.sport === entry.sport)),
+    ...tests.suggestions,
+    ...estimated.filter((entry) => !tests.suggestions.some((hit) => hit.sport === entry.sport)),
   ]
+
+  const planned = planFromMorning(activities, wellness, completions, config, today, days, intent)
+  // The days ahead are kept too: training on a day the app was not opened is still recognised.
+  if (planned.reduce(withProposal, proposals) !== config.proposals) {
+    await rememberProposals(deps.store, planned).catch((error: unknown) =>
+      console.error('Vorschläge nicht gespeichert', error),
+    )
+  }
 
   return {
     generatedAt: new Date().toISOString(),
     state,
-    history: buildHistory(events, activities, today, ADHERENCE_DAYS),
+    history: buildHistory(events, activities, today, ADHERENCE_DAYS, proposals, completions),
     thresholdSuggestions: suggestions,
     benchmark: benchmarkStatus(config, completions, activities, today),
     destinations,
-    days: planFromMorning(activities, wellness, completions, config, today, days, intent),
+    days: planned,
     feasibility: assessGoals(config.goals, config.profile, today),
+    scheduled: scheduledFrom(events).filter((entry) => entry.date >= today),
   }
 }
 
@@ -179,7 +165,17 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
 
   app.put('/api/config', async (context) => {
     const { store } = await resolve(context)
-    return context.json(await store.save(validateConfig(await context.req.json())))
+    const body = (await context.req.json()) as Record<string, unknown>
+    // The server keeps this record; a settings form holding an older copy must not roll it back.
+    // Only a missing config means there is nothing to keep; any other failure must not erase it.
+    const proposals = await store.load().then(
+      (stored) => stored.proposals,
+      (error: unknown) => {
+        if (error instanceof MissingConfigError) return []
+        throw error
+      },
+    )
+    return context.json(await store.save(validateConfig({ ...body, proposals })))
   })
 
   app.get('/api/plan', async (context) => {
@@ -348,8 +344,15 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
       return context.json({ error: `Keine ${body.variant}-Fassung für ${template.name}` }, 400)
     }
     const short = chosen && chosen.minutes < template.minutes ? chosen : undefined
+    const minutes = short?.minutes ?? template.minutes
+    const name = short ? `${template.name} (${minutes} min)` : template.name
 
-    const name = short ? `${template.name} (${short.minutes} min)` : template.name
+    // Each version may go on the calendar once; sending several is the athlete's way of deciding later.
+    const alreadyScheduled = plan.scheduled.some(
+      (entry) => entry.date === body.date && entry.templateId === template.id && entry.minutes === minutes,
+    )
+    if (alreadyScheduled) return context.json({ ok: true, date: body.date, name, alreadyScheduled })
+
     await createWorkoutEvent(deps.auth, {
       date: body.date,
       sport: template.sport,
@@ -357,11 +360,10 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
       name,
       description:
         short?.description ?? planned?.description ?? describeWorkout(template, 'manuell ausgewählt'),
-      movingTimeSec: (short?.minutes ?? template.minutes) * 60,
-      variant: short ? 'short' : 'full',
+      minutes,
     })
 
-    return context.json({ ok: true, date: body.date, name })
+    return context.json({ ok: true, date: body.date, name, alreadyScheduled })
   })
 
   return app

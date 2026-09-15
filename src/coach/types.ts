@@ -100,6 +100,21 @@ export type BreakKind = 'illness' | 'vaccination' | 'injury' | 'pause'
 
 export const ALL_BREAK_KINDS: readonly BreakKind[] = ['illness', 'vaccination', 'injury', 'pause']
 
+/** Every session offered on one day, however often the plan was opened. */
+export type DayProposal = {
+  readonly date: string
+  /** The template the day recommended, or null for a rest day. */
+  readonly recommended: string | null
+  readonly templateIds: readonly string[]
+}
+
+/** One version of a proposal already on the intervals.icu calendar. */
+export type ScheduledWorkout = {
+  readonly date: string
+  readonly templateId: string
+  readonly minutes: number
+}
+
 export type TrainingBreak = {
   readonly id: string
   readonly kind: BreakKind
@@ -118,6 +133,8 @@ export type CoachConfig = {
   readonly strengthLog: readonly string[]
   /** Declared interruptions — illness, a vaccination, an injury, plain absence. */
   readonly breaks: readonly TrainingBreak[]
+  /** What the app offered each day, so training is recognised without the calendar. */
+  readonly proposals: readonly DayProposal[]
   /** ISO date the plan started, anchors the 3:1 build/recovery cycle. */
   readonly planStart: string
 }
@@ -152,7 +169,7 @@ export type PlannedEvent = {
   readonly pairedActivityId: string | null
 }
 
-export type AdherenceStatus = 'done' | 'switched' | 'missed' | 'unplanned' | 'rest'
+export type AdherenceStatus = 'done' | 'switched' | 'missed' | 'open' | 'unplanned' | 'rest'
 
 export type AdherenceDay = {
   readonly date: string
@@ -428,4 +445,5 @@ export type Plan = {
   readonly destinations: readonly DestinationState[]
   readonly days: readonly PlannedDay[]
   readonly feasibility: readonly Feasibility[]
+  readonly scheduled: readonly ScheduledWorkout[]
 }

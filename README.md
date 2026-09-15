@@ -115,8 +115,24 @@ Eine gekürzte Fassung schaltet keine Progressionsstufe frei.
 ## Progression, Kraft, Benchmarks
 
 **Stufen.** Workouts gehören zu Familien (`bike-threshold`, `run-vo2`, …). Die nächste
-Stufe wird frei, wenn die vorige mit mindestens 75 % Compliance absolviert wurde — belegt
-über die Verknüpfung von Kalendereintrag und tatsächlicher Aktivität, nicht über den Plan.
+Stufe wird frei, wenn die vorige ganz absolviert wurde: mit mindestens 75 % Compliance, falls
+sie als Kalendereintrag gepaart ist, sonst wenn die Aktivität genau den Reiz der Einheit
+geliefert hat.
+
+**Erkennen ohne Kalender.** Die App merkt sich, was sie an jedem Tag angeboten hat — jede
+Option, die zu sehen war, auch nach einem Wunsch nach „härter" oder „lockerer". Eine
+Aktivität gilt als diese Einheit, wenn Sportart und Tag stimmen, die Dauer zwischen 40 % und
+150 % liegt und der Reiz passt: *genau*, wenn der Reiz der Einheit in den Zonen steckt,
+*ähnlich*, wenn nur die Härte passt. Ähnlich reicht für „erledigt" und den Verlauf, nicht
+für Progression. Tests und Referenzeinheiten brauchen immer den genauen Reiz; ein erkannter
+Test zählt nur, wenn ein durchgehaltener Block darin steckt und das Ergebnis nicht mehr als
+3 % unter dem eingestellten Wert liegt — sonst war es eine normale Schwelleneinheit. Ein
+gepaarter Kalendereintrag bleibt der direktere Beleg und gewinnt.
+
+**Heute bleibt heute.** Der Vorschlag für heute wird aus dem Stand vor der ersten Einheit
+des Tages berechnet und springt nicht um, sobald sie synchronisiert ist. Die Einheit wird
+als erledigt markiert; zählen tut sie ab morgen, dort mit dem, was tatsächlich trainiert
+wurde.
 
 **Krafttraining** erscheint optional an geeigneten Tagen (nie am Tag vor einer harten
 Einheit) und passt sich an die vorhandene Ausrüstung an: Studio, Kurzhanteln bis 10 kg
@@ -150,11 +166,14 @@ nach intervals.icu zurückgeschrieben (`ftp` und `indoor_ftp` gemeinsam).
 
 ## Workouts in den Kalender
 
-Jede Einheit hat einen Button „→ intervals.icu Kalender“. Der Server erzeugt ein
-`WORKOUT`-Event mit Beschreibung in intervals.icu-Syntax — von dort synchronisiert es
-auf Rolle bzw. Uhr. Zielangaben sind Prozentwerte von FTP bzw. Schwellenpace, damit
-intervals.icu immer mit den dort hinterlegten Werten rechnet; die App zeigt zusätzlich
-die absoluten Watt- und Pace-Bereiche an.
+Optional, nur um eine Einheit auf Rolle oder Uhr zu bekommen — erkannt wird Training auch
+ohne. Jede Fassung einer Einheit lässt sich einzeln senden, auch alle nebeneinander, wenn
+noch offen ist, was der Tag hergibt. Dieselbe Fassung am selben Tag landet nur einmal im
+Kalender; die Dauer steht dafür in der `external_id` (`coach:<datum>:<vorlage>:<minuten>`).
+Der Server erzeugt ein `WORKOUT`-Event mit Beschreibung in intervals.icu-Syntax.
+Zielangaben sind Prozentwerte von FTP bzw. Schwellenpace, damit intervals.icu immer mit
+den dort hinterlegten Werten rechnet; die App zeigt zusätzlich die absoluten Watt- und
+Pace-Bereiche an.
 
 **Zielgeräte** (Garmin Connect, Wahoo, Zwift) lassen sich direkt in der App schalten. Die
 Weiterleitung macht intervals.icu selbst; die App setzt nur die entsprechenden Flags am

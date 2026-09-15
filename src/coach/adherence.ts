@@ -1,6 +1,7 @@
-import type { Activity, AdherenceDay, AdherenceStatus, PlannedEvent } from './types.ts'
+import type { Activity, AdherenceDay, AdherenceStatus, DayProposal, PlannedEvent } from './types.ts'
+import type { Completion } from './progression.ts'
 import { addDays, weekdayDe } from './dates.ts'
-import { LIBRARY } from './library.ts'
+import { LIBRARY, findTemplate } from './library.ts'
 
 const EXTERNAL_ID_PREFIX = 'coach:'
 
@@ -19,12 +20,14 @@ const heaviest = (activities: readonly Activity[]): Activity | null =>
   )
 
 const classify = (
-  planned: readonly PlannedEvent[],
+  planned: readonly string[],
   trained: readonly Activity[],
   paired: Activity | null,
+  today: boolean,
 ): AdherenceStatus => {
   if (paired) return 'done'
-  if (planned.length > 0) return trained.length > 0 ? 'switched' : 'missed'
+  if (planned.length > 0 && trained.length === 0) return today ? 'open' : 'missed'
+  if (planned.length > 0) return 'switched'
   return trained.length > 0 ? 'unplanned' : 'rest'
 }
 
@@ -32,17 +35,31 @@ const dayFor = (
   date: string,
   events: readonly PlannedEvent[],
   activities: readonly Activity[],
+  proposals: readonly DayProposal[],
+  completions: readonly Completion[],
+  today: string,
 ): AdherenceDay => {
-  const planned = events.filter((event) => event.date === date && isOurs(event))
+  const pushed = events.filter((event) => event.date === date && isOurs(event))
+  const recommended = proposals.find((entry) => entry.date === date)?.recommended
+  const recommendedName = recommended ? findTemplate(recommended)?.name : undefined
+  const names = [...new Set(pushed.map((event) => event.name))]
+  // A shortened push is named "<template> (45 min)", which already is the recommendation.
+  const alreadyNamed = recommendedName && names.some((name) => name.startsWith(recommendedName))
+  const planned = recommendedName && !alreadyNamed ? [...names, recommendedName] : names
   const trained = activities.filter((activity) => activity.date === date && activity.load > 0)
 
   const paired =
     trained.find(
       (activity) =>
         activity.pairedEventId !== null &&
-        planned.some((event) => event.id === activity.pairedEventId),
+        pushed.some((event) => event.id === activity.pairedEventId),
     ) ??
-    trained.find((activity) => planned.some((event) => event.pairedActivityId === activity.id)) ??
+    trained.find((activity) => pushed.some((event) => event.pairedActivityId === activity.id)) ??
+    trained.find((activity) =>
+      completions.some(
+        (completion) => completion.activityId === activity.id && completion.date === date,
+      ),
+    ) ??
     null
 
   const completed = paired ?? heaviest(trained)
@@ -50,8 +67,8 @@ const dayFor = (
   return {
     date,
     weekday: weekdayDe(date),
-    status: classify(planned, trained, paired),
-    planned: planned.map((event) => event.name),
+    status: classify(planned, trained, paired, date === today),
+    planned,
     completed: completed?.name || (completed ? 'Einheit ohne Namen' : null),
     completedSport: completed?.sport ?? null,
     compliance: paired?.compliance ?? null,
@@ -65,7 +82,9 @@ export const buildHistory = (
   activities: readonly Activity[],
   today: string,
   days = 7,
+  proposals: readonly DayProposal[] = [],
+  completions: readonly Completion[] = [],
 ): readonly AdherenceDay[] =>
   Array.from({ length: days }, (_unused, index) => addDays(today, index - (days - 1))).map((date) =>
-    dayFor(date, events, activities),
+    dayFor(date, events, activities, proposals, completions, today),
   )

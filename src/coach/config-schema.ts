@@ -1,6 +1,7 @@
 import type {
   AthleteProfile,
   CoachConfig,
+  DayProposal,
   Goal,
   Sport,
   SportSetting,
@@ -10,6 +11,7 @@ import type {
 } from './types.ts'
 import { ALL_BREAK_KINDS, ALL_SPORTS } from './types.ts'
 import type { Equipment } from './types.ts'
+import { MAX_PROPOSAL_DAYS } from './proposals.ts'
 
 export class ValidationError extends Error {
   constructor(readonly issues: readonly string[]) {
@@ -56,6 +58,7 @@ const DEFAULT_CONFIG: CoachConfig = {
   ],
   strengthLog: [],
   breaks: [],
+  proposals: [],
   planStart: new Date().toISOString().slice(0, 10),
 }
 
@@ -248,6 +251,28 @@ const validateBreaks = (raw: unknown): readonly TrainingBreak[] => {
     .slice(-MAX_BREAKS)
 }
 
+/** Written by the server as the plan is opened; a broken entry is simply forgotten. */
+const validateProposals = (raw: unknown): readonly DayProposal[] => {
+  const entries = Array.isArray(raw) ? raw : []
+  return entries
+    .map((entry) => (entry ?? {}) as Record<string, unknown>)
+    .filter(
+      (entry) =>
+        isIsoDate(entry['date']) &&
+        (entry['recommended'] === null || typeof entry['recommended'] === 'string') &&
+        Array.isArray(entry['templateIds']),
+    )
+    .map((entry) => ({
+      date: String(entry['date']),
+      recommended: entry['recommended'] === null ? null : String(entry['recommended']),
+      templateIds: (entry['templateIds'] as unknown[]).filter(
+        (id): id is string => typeof id === 'string',
+      ),
+    }))
+    .sort((left, right) => left.date.localeCompare(right.date))
+    .slice(-MAX_PROPOSAL_DAYS)
+}
+
 export const validateConfig = (raw: unknown): CoachConfig => {
   const issues: string[] = []
   const input = (raw ?? {}) as Record<string, unknown>
@@ -259,6 +284,7 @@ export const validateConfig = (raw: unknown): CoachConfig => {
     goals: goalsInput.map((goal, index) => validateGoal(goal, index, issues)),
     strengthLog: validateStrengthLog(input['strengthLog']),
     breaks: validateBreaks(input['breaks']),
+    proposals: validateProposals(input['proposals']),
     planStart: isIsoDate(input['planStart']) ? input['planStart'] : DEFAULT_CONFIG.planStart,
   }
 

@@ -5,6 +5,7 @@ const STATUS_LABEL: Readonly<Record<AdherenceStatus, string>> = {
   done: 'geplant und absolviert',
   switched: 'anders trainiert als geplant',
   missed: 'geplant, nicht absolviert',
+  open: 'heute, noch offen',
   unplanned: 'spontan trainiert',
   rest: 'Ruhetag',
 }
@@ -19,9 +20,9 @@ const detail = (day: AdherenceDay): string => {
   return `${date} — ${planned} · ${done}`
 }
 
-/** The most recent day that carried a proposal, which is what the athlete asks about. */
+/** The most recent day that carried a proposal and is over, which is what the athlete asks about. */
 const lastPlanned = (history: readonly AdherenceDay[]): AdherenceDay | undefined =>
-  [...history].reverse().find((day) => day.planned.length > 0)
+  [...history].reverse().find((day) => day.planned.length > 0 && day.status !== 'open')
 
 export const HistoryStrip = ({ history }: { readonly history: readonly AdherenceDay[] }) => {
   const last = lastPlanned(history)

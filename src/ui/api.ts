@@ -83,8 +83,8 @@ export const pushWorkout = (
   date: string,
   templateId: string,
   variant: SessionTier = 'max',
-): Promise<{ name: string }> =>
-  request<{ name: string }>('/api/push', {
+): Promise<{ name: string; alreadyScheduled: boolean }> =>
+  request<{ name: string; alreadyScheduled: boolean }>('/api/push', {
     method: 'POST',
     body: JSON.stringify({ date, templateId, variant }),
   })

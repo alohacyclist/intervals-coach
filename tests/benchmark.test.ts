@@ -10,6 +10,7 @@ const completion = (templateId: string, daysAgo: number, activityId: string): Co
   compliance: 90,
   activityId,
   variant: 'full',
+  evidence: 'calendar',
 })
 
 const ride = (daysAgo: number, id: string, hr: number | null) => ({

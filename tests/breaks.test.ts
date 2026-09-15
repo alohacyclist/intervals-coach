@@ -127,6 +127,7 @@ describe('when the plan measures instead of estimating', () => {
         compliance: 95,
         activityId: 'a',
         variant: 'full' as const,
+        evidence: 'calendar' as const,
       },
     ]
     expect(thresholdTestDue('Ride', done(40), TODAY, fit, 'BUILD', false, 90, 2)).toBeNull()

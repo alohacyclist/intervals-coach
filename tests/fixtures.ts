@@ -84,6 +84,7 @@ export const config: CoachConfig = {
   ],
   strengthLog: [],
   breaks: [],
+  proposals: [],
   planStart: '2026-08-31',
 }
 

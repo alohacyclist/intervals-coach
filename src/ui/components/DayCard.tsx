@@ -1,4 +1,4 @@
-import type { PlannedDay } from '../../coach/types.ts'
+import type { PlannedDay, ScheduledWorkout } from '../../coach/types.ts'
 import { PHASE_LABELS } from '../../coach/phase.ts'
 import { SessionCard } from './SessionCard.tsx'
 import { StrengthCard } from './StrengthCard.tsx'
@@ -17,9 +17,17 @@ type Props = {
   readonly strengthDone: boolean
   readonly onStrengthLogged: () => void
   readonly destinations: readonly string[]
+  readonly scheduled: readonly ScheduledWorkout[]
 }
 
-export const DayCard = ({ day, index, strengthDone, onStrengthLogged, destinations }: Props) => {
+export const DayCard = ({
+  day,
+  index,
+  strengthDone,
+  onStrengthLogged,
+  destinations,
+  scheduled,
+}: Props) => {
   const trained = day.completed.length > 0
   const dimmed = trained || day.recommended === 'REST'
 
@@ -73,6 +81,9 @@ export const DayCard = ({ day, index, strengthDone, onStrengthLogged, destinatio
             date={day.date}
             recommended={day.recommended === session.sport}
             done={day.completed.some((entry) => entry.templateId === session.template.id)}
+            scheduledMinutes={scheduled
+              .filter((entry) => entry.templateId === session.template.id)
+              .map((entry) => entry.minutes)}
             destinations={destinations}
           />
         ))}

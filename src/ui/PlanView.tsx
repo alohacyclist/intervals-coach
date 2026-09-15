@@ -155,6 +155,7 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
           strengthDone={config?.strengthLog.includes(day.date) ?? false}
           onStrengthLogged={() => void load()}
           destinations={(plan?.destinations ?? []).filter((d) => d.enabled).map((d) => d.label)}
+          scheduled={(plan?.scheduled ?? []).filter((entry) => entry.date === day.date)}
         />
       ))}
 

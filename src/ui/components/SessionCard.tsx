@@ -9,11 +9,13 @@ type Props = {
   readonly recommended: boolean
   /** Trained today from this very proposal. */
   readonly done: boolean
+  /** Durations of the versions already on the calendar. */
+  readonly scheduledMinutes: readonly number[]
   /** Named so the button says where the workout actually ends up. */
   readonly destinations: readonly string[]
 }
 
-type PushState = { readonly status: 'idle' | 'busy' | 'done' | 'error'; readonly message?: string }
+type PushState = { readonly status: 'idle' | 'busy' | 'error'; readonly message?: string }
 
 /** The usual day is what the athlete sees first; the others are one tap away. */
 const preferredTier = (session: PlannedSession): SessionTier => {
@@ -22,16 +24,26 @@ const preferredTier = (session: PlannedSession): SessionTier => {
   return normal?.tier ?? variants[variants.length - 1]?.tier ?? 'max'
 }
 
-export const SessionCard = ({ session, date, recommended, done, destinations }: Props) => {
+export const SessionCard = ({
+  session,
+  date,
+  recommended,
+  done,
+  scheduledMinutes,
+  destinations,
+}: Props) => {
   const [push, setPush] = useState<PushState>({ status: 'idle' })
+  const [sent, setSent] = useState<readonly number[]>([])
   const [tier, setTier] = useState<SessionTier>(() => preferredTier(session))
 
   const variants = session.variants
   const active = variants.find((variant) => variant.tier === tier) ?? variants[variants.length - 1]
   const steps = active?.humanSteps ?? session.humanSteps
   const trimmed = active !== undefined && active.cuts.length > 0
+  const minutes = active?.minutes ?? session.template.minutes
+  // Per version: sending all of them is how an athlete keeps the day open.
+  const onCalendar = (length: number) => [...scheduledMinutes, ...sent].includes(length)
 
-  // A pushed workout belongs to one version, so switching starts the choice over.
   const choose = (next: SessionTier) => {
     setTier(next)
     setPush({ status: 'idle' })
@@ -41,7 +53,8 @@ export const SessionCard = ({ session, date, recommended, done, destinations }: 
     setPush({ status: 'busy' })
     try {
       await pushWorkout(date, session.template.id, tier)
-      setPush({ status: 'done', message: 'Im Kalender' })
+      setSent((previous) => [...previous, minutes])
+      setPush({ status: 'idle' })
     } catch (error) {
       setPush({ status: 'error', message: error instanceof Error ? error.message : 'Fehler' })
     }
@@ -74,7 +87,11 @@ export const SessionCard = ({ session, date, recommended, done, destinations }: 
               }
               onClick={() => choose(variant.tier)}
             >
-              {variant.minutes} min <span>{TIER_LABELS[variant.tier]}</span>
+              {variant.minutes} min{' '}
+              <span>
+                {TIER_LABELS[variant.tier]}
+                {onCalendar(variant.minutes) && ' ✓'}
+              </span>
             </button>
           ))}
         </div>
@@ -106,19 +123,15 @@ export const SessionCard = ({ session, date, recommended, done, destinations }: 
         <p className="session__note">{session.template.coachNote}</p>
       )}
 
-      {!done && (
-        <button
-          type="button"
-          onClick={onPush}
-          disabled={push.status === 'busy' || push.status === 'done'}
-        >
+      {done ? null : onCalendar(minutes) ? (
+        <p className="session__sent readout">✓ Diese Fassung ist im Kalender</p>
+      ) : (
+        <button type="button" onClick={onPush} disabled={push.status === 'busy'}>
           {push.status === 'busy'
             ? 'Sende…'
-            : push.status === 'done'
-              ? '✓ Übertragen'
-              : destinations.length > 0
-                ? `→ Kalender + ${destinations.join(', ')}`
-                : '→ intervals.icu Kalender'}
+            : destinations.length > 0
+              ? `→ Kalender + ${destinations.join(', ')}`
+              : '→ intervals.icu Kalender'}
         </button>
       )}
       {push.status === 'error' && <p className="error">{push.message}</p>}

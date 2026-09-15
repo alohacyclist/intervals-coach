@@ -220,9 +220,8 @@ export type CalendarEvent = {
   readonly templateId: string
   readonly name: string
   readonly description: string
-  readonly movingTimeSec: number
-  /** Marked in the external id so progression can tell the versions apart. */
-  readonly variant?: 'full' | 'short'
+  /** Also in the external id, so each pushed version can be told apart. */
+  readonly minutes: number
 }
 
 /**
@@ -331,8 +330,8 @@ export const createWorkoutEvent = async (auth: IntervalsAuth, event: CalendarEve
       type: event.sport,
       name: event.name,
       description: event.description,
-      moving_time: event.movingTimeSec,
+      moving_time: event.minutes * 60,
       // Marks the event as ours, so adherence only judges this app's proposals.
-      external_id: `coach:${event.date}:${event.templateId}${event.variant === 'short' ? ':short' : ''}`,
+      external_id: `coach:${event.date}:${event.templateId}:${event.minutes}`,
     }),
   })
