@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { adoptThreshold, thresholdSuggestions } from '../src/coach/threshold-drift.ts'
+import { adoptThreshold, measuredSuggestion, thresholdSuggestions } from '../src/coach/threshold-drift.ts'
 import { config, triConfig } from './fixtures.ts'
 
 const profile = triConfig.profile
@@ -56,5 +56,13 @@ describe('threshold drift', () => {
   it('adopts a swim threshold in its own unit', () => {
     const updated = adoptThreshold(profile, 'Swim', 104)
     expect(updated.sports[2]?.threshold).toEqual({ metric: 'swimPace', cssSecPer100m: 104 })
+  })
+
+  it('stops asking once a measured value has been adopted', () => {
+    // config holds 236 s/km for running.
+    expect(measuredSuggestion(config.profile, 'Run', 241)?.action).toBe('adopt')
+    const adopted = adoptThreshold(config.profile, 'Run', 241)
+    expect(measuredSuggestion(adopted, 'Run', 241)).toBeNull()
+    expect(measuredSuggestion(adopted, 'Run', 240.7)).toBeNull()
   })
 })

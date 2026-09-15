@@ -83,6 +83,8 @@ export const measuredSuggestion = (
   const setting = profile.sports.find((entry) => entry.sport === sport)
   if (!setting || value <= 0) return null
   const configured = valueOf(setting.threshold)
+  // Adopting rounds, so an adopted measurement matches only after rounding too.
+  if (Math.round(value) === Math.round(configured)) return null
   const drift = improvementPercent(setting.threshold.metric, configured, value)
   const render = (amount: number) =>
     setting.threshold.metric === 'power'
