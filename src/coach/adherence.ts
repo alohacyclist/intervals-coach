@@ -2,6 +2,7 @@ import type { Activity, AdherenceDay, AdherenceStatus, DayProposal, PlannedEvent
 import type { Completion } from './progression.ts'
 import { addDays, weekdayDe } from './dates.ts'
 import { LIBRARY, findTemplate } from './library.ts'
+import { isZrlRace } from './zrl.ts'
 
 const EXTERNAL_ID_PREFIX = 'coach:'
 
@@ -26,6 +27,7 @@ const classify = (
   today: boolean,
 ): AdherenceStatus => {
   if (paired) return 'done'
+  if (trained.some(isZrlRace)) return 'race'
   if (planned.length > 0 && trained.length === 0) return today ? 'open' : 'missed'
   if (planned.length > 0) return 'switched'
   return trained.length > 0 ? 'unplanned' : 'rest'
@@ -62,7 +64,7 @@ const dayFor = (
     ) ??
     null
 
-  const completed = paired ?? heaviest(trained)
+  const completed = paired ?? trained.find(isZrlRace) ?? heaviest(trained)
 
   return {
     date,

@@ -4,6 +4,7 @@ import { findTemplate, flattenBlocks, intensityClass } from './library.ts'
 import { deliveredStimuli, inferStimulus } from './fitness.ts'
 import { defaultThreshold, thresholdFor } from './thresholds.ts'
 import { estimateSeconds } from './variant.ts'
+import { isZrlRace } from './zrl.ts'
 
 /** Shorter than this is a different session, not the knapp version of this one. */
 const MIN_SHARE = 0.4
@@ -107,7 +108,7 @@ export const matchedCompletions = (
   profile: AthleteProfile,
 ): readonly Completion[] =>
   activities.flatMap((activity) => {
-    if (activity.load <= 0 || activity.sport === 'Other') return []
+    if (activity.load <= 0 || activity.sport === 'Other' || isZrlRace(activity)) return []
     const proposal = proposals.find((entry) => entry.date === activity.date)
     const templates = (proposal?.templateIds ?? [])
       .map(findTemplate)

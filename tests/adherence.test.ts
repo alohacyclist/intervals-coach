@@ -82,7 +82,11 @@ describe('adherence history', () => {
 })
 
 describe('adherence without the calendar', () => {
-  const proposal = { date: '2026-08-31', recommended: 'bike-thr-short-3x8', templateIds: ['bike-thr-short-3x8'] }
+  const proposal = {
+    date: '2026-08-31',
+    recommended: 'bike-thr-short-3x8',
+    templateIds: ['bike-thr-short-3x8'],
+  }
 
   it('counts a recognised session as done', () => {
     const ride = activity(2, 'Ride', { load: 70 })
@@ -113,5 +117,18 @@ describe('adherence without the calendar', () => {
   it('leaves today open instead of calling it missed', () => {
     const today = { ...proposal, date: TODAY }
     expect(dayOn(buildHistory([], [], TODAY, 7, [today], []), 0)?.status).toBe('open')
+  })
+})
+
+describe('race days', () => {
+  it('shows a Zwift Racing League race as a race, not as a switch', () => {
+    const event = plannedEvent(2, 'VO2max kompakt 4x3min')
+    const race = activity(2, 'Ride', {
+      name: 'Zwift - TTT: Zwift Racing League: City Showdown - Open Emerald League Division 2 (B) on Watts the Limit in New York',
+      load: 73,
+    })
+    const day = dayOn(buildHistory([event], [race], TODAY), 2)
+    expect(day?.status).toBe('race')
+    expect(day?.completed).toContain('Zwift Racing League')
   })
 })

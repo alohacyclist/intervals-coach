@@ -3,6 +3,7 @@ import { SPORT_LABELS } from '../../coach/types.ts'
 
 const STATUS_LABEL: Readonly<Record<AdherenceStatus, string>> = {
   done: 'geplant und absolviert',
+  race: 'Rennen',
   switched: 'anders trainiert als geplant',
   missed: 'geplant, nicht absolviert',
   open: 'heute, noch offen',
@@ -53,7 +54,7 @@ export const HistoryStrip = ({ history }: { readonly history: readonly Adherence
               absolviert
               {last.compliance !== null && ` (${Math.round(last.compliance)} % Übereinstimmung)`}
             </span>
-          ) : last.status === 'switched' ? (
+          ) : last.status === 'switched' || last.status === 'race' ? (
             <span className="history__alt">
               stattdessen {sportOf(last)}: {last.completed}
             </span>
@@ -64,7 +65,7 @@ export const HistoryStrip = ({ history }: { readonly history: readonly Adherence
       )}
 
       <p className="history__legend">
-        {(['done', 'switched', 'unplanned', 'missed', 'rest'] as const).map((status) => (
+        {(['done', 'race', 'switched', 'unplanned', 'missed', 'rest'] as const).map((status) => (
           <span key={status}>
             <i className={`history__dot history__day--${status}`} /> {STATUS_LABEL[status]}
           </span>

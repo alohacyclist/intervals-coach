@@ -169,7 +169,7 @@ export type PlannedEvent = {
   readonly pairedActivityId: string | null
 }
 
-export type AdherenceStatus = 'done' | 'switched' | 'missed' | 'open' | 'unplanned' | 'rest'
+export type AdherenceStatus = 'done' | 'race' | 'switched' | 'missed' | 'open' | 'unplanned' | 'rest'
 
 export type AdherenceDay = {
   readonly date: string

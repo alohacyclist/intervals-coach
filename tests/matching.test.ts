@@ -121,6 +121,18 @@ describe('recognising a proposal without the calendar', () => {
     expect(match?.evidence).toBe('similar')
   })
 
+  it('never takes a Zwift Racing League race for a proposed session', () => {
+    const race = activity(2, 'Ride', {
+      name: 'Zwift - Race: Zwift Racing League: City Showdown - Open Emerald League Division 2 (B) on Empire Elevation in New York',
+      load: 66,
+      movingTimeSec: 48 * 60,
+      zoneSeconds: { Z1: 660, Z2: 900, Z3: 480, Z4: 240, Z5: 240, Z6: 240, Z7: 60, SS: 240 },
+    })
+    expect(
+      matchedCompletions([proposal(2, ['bike-vo2-short-4x3'])], [race], config.profile),
+    ).toEqual([])
+  })
+
   it('ignores entries without load', () => {
     expect(
       matchedCompletions(

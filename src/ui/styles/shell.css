@@ -217,6 +217,9 @@
 .history__day--done::after {
   background: var(--good);
 }
+.history__day--race::after {
+  background: var(--data);
+}
 .history__day--switched::after {
   background: var(--run);
 }
