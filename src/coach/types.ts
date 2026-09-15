@@ -359,6 +359,19 @@ export type PlannedDay = {
   readonly optional: boolean
   /** Strength belongs on a hard day, never the day before one. */
   readonly strength: StrengthSuggestion | null
+  /** Already trained on this day; the proposals stay as they were that morning. */
+  readonly completed: readonly CompletedSession[]
+}
+
+export type CompletedSession = {
+  readonly activityId: string
+  readonly name: string
+  readonly sport: Sport | 'Other'
+  readonly load: number
+  readonly minutes: number
+  readonly compliance: number | null
+  /** The proposal it fulfilled, when the athlete pushed it from the app. */
+  readonly templateId: string | null
 }
 
 export type Feasibility = {

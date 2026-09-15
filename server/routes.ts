@@ -17,7 +17,7 @@ import {
 } from './intervals.ts'
 import { addDays, diffDays } from '../src/coach/dates.ts'
 import { buildState } from '../src/coach/state.ts'
-import { planDays } from '../src/coach/engine.ts'
+import { planFromMorning } from '../src/coach/today.ts'
 import { assessGoals } from '../src/coach/feasibility.ts'
 import { buildHistory } from '../src/coach/adherence.ts'
 import { completionsFrom } from '../src/coach/progression.ts'
@@ -149,7 +149,7 @@ const buildPlan = async (deps: RouteDeps, days: number, intent?: Intent): Promis
     thresholdSuggestions: suggestions,
     benchmark: benchmarkStatus(config, completions, activities, today),
     destinations,
-    days: planDays(state, config, days, completions, intent),
+    days: planFromMorning(activities, wellness, completions, config, today, days, intent),
     feasibility: assessGoals(config.goals, config.profile, today),
   }
 }

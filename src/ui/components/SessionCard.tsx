@@ -7,6 +7,8 @@ type Props = {
   readonly session: PlannedSession
   readonly date: string
   readonly recommended: boolean
+  /** Trained today from this very proposal. */
+  readonly done: boolean
   /** Named so the button says where the workout actually ends up. */
   readonly destinations: readonly string[]
 }
@@ -20,7 +22,7 @@ const preferredTier = (session: PlannedSession): SessionTier => {
   return normal?.tier ?? variants[variants.length - 1]?.tier ?? 'max'
 }
 
-export const SessionCard = ({ session, date, recommended, destinations }: Props) => {
+export const SessionCard = ({ session, date, recommended, done, destinations }: Props) => {
   const [push, setPush] = useState<PushState>({ status: 'idle' })
   const [tier, setTier] = useState<SessionTier>(() => preferredTier(session))
 
@@ -46,10 +48,15 @@ export const SessionCard = ({ session, date, recommended, destinations }: Props)
   }
 
   return (
-    <article className={`session ${recommended ? 'session--recommended' : ''}`}>
+    <article
+      className={`session ${recommended ? 'session--recommended' : ''} ${done ? 'session--done' : ''}`}
+    >
       <div className="session__head">
-        <span className={`badge badge--${session.sport.toLowerCase()}`}>{SPORT_LABELS[session.sport]}</span>
+        <span className={`badge badge--${session.sport.toLowerCase()}`}>
+          {SPORT_LABELS[session.sport]}
+        </span>
         {recommended && <span className="badge badge--pick">Empfehlung</span>}
+        {done && <span className="badge badge--done">✓ Erledigt</span>}
         <span className="session__meta">{active?.load ?? session.template.load} TSS</span>
       </div>
 
@@ -72,7 +79,9 @@ export const SessionCard = ({ session, date, recommended, destinations }: Props)
           ))}
         </div>
       ) : (
-        <p className="session__duration readout">{active?.minutes ?? session.template.minutes} min</p>
+        <p className="session__duration readout">
+          {active?.minutes ?? session.template.minutes} min
+        </p>
       )}
 
       <ol className="steps">
@@ -97,15 +106,21 @@ export const SessionCard = ({ session, date, recommended, destinations }: Props)
         <p className="session__note">{session.template.coachNote}</p>
       )}
 
-      <button type="button" onClick={onPush} disabled={push.status === 'busy' || push.status === 'done'}>
-        {push.status === 'busy'
-          ? 'Sende…'
-          : push.status === 'done'
-            ? '✓ Übertragen'
-            : destinations.length > 0
-              ? `→ Kalender + ${destinations.join(', ')}`
-              : '→ intervals.icu Kalender'}
-      </button>
+      {!done && (
+        <button
+          type="button"
+          onClick={onPush}
+          disabled={push.status === 'busy' || push.status === 'done'}
+        >
+          {push.status === 'busy'
+            ? 'Sende…'
+            : push.status === 'done'
+              ? '✓ Übertragen'
+              : destinations.length > 0
+                ? `→ Kalender + ${destinations.join(', ')}`
+                : '→ intervals.icu Kalender'}
+        </button>
+      )}
       {push.status === 'error' && <p className="error">{push.message}</p>}
     </article>
   )

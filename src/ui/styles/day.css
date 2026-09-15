@@ -63,6 +63,7 @@
   border-color: var(--data);
 }
 .badge--easy,
+.badge--done,
 .badge--on-track {
   color: var(--good);
   border-color: var(--good);
@@ -109,6 +110,37 @@
   font-weight: 600;
 }
 
+.done {
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--rule);
+  border-left: 3px solid var(--good);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.done__item {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 8px;
+  font-size: 13px;
+}
+.done__item strong {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.done__meta {
+  font-size: 12px;
+  color: var(--dim);
+}
+.done__note {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--dim);
+  max-width: 78ch;
+}
+
 /* One pixel of ground shows between the options, which is the divider. */
 .day__options {
   display: grid;
@@ -116,8 +148,11 @@
   gap: 1px;
   background: var(--rule);
 }
-.day__options--optional .session {
+.day__options--optional .session:not(.session--done) {
   opacity: 0.62;
+}
+.session--done {
+  box-shadow: inset 3px 0 0 var(--good);
 }
 .day__options--optional:hover .session {
   opacity: 1;

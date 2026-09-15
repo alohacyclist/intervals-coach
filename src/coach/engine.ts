@@ -1,4 +1,5 @@
 import type {
+  Activity,
   CoachConfig,
   Intent,
   StrengthSuggestion,
@@ -26,6 +27,8 @@ import { defaultThreshold, selectedSports, thresholdFor } from './thresholds.ts'
 import { breakLimit, returnWindow } from './breaks.ts'
 import { thresholdTestDue } from './threshold-test.ts'
 import { levelCeilings } from './progression.ts'
+import { completedFrom, effortsFrom } from './done.ts'
+import type { Effort } from './done.ts'
 import type { Completion } from './progression.ts'
 import { findTemplate, flattenBlocks, intensityClass, isPreferredSport, strengthSession, templatesFor } from './library.ts'
 import { describeBlocks, describeWorkout, toHumanSteps } from './format.ts'
@@ -565,39 +568,48 @@ const strengthFor = (
   return simulation.strengthThisWeek < session.perWeek ? session : null
 }
 
+const plannedEffort = (session: PlannedSession): Effort => ({
+  sport: session.sport,
+  load: session.template.load,
+  hard: intensityClass(session.template.stimulus) === 'hard',
+  stimuli: [session.template.stimulus],
+})
+
 const advance = (
   simulation: Simulation,
-  session: PlannedSession | null,
+  efforts: readonly Effort[],
   offered: readonly PlannedSession[],
   strengthAdded: boolean,
   nextDate: string,
   tested: boolean,
 ): Simulation => {
-  const isHard = session !== null && intensityClass(session.template.stimulus) === 'hard'
   const sameWeek = startOfWeek(nextDate) === simulation.weekStart
+  const sessions = efforts.filter((effort) => effort.sport !== 'Other')
+  const hardIn = (sport: Sport) =>
+    efforts.filter((effort) => effort.hard && effort.sport === sport).length
   const bumpedAges = Object.fromEntries(
     Object.entries(simulation.stimulusAge).map(([key, age]) => [key, age + 1]),
   )
+  const freshAges = Object.fromEntries(
+    sessions.flatMap((effort) => effort.stimuli.map((stimulus) => [`${effort.sport}:${stimulus}`, 1])),
+  )
 
   return {
-    fitness: projectFitness(simulation.fitness, session?.template.load ?? 0),
+    fitness: projectFitness(simulation.fitness, efforts.reduce((sum, effort) => sum + effort.load, 0)),
     daysSinceHard: Object.fromEntries(
-      ALL_SPORTS.map((sport) => [
-        sport,
-        isHard && session.sport === sport ? 1 : simulation.daysSinceHard[sport] + 1,
-      ]),
+      ALL_SPORTS.map((sport) => [sport, hardIn(sport) > 0 ? 1 : simulation.daysSinceHard[sport] + 1]),
     ) as Record<Sport, number>,
-    hardThisWeek: sameWeek ? simulation.hardThisWeek + (isHard ? 1 : 0) : 0,
-    sessionsThisWeek: (sameWeek ? simulation.sessionsThisWeek : 0) + (session ? 1 : 0),
+    hardThisWeek: sameWeek
+      ? simulation.hardThisWeek + efforts.filter((effort) => effort.hard).length
+      : 0,
+    sessionsThisWeek: (sameWeek ? simulation.sessionsThisWeek : 0) + sessions.length,
     hardThisWeekBySport: Object.fromEntries(
       ALL_SPORTS.map((sport) => {
         const carried = sameWeek ? simulation.hardThisWeekBySport[sport] : 0
-        return [sport, carried + (isHard && session.sport === sport ? 1 : 0)]
+        return [sport, carried + hardIn(sport)]
       }),
     ) as Record<Sport, number>,
-    stimulusAge: session
-      ? { ...bumpedAges, [`${session.sport}:${session.template.stimulus}`]: 1 }
-      : bumpedAges,
+    stimulusAge: { ...bumpedAges, ...freshAges },
     // Every option shown counts as used, so the next day offers different work.
     usedTemplateIds: [
       ...simulation.usedTemplateIds,
@@ -605,7 +617,7 @@ const advance = (
     ],
     strengthThisWeek: (sameWeek ? simulation.strengthThisWeek : 0) + (strengthAdded ? 1 : 0),
     testedThisWeek: (sameWeek && simulation.testedThisWeek) || tested,
-    consecutiveRest: session ? 0 : simulation.consecutiveRest + 1,
+    consecutiveRest: efforts.length > 0 ? 0 : simulation.consecutiveRest + 1,
     weekStart: sameWeek ? simulation.weekStart : startOfWeek(nextDate),
   }
 }
@@ -616,10 +628,26 @@ export const planDays = (
   days = 3,
   completions: readonly Completion[] = [],
   intent?: Intent,
+  /** Trained on the first day: it shapes the days after, never the first day itself. */
+  doneToday: readonly Activity[] = [],
 ): readonly PlannedDay[] => {
   const budgetMinutes = config.profile.sessionMinutes.max
   const sports = selectedSports(config.profile)
-  const ceilings = levelCeilings(completions)
+  const trainedToday = effortsFrom(doneToday)
+  const morningCompletions = completions.filter((completion) => completion.date < state.today)
+  const morningConfig: CoachConfig = {
+    ...config,
+    strengthLog: config.strengthLog.filter((date) => date < state.today),
+  }
+  const laterState: TrainingState = {
+    ...state,
+    recentWorkouts: [
+      ...state.recentWorkouts,
+      ...doneToday.flatMap((activity) =>
+        activity.sport === 'Other' || activity.load <= 0 ? [] : [{ sport: activity.sport, name: activity.name }],
+      ),
+    ],
+  }
 
   const { plan } = Array.from({ length: days }).reduce<{
     simulation: Simulation
@@ -627,6 +655,10 @@ export const planDays = (
   }>(
     ({ simulation, plan }, _unused, dayIndex) => {
       const date = addDays(state.today, dayIndex)
+      const isToday = dayIndex === 0
+      const known = isToday ? morningCompletions : completions
+      const view = isToday ? state : laterState
+      const ceilings = levelCeilings(known)
       const phases = Object.fromEntries(
         sports.map((sport) => [sport, phaseForSport(config, sport, date)]),
       ) as Record<Sport, Phase>
@@ -662,7 +694,7 @@ export const planDays = (
         const test = testable
           ? thresholdTestDue(
               sport,
-              completions,
+              known,
               date,
               simulation.fitness,
               sportPhase,
@@ -681,17 +713,17 @@ export const planDays = (
           sportPhase,
           budgetMinutes,
           ceilings,
-          state.recentWorkouts,
+          view.recentWorkouts,
         )
         const best = [...candidates].sort(
           (left, right) =>
-            scoreTemplate(right, simulation, state, sportPhase, budgetMinutes, returning) -
-            scoreTemplate(left, simulation, state, sportPhase, budgetMinutes, returning),
+            scoreTemplate(right, simulation, view, sportPhase, budgetMinutes, returning) -
+            scoreTemplate(left, simulation, view, sportPhase, budgetMinutes, returning),
         )[0]
         if (!best) return null
         return buildSession(best, config, reasonFor(best, dayType, sportPhase, simulation, ceilings))
       }).filter((session): session is PlannedSession => session !== null)
-      const strength = strengthFor(dayType, simulation, config)
+      const strength = strengthFor(dayType, simulation, isToday ? morningConfig : config)
       const chosen = options.find((session) => session.sport === recommended) ?? null
 
       const day: PlannedDay = {
@@ -704,21 +736,27 @@ export const planDays = (
         notes: notesFor(decision, state, simulation, config, dayIndex, date),
         optional: decision.optional,
         strength,
+        completed: isToday ? completedFrom(doneToday, completions) : [],
       }
+
+      // What was actually trained replaces the proposal; a test only offered measured nothing.
+      const actual = isToday ? trainedToday : []
+      const efforts = actual.length > 0 ? actual : chosen ? [plannedEffort(chosen)] : []
+      const tested = actual.length === 0 && options.some((option) => option.template.measures === 'threshold')
 
       return {
         simulation: advance(
           simulation,
-          chosen,
+          efforts,
           options,
           strength !== null,
           addDays(state.today, dayIndex + 1),
-          options.some((option) => option.template.measures === 'threshold'),
+          tested,
         ),
         plan: [...plan, day],
       }
     },
-    { simulation: initSimulation(state, config), plan: [] },
+    { simulation: initSimulation(state, morningConfig), plan: [] },
   )
 
   return plan

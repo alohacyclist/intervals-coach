@@ -448,6 +448,12 @@ describe('strength progression', () => {
     expect(today?.strength).toBeNull()
   })
 
+  it('keeps today\'s strength session once it has been logged today', () => {
+    // Logging it must mark it done, not make it vanish because the week is now full.
+    const [today] = planDays(stateFrom(rested), withLog(['2026-08-31', TODAY]))
+    expect(today?.strength).not.toBeNull()
+  })
+
   it('progresses on what was logged, not on elapsed weeks', () => {
     const stale = withLog(['2024-01-01', '2024-01-03'])
     const [today] = planDays(stateFrom(rested), stale)
