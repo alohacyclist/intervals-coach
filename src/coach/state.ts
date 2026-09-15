@@ -12,6 +12,7 @@ import { ALL_SPORTS } from './types.ts'
 import { addDays, diffDays, startOfWeek } from './dates.ts'
 import { computeFitness, deliveredStimuli, isHardActivity, rampRate } from './fitness.ts'
 import { computeReadiness } from './readiness.ts'
+import { raceSamples } from './zrl.ts'
 
 const NEVER = 99
 
@@ -123,6 +124,8 @@ export const buildState = (
   activities: readonly Activity[],
   wellness: readonly Wellness[],
   today: string,
+  /** League races reach back a season, further than the training history is fetched. */
+  raceActivities: readonly Activity[] = activities,
 ): TrainingState => {
   const overall = computeFitness(activities, today)
   const last7 = activities.filter((activity) => {
@@ -150,6 +153,7 @@ export const buildState = (
         thisWeek.filter((activity) => activity.sport === sport && isHardActivity(activity)).length,
       ]),
     ) as Record<Sport, number>,
+    raceHistory: raceSamples(raceActivities.filter((activity) => diffDays(activity.date, today) >= 0)),
     recentWorkouts: activities
       .filter((activity) => diffDays(activity.date, today) >= 0 && diffDays(activity.date, today) < 10)
       .flatMap((activity) =>

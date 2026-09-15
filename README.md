@@ -164,6 +164,32 @@ Schätzung beweist eine Untergrenze, nie eine Obergrenze: dass eine Leistung *ni
 erreicht wurde, kann auch heißen, dass sie nie versucht wurde. Übernommene Werte werden
 nach intervals.icu zurückgeschrieben (`ftp` und `indoor_ftp` gemeinsam).
 
+## Zwift Racing League
+
+Eine Runde wird einmal eingetragen (Einstellungen → Zwift Racing League): pro Dienstag
+Format — Scratch, Punkterennen, Mannschaftszeitfahren, Race of Truth — sowie Route und
+Runden, sobald WTRL sie veröffentlicht. Routen, Distanzen und Höhenmeter kommen aus
+[`zwift-data`](https://github.com/andipaetzold/zwift-data) (MIT); eine offizielle
+Schnittstelle für Rennplan oder Anmeldung gibt es nicht, deshalb weiß die App nie, ob
+jemand wirklich startet.
+
+Der Plan ist für beide Ausgänge gebaut. Der Renntag ist ein Qualitätstag: das Rennen steht
+zuerst, daneben je eine harte Alternative, die die Woche genauso hält. Der Tag davor ist
+locker mit kurzen Antritten auf dem Rad. Keine Standortbestimmung am Renntag oder am Tag
+davor, kein Krafttraining am Renntag. Eine eingetragene Pause, die heute noch läuft, geht
+vor; in der Erholungswoche wird das Rennen nur freiwillig und nach einer lockeren
+Alternative angeboten; bei roten Erholungswerten bleibt die Entscheidung des Plans stehen.
+Ein eigener Wunsch („Heute locker") gewinnt immer.
+
+**Belastung.** Veröffentlichte Werte je Format gibt es nicht, also schätzt die App aus den
+eigenen Rennen der letzten Saison (am Aktivitätsnamen „Zwift Racing League" erkannt):
+Median-IF je Art — Massenstart oder Zeitfahren; Race of Truth wie Zeitfahren, bis zwei
+eigene vorliegen —, Geschwindigkeit aus einer Geraden über Höhenmeter pro Kilometer,
+Streckenlänge aus Route × Runden + Anfahrt + 2,75 km (so viel länger war die Aufzeichnung
+im Median als die Strecke), dazu 20 Minuten Aufwärmen. Mit weniger als zwei eigenen Rennen
+oder ohne Route heißt die Schätzung „grob". Ein gefahrenes Rennen zählt als harte Einheit,
+schaltet aber nie eine Progressionsstufe frei und erscheint im Verlauf als Rennen.
+
 ## Workouts in den Kalender
 
 Optional, nur um eine Einheit auf Rolle oder Uhr zu bekommen — erkannt wird Training auch

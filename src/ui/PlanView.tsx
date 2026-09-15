@@ -12,6 +12,7 @@ import { DayCard } from './components/DayCard.tsx'
 import { GoalsPanel } from './components/GoalsPanel.tsx'
 import { SettingsPanel } from './components/SettingsPanel.tsx'
 import { BreakBar } from './components/BreakBar.tsx'
+import { ZrlPanel } from './components/ZrlPanel.tsx'
 
 const PLAN_DAYS = 3
 
@@ -142,6 +143,16 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
               void load()
             }}
           />
+          {plan && (
+            <ZrlPanel
+              config={config}
+              today={plan.days[0]?.date ?? plan.state.today}
+              onSaved={(saved) => {
+                setConfig(saved)
+                void load()
+              }}
+            />
+          )}
         </div>
       )}
 

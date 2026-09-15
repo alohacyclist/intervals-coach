@@ -2,7 +2,7 @@ import type { Activity, AdherenceDay, AdherenceStatus, DayProposal, PlannedEvent
 import type { Completion } from './progression.ts'
 import { addDays, weekdayDe } from './dates.ts'
 import { LIBRARY, findTemplate } from './library.ts'
-import { isZrlRace } from './zrl.ts'
+import { ZRL_TEMPLATE_ID, isZrlRace } from './zrl.ts'
 
 const EXTERNAL_ID_PREFIX = 'coach:'
 
@@ -43,7 +43,12 @@ const dayFor = (
 ): AdherenceDay => {
   const pushed = events.filter((event) => event.date === date && isOurs(event))
   const recommended = proposals.find((entry) => entry.date === date)?.recommended
-  const recommendedName = recommended ? findTemplate(recommended)?.name : undefined
+  const recommendedName =
+    recommended === ZRL_TEMPLATE_ID
+      ? 'Zwift Racing League'
+      : recommended
+        ? findTemplate(recommended)?.name
+        : undefined
   const names = [...new Set(pushed.map((event) => event.name))]
   // A shortened push is named "<template> (45 min)", which already is the recommendation.
   const alreadyNamed = recommendedName && names.some((name) => name.startsWith(recommendedName))

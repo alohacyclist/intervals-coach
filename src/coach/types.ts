@@ -100,6 +100,49 @@ export type BreakKind = 'illness' | 'vaccination' | 'injury' | 'pause'
 
 export const ALL_BREAK_KINDS: readonly BreakKind[] = ['illness', 'vaccination', 'injury', 'pause']
 
+export type ZrlFormat = 'scratch' | 'points' | 'ttt' | 'truth'
+
+export const ZRL_FORMATS: readonly ZrlFormat[] = ['scratch', 'points', 'ttt', 'truth']
+
+export const ZRL_FORMAT_LABELS: Readonly<Record<ZrlFormat, string>> = {
+  scratch: 'Scratch',
+  points: 'Punkterennen',
+  ttt: 'Mannschaftszeitfahren',
+  truth: 'Race of Truth',
+}
+
+/** A Zwift route as the race uses it, copied in when the round is entered. */
+export type ZwiftRoute = {
+  readonly id: number
+  readonly name: string
+  readonly world: string
+  readonly distanceKm: number
+  readonly elevationM: number
+  readonly leadInKm: number
+  readonly leadInElevationM: number
+}
+
+export type ZrlRace = {
+  readonly date: string
+  readonly format: ZrlFormat
+  /** Null until WTRL publishes it; the estimate then leans on past races only. */
+  readonly route: ZwiftRoute | null
+  readonly laps: number
+}
+
+/** A league race the athlete already rode, as read from the activity. */
+export type RaceSample = {
+  readonly date: string
+  /** Team time trial by name; the entered format wins where one exists. */
+  readonly teamTimeTrial: boolean
+  readonly minutes: number
+  readonly distanceKm: number
+  readonly elevationM: number
+  /** Intensity factor in percent, as intervals.icu reports it. */
+  readonly intensity: number
+  readonly load: number
+}
+
 /** Every session offered on one day, however often the plan was opened. */
 export type DayProposal = {
   readonly date: string
@@ -135,6 +178,8 @@ export type CoachConfig = {
   readonly breaks: readonly TrainingBreak[]
   /** What the app offered each day, so training is recognised without the calendar. */
   readonly proposals: readonly DayProposal[]
+  /** Zwift Racing League dates of the current round, entered once per round. */
+  readonly zrlRaces: readonly ZrlRace[]
   /** ISO date the plan started, anchors the 3:1 build/recovery cycle. */
   readonly planStart: string
 }
@@ -149,6 +194,8 @@ export type Activity = {
   readonly load: number
   readonly intensity: number
   readonly movingTimeSec: number
+  readonly distanceM: number
+  readonly elevationM: number
   readonly isStrength: boolean
   /** Set by intervals.icu when this activity fulfilled a planned workout. */
   readonly pairedEventId: string | null
@@ -253,6 +300,8 @@ export type TrainingState = {
   readonly hardThisWeekBySport: Readonly<Record<Sport, number>>
   /** Named sessions of the last ten days, by sport — a run cannot repeat a ride. */
   readonly recentWorkouts: readonly RecentWorkout[]
+  /** League races ridden so far; what the next one will cost is estimated from them. */
+  readonly raceHistory: readonly RaceSample[]
   readonly loadLast7: number
   /** CTL change over the last 7 days. */
   readonly rampRate: number
@@ -332,6 +381,8 @@ export type WorkoutTemplate = {
    * offered when the configured value is in doubt rather than on a schedule.
    */
   readonly measures?: 'vo2' | 'threshold'
+  /** Only offered around a race: the race itself, or the openers the day before. */
+  readonly occasion?: 'race' | 'pre-race'
 }
 
 export type DayType = 'KEY' | 'EASY' | 'RECOVERY' | 'REST'
@@ -362,6 +413,19 @@ export type PlannedSession = {
   readonly humanSteps: readonly string[]
   /** The same session at each configured time budget, shortest first. */
   readonly variants: readonly SessionVariant[]
+  readonly race?: RaceDetails
+}
+
+export type RaceDetails = {
+  readonly race: ZrlRace
+  /** Race only, without the warm-up. */
+  readonly raceMinutes: number
+  readonly distanceKm: number | null
+  readonly elevationM: number | null
+  /** How many own races of the same kind the estimate rests on. */
+  readonly basedOn: number
+  /** Too little history or no route yet: a first guess, not a forecast. */
+  readonly rough: boolean
 }
 
 export type PlannedDay = {

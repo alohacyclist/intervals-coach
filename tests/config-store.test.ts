@@ -147,4 +147,14 @@ describe('migrating the time budget', () => {
     })
     expect(migrated.profile.sessionMinutes).toEqual({ min: 45, normal: 60, max: 90 })
   })
+
+  it('drops a race on a date that does not exist', () => {
+    const races = [
+      { date: '2026-02-30', format: 'ttt', laps: 1, route: null },
+      { date: '2026-09-22', format: 'ttt', laps: 1, route: null },
+    ]
+    expect(validateConfig({ ...DEFAULT_CONFIG, zrlRaces: races }).zrlRaces.map((race) => race.date)).toEqual([
+      '2026-09-22',
+    ])
+  })
 })

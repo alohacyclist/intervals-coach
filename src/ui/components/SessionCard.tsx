@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { PlannedSession, SessionTier } from '../../coach/types.ts'
+import type { PlannedSession, RaceDetails, SessionTier } from '../../coach/types.ts'
 import { SPORT_LABELS, TIER_LABELS } from '../../coach/types.ts'
 import { pushWorkout } from '../api.ts'
 
@@ -16,6 +16,20 @@ type Props = {
 }
 
 type PushState = { readonly status: 'idle' | 'busy' | 'error'; readonly message?: string }
+
+const decimal = (value: number): string =>
+  value.toLocaleString('de-DE', { maximumFractionDigits: 1 })
+
+/** A race has no push button: it happens on Zwift, not from the calendar. */
+const raceFacts = (race: RaceDetails): string =>
+  [
+    race.distanceKm === null ? 'Route noch offen' : `${decimal(race.distanceKm)} km`,
+    race.elevationM === null ? null : `${race.elevationM} hm`,
+    race.race.route ? `${race.race.laps} ${race.race.laps === 1 ? 'Runde' : 'Runden'}` : null,
+    race.rough ? 'grobe Schätzung' : `geschätzt aus ${race.basedOn} Rennen`,
+  ]
+    .filter(Boolean)
+    .join(' · ')
 
 /** The usual day is what the athlete sees first; the others are one tap away. */
 const preferredTier = (session: PlannedSession): SessionTier => {
@@ -75,6 +89,7 @@ export const SessionCard = ({
 
       <h3>{session.template.name}</h3>
       <p className="session__reason">{session.reason}</p>
+      {session.race && <p className="session__race readout">{raceFacts(session.race)}</p>}
 
       {variants.length > 1 ? (
         <div className="variants" role="group" aria-label="Dauer wählen">
@@ -123,7 +138,7 @@ export const SessionCard = ({
         <p className="session__note">{session.template.coachNote}</p>
       )}
 
-      {done ? null : onCalendar(minutes) ? (
+      {done || session.race ? null : onCalendar(minutes) ? (
         <p className="session__sent readout">✓ Diese Fassung ist im Kalender</p>
       ) : (
         <button type="button" onClick={onPush} disabled={push.status === 'busy'}>

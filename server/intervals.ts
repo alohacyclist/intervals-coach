@@ -88,6 +88,8 @@ const mapActivity = (raw: RawActivity): Activity => ({
   load: num(raw['icu_training_load']),
   intensity: num(raw['icu_intensity']),
   movingTimeSec: num(raw['moving_time']),
+  distanceM: num(raw['distance']),
+  elevationM: num(raw['total_elevation_gain']),
   isStrength: typeof raw['type'] === 'string' && STRENGTH_TYPES.has(raw['type']),
   pairedEventId: raw['paired_event_id'] == null ? null : String(raw['paired_event_id']),
   compliance: nullableNum(raw['compliance']),

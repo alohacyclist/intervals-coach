@@ -30,6 +30,8 @@ export const DayCard = ({
 }: Props) => {
   const trained = day.completed.length > 0
   const dimmed = trained || day.recommended === 'REST'
+  // Two options can share a sport — a race and its alternative — but only one is the pick.
+  const pick = day.options.find((option) => option.sport === day.recommended)?.template.id
 
   return (
     <section className="day">
@@ -79,7 +81,7 @@ export const DayCard = ({
             key={session.template.id}
             session={session}
             date={day.date}
-            recommended={day.recommended === session.sport}
+            recommended={session.template.id === pick}
             done={day.completed.some((entry) => entry.templateId === session.template.id)}
             scheduledMinutes={scheduled
               .filter((entry) => entry.templateId === session.template.id)

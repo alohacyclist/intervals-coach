@@ -1,6 +1,7 @@
 import type { Activity, CompletedSession, Sport, Stimulus } from './types.ts'
 import type { Completion } from './progression.ts'
 import { deliveredStimuli, isHardActivity } from './fitness.ts'
+import { ZRL_TEMPLATE_ID, isZrlRace } from './zrl.ts'
 
 /** What a day cost, whether the plan proposed it or the athlete actually trained it. */
 export type Effort = {
@@ -33,5 +34,7 @@ export const completedFrom = (
     load: Math.round(activity.load),
     minutes: Math.round(activity.movingTimeSec / 60),
     compliance: activity.compliance === null ? null : Math.round(activity.compliance),
-    templateId: completions.find((completion) => completion.activityId === activity.id)?.templateId ?? null,
+    templateId: isZrlRace(activity)
+      ? ZRL_TEMPLATE_ID
+      : (completions.find((completion) => completion.activityId === activity.id)?.templateId ?? null),
   }))

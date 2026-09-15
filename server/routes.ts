@@ -1,7 +1,13 @@
 import { Hono } from 'hono'
 import type { Context } from 'hono'
 import type { ConfigStore } from '../src/coach/config-schema.ts'
-import { MissingConfigError, ValidationError, validateConfig } from '../src/coach/config-schema.ts'
+import {
+  MissingConfigError,
+  ValidationError,
+  validateConfig,
+  validateZrlRaces,
+  MAX_ZRL_RACES,
+} from '../src/coach/config-schema.ts'
 import type { IntervalsAuth } from './intervals.ts'
 import {
   IntervalsError,
@@ -27,6 +33,8 @@ import { matchedCompletions, mergeCompletions } from '../src/coach/matching.ts'
 import { withProposal } from '../src/coach/proposals.ts'
 import type { DayProposal, PlannedDay, Sport } from '../src/coach/types.ts'
 import { readThresholdTests } from './threshold-tests.ts'
+import { ZWIFT_ROUTES, findRoute } from './zwift-routes.ts'
+import { isZrlRace } from '../src/coach/zrl.ts'
 import { ALL_BREAK_KINDS } from '../src/coach/types.ts'
 import type { SessionTier } from '../src/coach/types.ts'
 
@@ -42,6 +50,8 @@ const MAX_BREAK_DAYS = 120
 const ACTIVITY_HISTORY_DAYS = 180
 const WELLNESS_HISTORY_DAYS = 60
 const ADHERENCE_DAYS = 7
+/** A whole league season, September to April, so last season's races inform this one. */
+const RACE_HISTORY_DAYS = 400
 /** Progression looks further back than the visible history strip. */
 const PROGRESSION_DAYS = 120
 
@@ -101,13 +111,35 @@ const buildPlan = async (deps: RouteDeps, days: number, intent?: Intent): Promis
     fetchSportSettings(deps.auth).catch(() => null),
     fetchDestinations(deps.auth).catch(() => []),
   ])
-  const state = buildState(activities, wellness, today)
+  // Only an athlete with races entered pays for the extra history; without it the estimate is rougher, not wrong.
+  const olderRaces =
+    config.zrlRaces.length === 0
+      ? []
+      : await fetchActivities(
+          deps.auth,
+          addDays(today, -RACE_HISTORY_DAYS),
+          addDays(today, -ACTIVITY_HISTORY_DAYS - 1),
+        ).then(
+          (older) => older.filter(isZrlRace),
+          () => [],
+        )
+  const raceActivities = [...olderRaces, ...activities]
+  const state = buildState(activities, wellness, today, raceActivities)
   const calendar = completionsFrom(events, activities)
   const recognised = (proposals: readonly DayProposal[]) =>
     mergeCompletions(calendar, matchedCompletions(proposals, activities, config.profile))
 
   // Today has to be on record before training done today can be recognised against it.
-  const [morning] = planFromMorning(activities, wellness, recognised(config.proposals), config, today, 1, intent)
+  const [morning] = planFromMorning(
+    activities,
+    wellness,
+    recognised(config.proposals),
+    config,
+    today,
+    1,
+    intent,
+    raceActivities,
+  )
   const proposals = morning ? withProposal(config.proposals, morning) : config.proposals
 
   const tests = await readThresholdTests(deps.auth, config, recognised(proposals), today)
@@ -119,7 +151,16 @@ const buildPlan = async (deps: RouteDeps, days: number, intent?: Intent): Promis
     ...estimated.filter((entry) => !tests.suggestions.some((hit) => hit.sport === entry.sport)),
   ]
 
-  const planned = planFromMorning(activities, wellness, completions, config, today, days, intent)
+  const planned = planFromMorning(
+    activities,
+    wellness,
+    completions,
+    config,
+    today,
+    days,
+    intent,
+    raceActivities,
+  )
   // The days ahead are kept too: training on a day the app was not opened is still recognised.
   if (planned.reduce(withProposal, proposals) !== config.proposals) {
     await rememberProposals(deps.store, planned).catch((error: unknown) =>
@@ -166,16 +207,16 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
   app.put('/api/config', async (context) => {
     const { store } = await resolve(context)
     const body = (await context.req.json()) as Record<string, unknown>
-    // The server keeps this record; a settings form holding an older copy must not roll it back.
+    // Kept by their own endpoints; a settings form holding an older copy must not roll them back.
     // Only a missing config means there is nothing to keep; any other failure must not erase it.
-    const proposals = await store.load().then(
-      (stored) => stored.proposals,
+    const owned = await store.load().then(
+      (stored) => ({ proposals: stored.proposals, zrlRaces: stored.zrlRaces }),
       (error: unknown) => {
-        if (error instanceof MissingConfigError) return []
+        if (error instanceof MissingConfigError) return { proposals: [], zrlRaces: [] }
         throw error
       },
     )
-    return context.json(await store.save(validateConfig({ ...body, proposals })))
+    return context.json(await store.save(validateConfig({ ...body, ...owned })))
   })
 
   app.get('/api/plan', async (context) => {
@@ -249,6 +290,36 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
       () => false,
     )
     return context.json({ ...saved, syncedToIntervals: synced })
+  })
+
+  /** Every rideable Zwift route, for entering a league round. Not athlete data. */
+  app.get('/api/zwift-routes', (context) => context.json(ZWIFT_ROUTES))
+
+  /** Replaces the entered Zwift Racing League dates; route details come from the route list, not the client. */
+  app.put('/api/zrl', async (context) => {
+    const body = (await context.req.json()) as { races?: unknown }
+    if (!Array.isArray(body.races)) return context.json({ error: 'races muss eine Liste sein' }, 400)
+    if (body.races.length > MAX_ZRL_RACES) {
+      return context.json({ error: `Höchstens ${MAX_ZRL_RACES} Rennen` }, 400)
+    }
+
+    const issues: string[] = []
+    const races = body.races.map((entry: unknown, index: number) => {
+      const raw = (entry ?? {}) as Record<string, unknown>
+      const where = typeof raw['date'] === 'string' ? raw['date'] : `Eintrag ${index + 1}`
+      const route = raw['routeId'] == null ? null : findRoute(Number(raw['routeId']))
+      if (raw['routeId'] != null && route === null) issues.push(`${where}: Route unbekannt`)
+      const race = { date: raw['date'], format: raw['format'], laps: raw['laps'], route }
+      if (validateZrlRaces([race]).length === 0) issues.push(`${where}: Datum, Format oder Runden ungültig`)
+      return race
+    })
+    const dates = races.map((race) => String(race.date))
+    if (new Set(dates).size !== dates.length) issues.push('Ein Datum ist doppelt eingetragen')
+    if (issues.length > 0) return context.json({ error: issues.join('; ') }, 400)
+
+    const { store } = await resolve(context)
+    const config = await store.load()
+    return context.json(await store.save(validateConfig({ ...config, zrlRaces: validateZrlRaces(races) })))
   })
 
   /** Records or removes a completed strength session; progression follows the log. */

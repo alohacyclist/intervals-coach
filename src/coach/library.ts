@@ -29,6 +29,25 @@ const cooldown = (duration: string, target: string): Step =>
 
 const BIKE: readonly WorkoutTemplate[] = [
   {
+    id: 'bike-zrl-openers',
+    sport: 'Ride',
+    stimulus: 'ENDURANCE',
+    name: 'Vorbelastung vor dem Rennen',
+    minutes: 50,
+    load: 40,
+    phases: ['BASE', 'BUILD', 'SPECIFIC', 'TAPER', 'RECOVERY'],
+    occasion: 'pre-race',
+    coachNote:
+      'Beine wach machen, nicht müde: die Antritte kurz und knackig, alles dazwischen wirklich locker.',
+    blocks: [
+      warmupBike('10m'),
+      step('15m', '60-70%'),
+      repeat(3, [step('30s', '110-120%', { cadence: '95-105rpm' }), step('3m', '55-65%')]),
+      step('8m', '60-70%'),
+      cooldown('6m', '55%'),
+    ],
+  },
+  {
     id: 'bike-vo2-5x4',
     family: 'bike-vo2',
     level: 2,

@@ -24,6 +24,8 @@ export const activity = (
   load: 60,
   intensity: 80,
   movingTimeSec: 3600,
+  distanceM: 30000,
+  elevationM: 200,
   isStrength: false,
   pairedEventId: null,
   compliance: null,
@@ -85,6 +87,7 @@ export const config: CoachConfig = {
   strengthLog: [],
   breaks: [],
   proposals: [],
+  zrlRaces: [],
   planStart: '2026-08-31',
 }
 

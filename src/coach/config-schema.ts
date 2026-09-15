@@ -8,8 +8,10 @@ import type {
   SessionMinutes,
   SportThreshold,
   TrainingBreak,
+  ZrlRace,
+  ZwiftRoute,
 } from './types.ts'
-import { ALL_BREAK_KINDS, ALL_SPORTS } from './types.ts'
+import { ALL_BREAK_KINDS, ALL_SPORTS, ZRL_FORMATS } from './types.ts'
 import type { Equipment } from './types.ts'
 import { MAX_PROPOSAL_DAYS } from './proposals.ts'
 
@@ -59,11 +61,15 @@ const DEFAULT_CONFIG: CoachConfig = {
   strengthLog: [],
   breaks: [],
   proposals: [],
+  zrlRaces: [],
   planStart: new Date().toISOString().slice(0, 10),
 }
 
+/** Shape and calendar both: "2026-02-30" looks like a date and would break every weekday lookup. */
 const isIsoDate = (value: unknown): value is string =>
-  typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)
+  typeof value === 'string' &&
+  /^\d{4}-\d{2}-\d{2}$/.test(value) &&
+  new Date(`${value}T00:00:00Z`).toISOString().slice(0, 10) === value
 
 const positive = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value) && value > 0
@@ -273,6 +279,54 @@ const validateProposals = (raw: unknown): readonly DayProposal[] => {
     .slice(-MAX_PROPOSAL_DAYS)
 }
 
+/** A round is six races; a season holds four rounds. Past races are kept for a while, then dropped. */
+export const MAX_ZRL_RACES = 40
+export const MAX_ZRL_LAPS = 20
+
+const finite = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value)
+
+const validateRoute = (raw: unknown): ZwiftRoute | null => {
+  const route = (raw ?? {}) as Record<string, unknown>
+  const numbers = ['id', 'distanceKm', 'elevationM', 'leadInKm', 'leadInElevationM'] as const
+  if (!numbers.every((key) => finite(route[key]) && Number(route[key]) >= 0)) return null
+  if (typeof route['name'] !== 'string' || typeof route['world'] !== 'string') return null
+  if (Number(route['distanceKm']) <= 0) return null
+  return {
+    id: Number(route['id']),
+    name: route['name'],
+    world: route['world'],
+    distanceKm: Number(route['distanceKm']),
+    elevationM: Number(route['elevationM']),
+    leadInKm: Number(route['leadInKm']),
+    leadInElevationM: Number(route['leadInElevationM']),
+  }
+}
+
+/** One race per date, newest entry winning; a broken entry is dropped, not rejected. */
+export const validateZrlRaces = (raw: unknown): readonly ZrlRace[] => {
+  const entries = Array.isArray(raw) ? raw : []
+  const valid = entries
+    .map((entry) => (entry ?? {}) as Record<string, unknown>)
+    .filter(
+      (entry) =>
+        isIsoDate(entry['date']) &&
+        ZRL_FORMATS.includes(entry['format'] as ZrlRace['format']) &&
+        Number.isInteger(entry['laps']) &&
+        Number(entry['laps']) >= 1 &&
+        Number(entry['laps']) <= MAX_ZRL_LAPS,
+    )
+    .map((entry) => ({
+      date: String(entry['date']),
+      format: entry['format'] as ZrlRace['format'],
+      route: entry['route'] == null ? null : validateRoute(entry['route']),
+      laps: Number(entry['laps']),
+    }))
+  const byDate = new Map(valid.map((race) => [race.date, race]))
+  return [...byDate.values()]
+    .sort((left, right) => left.date.localeCompare(right.date))
+    .slice(-MAX_ZRL_RACES)
+}
+
 export const validateConfig = (raw: unknown): CoachConfig => {
   const issues: string[] = []
   const input = (raw ?? {}) as Record<string, unknown>
@@ -285,6 +339,7 @@ export const validateConfig = (raw: unknown): CoachConfig => {
     strengthLog: validateStrengthLog(input['strengthLog']),
     breaks: validateBreaks(input['breaks']),
     proposals: validateProposals(input['proposals']),
+    zrlRaces: validateZrlRaces(input['zrlRaces']),
     planStart: isIsoDate(input['planStart']) ? input['planStart'] : DEFAULT_CONFIG.planStart,
   }
 

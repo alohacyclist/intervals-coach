@@ -1,5 +1,6 @@
 import type { SessionTier } from '../coach/types.ts'
-import type { CoachConfig, Plan } from '../coach/types.ts'
+import type { CoachConfig, Plan, ZwiftRoute } from '../coach/types.ts'
+import type { ZrlRaceInput } from './zrl-rows.ts'
 
 export class ApiError extends Error {
   constructor(
@@ -61,6 +62,12 @@ export const getConfig = (): Promise<CoachConfig> => request<CoachConfig>('/api/
 
 export const putConfig = (config: CoachConfig): Promise<CoachConfig> =>
   request<CoachConfig>('/api/config', { method: 'PUT', body: JSON.stringify(config) })
+
+export const fetchZwiftRoutes = (): Promise<readonly ZwiftRoute[]> =>
+  request<readonly ZwiftRoute[]>('/api/zwift-routes')
+
+export const putZrlRaces = (races: readonly ZrlRaceInput[]): Promise<CoachConfig> =>
+  request<CoachConfig>('/api/zrl', { method: 'PUT', body: JSON.stringify({ races }) })
 
 export const syncSettings = (): Promise<{ config: CoachConfig }> =>
   request<{ config: CoachConfig }>('/api/sync-settings', { method: 'POST' })
