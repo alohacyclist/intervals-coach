@@ -56,7 +56,10 @@ const request = async <T>(
       response.status === 401 || response.status === 403
         ? ' — API-Key oder Athlete-ID prüfen (intervals.icu → Settings → Developer).'
         : ''
-    throw new IntervalsError(`intervals.icu ${response.status}: ${body.slice(0, 300)}${hint}`, response.status)
+    throw new IntervalsError(
+      `intervals.icu ${response.status}: ${body.slice(0, 300)}${hint}`,
+      response.status,
+    )
   }
 
   return response.status === 204 ? (null as T) : ((await response.json()) as T)
@@ -193,7 +196,10 @@ export type SportSettings = {
 
 /** Reads FTP and threshold pace straight from intervals.icu so the plan uses the same numbers. */
 export const fetchSportSettings = async (auth: IntervalsAuth): Promise<SportSettings> => {
-  const raw = await request<Record<string, unknown>[]>(auth, `/athlete/${auth.athleteId}/sport-settings`)
+  const raw = await request<Record<string, unknown>[]>(
+    auth,
+    `/athlete/${auth.athleteId}/sport-settings`,
+  )
   const forSport = (sport: Sport) =>
     (raw ?? []).find((entry) => {
       const types = entry['types']
@@ -209,7 +215,8 @@ export const fetchSportSettings = async (auth: IntervalsAuth): Promise<SportSett
   return {
     ftp: nullableNum(ride?.['ftp']),
     // intervals.icu stores threshold pace as metres per second.
-    thresholdPaceSecPerKm: thresholdSpeed && thresholdSpeed > 0 ? Math.round(1000 / thresholdSpeed) : null,
+    thresholdPaceSecPerKm:
+      thresholdSpeed && thresholdSpeed > 0 ? Math.round(1000 / thresholdSpeed) : null,
     cssSecPer100m: swimSpeed && swimSpeed > 0 ? Math.round(100 / swimSpeed) : null,
     lthr: nullableNum(ride?.['lthr']),
     maxHr: nullableNum(ride?.['max_hr']),
@@ -270,30 +277,59 @@ const DESTINATION_LABELS: Readonly<Record<WorkoutDestination, string>> = {
 const readAthlete = (auth: IntervalsAuth) =>
   request<Record<string, unknown>>(auth, `/athlete/${auth.athleteId}`)
 
-export const fetchDestinations = async (auth: IntervalsAuth): Promise<readonly DestinationState[]> => {
+/** What tells a linked platform from one that was never connected. */
+const CONNECTION_FIELDS: Readonly<Record<WorkoutDestination, string>> = {
+  garmin: 'icu_garmin_training',
+  wahoo: 'wahoo_user_id',
+  zwift: 'zwift_user_id',
+  coros: 'coros_user_id',
+  suunto: 'suunto_user_id',
+}
+
+export const fetchDestinations = async (
+  auth: IntervalsAuth,
+): Promise<readonly DestinationState[]> => {
   const athlete = await readAthlete(auth)
   return (Object.keys(DESTINATION_FIELDS) as WorkoutDestination[]).map((destination) => ({
     destination,
     label: DESTINATION_LABELS[destination],
     enabled: athlete[DESTINATION_FIELDS[destination]] === true,
+    connected: Boolean(athlete[CONNECTION_FIELDS[destination]]),
   }))
 }
 
+/** Which flags have to change so that exactly `wanted` receives the next workout. */
+export const destinationChanges = (
+  current: Readonly<Record<WorkoutDestination, boolean>>,
+  wanted: readonly WorkoutDestination[],
+): Readonly<Partial<Record<WorkoutDestination, boolean>>> =>
+  Object.fromEntries(
+    (Object.keys(DESTINATION_FIELDS) as WorkoutDestination[])
+      .map((destination) => [destination, wanted.includes(destination)] as const)
+      .filter(([destination, next]) => current[destination] !== next),
+  )
+
 /**
- * Reads the whole athlete record and writes it back with one flag changed. A
- * partial PUT would risk clearing settings this app knows nothing about.
+ * intervals.icu forwards per athlete, not per workout, so the switches are set
+ * to match the sport right before its workout is written. Each flag goes over on
+ * its own: writing the whole athlete record back is refused with 403.
  */
-export const setDestination = async (
+export const applyDestinations = async (
   auth: IntervalsAuth,
-  destination: WorkoutDestination,
-  enabled: boolean,
+  wanted: readonly WorkoutDestination[],
 ): Promise<readonly DestinationState[]> => {
-  const athlete = await readAthlete(auth)
-  await request(auth, `/athlete/${auth.athleteId}`, {
-    method: 'PUT',
-    body: JSON.stringify({ ...athlete, [DESTINATION_FIELDS[destination]]: enabled }),
-  })
-  return fetchDestinations(auth)
+  const states = await fetchDestinations(auth)
+  const current = Object.fromEntries(
+    states.map((state) => [state.destination, state.enabled]),
+  ) as Record<WorkoutDestination, boolean>
+
+  for (const [destination, enabled] of Object.entries(destinationChanges(current, wanted))) {
+    await request(auth, `/athlete/${auth.athleteId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ [DESTINATION_FIELDS[destination as WorkoutDestination]]: enabled }),
+    })
+  }
+  return states.map((state) => ({ ...state, enabled: wanted.includes(state.destination) }))
 }
 
 export type WorkInterval = {
@@ -323,7 +359,10 @@ export const fetchActivityIntervals = async (
     }))
 }
 
-export const createWorkoutEvent = async (auth: IntervalsAuth, event: CalendarEvent): Promise<unknown> =>
+export const createWorkoutEvent = async (
+  auth: IntervalsAuth,
+  event: CalendarEvent,
+): Promise<unknown> =>
   request(auth, `/athlete/${auth.athleteId}/events`, {
     method: 'POST',
     body: JSON.stringify({

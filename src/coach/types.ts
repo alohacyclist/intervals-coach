@@ -180,6 +180,11 @@ export type CoachConfig = {
   readonly proposals: readonly DayProposal[]
   /** Zwift Racing League dates of the current round, entered once per round. */
   readonly zrlRaces: readonly ZrlRace[]
+  /**
+   * Where each sport's workouts go. A sport without an entry is left alone, so
+   * whatever is switched on in intervals.icu keeps applying to it.
+   */
+  readonly destinations: Partial<Record<Sport, readonly WorkoutDestination[]>>
   /** ISO date the plan started, anchors the 3:1 build/recovery cycle. */
   readonly planStart: string
 }
@@ -458,6 +463,9 @@ export type CompletedSession = {
 export type Feasibility = {
   readonly goalId: string
   readonly verdict: 'on-track' | 'ambitious' | 'unrealistic'
+  /** Where the athlete stands today, measured rather than entered at plan start. */
+  readonly currentValue: number
+  readonly weeksLeft: number | null
   readonly message: string
 }
 
@@ -498,6 +506,8 @@ export type DestinationState = {
   readonly destination: WorkoutDestination
   readonly label: string
   readonly enabled: boolean
+  /** Linked in intervals.icu at all; an unlinked platform can receive nothing. */
+  readonly connected: boolean
 }
 
 export type Plan = {

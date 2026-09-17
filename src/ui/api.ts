@@ -83,9 +83,6 @@ export const declareBreak = (kind: string, days: number): Promise<unknown> =>
 
 export const endBreak = (): Promise<unknown> => request('/api/break/end', { method: 'POST' })
 
-export const setDestination = (destination: string, enabled: boolean): Promise<unknown> =>
-  request('/api/destination', { method: 'POST', body: JSON.stringify({ destination, enabled }) })
-
 export const pushWorkout = (
   date: string,
   templateId: string,

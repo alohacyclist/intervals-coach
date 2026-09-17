@@ -139,9 +139,12 @@ Einheit) und passt sich an die vorhandene Ausrüstung an: Studio, Kurzhanteln bi
 oder nur Körpergewicht. Ohne Gewichte übernehmen einbeinige Arbeit, langsame Absenkphasen
 und Plyometrie die Rolle der Last.
 
-**Benchmarks.** Alle 8 Wochen schlägt die App eine feste Referenzeinheit vor (4×4 min),
-immer unverändert, damit die Ergebnisse vergleichbar bleiben. Verglichen wird Leistung
-gegen Herzfrequenz.
+**Formkontrolle.** Alle 8 Wochen legt die App dieselbe Referenzeinheit (4×4 min) auf einen
+Qualitätstag — unverändert, damit die Ergebnisse vergleichbar bleiben. Verglichen wird
+Leistung gegen Herzfrequenz: weniger Schläge für dieselbe Arbeit ist der Fortschritt. Sie
+setzt keine Werte und kostet keinen maximalen Test; das ist Aufgabe der Standortbestimmung.
+Nicht in Tapering- oder Erholungswochen, nicht über dem Zeitbudget, nicht direkt nach einer
+Pause und nie am selben Tag wie ein Schwellentest.
 
 **Standortbestimmung.** Jede Schätzung einer Schwelle ist durch das begrenzt, was der
 Athlet versucht hat: Intervalle belegen eine Untergrenze, nie eine Obergrenze. Wer gut
@@ -163,6 +166,15 @@ ab, schlägt die App eine Korrektur vor — Zuwächse ab 3 %, Rückgänge erst a
 Schätzung beweist eine Untergrenze, nie eine Obergrenze: dass eine Leistung *nicht*
 erreicht wurde, kann auch heißen, dass sie nie versucht wurde. Übernommene Werte werden
 nach intervals.icu zurückgeschrieben (`ftp` und `indoor_ftp` gemeinsam).
+
+## Ziele
+
+Gerechnet wird von heute bis zum Stichtag, nicht vom Wert bei Planstart: Ausgangspunkt ist,
+was jetzt gemessen ist — die FTP aus dem Profil, die Zielzeit aus der Schwellenpace über
+Riegel (`T = 3600 × (D / D₆₀)^1,06`) hochgerechnet. Daraus folgt, was pro Woche nötig wäre
+(+W/Woche bzw. Sekunden/Woche) und wie das zu realistischen Zuwächsen steht: 2,5 % FTP pro
+Monat, 0,8 % Rennzeit pro Monat. Zu viel verlangt heißt „ambitioniert", das Doppelte davon
+„nicht realistisch". Für 10 km kommt die Laufhäufigkeit als eigener Engpass dazu.
 
 ## Zwift Racing League
 
@@ -201,9 +213,12 @@ Zielangaben sind Prozentwerte von FTP bzw. Schwellenpace, damit intervals.icu im
 den dort hinterlegten Werten rechnet; die App zeigt zusätzlich die absoluten Watt- und
 Pace-Bereiche an.
 
-**Zielgeräte** (Garmin Connect, Wahoo, Zwift) lassen sich direkt in der App schalten. Die
-Weiterleitung macht intervals.icu selbst; die App setzt nur die entsprechenden Flags am
-Athletenprofil.
+**Zielgeräte je Sportart.** intervals.icu leitet je Konto weiter, nicht je Einheit — es gibt
+dort nur einen Schalter pro Plattform. Die App hält die Zuordnung deshalb selbst (Laufen →
+Garmin, Rad → Zwift und Wahoo, beliebig kombinierbar) und stellt die Schalter unmittelbar
+vor jedem Senden auf die Sportart der Einheit um. Eine Sportart ohne Zuordnung bleibt
+unangetastet. Geschrieben wird immer nur das einzelne Feld: ein PUT mit dem kompletten
+Athletenprofil lehnt intervals.icu mit 403 ab.
 
 ## Darstellung
 

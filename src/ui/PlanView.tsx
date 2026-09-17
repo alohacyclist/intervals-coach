@@ -42,6 +42,20 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
     if (showSettings) settingsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }, [showSettings])
 
+  // Per sport, because that is how the workout is forwarded when it is sent.
+  const destinationLabels = Object.fromEntries(
+    (config?.profile.sports ?? []).map((setting) => [
+      setting.sport,
+      (plan?.destinations ?? [])
+        .filter((state) =>
+          (
+            config?.destinations[setting.sport] ?? (state.enabled ? [state.destination] : [])
+          ).includes(state.destination),
+        )
+        .map((state) => state.label),
+    ]),
+  )
+
   const load = useCallback(async () => {
     setBusy(true)
     setError(null)
@@ -165,7 +179,7 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
           index={index}
           strengthDone={config?.strengthLog.includes(day.date) ?? false}
           onStrengthLogged={() => void load()}
-          destinations={(plan?.destinations ?? []).filter((d) => d.enabled).map((d) => d.label)}
+          destinations={destinationLabels}
           scheduled={(plan?.scheduled ?? []).filter((entry) => entry.date === day.date)}
         />
       ))}
@@ -174,8 +188,15 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
         <BenchmarkCard status={plan.benchmark} />
       )}
 
-      {plan && plan.destinations.length > 0 && (
-        <DestinationBar destinations={plan.destinations} onChanged={() => void load()} />
+      {plan && config && (
+        <DestinationBar
+          config={config}
+          destinations={plan.destinations}
+          onSaved={(saved) => {
+            setConfig(saved)
+            void load()
+          }}
+        />
       )}
 
       {plan && config && <GoalsPanel goals={config.goals} feasibility={plan.feasibility} />}

@@ -88,6 +88,7 @@ export const config: CoachConfig = {
   breaks: [],
   proposals: [],
   zrlRaces: [],
+  destinations: {},
   planStart: '2026-08-31',
 }
 

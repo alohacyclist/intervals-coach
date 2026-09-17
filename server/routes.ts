@@ -17,7 +17,7 @@ import {
   fetchDestinations,
   fetchSportSettings,
   fetchWellness,
-  setDestination,
+  applyDestinations,
   updateSportThreshold,
 } from './intervals.ts'
 import { addDays } from '../src/coach/dates.ts'
@@ -373,22 +373,6 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
     return context.json(await store.save(validateConfig({ ...config, breaks })))
   })
 
-  /** Turns one forwarding destination on or off in intervals.icu. */
-  app.post('/api/destination', async (context) => {
-    const body = (await context.req.json()) as { destination?: string; enabled?: boolean }
-    const known = ['garmin', 'wahoo', 'zwift', 'coros', 'suunto']
-    if (!body.destination || !known.includes(body.destination)) {
-      return context.json({ error: `destination muss eines von ${known.join(', ')} sein` }, 400)
-    }
-    const { auth } = await resolve(context)
-    const updated = await setDestination(
-      auth,
-      body.destination as Parameters<typeof setDestination>[1],
-      body.enabled !== false,
-    )
-    return context.json({ destinations: updated })
-  })
-
   app.post('/api/push', async (context) => {
     const body = (await context.req.json()) as {
       date?: string
@@ -423,6 +407,12 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
       (entry) => entry.date === body.date && entry.templateId === template.id && entry.minutes === minutes,
     )
     if (alreadyScheduled) return context.json({ ok: true, date: body.date, name, alreadyScheduled })
+
+    // intervals.icu forwards per athlete: the switches are set to this sport's
+    // destinations first, so a run does not land on the turbo trainer.
+    const config = await deps.store.load()
+    const wanted = config.destinations[template.sport]
+    if (wanted) await applyDestinations(deps.auth, wanted)
 
     await createWorkoutEvent(deps.auth, {
       date: body.date,

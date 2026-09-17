@@ -130,6 +130,7 @@ export const Onboarding = ({ onDone }: { readonly onDone: () => void }) => {
       breaks: [],
       proposals: [],
       zrlRaces: [],
+      destinations: {},
       planStart: new Date().toISOString().slice(0, 10),
     }
     if (config.profile.sports.length === 0) {

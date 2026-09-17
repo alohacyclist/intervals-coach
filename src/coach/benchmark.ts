@@ -1,4 +1,11 @@
-import type { Activity, BenchmarkResult, BenchmarkStatus, CoachConfig, Sport } from './types.ts'
+import type {
+  Activity,
+  BenchmarkResult,
+  BenchmarkStatus,
+  CoachConfig,
+  Phase,
+  Sport,
+} from './types.ts'
 import type { Completion } from './progression.ts'
 import { LIBRARY } from './library.ts'
 import { diffDays } from './dates.ts'
@@ -26,6 +33,50 @@ const isBenchmark = (templateId: string): boolean =>
       template.benchmark === true &&
       template.measures !== 'threshold',
   )
+
+export type BenchmarkDue = {
+  readonly sport: Sport
+  readonly templateId: string
+  readonly reason: string
+}
+
+/**
+ * The reference session belongs in the plan, not on a card with a button: an
+ * athlete should not have to decide when to measure. Same work every time, so
+ * only the heart rate it costs has to be compared — a threshold test answers a
+ * different question and sets the numbers themselves.
+ */
+export const benchmarkDue = (
+  sport: Sport,
+  completions: readonly Completion[],
+  today: string,
+  planStart: string,
+  phase: Phase,
+  returning: boolean,
+  budgetMinutes: number,
+): BenchmarkDue | null => {
+  const template = benchmarkTemplateFor(sport)
+  if (!template) return null
+  if (phase === 'TAPER' || phase === 'RECOVERY') return null
+  if (returning) return null
+  if (template.minutes > budgetMinutes) return null
+
+  const done = completions
+    .filter((completion) => completion.templateId === template.id)
+    .map((completion) => diffDays(completion.date, today))
+    .filter((age) => age >= 0)
+  const since = done.length === 0 ? diffDays(planStart, today) : Math.min(...done)
+  if (since < BENCHMARK_INTERVAL_WEEKS * 7) return null
+
+  return {
+    sport,
+    templateId: template.id,
+    reason:
+      done.length === 0
+        ? 'Formkontrolle: dieselbe Einheit alle acht Wochen, unverändert. Verglichen wird die Herzfrequenz, die sie kostet — heute wird die erste Referenz gesetzt.'
+        : `Formkontrolle: dieselbe Einheit wie vor ${Math.floor(since / 7)} Wochen, identische Vorgaben. Weniger Schläge für dieselbe Arbeit ist der Fortschritt.`,
+  }
+}
 
 const verdictFor = (
   current: number | null,

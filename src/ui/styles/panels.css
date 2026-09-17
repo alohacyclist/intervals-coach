@@ -263,3 +263,15 @@
     grid-column: 1 / -1;
   }
 }
+
+.destinations__sport {
+  display: flex;
+  align-items: center;
+  gap: 8px 10px;
+  flex-wrap: wrap;
+  padding-top: 10px;
+  border-top: 1px solid var(--rule);
+}
+.destinations__sport .destinations__row {
+  flex: 1;
+}

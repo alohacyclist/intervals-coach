@@ -22,7 +22,10 @@ const stateFrom = (
   wellnessEntries: Parameters<typeof buildState>[1] = [wellness(0), ...baselineWellness()],
 ) => buildState(activities, wellnessEntries, TODAY)
 
-const rested = [activity(9, 'Ride', { load: 60, intensity: 70 }), activity(11, 'Run', { load: 50, intensity: 70 })]
+const rested = [
+  activity(9, 'Ride', { load: 60, intensity: 70 }),
+  activity(11, 'Run', { load: 50, intensity: 70 }),
+]
 
 /**
  * Recent thresholds tests for both sports, so the plan prescribes ordinary
@@ -51,14 +54,18 @@ describe('plan engine', () => {
   it('schedules quality when rested and the week is still empty', () => {
     const [today] = planDays(stateFrom(rested), config)
     expect(today?.dayType).toBe('KEY')
-    expect(today?.options.every((option) => intensityClass(option.template.stimulus) === 'hard')).toBe(true)
+    expect(
+      today?.options.every((option) => intensityClass(option.template.stimulus) === 'hard'),
+    ).toBe(true)
   })
 
   it('never follows a hard day with another hard day', () => {
     const yesterdayHard = [activity(1, 'Ride', { load: 90, intensity: 98 })]
     const [today] = planDays(stateFrom(yesterdayHard), config)
     expect(today?.dayType).not.toBe('KEY')
-    expect(today?.options.every((option) => intensityClass(option.template.stimulus) !== 'hard')).toBe(true)
+    expect(
+      today?.options.every((option) => intensityClass(option.template.stimulus) !== 'hard'),
+    ).toBe(true)
   })
 
   it('never plans two hard days back to back inside the three day view', () => {
@@ -74,7 +81,9 @@ describe('plan engine', () => {
     const sick = [wellness(0, { hrv: 30, restingHr: 62, fatigue: 4 }), ...baselineWellness()]
     const [today] = planDays(stateFrom(rested, sick), config)
     expect(['RECOVERY', 'REST']).toContain(today?.dayType)
-    expect(today?.options.every((option) => intensityClass(option.template.stimulus) === 'easy')).toBe(true)
+    expect(
+      today?.options.every((option) => intensityClass(option.template.stimulus) === 'easy'),
+    ).toBe(true)
   })
 
   it('respects the weekly hard budget', () => {
@@ -133,7 +142,9 @@ describe('plan engine', () => {
     ]
     const [today] = planDays(stateFrom(fullWeek), config)
     expect(today?.options).toHaveLength(2)
-    expect(today?.options.every((option) => intensityClass(option.template.stimulus) === 'easy')).toBe(true)
+    expect(
+      today?.options.every((option) => intensityClass(option.template.stimulus) === 'easy'),
+    ).toBe(true)
   })
 
   it('recommends the sport that has had no quality session this week', () => {
@@ -163,7 +174,11 @@ describe('plan engine', () => {
         const shortest = option.variants[0]?.minutes ?? Infinity
         // Nothing is cut below half of itself, and two versions within twelve
         // minutes of each other collapse into one, so that is the honest floor.
-        const floor = Math.max(40, Math.round(option.template.minutes / 2), option.template.minutes - 11)
+        const floor = Math.max(
+          40,
+          Math.round(option.template.minutes / 2),
+          option.template.minutes - 11,
+        )
         expect(shortest, option.template.id).toBeLessThanOrEqual(floor)
       }
     }
@@ -185,7 +200,10 @@ describe('plan engine', () => {
   })
 
   it('drops the warning once the minimum is met', () => {
-    const met = [activity(0, 'Ride', { load: 55, intensity: 70 }), activity(1, 'Run', { load: 50, intensity: 70 })]
+    const met = [
+      activity(0, 'Ride', { load: 55, intensity: 70 }),
+      activity(1, 'Run', { load: 50, intensity: 70 }),
+    ]
     const [today] = planDays(stateFrom(met), config)
     expect(today?.notes.join(' ')).not.toContain('von mindestens')
   })
@@ -349,7 +367,9 @@ describe('training beyond the weekly ceiling', () => {
     const days = planDays(stateFrom(fullWeek), config, 5)
     const breaker = days.find((day) => day.optional)
     expect(breaker?.dayType).toBe('KEY')
-    expect(breaker?.options.every((option) => intensityClass(option.template.stimulus) === 'hard')).toBe(true)
+    expect(
+      breaker?.options.every((option) => intensityClass(option.template.stimulus) === 'hard'),
+    ).toBe(true)
   })
 
   it('marks anything past the ceiling as voluntary', () => {
@@ -429,14 +449,21 @@ describe('strength progression', () => {
   })
 
   it('moves to the full programme once six sessions are logged', () => {
-    const log = Array.from({ length: 6 }, (_unused, index) => `2026-06-${String(index + 1).padStart(2, '0')}`)
+    const log = Array.from(
+      { length: 6 },
+      (_unused, index) => `2026-06-${String(index + 1).padStart(2, '0')}`,
+    )
     const [today] = planDays(stateFrom(rested), withLog(log))
     expect(today?.strength?.phase).toBe('full')
     expect(today?.strength?.exercises.length).toBeGreaterThan(2)
   })
 
   it('drops to one session a week in the maintenance phase', () => {
-    const log = Array.from({ length: 25 }, (_unused, index) => `2026-0${1 + Math.floor(index / 28)}-${String((index % 28) + 1).padStart(2, '0')}`)
+    const log = Array.from(
+      { length: 25 },
+      (_unused, index) =>
+        `2026-0${1 + Math.floor(index / 28)}-${String((index % 28) + 1).padStart(2, '0')}`,
+    )
     const [today] = planDays(stateFrom(rested), withLog(log))
     expect(today?.strength?.phase).toBe('maintain')
     expect(today?.strength?.perWeek).toBe(1)
@@ -448,7 +475,7 @@ describe('strength progression', () => {
     expect(today?.strength).toBeNull()
   })
 
-  it('keeps today\'s strength session once it has been logged today', () => {
+  it("keeps today's strength session once it has been logged today", () => {
     // Logging it must mark it done, not make it vanish because the week is now full.
     const [today] = planDays(stateFrom(rested), withLog(['2026-08-31', TODAY]))
     expect(today?.strength).not.toBeNull()
@@ -474,7 +501,9 @@ describe('what the athlete wants today', () => {
     expect(planned?.dayType).toBe('EASY')
     const [wanted] = planDays(stateFrom(spentBudget), config, 1, [], 'hard')
     expect(wanted?.dayType).toBe('KEY')
-    expect(wanted?.options.every((option) => intensityClass(option.template.stimulus) === 'hard')).toBe(true)
+    expect(
+      wanted?.options.every((option) => intensityClass(option.template.stimulus) === 'hard'),
+    ).toBe(true)
   })
 
   it('says what it overrode', () => {
@@ -489,7 +518,13 @@ describe('what the athlete wants today', () => {
   })
 
   it('warns when hard would break the 48 hour rule but still complies', () => {
-    const [wanted] = planDays(stateFrom([activity(1, 'Ride', { load: 90, intensity: 98 })]), config, 1, [], 'hard')
+    const [wanted] = planDays(
+      stateFrom([activity(1, 'Ride', { load: 90, intensity: 98 })]),
+      config,
+      1,
+      [],
+      'hard',
+    )
     expect(wanted?.dayType).toBe('KEY')
     expect(wanted?.notes.join(' ')).toContain('zwei harte Tage hintereinander')
   })
@@ -554,7 +589,15 @@ describe('offering quality once the athlete has recovered', () => {
 
   it('does not offer it when the recovery signals say no', () => {
     const tired = [
-      { date: SUNDAY, eftpBySport: {}, hrv: 40, restingHr: 62, sleepSecs: 4 * 3600, fatigue: 4, soreness: 4 },
+      {
+        date: SUNDAY,
+        eftpBySport: {},
+        hrv: 40,
+        restingHr: 62,
+        sleepSecs: 4 * 3600,
+        fatigue: 4,
+        soreness: 4,
+      },
       ...Array.from({ length: 30 }, (_unused, index) => ({
         date: addDays(SUNDAY, -(index + 1)),
         eftpBySport: {},
@@ -591,7 +634,9 @@ describe('strength with the equipment at hand', () => {
 
   it('loads one leg at a time when the weights are light', () => {
     const [today] = planDays(stateFrom(rested), withEquipment('dumbbells'))
-    expect(today?.strength?.exercises.every((exercise) => exercise.sets.includes('je Seite'))).toBe(true)
+    expect(today?.strength?.exercises.every((exercise) => exercise.sets.includes('je Seite'))).toBe(
+      true,
+    )
   })
 
   it('replaces load with slow eccentrics when there is none', () => {
@@ -608,7 +653,10 @@ describe('strength with the equipment at hand', () => {
 
   it('progresses the same way whatever the equipment', () => {
     const log = Array.from({ length: 8 }, (_unused, index) => `2026-06-0${(index % 9) + 1}`)
-    const [today] = planDays(stateFrom(rested), { ...withEquipment('bodyweight'), strengthLog: log })
+    const [today] = planDays(stateFrom(rested), {
+      ...withEquipment('bodyweight'),
+      strengthLog: log,
+    })
     expect(today?.strength?.phase).toBe('full')
     expect(today?.strength?.exercises.length).toBeGreaterThan(2)
   })
@@ -648,6 +696,26 @@ describe('recognising a workout that was already done', () => {
 
     expect(ridesAfter('Run')).toContain('Sweetspot 3x12min')
     expect(ridesAfter('Ride')).not.toContain('Sweetspot 3x12min')
+  })
+})
+
+describe('the reference session', () => {
+  const longRunning = { ...config, planStart: '2026-01-01' }
+
+  it('lands on a quality day once it is due, without the athlete deciding', () => {
+    const [today] = planDays(stateFrom(rested), longRunning, 1, measured)
+    expect(today?.dayType).toBe('KEY')
+    expect(today?.options.map((option) => option.template.id)).toContain('bench-bike-4x4')
+    expect(
+      today?.options.find((option) => option.template.id === 'bench-bike-4x4')?.reason,
+    ).toContain('Formkontrolle')
+  })
+
+  it('never comes up as ordinary work', () => {
+    const days = planDays(stateFrom(rested), config, 7, measured)
+    expect(days.flatMap((day) => day.options.map((option) => option.template.id))).not.toContain(
+      'bench-bike-4x4',
+    )
   })
 })
 

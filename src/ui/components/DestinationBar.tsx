@@ -1,64 +1,92 @@
 import { useState } from 'react'
-import type { DestinationState } from '../../coach/types.ts'
-import { setDestination } from '../api.ts'
+import type { CoachConfig, DestinationState, Sport, WorkoutDestination } from '../../coach/types.ts'
+import { SPORT_LABELS } from '../../coach/types.ts'
+import { putConfig } from '../api.ts'
 
 type Props = {
+  readonly config: CoachConfig
   readonly destinations: readonly DestinationState[]
-  readonly onChanged: () => void
+  readonly onSaved: (config: CoachConfig) => void
 }
 
 /**
- * intervals.icu forwards planned workouts per athlete, not per session, so this
- * is a standing choice: whatever is on here receives every workout the plan pushes.
+ * intervals.icu forwards per athlete, not per workout. The app keeps the choice
+ * per sport instead and sets the switches to match right before it sends — so a
+ * run goes to the watch and a ride to trainer and head unit.
  */
-export const DestinationBar = ({ destinations, onChanged }: Props) => {
-  const [busy, setBusy] = useState<string | null>(null)
+export const DestinationBar = ({ config, destinations, onSaved }: Props) => {
+  const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const toggle = async (state: DestinationState) => {
-    setBusy(state.destination)
+  const sports = config.profile.sports.map((setting) => setting.sport)
+  const offered = destinations.filter(
+    (state) =>
+      state.connected ||
+      sports.some((sport) => (config.destinations[sport] ?? []).includes(state.destination)),
+  )
+
+  // Nothing chosen yet for a sport means "as intervals.icu is set", which is what it starts from.
+  const chosenFor = (sport: Sport): readonly WorkoutDestination[] =>
+    config.destinations[sport] ??
+    destinations.filter((state) => state.enabled).map((state) => state.destination)
+
+  const toggle = async (sport: Sport, destination: WorkoutDestination) => {
+    const current = chosenFor(sport)
+    const next = current.includes(destination)
+      ? current.filter((entry) => entry !== destination)
+      : [...current, destination]
+    setBusy(true)
     setError(null)
     try {
-      await setDestination(state.destination, !state.enabled)
-      onChanged()
+      onSaved(
+        await putConfig({
+          ...config,
+          destinations: { ...config.destinations, [sport]: next },
+        }),
+      )
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Fehler')
     } finally {
-      setBusy(null)
+      setBusy(false)
     }
   }
-
-  const active = destinations.filter((entry) => entry.enabled)
 
   return (
     <section className="destinations">
       <div className="destinations__head">
         <h2>Übertragen an</h2>
-        <span className="destinations__meta">
-          {active.length === 0
-            ? 'nirgendwohin — Einheiten bleiben im intervals.icu-Kalender'
-            : active.map((entry) => entry.label).join(' · ')}
-        </span>
+        <span className="destinations__meta">pro Sportart</span>
       </div>
 
-      <div className="destinations__row">
-        {destinations.map((state) => (
-          <button
-            key={state.destination}
-            type="button"
-            disabled={busy !== null}
-            className={state.enabled ? 'destinations__on' : ''}
-            onClick={() => void toggle(state)}
-          >
-            {state.enabled ? '✓ ' : ''}
-            {state.label}
-          </button>
-        ))}
-      </div>
+      {sports.map((sport) => {
+        const chosen = chosenFor(sport)
+        return (
+          <div key={sport} className="destinations__sport">
+            <span className={`badge badge--${sport.toLowerCase()}`}>{SPORT_LABELS[sport]}</span>
+            <div className="destinations__row">
+              {offered.map((state) => (
+                <button
+                  key={state.destination}
+                  type="button"
+                  disabled={busy}
+                  className={chosen.includes(state.destination) ? 'destinations__on' : ''}
+                  onClick={() => void toggle(sport, state.destination)}
+                >
+                  {chosen.includes(state.destination) ? '✓ ' : ''}
+                  {state.label}
+                </button>
+              ))}
+              {chosen.length === 0 && (
+                <span className="destinations__meta">nur der intervals.icu-Kalender</span>
+              )}
+            </div>
+          </div>
+        )
+      })}
 
       <p className="destinations__note">
-        Gilt für alle geplanten Einheiten, nicht nur für einzelne. Was hier an ist, bekommt jede
-        Einheit, die du in den Kalender legst — auf Uhr, Radcomputer oder Rolle.
+        intervals.icu leitet je Konto weiter, nicht je Einheit. Die App stellt die Schalter deshalb
+        kurz vor jedem Senden auf die Sportart um.
       </p>
       {error && <p className="error">{error}</p>}
     </section>

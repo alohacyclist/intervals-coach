@@ -16,7 +16,7 @@ type Props = {
   readonly index: number
   readonly strengthDone: boolean
   readonly onStrengthLogged: () => void
-  readonly destinations: readonly string[]
+  readonly destinations: Readonly<Record<string, readonly string[]>>
   readonly scheduled: readonly ScheduledWorkout[]
 }
 
@@ -86,7 +86,7 @@ export const DayCard = ({
             scheduledMinutes={scheduled
               .filter((entry) => entry.templateId === session.template.id)
               .map((entry) => entry.minutes)}
-            destinations={destinations}
+            destinations={destinations[session.sport] ?? []}
           />
         ))}
       </div>

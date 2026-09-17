@@ -22,6 +22,7 @@ import { PHASE_LABELS, phaseForSport, primaryGoal, weeklyHardBudget } from './ph
 import { selectedSports } from './thresholds.ts'
 import { breakLimit, returnWindow } from './breaks.ts'
 import { thresholdTestDue } from './threshold-test.ts'
+import { benchmarkDue } from './benchmark.ts'
 import { levelCeilings } from './progression.ts'
 import { completedFrom, effortsFrom } from './done.ts'
 import type { Effort } from './done.ts'
@@ -629,6 +630,14 @@ export const planDays = (
         if (test) {
           const template = findTemplate(test.templateId)
           if (template) return buildSession(template, config, test.reason)
+        }
+        // Setting the numbers comes first; comparing against the last time comes after.
+        const reference = testable
+          ? benchmarkDue(sport, known, date, config.planStart, sportPhase, returning, budgetMinutes)
+          : null
+        if (reference) {
+          const template = findTemplate(reference.templateId)
+          if (template) return buildSession(template, config, reference.reason)
         }
         if (openers && sport === 'Ride') return buildSession(openers, config, decision.reason)
         const candidates = candidatesFor(

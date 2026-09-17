@@ -8,6 +8,7 @@ import type {
   SessionMinutes,
   SportThreshold,
   TrainingBreak,
+  WorkoutDestination,
   ZrlRace,
   ZwiftRoute,
 } from './types.ts'
@@ -62,6 +63,7 @@ const DEFAULT_CONFIG: CoachConfig = {
   breaks: [],
   proposals: [],
   zrlRaces: [],
+  destinations: {},
   planStart: new Date().toISOString().slice(0, 10),
 }
 
@@ -327,6 +329,27 @@ export const validateZrlRaces = (raw: unknown): readonly ZrlRace[] => {
     .slice(-MAX_ZRL_RACES)
 }
 
+export const ALL_DESTINATIONS: readonly WorkoutDestination[] = [
+  'garmin',
+  'wahoo',
+  'zwift',
+  'coros',
+  'suunto',
+]
+
+/** A sport without an entry keeps whatever intervals.icu is set to; an empty list means nowhere. */
+const validateDestinations = (raw: unknown): CoachConfig['destinations'] => {
+  const input = (raw ?? {}) as Record<string, unknown>
+  return Object.fromEntries(
+    ALL_SPORTS.filter((sport) => Array.isArray(input[sport])).map((sport) => [
+      sport,
+      (input[sport] as unknown[]).filter((entry): entry is WorkoutDestination =>
+        ALL_DESTINATIONS.includes(entry as WorkoutDestination),
+      ),
+    ]),
+  )
+}
+
 export const validateConfig = (raw: unknown): CoachConfig => {
   const issues: string[] = []
   const input = (raw ?? {}) as Record<string, unknown>
@@ -340,6 +363,7 @@ export const validateConfig = (raw: unknown): CoachConfig => {
     breaks: validateBreaks(input['breaks']),
     proposals: validateProposals(input['proposals']),
     zrlRaces: validateZrlRaces(input['zrlRaces']),
+    destinations: validateDestinations(input['destinations']),
     planStart: isIsoDate(input['planStart']) ? input['planStart'] : DEFAULT_CONFIG.planStart,
   }
 

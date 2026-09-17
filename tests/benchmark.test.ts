@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { benchmarkStatus, BENCHMARK_INTERVAL_WEEKS } from '../src/coach/benchmark.ts'
+import { benchmarkDue, benchmarkStatus, BENCHMARK_INTERVAL_WEEKS } from '../src/coach/benchmark.ts'
 import type { Completion } from '../src/coach/progression.ts'
 import { activity, config, TODAY, triConfig } from './fixtures.ts'
 import { addDays } from '../src/coach/dates.ts'
@@ -32,7 +32,12 @@ describe('benchmark scheduling', () => {
 
   it('resets the clock once one was completed', () => {
     const done = [completion('bench-bike-4x4', 7, 'a1')]
-    const status = benchmarkStatus({ ...config, planStart: addDays(TODAY, -200) }, done, [ride(7, 'a1', 160)], TODAY)
+    const status = benchmarkStatus(
+      { ...config, planStart: addDays(TODAY, -200) },
+      done,
+      [ride(7, 'a1', 160)],
+      TODAY,
+    )
     expect(status.due).toBe(false)
     expect(status.weeksSinceLast).toBe(1)
   })
@@ -76,7 +81,12 @@ describe('benchmark comparison', () => {
   })
 
   it('marks the first execution as a baseline', () => {
-    const status = benchmarkStatus(config, [completion('bench-bike-4x4', 3, 'a1')], [ride(3, 'a1', 160)], TODAY)
+    const status = benchmarkStatus(
+      config,
+      [completion('bench-bike-4x4', 3, 'a1')],
+      [ride(3, 'a1', 160)],
+      TODAY,
+    )
     expect(status.results[0]?.verdict).toBe('first')
   })
 
@@ -85,8 +95,38 @@ describe('benchmark comparison', () => {
   })
 
   it('ignores ordinary sessions', () => {
-    const status = benchmarkStatus(config, [completion('bike-thr-3x12', 3, 'a1')], [ride(3, 'a1', 160)], TODAY)
+    const status = benchmarkStatus(
+      config,
+      [completion('bike-thr-3x12', 3, 'a1')],
+      [ride(3, 'a1', 160)],
+      TODAY,
+    )
     expect(status.results).toEqual([])
     expect(status.weeksSinceLast).toBeNull()
+  })
+})
+
+describe('the reference session in the plan', () => {
+  // Plan start long ago, so the first reference session is overdue.
+  const long = '2026-01-01'
+
+  it('is scheduled on a quality day once it is due', () => {
+    const due = benchmarkDue('Ride', [], TODAY, long, 'BUILD', false, 90)
+    expect(due?.templateId).toBe('bench-bike-4x4')
+    expect(due?.reason).toContain('Formkontrolle')
+  })
+
+  it('waits eight weeks after the last one', () => {
+    const recent = [completion('bench-bike-4x4', 20, 'a')]
+    const old = [completion('bench-bike-4x4', 70, 'a')]
+    expect(benchmarkDue('Ride', recent, TODAY, long, 'BUILD', false, 90)).toBeNull()
+    expect(benchmarkDue('Ride', old, TODAY, long, 'BUILD', false, 90)).not.toBeNull()
+  })
+
+  it('stays away from taper and recovery weeks, breaks and a tight time budget', () => {
+    expect(benchmarkDue('Ride', [], TODAY, long, 'TAPER', false, 90)).toBeNull()
+    expect(benchmarkDue('Ride', [], TODAY, long, 'RECOVERY', false, 90)).toBeNull()
+    expect(benchmarkDue('Ride', [], TODAY, long, 'BUILD', true, 90)).toBeNull()
+    expect(benchmarkDue('Ride', [], TODAY, long, 'BUILD', false, 40)).toBeNull()
   })
 })
