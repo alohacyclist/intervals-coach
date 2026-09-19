@@ -50,6 +50,21 @@ Zehn Fehlversuche pro IP-Adresse sperren die Anmeldung für 15 Minuten. Das Pass
 in konstanter Zeit verglichen, landet nie im Browser-Speicher und wird bei jedem Aufruf
 neu gegen das Secret geprüft. `APP_USER` wird nicht mehr gebraucht.
 
+**Deployment per GitHub Actions:** `.github/workflows/deploy.yml` fährt auf jedem Pull
+Request Tests und Build, und bei jedem Push auf `main` zusätzlich `wrangler deploy` — ein
+roter Test hält das Deployment auf. Dafür braucht das Repository zwei Secrets unter
+*Settings → Secrets and variables → Actions*:
+
+| Secret | Woher |
+|---|---|
+| `CLOUDFLARE_API_TOKEN` | Cloudflare → My Profile → API Tokens → *Edit Cloudflare Workers* |
+| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare-Dashboard, rechts in der Übersicht des Accounts |
+
+Der Token braucht nur Workers-Rechte: Schreibzugriff auf Workers Scripts und den
+KV-Namespace, sonst nichts. Ein Deployment von Hand bleibt jederzeit möglich
+(`npm run deploy`), und im Actions-Tab lässt sich der Workflow über *Run workflow* auch
+ohne Commit auslösen.
+
 **Worker lokal testen:** `cp .dev.vars.example .dev.vars`, ausfüllen, dann `npm run cf`.
 `.dev.vars` ist gitignored.
 
