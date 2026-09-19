@@ -26,6 +26,11 @@
   color: var(--faint);
   font-weight: 400;
 }
+/* Opened from a folded row: the row is the title, so only the badges remain. */
+.day__head--tags {
+  justify-content: flex-end;
+  padding: 9px 14px;
+}
 .day__tags {
   display: flex;
   gap: 6px;
@@ -96,6 +101,8 @@
   color: var(--dim);
 }
 
+/* The divider has to span the card, so the box keeps the full width and the
+   measure sits on the text inside it — a max-width here cut the rule short. */
 .rest-hint {
   margin: 0;
   padding: 11px 14px;
@@ -103,6 +110,9 @@
   border-left: 3px solid var(--warn);
   font-size: 13px;
   color: var(--dim);
+}
+.rest-hint > span {
+  display: block;
   max-width: 78ch;
 }
 .rest-hint strong {
@@ -278,24 +288,6 @@
   border-top: 1px solid var(--rule);
   padding: 11px 14px;
 }
-.strength summary {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  list-style: none;
-}
-.strength summary::-webkit-details-marker {
-  display: none;
-}
-.strength summary::before {
-  content: '+';
-  font-family: var(--mono);
-  color: var(--faint);
-}
-.strength[open] summary::before {
-  content: '−';
-}
 .strength__meta {
   margin-left: auto;
   font-family: var(--mono);
@@ -346,8 +338,119 @@
   color: var(--dim);
 }
 
+/* ---------------------------------------------------------------- folded day */
+
+/* Today is the instrument; a preview day and a rest day are one line until
+   they are asked for. The row carries what a preview is actually asked for:
+   when, which sport, how big — never the intervals. */
+.day--folded > summary {
+  padding: 11px 14px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.day--folded[open] > summary {
+  border-bottom: 1px solid var(--rule);
+}
+.fold__date {
+  color: var(--faint);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.fold__name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--sans);
+  font-size: 14px;
+  color: var(--ink);
+}
+/* A day without training should not look like a quality day. */
+.fold__name--rest {
+  color: var(--faint);
+  font-style: italic;
+}
+.fold__meta {
+  color: var(--faint);
+  white-space: nowrap;
+}
+.day--trained > summary .fold__name {
+  color: var(--good);
+}
+
+/* ------------------------------------------------------------------ profile */
+
+/* The session as a shape: fixed height so the type around it keeps its rhythm,
+   fluid width so the time axis uses whatever room the card has. */
+.profile {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.profile__plot {
+  display: block;
+  width: 100%;
+  height: 52px;
+}
+.profile__scale {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--faint);
+}
+
+/* The shape leads; the table and the coaching prose sit one line behind it. */
+.session__why .session__note {
+  margin-top: 8px;
+}
+
 @media (max-width: 720px) {
   .day__options {
     grid-template-columns: 1fr;
+  }
+}
+
+.session__steps > summary,
+.session__why > summary {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.session__steps > summary::after,
+.session__why > summary::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--rule);
+}
+.session__steps .steps {
+  margin-top: 6px;
+}
+
+/* The three fields of a folded row do not fit one phone line; the name takes
+   its own, so neither the date nor the size is ever the part that is cut. */
+@media (max-width: 520px) {
+  .day--folded > summary {
+    flex-wrap: wrap;
+  }
+  .fold__meta {
+    order: 2;
+    margin-left: auto;
+  }
+  .fold__name {
+    order: 3;
+    flex-basis: 100%;
+    padding-left: 20px;
   }
 }

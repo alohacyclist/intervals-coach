@@ -27,6 +27,7 @@ import { assessGoals } from '../src/coach/feasibility.ts'
 import { buildHistory } from '../src/coach/adherence.ts'
 import { completionsFrom, scheduledFrom } from '../src/coach/progression.ts'
 import { benchmarkStatus } from '../src/coach/benchmark.ts'
+import { buildProgress } from '../src/coach/progress.ts'
 import { adoptThreshold, thresholdSuggestions } from '../src/coach/threshold-drift.ts'
 import type { ObservedThresholds } from '../src/coach/threshold-drift.ts'
 import { matchedCompletions, mergeCompletions } from '../src/coach/matching.ts'
@@ -42,7 +43,7 @@ const TIERS: readonly SessionTier[] = ['min', 'normal', 'max']
 import { activeBreak, endedBefore } from '../src/coach/breaks.ts'
 import { findTemplate } from '../src/coach/library.ts'
 import { describeWorkout } from '../src/coach/format.ts'
-import type { Intent, Plan } from '../src/coach/types.ts'
+import type { Intent, Plan, Progress } from '../src/coach/types.ts'
 
 const TIMEZONE = 'Europe/Berlin'
 /** Longer than this is not a break any more, it is a different training year. */
@@ -54,6 +55,8 @@ const ADHERENCE_DAYS = 7
 const RACE_HISTORY_DAYS = 400
 /** Progression looks further back than the visible history strip. */
 const PROGRESSION_DAYS = 120
+/** A training block plus its recovery weeks — enough to see a rhythm. */
+const WEEKS_SHOWN = 12
 
 /** Local calendar date in the athlete's timezone — sv-SE formats as YYYY-MM-DD. */
 export const localToday = (now: Date = new Date()): string =>
@@ -97,6 +100,29 @@ const rememberProposals = async (store: ConfigStore, days: readonly PlannedDay[]
   const latest = await store.load()
   const proposals = days.reduce(withProposal, latest.proposals)
   if (proposals !== latest.proposals) await store.save(validateConfig({ ...latest, proposals }))
+}
+
+/**
+ * The development view. Deliberately lighter than the plan: it needs the same
+ * activity history the plan already reads, but neither wellness nor the
+ * calendar ahead, because nothing here is about today.
+ */
+const buildProgressView = async (deps: RouteDeps): Promise<Progress> => {
+  const today = localToday()
+  const config = await deps.store.load()
+  const [activities, events] = await Promise.all([
+    fetchActivities(deps.auth, addDays(today, -ACTIVITY_HISTORY_DAYS), today),
+    fetchEvents(deps.auth, addDays(today, -PROGRESSION_DAYS), today),
+  ])
+  const completions = mergeCompletions(
+    completionsFrom(events, activities),
+    matchedCompletions(config.proposals, activities, config.profile),
+  )
+  return buildProgress(activities, completions, today, ACTIVITY_HISTORY_DAYS, WEEKS_SHOWN, {
+    benchmark: benchmarkStatus(config, completions, activities, today),
+    feasibility: assessGoals(config.goals, config.profile, today),
+    sports: config.profile.sports.map((setting) => setting.sport),
+  })
 }
 
 const buildPlan = async (deps: RouteDeps, days: number, intent?: Intent): Promise<Plan> => {
@@ -173,10 +199,8 @@ const buildPlan = async (deps: RouteDeps, days: number, intent?: Intent): Promis
     state,
     history: buildHistory(events, activities, today, ADHERENCE_DAYS, proposals, completions),
     thresholdSuggestions: suggestions,
-    benchmark: benchmarkStatus(config, completions, activities, today),
     destinations,
     days: planned,
-    feasibility: assessGoals(config.goals, config.profile, today),
     scheduled: scheduledFrom(events).filter((entry) => entry.date >= today),
   }
 }
@@ -218,6 +242,10 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
     )
     return context.json(await store.save(validateConfig({ ...body, ...owned })))
   })
+
+  app.get('/api/progress', async (context) =>
+    context.json(await buildProgressView(await resolve(context))),
+  )
 
   app.get('/api/plan', async (context) => {
     const requested = Number(context.req.query('days') ?? 3)
