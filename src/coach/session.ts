@@ -9,6 +9,7 @@ import type {
 } from './types.ts'
 import { describeBlocks, describeWorkout, toHumanSteps } from './format.ts'
 import { defaultThreshold, thresholdFor } from './thresholds.ts'
+import { profileOf } from './profile.ts'
 import { MIN_SAVING_MINUTES, shorten, totalSeconds } from './variant.ts'
 
 const SHORT_NOTE =
@@ -37,6 +38,7 @@ const variantFor = (
       blocks: template.blocks,
       description: describeWorkout(template, reason),
       humanSteps: toHumanSteps(template.blocks, threshold),
+      profile: profileOf(template.blocks, threshold),
       cuts: [],
     }
   }
@@ -51,6 +53,7 @@ const variantFor = (
     blocks,
     description: describeBlocks(blocks, `${template.coachNote}\n\n${SHORT_NOTE}`, reason),
     humanSteps: toHumanSteps(blocks, threshold),
+    profile: profileOf(blocks, threshold),
     cuts,
   }
 }

@@ -14,10 +14,15 @@
 .topbar {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
   gap: 12px;
+  flex-wrap: wrap;
   padding: 10px 0;
   border-bottom: 1px solid var(--rule);
+}
+/* With only the theme switch in it the bar keeps its old right-hand look. */
+.topbar > :only-child {
+  margin-left: auto;
 }
 
 /* A three-position mode switch, the way an instrument carries one. */

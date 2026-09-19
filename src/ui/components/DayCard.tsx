@@ -101,17 +101,22 @@ export const DayCard = ({
 
       {day.optional && !trained && (
         <p className="rest-hint">
-          <strong>Über deinem Wochenpensum.</strong> Eingeplant ist heute nichts mehr — nach zwei
-          Ruhetagen bist du aber erholt und dein Budget für harte Einheiten ist noch nicht
-          ausgeschöpft. Nimm es, wenn du Lust hast; lass es aus, ohne dass der Plan darunter leidet.
+          <span>
+            <strong>Über deinem Wochenpensum.</strong> Eingeplant ist heute nichts mehr — nach zwei
+            Ruhetagen bist du aber erholt und dein Budget für harte Einheiten ist noch nicht
+            ausgeschöpft. Nimm es, wenn du Lust hast; lass es aus, ohne dass der Plan darunter
+            leidet.
+          </span>
         </p>
       )}
 
       {day.recommended === 'REST' && !trained && (
         <p className="rest-hint">
-          <strong>Heute ist Pause vorgesehen.</strong> Ruhetage sind Teil des Plans, nicht das
-          Ausbleiben davon — die Anpassung passiert dazwischen. Falls du dich trotzdem bewegen
-          willst, stehen unten die lockersten Varianten.
+          <span>
+            <strong>Heute ist Pause vorgesehen.</strong> Ruhetage sind Teil des Plans, nicht das
+            Ausbleiben davon — die Anpassung passiert dazwischen. Falls du dich trotzdem bewegen
+            willst, stehen unten die lockersten Varianten.
+          </span>
         </p>
       )}
 

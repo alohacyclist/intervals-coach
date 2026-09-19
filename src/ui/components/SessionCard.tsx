@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { PlannedSession, RaceDetails, SessionTier } from '../../coach/types.ts'
 import { SPORT_LABELS, TIER_LABELS } from '../../coach/types.ts'
 import { pushWorkout } from '../api.ts'
+import { WorkoutProfile } from './WorkoutProfile.tsx'
 
 type Props = {
   readonly session: PlannedSession
@@ -53,6 +54,7 @@ export const SessionCard = ({
   const variants = session.variants
   const active = variants.find((variant) => variant.tier === tier) ?? variants[variants.length - 1]
   const steps = active?.humanSteps ?? session.humanSteps
+  const profile = active?.profile ?? []
   const trimmed = active !== undefined && active.cuts.length > 0
   const minutes = active?.minutes ?? session.template.minutes
   // Per version: sending all of them is how an athlete keeps the day open.
@@ -73,6 +75,21 @@ export const SessionCard = ({
       setPush({ status: 'error', message: error instanceof Error ? error.message : 'Fehler' })
     }
   }
+
+  const stepList = (
+    <ol className="steps">
+      {steps.map((step, index) => {
+        // "12min @ 276-291 W" reads as a table, so the duration keeps its own column.
+        const [duration, ...target] = step.split(' @ ')
+        return (
+          <li key={`${session.template.id}-${tier}-${index}`}>
+            <span>{duration}</span>
+            {target.length > 0 && <em>{target.join(' @ ')}</em>}
+          </li>
+        )
+      })}
+    </ol>
+  )
 
   return (
     <article
@@ -116,18 +133,19 @@ export const SessionCard = ({
         </p>
       )}
 
-      <ol className="steps">
-        {steps.map((step, index) => {
-          // "12min @ 276-291 W" reads as a table, so the duration keeps its own column.
-          const [duration, ...target] = step.split(' @ ')
-          return (
-            <li key={`${session.template.id}-${tier}-${index}`}>
-              <span>{duration}</span>
-              {target.length > 0 && <em>{target.join(' @ ')}</em>}
-            </li>
-          )
-        })}
-      </ol>
+      {profile.length > 0 && <WorkoutProfile profile={profile} minutes={minutes} />}
+
+      {/* The shape answers "how hard is this"; the table answers "what exactly",
+          which is only asked once the session is chosen. Without a profile to
+          stand in for it, the table is the only reading and stays open. */}
+      {profile.length > 0 ? (
+        <details className="disclose session__steps">
+          <summary>Schritte im Detail</summary>
+          {stepList}
+        </details>
+      ) : (
+        stepList
+      )}
 
       {/* The one sentence why stays above; the coaching prose is a tap away. */}
       <details className="disclose session__why">

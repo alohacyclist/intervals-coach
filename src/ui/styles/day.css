@@ -101,6 +101,8 @@
   color: var(--dim);
 }
 
+/* The divider has to span the card, so the box keeps the full width and the
+   measure sits on the text inside it — a max-width here cut the rule short. */
 .rest-hint {
   margin: 0;
   padding: 11px 14px;
@@ -108,6 +110,9 @@
   border-left: 3px solid var(--warn);
   font-size: 13px;
   color: var(--dim);
+}
+.rest-hint > span {
+  display: block;
   max-width: 78ch;
 }
 .rest-hint strong {
@@ -377,23 +382,32 @@
   color: var(--good);
 }
 
-/* --------------------------------------------------------------- reasoning */
+/* ------------------------------------------------------------------ profile */
 
-/* The coaching prose sits behind one line, so the card leads with its data. */
-.session__why > summary {
-  font-family: var(--mono);
-  font-size: 9.5px;
-  font-weight: 500;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+/* The session as a shape: fixed height so the type around it keeps its rhythm,
+   fluid width so the time axis uses whatever room the card has. */
+.profile {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.profile__plot {
+  display: block;
+  width: 100%;
+  height: 52px;
+}
+.profile__scale {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0;
+  font-size: 10px;
+  letter-spacing: 0.08em;
   color: var(--faint);
 }
-.session__why > summary::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: var(--rule);
-}
+
+/* The shape leads; the table and the coaching prose sit one line behind it. */
 .session__why .session__note {
   margin-top: 8px;
 }
@@ -402,6 +416,26 @@
   .day__options {
     grid-template-columns: 1fr;
   }
+}
+
+.session__steps > summary,
+.session__why > summary {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.session__steps > summary::after,
+.session__why > summary::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--rule);
+}
+.session__steps .steps {
+  margin-top: 6px;
 }
 
 /* The three fields of a folded row do not fit one phone line; the name takes
