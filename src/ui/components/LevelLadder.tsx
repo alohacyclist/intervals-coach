@@ -2,9 +2,12 @@ import type { FamilyLevel } from '../../coach/types.ts'
 import { SPORT_LABELS } from '../../coach/types.ts'
 
 /**
- * The ladder the engine has always climbed, finally shown. A level is earned by
- * completing the full version of a session closely enough, which is why a
- * trimmed week does not move a rung.
+ * The ladder the engine has always climbed, finally shown.
+ *
+ * `levelFor` returns the level currently ON OFFER — one above the highest one
+ * cleared, capped by what the family has. So standing on the top rung means
+ * the hardest version is being offered, not that it is already done, and the
+ * wording here has to say "angeboten" rather than "erreicht".
  */
 
 type Props = {
@@ -19,8 +22,7 @@ export const LevelLadder = ({ levels }: Props) => {
       <div className="ladder__head">
         <h2>Stufen</h2>
         <span className="ladder__hint readout">
-          {levels.filter((entry) => entry.level >= entry.top).length} von {levels.length}{' '}
-          ausgereizt
+          {levels.filter((entry) => entry.level > 1).length} von {levels.length} gesteigert
         </span>
       </div>
 
@@ -34,7 +36,7 @@ export const LevelLadder = ({ levels }: Props) => {
           <span
             className="pips"
             role="img"
-            aria-label={`Stufe ${entry.level} von ${entry.top}`}
+            aria-label={`Stufe ${entry.level} von ${entry.top} angeboten`}
           >
             {Array.from({ length: entry.top }, (_, index) => (
               <i
@@ -50,10 +52,10 @@ export const LevelLadder = ({ levels }: Props) => {
 
           <span className="rung__next">
             {entry.level >= entry.top
-              ? `Höchste Stufe: ${entry.current ?? '—'}. Weiter geht es über die Schwellenwerte.`
+              ? `Oberste Stufe: ${entry.current ?? '—'}. Ab hier steigert sich die Einheit über die Schwellenwerte, nicht über die Stufe.`
               : entry.next
-                ? `Aktuell ${entry.current ?? '—'}. Eine saubere Absolvierung bis „${entry.next}“.`
-                : `Aktuell ${entry.current ?? '—'}.`}
+                ? `Angeboten: ${entry.current ?? '—'}. Eine saubere, vollständige Absolvierung schaltet „${entry.next}“ frei.`
+                : `Angeboten: ${entry.current ?? '—'}.`}
           </span>
         </div>
       ))}

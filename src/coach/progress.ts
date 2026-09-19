@@ -84,10 +84,19 @@ const weeklyLoads = (
  * step the athlete stands on; the library says how many steps there are and
  * what the next one is called.
  */
-const familyLevels = (completions: readonly Completion[]): readonly FamilyLevel[] => {
+const familyLevels = (
+  completions: readonly Completion[],
+  sports: readonly Sport[],
+): readonly FamilyLevel[] => {
   const families = [...new Set(LIBRARY.map((template) => template.family).filter(Boolean))]
   return families
     .filter((family): family is string => family !== undefined)
+    // A rider has no business being told they sit at level 1 in swimming.
+    .filter((family) =>
+      sports.length === 0
+        ? true
+        : LIBRARY.some((template) => template.family === family && sports.includes(template.sport)),
+    )
     .map((family) => {
       const members = LIBRARY.filter((template) => template.family === family)
       const levels = [...new Set(members.map((template) => template.level ?? 1))].sort(
@@ -112,6 +121,8 @@ const familyLevels = (completions: readonly Completion[]): readonly FamilyLevel[
 type Achievements = {
   readonly benchmark: BenchmarkStatus
   readonly feasibility: readonly Feasibility[]
+  /** The athlete's own sports; empty means every family in the library. */
+  readonly sports: readonly Sport[]
 }
 
 export const buildProgress = (
@@ -120,7 +131,7 @@ export const buildProgress = (
   today: string,
   historyDays = 180,
   weeks = 12,
-  achieved: Achievements = { benchmark: EMPTY_BENCHMARK, feasibility: [] },
+  achieved: Achievements = { benchmark: EMPTY_BENCHMARK, feasibility: [], sports: [] },
 ): Progress => {
   const from = addDays(today, -historyDays)
   const inRange = activities.filter((entry) => entry.date >= from && entry.date <= today)
@@ -135,7 +146,7 @@ export const buildProgress = (
     historyDays,
     fitness: fitnessSeries(activities, today, historyDays),
     weeks: weeklyLoads(activities, today, weeks),
-    levels: familyLevels(completions),
+    levels: familyLevels(completions, achieved.sports),
     benchmark: achieved.benchmark,
     feasibility: achieved.feasibility,
     totals: {
@@ -146,18 +157,24 @@ export const buildProgress = (
       days: new Set(trained.map((entry) => entry.date)).size,
       sessionsBySport: bySport,
       // A streak of nothing is worth naming; it explains a falling curve.
-      longestBreak: longestBreak(trained, from, today),
+      longestBreak: longestBreak(trained, today),
     },
   }
 }
 
-/** The longest run of days without a single session, in days. */
-const longestBreak = (trained: readonly Activity[], from: string, to: string): number => {
+/**
+ * The longest run of days without a session, counted from the first session on.
+ * Days before that are not a break — they are an account that did not exist
+ * yet, and counting them reported a 150 day pause to a new athlete.
+ */
+const longestBreak = (trained: readonly Activity[], to: string): number => {
   const days = new Set(trained.map((entry) => entry.date))
+  if (days.size === 0) return 0
+  const start = [...days].sort()[0]!
   let longest = 0
   let run = 0
-  for (let index = 0; index <= diffDays(from, to); index += 1) {
-    if (days.has(addDays(from, index))) {
+  for (let index = 0; index <= diffDays(start, to); index += 1) {
+    if (days.has(addDays(start, index))) {
       run = 0
     } else {
       run += 1

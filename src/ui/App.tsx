@@ -49,16 +49,19 @@ const ViewSwitch = ({
 const Shell = ({
   children,
   nav,
+  resetKey,
 }: {
   readonly children: ReactNode
   readonly nav?: ReactNode
+  /** Switching views remounts the boundary, so one broken page is escapable. */
+  readonly resetKey?: string
 }) => (
   <main className="app">
     <div className="topbar">
       {nav}
       <ThemeSwitch />
     </div>
-    <ErrorBoundary>{children}</ErrorBoundary>
+    <ErrorBoundary key={resetKey}>{children}</ErrorBoundary>
   </main>
 )
 
@@ -126,7 +129,7 @@ export const App = () => {
   const needsOnboarding = () => setMe({ ...me, onboarded: false })
 
   return (
-    <Shell nav={<ViewSwitch path={path} onGo={go} />}>
+    <Shell nav={<ViewSwitch path={path} onGo={go} />} resetKey={path}>
       {path === PROGRESS_PATH ? (
         <ProgressView onNeedsOnboarding={needsOnboarding} />
       ) : (
