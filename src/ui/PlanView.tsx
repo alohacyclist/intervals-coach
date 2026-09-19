@@ -5,11 +5,9 @@ import type { Me } from './api.ts'
 import { DataIssueBanner } from './components/DataIssueBanner.tsx'
 import { HistoryStrip } from './components/HistoryStrip.tsx'
 import { ThresholdCard } from './components/ThresholdCard.tsx'
-import { BenchmarkCard } from './components/BenchmarkCard.tsx'
 import { DestinationBar } from './components/DestinationBar.tsx'
 import { StateHeader } from './components/StateHeader.tsx'
 import { DayCard } from './components/DayCard.tsx'
-import { GoalsPanel } from './components/GoalsPanel.tsx'
 import { SettingsPanel } from './components/SettingsPanel.tsx'
 import { BreakBar } from './components/BreakBar.tsx'
 import { ZrlPanel } from './components/ZrlPanel.tsx'
@@ -188,10 +186,6 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
         />
       ))}
 
-      {plan && (plan.benchmark.due || plan.benchmark.results.length > 0) && (
-        <BenchmarkCard status={plan.benchmark} />
-      )}
-
       {plan && config && (
         <DestinationBar
           config={config}
@@ -202,8 +196,6 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
           }}
         />
       )}
-
-      {plan && config && <GoalsPanel goals={config.goals} feasibility={plan.feasibility} />}
 
       {plan && (
         <footer className="footer">

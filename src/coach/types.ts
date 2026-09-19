@@ -399,6 +399,15 @@ export type Intent = 'hard' | 'easy' | 'rest'
  * The same session in less time. Offered alongside the full version so a short
  * day does not become a skipped day.
  */
+/** One drawn block of a workout profile: how long, how hard, what it is called. */
+export type ProfileSegment = {
+  readonly seconds: number
+  /** Percent of threshold at the middle of the step, so a ramp gets one height. */
+  readonly percent: number
+  readonly intensity: IntensityClass
+  readonly label: string | null
+}
+
 export type SessionVariant = {
   readonly tier: SessionTier
   readonly minutes: number
@@ -406,6 +415,8 @@ export type SessionVariant = {
   readonly blocks: readonly Block[]
   readonly description: string
   readonly humanSteps: readonly string[]
+  /** The same steps as a shape, drawn instead of read. */
+  readonly profile: readonly ProfileSegment[]
   /** What was removed, so the athlete can see the stimulus survived. */
   readonly cuts: readonly string[]
 }
@@ -510,14 +521,57 @@ export type DestinationState = {
   readonly connected: boolean
 }
 
+/** One week of training volume, as the athlete actually plans in weeks. */
+export type WeekLoad = {
+  readonly start: string
+  readonly end: string
+  readonly load: number
+  readonly sessions: number
+  /** The running week is incomplete; drawing it as a full one would lie. */
+  readonly partial: boolean
+}
+
+export type FitnessPoint = {
+  readonly date: string
+  readonly ctl: number
+  readonly atl: number
+}
+
+/** Where the athlete stands in one progression family, and what is next. */
+export type FamilyLevel = {
+  readonly family: string
+  readonly sport: Sport
+  readonly label: string
+  readonly level: number
+  readonly top: number
+  readonly current: string | null
+  readonly next: string | null
+}
+
+export type Progress = {
+  readonly today: string
+  readonly historyDays: number
+  readonly fitness: readonly FitnessPoint[]
+  readonly weeks: readonly WeekLoad[]
+  readonly levels: readonly FamilyLevel[]
+  readonly benchmark: BenchmarkStatus
+  readonly feasibility: readonly Feasibility[]
+  readonly totals: {
+    readonly sessions: number
+    readonly load: number
+    readonly hours: number
+    readonly days: number
+    readonly sessionsBySport: Readonly<Record<string, number>>
+    readonly longestBreak: number
+  }
+}
+
 export type Plan = {
   readonly generatedAt: string
   readonly state: TrainingState
   readonly history: readonly AdherenceDay[]
   readonly thresholdSuggestions: readonly ThresholdSuggestion[]
-  readonly benchmark: BenchmarkStatus
   readonly destinations: readonly DestinationState[]
   readonly days: readonly PlannedDay[]
-  readonly feasibility: readonly Feasibility[]
   readonly scheduled: readonly ScheduledWorkout[]
 }

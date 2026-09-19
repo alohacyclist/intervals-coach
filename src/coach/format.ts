@@ -23,7 +23,7 @@ export const toIntervalsText = (blocks: readonly Block[]): string => {
 // Matches a single percentage or a range such as "97-102%".
 const PERCENT_PATTERN = /(\d+(?:\.\d+)?)(?:\s*-\s*(\d+(?:\.\d+)?))?\s*%/g
 
-const percentages = (target: string): readonly number[] =>
+export const percentages = (target: string): readonly number[] =>
   [...target.matchAll(PERCENT_PATTERN)].flatMap((match) =>
     [match[1], match[2]].filter((value): value is string => value !== undefined).map(Number),
   )
