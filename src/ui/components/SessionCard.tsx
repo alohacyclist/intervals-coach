@@ -129,14 +129,17 @@ export const SessionCard = ({
         })}
       </ol>
 
-      {trimmed ? (
-        <p className="session__note">
-          {active?.cuts.join(' · ')}. Intervalllänge und Zielwerte bleiben unverändert — nur das
-          Volumen sinkt. Zählt nicht für die Progression zur nächsten Stufe.
-        </p>
-      ) : (
+      {/* The one sentence why stays above; the coaching prose is a tap away. */}
+      <details className="disclose session__why">
+        <summary>Warum diese Einheit</summary>
+        {trimmed && (
+          <p className="session__note">
+            {active?.cuts.join(' · ')}. Intervalllänge und Zielwerte bleiben unverändert — nur das
+            Volumen sinkt. Zählt nicht für die Progression zur nächsten Stufe.
+          </p>
+        )}
         <p className="session__note">{session.template.coachNote}</p>
-      )}
+      </details>
 
       {done || session.race ? null : onCalendar(minutes) ? (
         <p className="session__sent readout">✓ Diese Fassung ist im Kalender</p>

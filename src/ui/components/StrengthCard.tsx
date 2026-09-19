@@ -29,7 +29,7 @@ export const StrengthCard = ({ strength, date, done, onLogged }: Props) => {
   }
 
   return (
-    <details className="strength">
+    <details className="disclose strength">
       <summary>
         <span className="badge badge--strength">Kraft</span>
         <strong>{strength.name}</strong>
