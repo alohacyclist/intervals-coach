@@ -65,7 +65,36 @@ describe('buildProgress', () => {
     expect(progress.totals.hours).toBe(2)
     expect(progress.totals.days).toBe(2)
     expect(progress.totals.sessionsBySport).toEqual({ Ride: 1, Run: 1 })
-    // Nothing from day -20 to day -3, then two days trained, then today off.
-    expect(progress.totals.longestBreak).toBe(18)
+    // Counted from the first session on: trained on -2 and -1, nothing today.
+    expect(progress.totals.longestBreak).toBe(1)
+  })
+
+  it('does not count the time before the first session as a break', () => {
+    // An account three days old must not report a 100 day pause.
+    const progress = buildProgress([activity(1, 'Ride', { load: 50 })], [], TODAY, 100)
+    expect(progress.totals.longestBreak).toBe(1)
+    expect(buildProgress([], [], TODAY, 100).totals.longestBreak).toBe(0)
+  })
+
+  it('finds the real gap between two blocks of training', () => {
+    const activities: readonly Activity[] = [
+      activity(30, 'Ride', { load: 50 }),
+      activity(9, 'Ride', { load: 50 }),
+      activity(8, 'Ride', { load: 50 }),
+    ]
+    // Day -30 trained, then nothing until day -9: twenty empty days between.
+    expect(buildProgress(activities, [], TODAY, 60).totals.longestBreak).toBe(20)
+  })
+
+  it('leaves out the families of sports the athlete does not train', () => {
+    const rider = buildProgress([], [], TODAY, 180, 12, {
+      benchmark: { due: false, weeksSinceLast: null, intervalWeeks: 0, sessions: [], results: [] },
+      feasibility: [],
+      sports: ['Ride'],
+    })
+    expect(rider.levels.length).toBeGreaterThan(0)
+    expect(rider.levels.every((entry) => entry.sport === 'Ride')).toBe(true)
+    // No sports named at all still means the whole library, as the tests use it.
+    expect(buildProgress([], [], TODAY).levels.some((entry) => entry.sport === 'Swim')).toBe(true)
   })
 })

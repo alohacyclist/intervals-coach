@@ -143,9 +143,19 @@
   gap: 4px;
 }
 .weeks__value {
+  flex: none;
   font-size: 9.5px;
   color: var(--faint);
   white-space: nowrap;
+}
+/* The only flexible part of the column, so a bar's percentage is measured
+   against the drawing area alone and the ratio between bars stays true. */
+.weeks__track {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  display: flex;
+  align-items: flex-end;
 }
 .weeks__bar {
   width: 100%;
@@ -162,6 +172,7 @@
   border: 1px solid var(--data);
 }
 .weeks__label {
+  flex: none;
   padding-bottom: 10px;
   font-size: 9px;
   letter-spacing: 0.02em;

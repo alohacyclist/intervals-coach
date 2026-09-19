@@ -38,7 +38,10 @@ export const FitnessCurve = ({ points }: Props) => {
     return { value: Math.round(value), offset: 100 - (value / top) * 100 }
   })
 
-  const form = Math.round((last!.ctl - last!.atl) * 10) / 10
+  // Form is yesterday's balance in fitness.ts ("matching the intervals.icu
+  // convention"); today's would print a different number under the same label.
+  const yesterday = points[points.length - 2] ?? last!
+  const form = Math.round((yesterday.ctl - yesterday.atl) * 10) / 10
 
   return (
     <figure className="chart">

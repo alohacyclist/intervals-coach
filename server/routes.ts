@@ -121,6 +121,7 @@ const buildProgressView = async (deps: RouteDeps): Promise<Progress> => {
   return buildProgress(activities, completions, today, ACTIVITY_HISTORY_DAYS, WEEKS_SHOWN, {
     benchmark: benchmarkStatus(config, completions, activities, today),
     feasibility: assessGoals(config.goals, config.profile, today),
+    sports: config.profile.sports.map((setting) => setting.sport),
   })
 }
 

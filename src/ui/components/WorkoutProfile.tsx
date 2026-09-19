@@ -3,8 +3,7 @@ import type { ProfileSegment } from '../../coach/types.ts'
 /**
  * The workout as a shape. Drawn in viewBox units and stretched to the card's
  * width, so the height stays 52 px on any screen while the time axis fills
- * whatever room there is. Colour marks the hard part; the height carries the
- * exact intensity, because that is what the scale is for.
+ * whatever room there is.
  */
 
 const WIDTH = 320
@@ -12,6 +11,13 @@ const BASE = 46
 const TOP = 4
 /** A hairline of ground between blocks, so four intervals read as four. */
 const GAP = 1.1
+/**
+ * A fixed ceiling, so height means the same on every card: a recovery ride has
+ * to draw flat next to a VO2 session, which it did not while each workout was
+ * scaled to its own peak. Only a session that goes above it moves the ceiling,
+ * because clipping the one bar that matters would be worse.
+ */
+const SCALE_TOP = 130
 
 type Props = {
   readonly profile: readonly ProfileSegment[]
@@ -23,17 +29,20 @@ export const WorkoutProfile = ({ profile, minutes }: Props) => {
   if (total === 0) return null
 
   const peak = Math.max(...profile.map((segment) => segment.percent))
+  const ceiling = Math.max(SCALE_TOP, peak)
   const hard = profile.filter((segment) => segment.intensity === 'hard').length
 
   let cursor = 0
   const bars = profile.map((segment, index) => {
     const width = (segment.seconds / total) * WIDTH
-    const height = Math.max(1.5, (segment.percent / peak) * (BASE - TOP))
+    const height = Math.max(1.5, (segment.percent / ceiling) * (BASE - TOP))
     const bar = {
       key: `${index}-${segment.seconds}`,
       x: cursor,
-      // The last block still ends on the edge even after the gap is taken off.
-      width: Math.max(0.7, width - GAP),
+      // Every block gives up the gap, the last one included; and a block
+      // narrower than the gap keeps its own width instead of borrowing the
+      // next one's, which would draw the two on top of each other.
+      width: Math.min(width, Math.max(0.35, width - GAP)),
       y: BASE - height,
       height,
       intensity: segment.intensity,
@@ -63,7 +72,7 @@ export const WorkoutProfile = ({ profile, minutes }: Props) => {
               key={bar.key}
               x={bar.x + 0.5}
               y={bar.y + 0.5}
-              width={Math.max(0.7, bar.width - 1)}
+              width={Math.max(0.35, bar.width - 1)}
               height={Math.max(1, bar.height - 1)}
               fill="none"
               stroke="var(--data)"

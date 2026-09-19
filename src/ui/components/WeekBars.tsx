@@ -36,15 +36,19 @@ export const WeekBars = ({ weeks }: Props) => {
         {weeks.map((week) => (
           <li key={week.start} className="weeks__item">
             <span className="weeks__value readout">{week.load}</span>
-            <span
-              className={`weeks__bar ${week.load === peak ? 'weeks__bar--peak' : ''} ${
-                week.partial ? 'weeks__bar--partial' : ''
-              }`}
-              style={{ height: `${Math.max(1, (week.load / peak) * 100)}%` }}
-              title={`${label(week)} — ${week.load} TSS aus ${week.sessions} Einheiten${
-                week.partial ? ' (Woche läuft noch)' : ''
-              }`}
-            />
+            {/* The bar needs a track of its own: sharing the column with the
+                labels made its percentage height fight them for the space. */}
+            <span className="weeks__track">
+              <span
+                className={`weeks__bar ${week.load === peak ? 'weeks__bar--peak' : ''} ${
+                  week.partial ? 'weeks__bar--partial' : ''
+                }`}
+                style={{ height: `${Math.max(1, (week.load / peak) * 100)}%` }}
+                title={`${label(week)} — ${week.load} TSS aus ${week.sessions} Einheiten${
+                  week.partial ? ' (Woche läuft noch)' : ''
+                }`}
+              />
+            </span>
             <span className="weeks__label readout">{label(week)}</span>
           </li>
         ))}
