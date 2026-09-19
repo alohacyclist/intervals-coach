@@ -2,7 +2,15 @@ import { sign, verify } from './crypto.ts'
 
 const COOKIE_NAME = 'coach_session'
 const STATE_COOKIE = 'coach_oauth_state'
+
+/**
+ * Thirty days. Long enough that a training rhythm with a week off never meets a
+ * login screen, short enough that a forgotten phone stops being a key next month.
+ */
 const MAX_AGE_SECONDS = 60 * 60 * 24 * 30
+
+/** A session older than this gets a fresh cookie, so regular use never expires. */
+const RENEW_AFTER_SECONDS = 60 * 60 * 24
 
 export type Session = {
   readonly athleteId: string
@@ -30,13 +38,21 @@ const readCookie = (header: string | null, name: string): string | null => {
   return match ? decodeURIComponent(match.slice(name.length + 1)) : null
 }
 
-const cookie = (name: string, value: string, maxAge: number): string =>
-  `${name}=${encodeURIComponent(value)}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${maxAge}`
+/**
+ * `Secure` is dropped only for plain http, which in practice is `wrangler dev`
+ * on localhost — without that the cookie would silently never be stored there.
+ */
+const cookie = (name: string, value: string, maxAge: number, secure = true): string =>
+  `${name}=${encodeURIComponent(value)}; HttpOnly;${secure ? ' Secure;' : ''} SameSite=Lax; Path=/; Max-Age=${maxAge}`
 
-export const createSessionCookie = async (athleteId: string, secret: string): Promise<string> => {
+export const createSessionCookie = async (
+  athleteId: string,
+  secret: string,
+  secure = true,
+): Promise<string> => {
   const session: Session = { athleteId, exp: Math.floor(Date.now() / 1000) + MAX_AGE_SECONDS }
   const payload = encode(session)
-  return cookie(COOKIE_NAME, `${payload}.${await sign(payload, secret)}`, MAX_AGE_SECONDS)
+  return cookie(COOKIE_NAME, `${payload}.${await sign(payload, secret)}`, MAX_AGE_SECONDS, secure)
 }
 
 export const clearSessionCookie = (): string => cookie(COOKIE_NAME, '', 0)
@@ -50,8 +66,17 @@ export const readSession = async (header: string | null, secret: string): Promis
   return session && session.exp > Math.floor(Date.now() / 1000) ? session : null
 }
 
+/**
+ * True once the cookie has aged a day. Rewriting it then turns the fixed thirty
+ * days into a sliding window: whoever keeps using the app stays signed in, and
+ * a session left alone for a month still ends.
+ */
+export const shouldRenew = (session: Session, now: number = Math.floor(Date.now() / 1000)): boolean =>
+  session.exp - now < MAX_AGE_SECONDS - RENEW_AFTER_SECONDS
+
 /** The OAuth state parameter, mirrored into a short lived cookie to stop CSRF. */
-export const createStateCookie = (state: string): string => cookie(STATE_COOKIE, state, 600)
+export const createStateCookie = (state: string, secure = true): string =>
+  cookie(STATE_COOKIE, state, 600, secure)
 
 export const readState = (header: string | null): string | null => readCookie(header, STATE_COOKIE)
 
