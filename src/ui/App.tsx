@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { getMe } from './api.ts'
 import type { Me } from './api.ts'
 import { Landing } from './Landing.tsx'
+import { PasswordLogin } from './PasswordLogin.tsx'
 import { Onboarding } from './Onboarding.tsx'
 import { PlanView } from './PlanView.tsx'
 import { Imprint } from './legal/Imprint.tsx'
@@ -47,7 +48,11 @@ export const App = () => {
   if (!me.authenticated) {
     return (
       <Shell>
-        <Landing error={new URLSearchParams(window.location.search).get('fehler')} />
+        {me.mode === 'single' ? (
+          <PasswordLogin onDone={() => void load()} />
+        ) : (
+          <Landing error={new URLSearchParams(window.location.search).get('fehler')} />
+        )}
       </Shell>
     )
   }

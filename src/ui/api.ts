@@ -52,6 +52,10 @@ export type SportSettings = {
 
 export const getMe = (): Promise<Me> => request<Me>('/api/me')
 
+/** Single user mode only: trades the shared password for a session cookie. */
+export const login = (passwort: string): Promise<{ ok: true }> =>
+  request<{ ok: true }>('/api/login', { method: 'POST', body: JSON.stringify({ passwort }) })
+
 export const getSportSettings = (): Promise<SportSettings> =>
   request<SportSettings>('/api/sport-settings')
 

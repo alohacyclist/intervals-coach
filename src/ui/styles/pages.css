@@ -270,3 +270,33 @@
   background: transparent;
   color: var(--faint);
 }
+
+/* Single user sign in: one field, nothing to read before it. */
+.login {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  align-items: flex-start;
+  max-width: 34ch;
+  padding: 48px 0 32px;
+}
+.login h1 {
+  font-size: clamp(26px, 5vw, 34px);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.login__lead {
+  font-size: 14px;
+  color: var(--dim);
+}
+.login__field {
+  width: 100%;
+  gap: 6px;
+}
+.login__legal {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  color: var(--faint);
+  padding-top: 8px;
+}
