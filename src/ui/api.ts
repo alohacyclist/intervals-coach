@@ -1,5 +1,5 @@
 import type { SessionTier } from '../coach/types.ts'
-import type { CoachConfig, Plan, ZwiftRoute } from '../coach/types.ts'
+import type { CoachConfig, Plan, Progress, ZwiftRoute } from '../coach/types.ts'
 import type { ZrlRaceInput } from './zrl-rows.ts'
 
 export class ApiError extends Error {
@@ -61,6 +61,8 @@ export const getSportSettings = (): Promise<SportSettings> =>
 
 export const getPlan = (days: number, intent?: string): Promise<Plan> =>
   request<Plan>(`/api/plan?days=${days}${intent ? `&intent=${intent}` : ''}`)
+
+export const getProgress = (): Promise<Progress> => request<Progress>('/api/progress')
 
 export const getConfig = (): Promise<CoachConfig> => request<CoachConfig>('/api/config')
 

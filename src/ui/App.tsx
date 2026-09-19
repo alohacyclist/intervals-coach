@@ -6,15 +6,56 @@ import { Landing } from './Landing.tsx'
 import { PasswordLogin } from './PasswordLogin.tsx'
 import { Onboarding } from './Onboarding.tsx'
 import { PlanView } from './PlanView.tsx'
+import { ProgressView } from './ProgressView.tsx'
 import { Imprint } from './legal/Imprint.tsx'
 import { Privacy } from './legal/Privacy.tsx'
 import { ThemeSwitch } from './components/ThemeSwitch.tsx'
 import { ErrorBoundary } from './components/ErrorBoundary.tsx'
 
+const PLAN_PATH = '/app'
+const PROGRESS_PATH = '/verlauf'
+
+/**
+ * Two questions, two pages: what do I do today, and am I getting anywhere. The
+ * switch is the same three-position control the theme already uses, so the app
+ * gains a page without gaining a new kind of control.
+ */
+const ViewSwitch = ({
+  path,
+  onGo,
+}: {
+  readonly path: string
+  readonly onGo: (next: string) => void
+}) => (
+  <div className="mode" role="group" aria-label="Ansicht">
+    <button
+      type="button"
+      aria-pressed={path !== PROGRESS_PATH}
+      onClick={() => onGo(PLAN_PATH)}
+    >
+      Plan
+    </button>
+    <button
+      type="button"
+      aria-pressed={path === PROGRESS_PATH}
+      onClick={() => onGo(PROGRESS_PATH)}
+    >
+      Verlauf
+    </button>
+  </div>
+)
+
 /** Every view carries the mode switch, so the choice is never buried in settings. */
-const Shell = ({ children }: { readonly children: ReactNode }) => (
+const Shell = ({
+  children,
+  nav,
+}: {
+  readonly children: ReactNode
+  readonly nav?: ReactNode
+}) => (
   <main className="app">
     <div className="topbar">
+      {nav}
       <ThemeSwitch />
     </div>
     <ErrorBoundary>{children}</ErrorBoundary>
@@ -25,6 +66,19 @@ const Shell = ({ children }: { readonly children: ReactNode }) => (
 export const App = () => {
   const [me, setMe] = useState<Me | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [path, setPath] = useState(() => window.location.pathname)
+
+  // The browser's own back button has to keep working across the two views.
+  useEffect(() => {
+    const onPop = () => setPath(window.location.pathname)
+    window.addEventListener('popstate', onPop)
+    return () => window.removeEventListener('popstate', onPop)
+  }, [])
+
+  const go = (next: string) => {
+    window.history.pushState(null, '', next)
+    setPath(next)
+  }
 
   const load = useCallback(async () => {
     try {
@@ -38,7 +92,6 @@ export const App = () => {
     void load()
   }, [load])
 
-  const path = window.location.pathname
   if (path === '/datenschutz') return <Shell><Privacy /></Shell>
   if (path === '/impressum') return <Shell><Imprint /></Shell>
 
@@ -70,9 +123,15 @@ export const App = () => {
     )
   }
 
+  const needsOnboarding = () => setMe({ ...me, onboarded: false })
+
   return (
-    <Shell>
-      <PlanView me={me} onNeedsOnboarding={() => setMe({ ...me, onboarded: false })} />
+    <Shell nav={<ViewSwitch path={path} onGo={go} />}>
+      {path === PROGRESS_PATH ? (
+        <ProgressView onNeedsOnboarding={needsOnboarding} />
+      ) : (
+        <PlanView me={me} onNeedsOnboarding={needsOnboarding} />
+      )}
     </Shell>
   )
 }
