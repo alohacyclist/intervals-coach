@@ -24,8 +24,14 @@ const repeat = (times: number, steps: readonly Step[]): Repeat => ({ kind: 'repe
 const warmupBike = (duration: string): Step =>
   step(duration, 'ramp 50%-72%', { label: 'Einfahren' })
 
-const cooldown = (duration: string, target: string): Step =>
+const cooldownBike = (duration: string, target: string): Step =>
   step(duration, target, { label: 'Ausfahren' })
+
+const cooldownRun = (duration: string, target: string): Step =>
+  step(duration, target, { label: 'Auslaufen' })
+
+const cooldownSwim = (duration: string, target: string): Step =>
+  step(duration, target, { label: 'Ausschwimmen' })
 
 const BIKE: readonly WorkoutTemplate[] = [
   {
@@ -44,7 +50,7 @@ const BIKE: readonly WorkoutTemplate[] = [
       step('15m', '60-70%'),
       repeat(3, [step('30s', '110-120%', { cadence: '95-105rpm' }), step('3m', '55-65%')]),
       step('8m', '60-70%'),
-      cooldown('6m', '55%'),
+      cooldownBike('6m', '55%'),
     ],
   },
   {
@@ -61,7 +67,7 @@ const BIKE: readonly WorkoutTemplate[] = [
     blocks: [
       warmupBike('15m'),
       repeat(5, [step('4m', '110-115%', { cadence: '90-100rpm' }), step('4m', '50%')]),
-      cooldown('10m', '55%'),
+      cooldownBike('10m', '55%'),
     ],
   },
   {
@@ -80,7 +86,7 @@ const BIKE: readonly WorkoutTemplate[] = [
       repeat(6, [step('40s', '125%', { cadence: '95-105rpm' }), step('20s', '50%')]),
       step('4m', '50%'),
       repeat(6, [step('40s', '125%', { cadence: '95-105rpm' }), step('20s', '50%')]),
-      cooldown('8m', '55%'),
+      cooldownBike('8m', '55%'),
     ],
   },
   {
@@ -97,7 +103,7 @@ const BIKE: readonly WorkoutTemplate[] = [
     blocks: [
       warmupBike('15m'),
       repeat(3, [step('12m', '97-102%', { cadence: '85-95rpm' }), step('5m', '50%')]),
-      cooldown('8m', '55%'),
+      cooldownBike('8m', '55%'),
     ],
   },
   {
@@ -114,7 +120,7 @@ const BIKE: readonly WorkoutTemplate[] = [
     blocks: [
       warmupBike('15m'),
       repeat(2, [step('20m', '96-100%', { cadence: '85-95rpm' }), step('8m', '50%')]),
-      cooldown('7m', '55%'),
+      cooldownBike('7m', '55%'),
     ],
   },
   {
@@ -135,7 +141,7 @@ const BIKE: readonly WorkoutTemplate[] = [
       repeat(3, [step('2m', '105%'), step('1m', '88%')]),
       step('4m', '50%'),
       repeat(3, [step('2m', '105%'), step('1m', '88%')]),
-      cooldown('8m', '55%'),
+      cooldownBike('8m', '55%'),
     ],
   },
   {
@@ -150,7 +156,7 @@ const BIKE: readonly WorkoutTemplate[] = [
     blocks: [
       warmupBike('12m'),
       repeat(3, [step('12m', '88-93%', { cadence: '85-95rpm' }), step('5m', '55%')]),
-      cooldown('8m', '55%'),
+      cooldownBike('8m', '55%'),
     ],
   },
   {
@@ -165,7 +171,7 @@ const BIKE: readonly WorkoutTemplate[] = [
     blocks: [
       warmupBike('10m'),
       repeat(2, [step('20m', '76-82%', { cadence: '85-95rpm' }), step('5m', '55%')]),
-      cooldown('5m', '55%'),
+      cooldownBike('5m', '55%'),
     ],
   },
   {
@@ -182,7 +188,7 @@ const BIKE: readonly WorkoutTemplate[] = [
     blocks: [
       warmupBike('10m'),
       repeat(3, [step('8m', '98-103%'), step('3m', '50%')]),
-      cooldown('6m', '55%'),
+      cooldownBike('6m', '55%'),
     ],
   },
   {
@@ -199,7 +205,7 @@ const BIKE: readonly WorkoutTemplate[] = [
     blocks: [
       warmupBike('12m'),
       repeat(4, [step('3m', '112-118%', { cadence: '95-105rpm' }), step('3m', '50%')]),
-      cooldown('6m', '55%'),
+      cooldownBike('6m', '55%'),
     ],
   },
   {
@@ -214,7 +220,7 @@ const BIKE: readonly WorkoutTemplate[] = [
     blocks: [
       step('10m', '55%', { label: 'Einfahren' }),
       step('55m', '65-72%', { cadence: '85-95rpm' }),
-      cooldown('10m', '55%'),
+      cooldownBike('10m', '55%'),
     ],
   },
   {
@@ -245,7 +251,7 @@ const RUN: readonly WorkoutTemplate[] = [
     blocks: [
       step('12m', '72-78% Pace', { label: 'Einlaufen' }),
       repeat(5, [step('1km', '100-104% Pace'), step('2m', '62-68% Pace')]),
-      cooldown('8m', '72% Pace'),
+      cooldownRun('8m', '72% Pace'),
     ],
   },
   {
@@ -262,7 +268,7 @@ const RUN: readonly WorkoutTemplate[] = [
     blocks: [
       step('12m', '72-78% Pace', { label: 'Einlaufen' }),
       repeat(4, [step('2km', '96-100% Pace'), step('3m', '62% Pace')]),
-      cooldown('8m', '72% Pace'),
+      cooldownRun('8m', '72% Pace'),
     ],
   },
   {
@@ -280,7 +286,7 @@ const RUN: readonly WorkoutTemplate[] = [
       step('15m', '72-78% Pace', { label: 'Einlaufen' }),
       repeat(4, [step('20s', '120% Pace'), step('40s', '50% Pace')]),
       repeat(8, [step('800mtr', '110-115% Pace'), step('2m', '58-64% Pace')]),
-      cooldown('8m', '72% Pace'),
+      cooldownRun('8m', '72% Pace'),
     ],
   },
   {
@@ -297,7 +303,7 @@ const RUN: readonly WorkoutTemplate[] = [
     blocks: [
       step('12m', '72-78% Pace', { label: 'Einlaufen' }),
       repeat(10, [step('400mtr', '118-124% Pace'), step('90s', '58% Pace')]),
-      cooldown('8m', '72% Pace'),
+      cooldownRun('8m', '72% Pace'),
     ],
   },
   {
@@ -312,7 +318,7 @@ const RUN: readonly WorkoutTemplate[] = [
     blocks: [
       step('12m', '72-78% Pace', { label: 'Einlaufen' }),
       step('25m', '92-95% Pace'),
-      cooldown('8m', '72% Pace'),
+      cooldownRun('8m', '72% Pace'),
     ],
   },
   {
@@ -328,7 +334,7 @@ const RUN: readonly WorkoutTemplate[] = [
       step('15m', '76% Pace'),
       step('15m', '84% Pace'),
       step('12m', '92-96% Pace'),
-      cooldown('6m', '72% Pace'),
+      cooldownRun('6m', '72% Pace'),
     ],
   },
   {
@@ -343,7 +349,7 @@ const RUN: readonly WorkoutTemplate[] = [
     blocks: [
       step('15m', '72-78% Pace', { label: 'Einlaufen' }),
       repeat(8, [step('20s', '128-135% Pace'), step('2m', '45-50% Pace')]),
-      cooldown('10m', '72% Pace'),
+      cooldownRun('10m', '72% Pace'),
     ],
   },
   {
@@ -385,7 +391,7 @@ const RUN: readonly WorkoutTemplate[] = [
     blocks: [
       step('10m', '72-78% Pace', { label: 'Einlaufen' }),
       repeat(3, [step('1km', '100-104% Pace'), step('2m', '62-68% Pace')]),
-      cooldown('6m', '72% Pace'),
+      cooldownRun('6m', '72% Pace'),
     ],
   },
   {
@@ -425,7 +431,7 @@ const SWIM: readonly WorkoutTemplate[] = [
       warmupSwim('300mtr'),
       repeat(4, [step('50mtr', '55-62% Pace', { label: 'Technik' }), step('20s', '50% Pace')]),
       repeat(10, [step('100mtr', '98-102% Pace'), step('20s', '50% Pace')]),
-      cooldown('200mtr', '60% Pace'),
+      cooldownSwim('200mtr', '60% Pace'),
     ],
   },
   {
@@ -443,7 +449,7 @@ const SWIM: readonly WorkoutTemplate[] = [
       warmupSwim('300mtr'),
       repeat(4, [step('50mtr', '55-62% Pace', { label: 'Technik' }), step('20s', '50% Pace')]),
       repeat(5, [step('200mtr', '96-100% Pace'), step('30s', '50% Pace')]),
-      cooldown('200mtr', '60% Pace'),
+      cooldownSwim('200mtr', '60% Pace'),
     ],
   },
   {
@@ -459,7 +465,7 @@ const SWIM: readonly WorkoutTemplate[] = [
       warmupSwim('300mtr'),
       repeat(4, [step('50mtr', '55-62% Pace', { label: 'Technik' }), step('20s', '50% Pace')]),
       repeat(16, [step('50mtr', '110-118% Pace'), step('20s', '50% Pace')]),
-      cooldown('200mtr', '60% Pace'),
+      cooldownSwim('200mtr', '60% Pace'),
     ],
   },
   {
@@ -474,7 +480,7 @@ const SWIM: readonly WorkoutTemplate[] = [
     blocks: [
       warmupSwim('300mtr'),
       repeat(3, [step('400mtr', '88-93% Pace'), step('45s', '50% Pace')]),
-      cooldown('200mtr', '60% Pace'),
+      cooldownSwim('200mtr', '60% Pace'),
     ],
   },
   {
@@ -490,7 +496,7 @@ const SWIM: readonly WorkoutTemplate[] = [
       warmupSwim('300mtr'),
       repeat(8, [step('50mtr', '55-62% Pace', { label: 'Technik' }), step('20s', '50% Pace')]),
       repeat(8, [step('50mtr', '95-100% Pace', { label: 'Umsetzen' }), step('30s', '50% Pace')]),
-      cooldown('200mtr', '60% Pace'),
+      cooldownSwim('200mtr', '60% Pace'),
     ],
   },
   {
@@ -502,7 +508,7 @@ const SWIM: readonly WorkoutTemplate[] = [
     load: 40,
     phases: ['BASE', 'BUILD', 'SPECIFIC', 'RECOVERY'],
     coachNote: 'Durchgehend locker. Auf gleichmäßige Zugfrequenz achten, nicht auf die Uhr.',
-    blocks: [warmupSwim('200mtr'), step('1500mtr', '78-85% Pace'), cooldown('200mtr', '60% Pace')],
+    blocks: [warmupSwim('200mtr'), step('1500mtr', '78-85% Pace'), cooldownSwim('200mtr', '60% Pace')],
   },
   {
     id: 'swim-thr-short-6x100',
@@ -518,7 +524,7 @@ const SWIM: readonly WorkoutTemplate[] = [
     blocks: [
       warmupSwim('200mtr'),
       repeat(6, [step('100mtr', '98-102% Pace'), step('20s', '50% Pace')]),
-      cooldown('150mtr', '60% Pace'),
+      cooldownSwim('150mtr', '60% Pace'),
     ],
   },
   {
@@ -557,7 +563,7 @@ const BENCHMARKS: readonly WorkoutTemplate[] = [
       repeat(3, [step('1m', '105%', { cadence: '95-105rpm' }), step('1m', '50%')]),
       step('3m', '50%'),
       step('20m', '100-108%', { label: 'Maximal, gleichmäßig' }),
-      cooldown('6m', '55%'),
+      cooldownBike('6m', '55%'),
     ],
   },
   {
@@ -577,7 +583,7 @@ const BENCHMARKS: readonly WorkoutTemplate[] = [
       repeat(3, [step('1m', '105% Pace'), step('1m', '60% Pace')]),
       step('2m', '60% Pace'),
       step('20m', '100-106% Pace', { label: 'Maximal, gleichmäßig' }),
-      cooldown('6m', '72% Pace'),
+      cooldownRun('6m', '72% Pace'),
     ],
   },
   {
@@ -594,7 +600,7 @@ const BENCHMARKS: readonly WorkoutTemplate[] = [
     blocks: [
       warmupBike('15m'),
       repeat(4, [step('4m', '105-110%', { cadence: '90-100rpm' }), step('4m', '50%')]),
-      cooldown('9m', '55%'),
+      cooldownBike('9m', '55%'),
     ],
   },
   {
@@ -611,7 +617,7 @@ const BENCHMARKS: readonly WorkoutTemplate[] = [
     blocks: [
       step('12m', '72-78% Pace', { label: 'Einlaufen' }),
       repeat(4, [step('4m', '104-108% Pace'), step('3m', '62-68% Pace')]),
-      cooldown('8m', '72% Pace'),
+      cooldownRun('8m', '72% Pace'),
     ],
   },
   {
@@ -627,7 +633,7 @@ const BENCHMARKS: readonly WorkoutTemplate[] = [
     blocks: [
       warmupSwim('300mtr'),
       step('400mtr', '98-102% Pace'),
-      cooldown('200mtr', '60% Pace'),
+      cooldownSwim('200mtr', '60% Pace'),
     ],
   },
 ]
