@@ -64,13 +64,17 @@ export const HistoryStrip = ({ history }: { readonly history: readonly Adherence
         </p>
       )}
 
-      <p className="history__legend">
-        {(['done', 'race', 'switched', 'unplanned', 'missed', 'rest'] as const).map((status) => (
-          <span key={status}>
-            <i className={`history__dot history__day--${status}`} /> {STATUS_LABEL[status]}
-          </span>
-        ))}
-      </p>
+      {/* A legend is understood once; after that it is only chrome above the data. */}
+      <details className="disclose history__key">
+        <summary>Legende</summary>
+        <p className="history__legend">
+          {(['done', 'race', 'switched', 'unplanned', 'missed', 'rest'] as const).map((status) => (
+            <span key={status}>
+              <i className={`history__dot history__day--${status}`} /> {STATUS_LABEL[status]}
+            </span>
+          ))}
+        </p>
+      </details>
     </section>
   )
 }

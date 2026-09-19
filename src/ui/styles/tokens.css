@@ -183,6 +183,33 @@ button:disabled {
   cursor: default;
 }
 
+/* Disclosure: a stencilled +/- the way a panel marks an expandable field. One
+   idiom for every "more on demand" — the folded day, the reasoning behind a
+   session, the week legend, the strength block. */
+.disclose > summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  list-style: none;
+}
+.disclose > summary::-webkit-details-marker {
+  display: none;
+}
+.disclose > summary::before {
+  content: '+';
+  flex-shrink: 0;
+  font-family: var(--mono);
+  line-height: 1;
+  color: var(--faint);
+}
+.disclose[open] > summary::before {
+  content: '\2212';
+}
+.disclose > summary:hover::before {
+  color: var(--data);
+}
+
 input,
 select {
   background: var(--bg-sink);
