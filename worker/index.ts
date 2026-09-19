@@ -1,13 +1,13 @@
 import { Hono } from 'hono'
 import type { Context } from 'hono'
-import { basicAuth } from 'hono/basic-auth'
 import { createApiRoutes } from '../server/routes.ts'
 import type { RouteDeps } from '../server/routes.ts'
 import { kvConfigStore } from './config-store-kv.ts'
 import { deleteUser, loadUser, needsTouch, saveUser, touchUser, userConfigStore, hasConfig } from './users.ts'
 import { authorizeUrl, exchangeCode, fetchAthlete, refreshTokens } from './oauth.ts'
 import type { OAuthApp } from './oauth.ts'
-import { randomToken } from './crypto.ts'
+import { randomToken, secretEquals } from './crypto.ts'
+import { blocked, clearFailures, recordFailure } from './login-throttle.ts'
 import {
   clearSessionCookie,
   clearStateCookie,
@@ -15,13 +15,21 @@ import {
   createStateCookie,
   readSession,
   readState,
+  shouldRenew,
 } from './session.ts'
+import type { Session } from './session.ts'
 import type { Bindings } from './bindings.ts'
 import { isMultiUser } from './bindings.ts'
 
 const REFRESH_MARGIN_SECONDS = 120
 
+/** The session subject in single user mode, where there is no athlete to name. */
+const SINGLE_USER_SUBJECT = 'einzelbetrieb'
+
 const app = new Hono<{ Bindings: Bindings }>()
+
+/** Plain http only happens under `wrangler dev`; there a Secure cookie is never stored. */
+const isSecure = (context: Context): boolean => new URL(context.req.url).protocol === 'https:'
 
 const oauthApp = (context: Context): OAuthApp => {
   const env = context.env as Bindings
@@ -33,11 +41,32 @@ const oauthApp = (context: Context): OAuthApp => {
   }
 }
 
-const sessionAthlete = async (context: Context): Promise<string | null> => {
-  const env = context.env as Bindings
-  if (!env.SESSION_SECRET) return null
-  const session = await readSession(context.req.header('Cookie') ?? null, env.SESSION_SECRET)
-  return session?.athleteId ?? null
+/**
+ * Multi user sessions are signed with `SESSION_SECRET`. Single user sessions fall
+ * back to the password itself, so a deployment that only sets `APP_PASSWORD` still
+ * gets signed cookies — and changing the password ends every session with it.
+ */
+const sessionSecret = (env: Bindings): string => env.SESSION_SECRET ?? env.APP_PASSWORD ?? ''
+
+const currentSession = async (context: Context): Promise<Session | null> => {
+  const secret = sessionSecret(context.env as Bindings)
+  return secret ? readSession(context.req.header('Cookie') ?? null, secret) : null
+}
+
+const sessionAthlete = async (context: Context): Promise<string | null> =>
+  (await currentSession(context))?.athleteId ?? null
+
+/**
+ * Every visit pushes the expiry back out, so an app in weekly use never meets a
+ * login screen again. Rewritten at most once a day; anything shorter would put a
+ * Set-Cookie on every request for nothing.
+ */
+const renewIfNeeded = async (context: Context, session: Session): Promise<void> => {
+  if (!shouldRenew(session)) return
+  context.header(
+    'Set-Cookie',
+    await createSessionCookie(session.athleteId, sessionSecret(context.env as Bindings), isSecure(context)),
+  )
 }
 
 /** Signed-in user's dependencies, refreshing the access token when it is close to expiry. */
@@ -80,6 +109,9 @@ const singleUserDeps = (context: Context): RouteDeps => {
   }
 }
 
+const singleUserConfigured = (env: Bindings): boolean =>
+  Boolean(env.APP_PASSWORD && env.INTERVALS_API_KEY && env.INTERVALS_ATHLETE_ID)
+
 // ---------------------------------------------------------------- auth routes
 
 app.get('/auth/login', async (context) => {
@@ -88,7 +120,7 @@ app.get('/auth/login', async (context) => {
   // without it rather than trusting the page to have asked.
   if (context.req.query('einwilligung') !== 'ja') return context.redirect('/?fehler=einwilligung', 302)
   const state = randomToken()
-  context.header('Set-Cookie', createStateCookie(state))
+  context.header('Set-Cookie', createStateCookie(state, isSecure(context)))
   return context.redirect(authorizeUrl(oauthApp(context), state), 302)
 })
 
@@ -119,8 +151,41 @@ app.get('/auth/callback', async (context) => {
     lastSeenAt: now,
   })
 
-  context.header('Set-Cookie', await createSessionCookie(athlete.id, secret), { append: true })
+  context.header('Set-Cookie', await createSessionCookie(athlete.id, secret, isSecure(context)), {
+    append: true,
+  })
   return context.redirect((await hasConfig(context.env.COACH_CONFIG, athlete.id)) ? '/app' : '/onboarding', 302)
+})
+
+/**
+ * Single user sign in. The shared password is exchanged once for a signed session
+ * cookie, which is what Basic Auth never gave us: a login that survives closing
+ * the browser and can be ended again from the app.
+ */
+app.post('/api/login', async (context) => {
+  const env = context.env as Bindings
+  if (isMultiUser(env)) return context.json({ error: 'Die Anmeldung läuft über intervals.icu' }, 400)
+  if (!singleUserConfigured(env)) return context.json({ error: 'Nicht konfiguriert' }, 500)
+
+  const client = context.req.header('CF-Connecting-IP') ?? 'unbekannt'
+  if (await blocked(env.COACH_CONFIG, client)) {
+    return context.json({ error: 'Zu viele Fehlversuche. Bitte in 15 Minuten erneut versuchen.' }, 429)
+  }
+
+  const body = (await context.req.json().catch(() => ({}))) as { passwort?: unknown }
+  const passwort = typeof body.passwort === 'string' ? body.passwort : ''
+
+  if (!(await secretEquals(passwort, env.APP_PASSWORD ?? ''))) {
+    await recordFailure(env.COACH_CONFIG, client)
+    return context.json({ error: 'Passwort falsch' }, 401)
+  }
+
+  await clearFailures(env.COACH_CONFIG, client)
+  context.header(
+    'Set-Cookie',
+    await createSessionCookie(SINGLE_USER_SUBJECT, sessionSecret(env), isSecure(context)),
+  )
+  return context.json({ ok: true })
 })
 
 app.get('/auth/logout', (context) => {
@@ -130,18 +195,21 @@ app.get('/auth/logout', (context) => {
 
 app.get('/api/me', async (context) => {
   const env = context.env as Bindings
+  const session = await currentSession(context)
+  if (session) await renewIfNeeded(context, session)
+
   if (!isMultiUser(env)) {
-    return context.json({ mode: 'single', authenticated: true, onboarded: true })
+    return context.json({ mode: 'single', authenticated: Boolean(session), onboarded: true })
   }
-  const athleteId = await sessionAthlete(context)
-  if (!athleteId) return context.json({ mode: 'multi', authenticated: false, onboarded: false })
-  const user = await loadUser(env.COACH_CONFIG, env.SESSION_SECRET ?? '', athleteId)
+  if (!session) return context.json({ mode: 'multi', authenticated: false, onboarded: false })
+
+  const user = await loadUser(env.COACH_CONFIG, env.SESSION_SECRET ?? '', session.athleteId)
   return context.json({
     mode: 'multi',
     authenticated: true,
-    onboarded: await hasConfig(env.COACH_CONFIG, athleteId),
+    onboarded: await hasConfig(env.COACH_CONFIG, session.athleteId),
     name: user?.name ?? 'Athlet',
-    athleteId,
+    athleteId: session.athleteId,
     consentAt: user?.consentAt ?? null,
   })
 })
@@ -149,32 +217,16 @@ app.get('/api/me', async (context) => {
 // ------------------------------------------------------------- access control
 
 /**
- * Readable without the password even in single user mode. intervals.icu checks
- * the privacy URL before it issues an OAuth client, and a visitor is entitled to
- * read the notice before signing in. Only the shell and the legal text are open —
- * every data route stays behind the password.
+ * The shell, its assets and the legal pages are readable without a session in
+ * either mode. They carry no data — the plan, the configuration and the
+ * intervals.icu credentials all sit behind `/api/`, which needs the cookie.
+ * intervals.icu also checks the privacy URL before it issues an OAuth client,
+ * and a visitor is entitled to read the notice before signing in.
  */
-const PUBLIC_PATHS = ['/datenschutz', '/impressum']
-const PUBLIC_FILES = ['/logo.svg', '/logo.png', '/favicon.png', '/apple-touch-icon.png']
-
-const isPublicPath = (path: string): boolean =>
-  PUBLIC_PATHS.includes(path) || PUBLIC_FILES.includes(path) || path.startsWith('/assets/')
-
 app.use('*', async (context, next) => {
   const env = context.env as Bindings
 
-  if (isMultiUser(env)) {
-    // Public landing page and assets; only the data API needs a session.
-    if (!context.req.path.startsWith('/api/')) return next()
-    if (context.req.path === '/api/me') return next()
-    const athleteId = await sessionAthlete(context)
-    if (!athleteId) return context.json({ error: 'Nicht angemeldet', needsLogin: true }, 401)
-    return next()
-  }
-
-  if (isPublicPath(context.req.path)) return next()
-
-  if (!env.APP_PASSWORD || !env.INTERVALS_API_KEY || !env.INTERVALS_ATHLETE_ID) {
+  if (!isMultiUser(env) && !singleUserConfigured(env)) {
     return context.text(
       'Nicht konfiguriert. Entweder INTERVALS_CLIENT_ID, INTERVALS_CLIENT_SECRET und SESSION_SECRET ' +
         'für den Mehrbenutzer-Betrieb setzen, oder INTERVALS_API_KEY, INTERVALS_ATHLETE_ID und APP_PASSWORD ' +
@@ -182,7 +234,14 @@ app.use('*', async (context, next) => {
       500,
     )
   }
-  return basicAuth({ username: env.APP_USER ?? 'coach', password: env.APP_PASSWORD })(context, next)
+
+  if (!context.req.path.startsWith('/api/')) return next()
+
+  const session = await currentSession(context)
+  if (!session) return context.json({ error: 'Nicht angemeldet', needsLogin: true }, 401)
+
+  await renewIfNeeded(context, session)
+  return next()
 })
 
 /** Art. 17 in one request: erase the account, then end the session. */

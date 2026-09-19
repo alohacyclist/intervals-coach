@@ -28,7 +28,6 @@ export type Bindings = {
   readonly INTERVALS_API_KEY?: string
   readonly INTERVALS_ATHLETE_ID?: string
   readonly APP_PASSWORD?: string
-  readonly APP_USER?: string
 }
 
 export type MultiUserBindings = Bindings & {

@@ -84,16 +84,20 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
 
   return (
     <>
-      {me.mode === 'multi' && (
-        <div className="account">
-          <span>
-            Angemeldet als {me.name}
-            {me.consentAt &&
-              ` · Einwilligung ${new Date(me.consentAt).toLocaleDateString('de-DE')}`}
-          </span>
-          <a href="/auth/logout">Abmelden</a>
-        </div>
-      )}
+      <div className="account">
+        <span>
+          {me.mode === 'multi' ? (
+            <>
+              Angemeldet als {me.name}
+              {me.consentAt &&
+                ` · Einwilligung ${new Date(me.consentAt).toLocaleDateString('de-DE')}`}
+            </>
+          ) : (
+            'Angemeldet'
+          )}
+        </span>
+        <a href="/auth/logout">Abmelden</a>
+      </div>
 
       {plan && (
         <StateHeader

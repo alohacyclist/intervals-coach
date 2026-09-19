@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { decryptJson, encryptJson, randomToken, sign, verify } from '../worker/crypto.ts'
-import { createSessionCookie, clearSessionCookie, readSession } from '../worker/session.ts'
+import { createSessionCookie, clearSessionCookie, readSession, shouldRenew } from '../worker/session.ts'
 
 const SECRET = 'test-secret-value'
 
@@ -68,5 +68,20 @@ describe('session cookies', () => {
 
   it('clears the cookie with a zero max age', () => {
     expect(clearSessionCookie()).toContain('Max-Age=0')
+  })
+
+  it('keeps Secure off for plain http and on everywhere else', async () => {
+    expect(await createSessionCookie('i123', SECRET, false)).not.toContain('Secure')
+    expect(await createSessionCookie('i123', SECRET)).toContain('Secure')
+  })
+
+  it('lasts thirty days and renews once a day has passed', () => {
+    const now = 1_800_000_000
+    const thirtyDays = 60 * 60 * 24 * 30
+    expect(shouldRenew({ athleteId: 'i123', exp: now + thirtyDays }, now)).toBe(false)
+    // Twelve hours in: still the cookie the browser already has.
+    expect(shouldRenew({ athleteId: 'i123', exp: now + thirtyDays - 60 * 60 * 12 }, now)).toBe(false)
+    // Two days in: the expiry gets pushed back out to thirty days again.
+    expect(shouldRenew({ athleteId: 'i123', exp: now + thirtyDays - 60 * 60 * 48 }, now)).toBe(true)
   })
 })

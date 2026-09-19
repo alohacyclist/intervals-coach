@@ -69,6 +69,24 @@ export const decryptJson = async <T>(payload: string, secret: string): Promise<T
   }
 }
 
+/**
+ * Constant time comparison of two secrets. Both sides are HMAC'd with a key that
+ * exists only for this call, so the comparison happens over digests of equal
+ * length and `crypto.subtle.verify` does it without an early exit.
+ */
+export const secretEquals = async (candidate: string, expected: string): Promise<boolean> => {
+  if (!candidate || !expected) return false
+  const key = await crypto.subtle.importKey(
+    'raw',
+    crypto.getRandomValues(new Uint8Array(32)),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign', 'verify'],
+  )
+  const mac = await crypto.subtle.sign('HMAC', key, encoder.encode(candidate))
+  return crypto.subtle.verify('HMAC', key, mac, encoder.encode(expected))
+}
+
 export const randomToken = (): string => toBase64Url(crypto.getRandomValues(new Uint8Array(24)))
 
 export { toBase64Url, fromBase64Url }

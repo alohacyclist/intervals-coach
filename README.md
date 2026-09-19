@@ -39,10 +39,16 @@ npm run deploy
 Danach liegt die App auf `https://intervals-coach.<dein-subdomain>.workers.dev`.
 Jedes weitere Deployment ist nur noch `npm run deploy`.
 
-**Zugangsschutz:** der Worker verlangt Basic Auth für *alles*, auch für die statischen
-Dateien — Benutzername `coach` (per Secret `APP_USER` änderbar), Passwort `APP_PASSWORD`.
-Das ist kein Komfort-Feature: der intervals.icu-API-Key hat Vollzugriff auf den Account,
-eine ungeschützte URL würde ihn effektiv weiterreichen.
+**Zugangsschutz:** die App fragt beim ersten Aufruf nach `APP_PASSWORD` und tauscht es
+gegen ein Sitzungs-Cookie (30 Tage, gleitend verlängert — siehe *Sitzungen* unten). Ohne
+gültiges Cookie liefert keine `/api/`-Route Daten. Das ist kein Komfort-Feature: der
+intervals.icu-API-Key hat Vollzugriff auf den Account, eine ungeschützte URL würde ihn
+effektiv weiterreichen. Öffentlich erreichbar sind nur die Programmdateien der Oberfläche
+und die Rechtstexte — beide enthalten keine Daten und keine Zugangsdaten.
+
+Zehn Fehlversuche pro IP-Adresse sperren die Anmeldung für 15 Minuten. Das Passwort wird
+in konstanter Zeit verglichen, landet nie im Browser-Speicher und wird bei jedem Aufruf
+neu gegen das Secret geprüft. `APP_USER` wird nicht mehr gebraucht.
 
 **Worker lokal testen:** `cp .dev.vars.example .dev.vars`, ausfüllen, dann `npm run cf`.
 `.dev.vars` ist gitignored.
@@ -235,7 +241,7 @@ Die App kennt zwei Modi und schaltet automatisch um:
 | | Einzelbetrieb | Mehrbenutzer |
 |---|---|---|
 | Aktiv wenn | `INTERVALS_API_KEY` gesetzt | `INTERVALS_CLIENT_ID`, `INTERVALS_CLIENT_SECRET`, `SESSION_SECRET` gesetzt |
-| Zugang | ein gemeinsames Passwort (Basic Auth) | „Mit intervals.icu anmelden" (OAuth) |
+| Zugang | ein gemeinsames Passwort, dann Sitzungs-Cookie | „Mit intervals.icu anmelden" (OAuth) |
 | Zugangsdaten | ein persönlicher API-Key im Secret | pro Nutzer ein OAuth-Token, verschlüsselt in KV |
 | Konfiguration | ein Datensatz | ein Datensatz je Athlet |
 
@@ -264,8 +270,17 @@ Einzelbetrieb unverändert aktiv — ein bestehendes Deployment bricht nicht.
 Zielkonfiguration je Athlet. Trainings- und Gesundheitsdaten werden bei jedem Aufruf frisch
 von intervals.icu geholt und nicht abgelegt.
 
-**Sitzungen:** HMAC-signiertes Cookie, `HttpOnly`, `Secure`, `SameSite=Lax`, 30 Tage.
-Der OAuth-`state` läuft über ein eigenes kurzlebiges Cookie gegen CSRF.
+**Sitzungen:** in beiden Modi dasselbe HMAC-signierte Cookie — `HttpOnly` (für
+JavaScript unsichtbar, also auch für fremdes), `Secure`, `SameSite=Lax` (kein Versand bei
+Anfragen von fremden Seiten), `Path=/`, 30 Tage Laufzeit. Es enthält nur Athlet und
+Ablaufzeitpunkt; ohne gültige Signatur ist es wertlos. Jeder Aufruf schiebt den Ablauf
+wieder auf 30 Tage vor (höchstens einmal täglich neu gesetzt), eine Sitzung ohne Nutzung
+endet also nach einem Monat von selbst. „Abmelden" löscht das Cookie sofort.
+
+Signiert wird im Mehrbenutzer-Betrieb mit `SESSION_SECRET`. Im Einzelbetrieb genügt
+`APP_PASSWORD` als Schlüssel — eine Passwortänderung beendet dadurch alle Sitzungen.
+Optional lässt sich auch dort `SESSION_SECRET` setzen, dann überleben Sitzungen den
+Passwortwechsel. Der OAuth-`state` läuft über ein eigenes kurzlebiges Cookie gegen CSRF.
 
 **Rechtliches:** HRV, Ruhepuls und Schlaf sind Gesundheitsdaten nach Art. 9 DSGVO.
 `/datenschutz` und `/impressum` liegen als Entwurf bei und müssen vor der Veröffentlichung
@@ -291,6 +306,7 @@ server/        intervals.icu-Client, HTTP-Routen, Node-Entry für die Entwicklun
 worker/        Cloudflare-Worker-Entry
   oauth.ts     intervals.icu OAuth: Authorize-URL, Code-Tausch, Refresh
   session.ts   signierte Session-Cookies, OAuth-state
+  login-throttle.ts  Fehlversuche pro IP, 15-Minuten-Fenster
   crypto.ts    HMAC-Signatur und AES-GCM-Verschlüsselung (Web Crypto)
   users.ts     Nutzer- und Konfigurationsspeicher in KV, je Athlet
 src/ui/        React-Oberfläche
