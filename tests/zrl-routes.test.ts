@@ -77,3 +77,29 @@ describe('entering a league round', () => {
     expect(store.current().zrlRaces).toEqual([race])
   })
 })
+
+describe('switching the league on and off', () => {
+  it('stores the switch and the taper on their own', async () => {
+    const store = memoryStore(config)
+    const response = await send(appWith(store), 'PUT', '/api/zrl-settings', {
+      enabled: true,
+      taper: false,
+    })
+    expect(response.status).toBe(200)
+    expect(store.current().zrl).toEqual({ enabled: true, taper: false })
+  })
+
+  it('refuses anything but two booleans', async () => {
+    const store = memoryStore(config)
+    const response = await send(appWith(store), 'PUT', '/api/zrl-settings', { enabled: 'yes' })
+    expect(response.status).toBe(400)
+    expect(store.current().zrl).toEqual(config.zrl)
+  })
+
+  it('is not rolled back by a settings form saved from an older copy', async () => {
+    const store = memoryStore({ ...config, zrl: { enabled: true, taper: false } })
+    const response = await send(appWith(store), 'PUT', '/api/config', config)
+    expect(response.status).toBe(200)
+    expect(store.current().zrl).toEqual({ enabled: true, taper: false })
+  })
+})

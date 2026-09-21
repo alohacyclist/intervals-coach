@@ -3,6 +3,18 @@ import { validateConfig, ValidationError, DEFAULT_CONFIG } from '../src/coach/co
 import { config } from './fixtures.ts'
 
 describe('config validation', () => {
+  it('keeps planning around races a config entered before the league switch existed', () => {
+    const { zrl: _dropped, ...stored } = config
+    const race = { date: '2026-09-08', format: 'scratch', route: null, laps: 1 }
+    expect(validateConfig({ ...stored, zrlRaces: [race] }).zrl).toEqual({ enabled: true, taper: true })
+    expect(validateConfig(stored).zrl).toEqual({ enabled: false, taper: true })
+  })
+
+  it('keeps the league switch and the taper as stored', () => {
+    const stored = { ...config, zrl: { enabled: true, taper: false } }
+    expect(validateConfig(stored).zrl).toEqual({ enabled: true, taper: false })
+  })
+
   it('accepts the default configuration', () => {
     expect(validateConfig(DEFAULT_CONFIG).profile.sports).toHaveLength(2)
   })

@@ -130,6 +130,7 @@ export const Onboarding = ({ onDone }: { readonly onDone: () => void }) => {
       breaks: [],
       proposals: [],
       zrlRaces: [],
+      zrl: { enabled: false, taper: true },
       destinations: {},
       planStart: new Date().toISOString().slice(0, 10),
     }

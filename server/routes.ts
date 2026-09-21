@@ -234,7 +234,7 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
     // Kept by their own endpoints; a settings form holding an older copy must not roll them back.
     // Only a missing config means there is nothing to keep; any other failure must not erase it.
     const owned = await store.load().then(
-      (stored) => ({ proposals: stored.proposals, zrlRaces: stored.zrlRaces }),
+      (stored) => ({ proposals: stored.proposals, zrlRaces: stored.zrlRaces, zrl: stored.zrl }),
       (error: unknown) => {
         if (error instanceof MissingConfigError) return { proposals: [], zrlRaces: [] }
         throw error
@@ -324,6 +324,17 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
   app.get('/api/zwift-routes', (context) => context.json(ZWIFT_ROUTES))
 
   /** Replaces the entered Zwift Racing League dates; route details come from the route list, not the client. */
+  app.put('/api/zrl-settings', async (context) => {
+    const { store } = await resolve(context)
+    const body = (await context.req.json()) as Record<string, unknown>
+    const { enabled, taper } = body
+    if (typeof enabled !== 'boolean' || typeof taper !== 'boolean') {
+      return context.json({ error: 'enabled und taper müssen true oder false sein' }, 400)
+    }
+    const config = await store.load()
+    return context.json(await store.save(validateConfig({ ...config, zrl: { enabled, taper } })))
+  })
+
   app.put('/api/zrl', async (context) => {
     const body = (await context.req.json()) as { races?: unknown }
     if (!Array.isArray(body.races)) return context.json({ error: 'races muss eine Liste sein' }, 400)
