@@ -122,13 +122,27 @@ export type ZwiftRoute = {
   readonly leadInElevationM: number
 }
 
+/**
+ * Whether the league shapes the plan at all, and whether the day before a race
+ * is kept easy. While enabled, every Tuesday counts as a race day; an entered
+ * race only adds format and route to it.
+ */
+export type ZrlSettings = {
+  readonly enabled: boolean
+  readonly taper: boolean
+}
+
 export type ZrlRace = {
   readonly date: string
-  readonly format: ZrlFormat
+  /** Null for a league Tuesday assumed from the settings but not entered yet. */
+  readonly format: ZrlFormat | null
   /** Null until WTRL publishes it; the estimate then leans on past races only. */
   readonly route: ZwiftRoute | null
   readonly laps: number
 }
+
+/** What the athlete entered: always with a format, the route may still be open. */
+export type EnteredZrlRace = ZrlRace & { readonly format: ZrlFormat }
 
 /** A league race the athlete already rode, as read from the activity. */
 export type RaceSample = {
@@ -179,7 +193,8 @@ export type CoachConfig = {
   /** What the app offered each day, so training is recognised without the calendar. */
   readonly proposals: readonly DayProposal[]
   /** Zwift Racing League dates of the current round, entered once per round. */
-  readonly zrlRaces: readonly ZrlRace[]
+  readonly zrlRaces: readonly EnteredZrlRace[]
+  readonly zrl: ZrlSettings
   /**
    * Where each sport's workouts go. A sport without an entry is left alone, so
    * whatever is switched on in intervals.icu keeps applying to it.

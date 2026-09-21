@@ -6,17 +6,18 @@ import type {
   TrainingState,
   ZrlRace,
 } from './types.ts'
-import { ZRL_FORMAT_LABELS } from './types.ts'
 import { addDays } from './dates.ts'
 import { breakLimit } from './breaks.ts'
 import { buildSession } from './session.ts'
-import { estimateRace, raceDetails, raceTemplate, zrlRaceOn } from './zrl.ts'
+import { estimateRace, formatLabel, leagueRaceOn, raceDetails, raceTemplate } from './zrl.ts'
 
 type Decision = { readonly dayType: DayType; readonly reason: string; readonly optional: boolean }
 
 export type RacesAround = {
   readonly race: ZrlRace | null
   readonly raceTomorrow: ZrlRace | null
+  /** Whether the day before a race is kept easy; the race itself stays either way. */
+  readonly taper: boolean
 }
 
 /**
@@ -29,16 +30,18 @@ export const racesAround = (
   date: string,
 ): RacesAround => {
   const free = (day: string) => breakLimit(config.breaks, day) === null
-  if (!sports.includes('Ride') || !free(date)) return { race: null, raceTomorrow: null }
+  const { taper } = config.zrl
+  if (!sports.includes('Ride') || !free(date)) return { race: null, raceTomorrow: null, taper }
   const tomorrow = addDays(date, 1)
   return {
-    race: zrlRaceOn(config.zrlRaces, date),
-    raceTomorrow: free(tomorrow) ? zrlRaceOn(config.zrlRaces, tomorrow) : null,
+    race: leagueRaceOn(config.zrl, config.zrlRaces, date),
+    raceTomorrow: free(tomorrow) ? leagueRaceOn(config.zrl, config.zrlRaces, tomorrow) : null,
+    taper,
   }
 }
 
 const raceLabel = (race: ZrlRace): string =>
-  `ZRL ${ZRL_FORMAT_LABELS[race.format]}${race.route ? ` auf ${race.route.name}` : ''}`
+  `ZRL ${formatLabel(race)}${race.route ? ` auf ${race.route.name}` : ''}`
 
 /**
  * The athlete only knows on the day whether they race, so the day is planned to
@@ -72,7 +75,7 @@ export const aroundRace = (
       reason: `${label} — Rennen oder eine gleichwertige Qualitätseinheit.${warning}`,
     }
   }
-  if (raceTomorrow && !exhausted) {
+  if (raceTomorrow && around.taper && !exhausted) {
     return {
       dayType: 'EASY',
       optional: false,
