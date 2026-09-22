@@ -33,6 +33,13 @@ import { aroundRace, raceSession, racesAround, withRace } from './race-day.ts'
 
 /** Minimum days between two hard sessions, regardless of sport. */
 const HARD_SPACING_DAYS = 2
+/**
+ * The smallest load this app itself ever proposes as a hard session. A hard effort
+ * below it — fifteen minutes of racing at 30, say — still blocks the next hard day,
+ * but it has not earned a whole rest day: the stimulus was real and small. Anything
+ * the plan prescribed itself sits at or above this, so its own days are unaffected.
+ */
+const FULL_HARD_LOAD = 48
 const STALE_STIMULUS_DAYS = 28
 /** A gap this long means the body has detrained; VO2max is the wrong way back in. */
 const LAYOFF_DAYS = 10
@@ -42,6 +49,7 @@ const MAX_CONSECUTIVE_REST = 2
 type Simulation = {
   readonly fitness: Fitness
   readonly daysSinceHard: Readonly<Record<Sport, number>>
+  readonly lastHardLoad: Readonly<Record<Sport, number>>
   readonly hardThisWeek: number
   readonly sessionsThisWeek: number
   readonly hardThisWeekBySport: Readonly<Record<Sport, number>>
@@ -83,6 +91,7 @@ const strengthThisWeekFrom = (state: TrainingState, config: CoachConfig): number
 const initSimulation = (state: TrainingState, config: CoachConfig): Simulation => ({
   fitness: state.overall,
   daysSinceHard: state.daysSinceHard,
+  lastHardLoad: state.lastHardLoad,
   hardThisWeek: state.hardSessionsThisWeek,
   sessionsThisWeek: state.sessionsThisWeek,
   hardThisWeekBySport: state.hardThisWeekBySport,
@@ -101,6 +110,15 @@ const stimulusAge = (simulation: Simulation, sport: Sport, stimulus: Stimulus): 
 
 const minDaysSinceHard = (simulation: Simulation, sports: readonly Sport[]): number =>
   Math.min(...sports.map((sport) => simulation.daysSinceHard[sport]))
+
+/** The load of the session that is holding the next hard day back. */
+const blockingHardLoad = (simulation: Simulation, sports: readonly Sport[]): number => {
+  const spacing = minDaysSinceHard(simulation, sports)
+  const loads = sports
+    .filter((sport) => simulation.daysSinceHard[sport] === spacing)
+    .map((sport) => simulation.lastHardLoad[sport] ?? 0)
+  return loads.length === 0 ? 0 : Math.max(...loads)
+}
 
 type DayDecision = {
   readonly dayType: DayType
@@ -231,6 +249,15 @@ const decideDay = (
     return plan('RECOVERY', 'Form deutlich im Minus — nur Regeneration')
   }
   if (minDaysSinceHard(simulation, sports) < HARD_SPACING_DAYS) {
+    const blocking = blockingHardLoad(simulation, sports)
+    // A small hard effort still rules out a second hard day, but a rest day would
+    // cost more than the effort did.
+    if (blocking > 0 && blocking < FULL_HARD_LOAD) {
+      return plan(
+        'EASY',
+        `Die letzte harte Einheit war kurz (Load ${blocking}) — locker statt Pause`,
+      )
+    }
     // A hard day is followed by rest. The weekly minimum is reached by spreading
     // the remaining sessions over the remaining days, never by stacking one onto
     // a recovery day — unless the week has run out of room to space them out.
@@ -495,6 +522,10 @@ const advance = (
   const sessions = efforts.filter((effort) => effort.sport !== 'Other')
   const hardIn = (sport: Sport) =>
     efforts.filter((effort) => effort.hard && effort.sport === sport).length
+  const hardLoadIn = (sport: Sport): number => {
+    const loads = efforts.filter((effort) => effort.hard && effort.sport === sport).map((effort) => effort.load)
+    return loads.length === 0 ? 0 : Math.max(...loads)
+  }
   const bumpedAges = Object.fromEntries(
     Object.entries(simulation.stimulusAge).map(([key, age]) => [key, age + 1]),
   )
@@ -506,6 +537,12 @@ const advance = (
     fitness: projectFitness(simulation.fitness, efforts.reduce((sum, effort) => sum + effort.load, 0)),
     daysSinceHard: Object.fromEntries(
       ALL_SPORTS.map((sport) => [sport, hardIn(sport) > 0 ? 1 : simulation.daysSinceHard[sport] + 1]),
+    ) as Record<Sport, number>,
+    lastHardLoad: Object.fromEntries(
+      ALL_SPORTS.map((sport) => [
+        sport,
+        hardIn(sport) > 0 ? hardLoadIn(sport) : simulation.lastHardLoad[sport],
+      ]),
     ) as Record<Sport, number>,
     hardThisWeek: sameWeek
       ? simulation.hardThisWeek + efforts.filter((effort) => effort.hard).length
