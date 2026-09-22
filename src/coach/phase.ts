@@ -1,5 +1,5 @@
 import type { AthleteProfile, CoachConfig, Goal, Phase, Sport } from './types.ts'
-import { diffDays, weeksBetween } from './dates.ts'
+import { diffDays, startOfWeek, weeksBetween } from './dates.ts'
 
 /** Weeks remaining until a goal date, or null for open-ended goals. */
 export const weeksToGoal = (goal: Goal, today: string): number | null =>
@@ -26,9 +26,23 @@ export const goalForSport = (
 ): Goal | undefined =>
   [...active(goals, today)].filter((goal) => goal.sport === sport).sort(byUrgency(today))[0]
 
-/** Every fourth week is a recovery week, anchored on the plan start date. */
+/** Whole calendar weeks between the week the plan started and the week of `today`. */
+const weekIndex = (planStart: string, today: string): number =>
+  weeksBetween(startOfWeek(planStart), startOfWeek(today))
+
+/**
+ * Every fourth week is a recovery week, counted in calendar weeks from the week
+ * the plan started.
+ *
+ * Counting from the start *date* would run each block from that weekday to the
+ * same weekday four weeks later, so a plan started on a Thursday put its
+ * recovery block on Thursday to Wednesday: the end of one week and the start of
+ * the next, which reads as two recovery weeks in a row. It also matched no other
+ * week in this app — the hard session budget, the weekly load and the engine's
+ * own simulation all run Monday to Sunday.
+ */
 export const isRecoveryWeek = (planStart: string, today: string): boolean =>
-  weeksBetween(planStart, today) % 4 === 3
+  weekIndex(planStart, today) % 4 === 3
 
 const datedPhase = (weeksLeft: number): Phase => {
   if (weeksLeft <= 1) return 'TAPER'
@@ -39,7 +53,7 @@ const datedPhase = (weeksLeft: number): Phase => {
 
 /** Open-ended goals cycle through two four-week blocks: base, then build. */
 const openEndedPhase = (planStart: string, today: string): Phase => {
-  const block = Math.floor(weeksBetween(planStart, today) / 4)
+  const block = Math.floor(weekIndex(planStart, today) / 4)
   return block % 2 === 0 ? 'BASE' : 'BUILD'
 }
 
