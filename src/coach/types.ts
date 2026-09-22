@@ -299,6 +299,8 @@ export type TrainingState = {
   readonly overall: Fitness
   readonly bySport: Readonly<Record<Sport, Fitness>>
   readonly daysSinceHard: Readonly<Record<Sport, number>>
+  /** Load of that most recent hard session — how much recovery it actually bought. */
+  readonly lastHardLoad: Readonly<Record<Sport, number>>
   readonly hardSessionsLast7: number
   readonly hardSessionsThisWeek: number
   readonly sessionsThisWeek: number

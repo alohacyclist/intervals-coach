@@ -681,6 +681,36 @@ describe('recognising a workout that was already done', () => {
     expect(runs.map((option) => option.template.name)).not.toContain('Schwelle kompakt 3x1km')
   })
 
+  /**
+   * Fifteen minutes of Zwift racing: 30 TSS, but seven minutes above threshold,
+   * so it counts as hard — and used to cost a whole rest day the next morning.
+   */
+  it('answers a short hard effort with an easy day, not a rest day', () => {
+    const race = activity(1, 'Ride', {
+      name: 'ZRL Race',
+      load: 30,
+      intensity: 110,
+      movingTimeSec: 900,
+      zoneSeconds: { Z1: 180, Z3: 60, Z4: 240, Z5: 420 },
+    })
+    const [today] = planDays(stateFrom([...rested, race]), config, 1, measured)
+
+    expect(today?.dayType).toBe('EASY')
+    expect(today?.notes.join(' ')).toContain('locker statt Pause')
+  })
+
+  it('still answers a full hard session with a rest day', () => {
+    const session = activity(1, 'Ride', {
+      load: 85,
+      intensity: 95,
+      movingTimeSec: 4500,
+      zoneSeconds: { Z1: 900, Z3: 600, Z4: 1800, Z5: 1200 },
+    })
+    const [today] = planDays(stateFrom([...rested, session]), config, 1, measured)
+
+    expect(today?.dayType).toBe('REST')
+  })
+
   it('does not let a run rule out the ride that shares its wording', () => {
     // A workout name means one session on a bike and another in running shoes;
     // only the sport that actually did it should be steered away from it.

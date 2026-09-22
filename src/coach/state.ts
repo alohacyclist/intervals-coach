@@ -24,6 +24,21 @@ const daysSinceHard = (activities: readonly Activity[], today: string, sport: Sp
   return ages.length === 0 ? NEVER : Math.min(...ages)
 }
 
+/**
+ * The load of the most recent hard session, so the plan can tell a fifteen minute
+ * race from a two hour threshold ride. Both block the next hard day; only one of
+ * them is worth a rest day. A double day counts by its larger session.
+ */
+const lastHardLoad = (activities: readonly Activity[], today: string, sport: Sport): number => {
+  const hard = activities
+    .filter((activity) => activity.sport === sport && isHardActivity(activity))
+    .map((activity) => ({ age: diffDays(activity.date, today), load: activity.load }))
+    .filter((entry) => entry.age >= 0)
+  if (hard.length === 0) return 0
+  const newest = Math.min(...hard.map((entry) => entry.age))
+  return Math.max(...hard.filter((entry) => entry.age === newest).map((entry) => entry.load))
+}
+
 const RECENT_DAYS = 14
 
 const consecutiveRestDays = (activities: readonly Activity[], today: string): number => {
@@ -143,6 +158,9 @@ export const buildState = (
     bySport: bySport(activities, today),
     daysSinceHard: Object.fromEntries(
       ALL_SPORTS.map((sport) => [sport, daysSinceHard(activities, today, sport)]),
+    ) as Record<Sport, number>,
+    lastHardLoad: Object.fromEntries(
+      ALL_SPORTS.map((sport) => [sport, lastHardLoad(activities, today, sport)]),
     ) as Record<Sport, number>,
     hardSessionsLast7: last7.filter(isHardActivity).length,
     hardSessionsThisWeek: thisWeek.filter(isHardActivity).length,
