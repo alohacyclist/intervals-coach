@@ -700,7 +700,9 @@ describe('recognising a workout that was already done', () => {
 })
 
 describe('the reference session', () => {
-  const longRunning = { ...config, planStart: '2026-01-01' }
+  // Lang genug gelaufen, dass die Referenzeinheit fällig ist — und ein Montag, weil
+  // die Erholungswochen in Kalenderwochen zählen und keine davon auf "heute" fallen soll.
+  const longRunning = { ...config, planStart: '2026-01-05' }
 
   it('lands on a quality day once it is due, without the athlete deciding', () => {
     const [today] = planDays(stateFrom(rested), longRunning, 1, measured)
