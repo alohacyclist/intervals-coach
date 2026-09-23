@@ -5,6 +5,7 @@ import type {
   StrengthSuggestion,
   DayType,
   Fitness,
+  GoalKind,
   IntensityClass,
   Phase,
   PlannedDay,
@@ -18,7 +19,7 @@ import type {
 import { ALL_SPORTS } from './types.ts'
 import { addDays, diffDays, startOfWeek, weekdayDe } from './dates.ts'
 import { projectFitness } from './fitness.ts'
-import { PHASE_LABELS, phaseForSport, primaryGoal, weeklyHardBudget } from './phase.ts'
+import { PHASE_LABELS, goalForSport, phaseForSport, primaryGoal, weeklyHardBudget } from './phase.ts'
 import { selectedSports } from './thresholds.ts'
 import { breakLimit, returnWindow } from './breaks.ts'
 import { thresholdTestDue } from './threshold-test.ts'
@@ -128,6 +129,32 @@ type DayDecision = {
 
 const plan = (dayType: DayType, reason: string): DayDecision => ({ dayType, reason, optional: false })
 
+/** How far the plan is willing to follow the athlete down from what they promised. */
+const MAX_FREQUENCY_CONCESSION = 2
+/**
+ * Below this there is no pattern to learn, only an empty window: a new account, a
+ * long layoff, a holiday. Conceding there would meet a returning athlete with a
+ * lowered plan, which is the opposite of what a return needs — and the layoff and
+ * break rules already own that case.
+ */
+const MIN_SESSIONS_FOR_A_PATTERN = 4
+
+/**
+ * The weekly minimum the plan actually works with. Someone who signed up for five
+ * sessions and has managed two and a half for a month is not going to be argued
+ * into five by a rest day that keeps getting postponed — planning against a number
+ * that never happens only produces a fictitious shortfall every week.
+ *
+ * The concession is capped, and the ceiling the athlete stated is untouched: on a
+ * week that does work out, nothing stands in the way of five.
+ */
+const effectiveWeeklyMin = (config: CoachConfig, state: TrainingState): number => {
+  const { min } = config.profile.weeklySessions
+  const managed = Math.round(state.sessionsPerWeekRecent)
+  if (state.sessionsPerWeekRecent * 4 < MIN_SESSIONS_FOR_A_PATTERN) return min
+  return Math.max(1, Math.min(min, Math.max(managed, min - MAX_FREQUENCY_CONCESSION)))
+}
+
 /** Past what the athlete signed up for, but supported by how they have recovered. */
 const beyondPlan = (dayType: DayType, reason: string): DayDecision => ({
   dayType,
@@ -229,7 +256,8 @@ const decideDay = (
   date: string,
   sports: readonly Sport[],
 ): DayDecision => {
-  const { min, max } = config.profile.weeklySessions
+  const { max } = config.profile.weeklySessions
+  const min = effectiveWeeklyMin(config, state)
   const readinessRed = state.readiness.score === 'red'
   const planned = simulation.sessionsThisWeek
 
@@ -328,7 +356,7 @@ const phaseAffinity = (phase: Phase, stimulus: Stimulus): number => {
   const affinities: Readonly<Record<Phase, Partial<Record<Stimulus, number>>>> = {
     BASE: { SWEETSPOT: 1.5, TEMPO: 1.2, THRESHOLD: 1, LONG: 1.2, NEURO: 0.8, ENDURANCE: 0.8 },
     BUILD: { VO2: 1.5, THRESHOLD: 1.3, SWEETSPOT: 0.8, LONG: 0.8 },
-    SPECIFIC: { THRESHOLD: 1.5, VO2: 1.2, TEMPO: 0.8 },
+    SPECIFIC: { THRESHOLD: 1.5, VO2: 1.2, TEMPO: 0.8, LONG: 0.6 },
     TAPER: { VO2: 1, THRESHOLD: 0.8, NEURO: 0.8, RECOVERY: 1 },
     RECOVERY: { RECOVERY: 1.5, ENDURANCE: 1.2, NEURO: 0.6 },
   }
@@ -342,6 +370,7 @@ const scoreTemplate = (
   phase: Phase,
   budgetMinutes: number,
   returning: boolean,
+  goalKind: GoalKind | undefined,
 ): number => {
   const dueness = Math.min(stimulusAge(simulation, template.sport, template.stimulus), STALE_STIMULUS_DAYS) / STALE_STIMULUS_DAYS
   const fit = template.minutes <= budgetMinutes ? 1 : -5
@@ -356,9 +385,18 @@ const scoreTemplate = (
   // Doing the same workout again days later is a different matter from seeing it
   // twice in the three day view, and needs to lose against anything else on offer.
   const alreadyDone = looksLikeRepeat(template, state.recentWorkouts) ? -5 : 0
+  // Written for this athlete's kind of goal — decisive in the specific phase,
+  // a nudge while the block is still general.
+  const goalBonus =
+    template.goalKind !== undefined && template.goalKind === goalKind
+      ? phase === 'SPECIFIC'
+        ? 1.5
+        : 0.7
+      : 0
   return (
     3 * dueness +
     phaseAffinity(phase, template.stimulus) +
+    goalBonus +
     roleBonus +
     layoffPenalty +
     fit +
@@ -382,10 +420,14 @@ const candidatesFor = (
   budgetMinutes: number,
   ceilings: Readonly<Record<string, number>>,
   recent: readonly RecentWorkout[],
+  goalKind: GoalKind | undefined,
+  recovering: boolean,
 ): readonly WorkoutTemplate[] => {
   const available = templatesFor(sport)
     // Benchmarks are scheduled deliberately, never offered as ordinary work; nor is anything made for a race.
     .filter((template) => template.benchmark !== true && template.occasion === undefined)
+    // Race pace belongs to whoever is racing; a watt goal has no use for it.
+    .filter((template) => template.goalKind === undefined || template.goalKind === goalKind)
     .filter((template) => withinLevel(template, ceilings))
 
   const byClass = (classes: readonly IntensityClass[]) =>
@@ -397,7 +439,12 @@ const candidatesFor = (
   const fresh = (list: readonly WorkoutTemplate[]) =>
     list.filter((template) => !looksLikeRepeat(template, recent))
 
-  const pool = byClass(ALLOWED_CLASSES[dayType])
+  // An easy day that exists because yesterday was hard is a recovery day in all
+  // but name. Tempo would turn the week into one long middle, which is the most
+  // common way an amateur plan fails.
+  const classes =
+    dayType === 'EASY' && recovering ? (['easy'] as const) : ALLOWED_CLASSES[dayType]
+  const pool = byClass(classes)
   const wider = byClass(FALLBACK_CLASSES[dayType])
 
   return (
@@ -483,10 +530,16 @@ const notesFor = (
   const coming = returnWindow(config.breaks, date)
   if (coming) notes.push(coming.note)
 
-  const { min } = config.profile.weeklySessions
+  const promised = config.profile.weeklySessions.min
+  const min = effectiveWeeklyMin(config, state)
   // A break is not a shortfall, so the weekly count stays quiet during and just after one.
   if (simulation.sessionsThisWeek < min && !breakLimit(config.breaks, date) && !coming) {
     notes.push(`Diese Woche ${simulation.sessionsThisWeek} von mindestens ${min} Einheiten`)
+  }
+  if (min < promised) {
+    notes.push(
+      `Vorgenommen ${promised} Einheiten/Woche, zuletzt ${state.sessionsPerWeekRecent.toLocaleString('de-DE')} — geplant wird mit ${min}`,
+    )
   }
   if (state.rampRate > 6) notes.push(`Fitness steigt schnell (+${state.rampRate}/Woche) — Verletzungsrisiko beachten`)
   return notes
@@ -677,6 +730,7 @@ export const planDays = (
           if (template) return buildSession(template, config, reference.reason)
         }
         if (openers && sport === 'Ride') return buildSession(openers, config, decision.reason)
+        const goalKind = goalForSport(config.goals, sport, date)?.kind
         const candidates = candidatesFor(
           sport,
           dayType,
@@ -684,11 +738,13 @@ export const planDays = (
           budgetMinutes,
           ceilings,
           view.recentWorkouts,
+          goalKind,
+          minDaysSinceHard(simulation, sports) < HARD_SPACING_DAYS,
         )
         const best = [...candidates].sort(
           (left, right) =>
-            scoreTemplate(right, simulation, view, sportPhase, budgetMinutes, returning) -
-            scoreTemplate(left, simulation, view, sportPhase, budgetMinutes, returning),
+            scoreTemplate(right, simulation, view, sportPhase, budgetMinutes, returning, goalKind) -
+            scoreTemplate(left, simulation, view, sportPhase, budgetMinutes, returning, goalKind),
         )[0]
         if (!best) return null
         return buildSession(best, config, reasonFor(best, dayType, sportPhase, simulation, ceilings))
