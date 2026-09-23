@@ -4,6 +4,7 @@ import type {
   FamilyLevel,
   Feasibility,
   Progress,
+  SeasonWeek,
   Sport,
   Stimulus,
   WeekLoad,
@@ -123,6 +124,7 @@ type Achievements = {
   readonly feasibility: readonly Feasibility[]
   /** The athlete's own sports; empty means every family in the library. */
   readonly sports: readonly Sport[]
+  readonly season?: readonly SeasonWeek[]
 }
 
 export const buildProgress = (
@@ -149,6 +151,8 @@ export const buildProgress = (
     levels: familyLevels(completions, achieved.sports),
     benchmark: achieved.benchmark,
     feasibility: achieved.feasibility,
+    // The band comes from the calendar, not from activities; the route fills it.
+    season: achieved.season ?? [],
     totals: {
       sessions: trained.length,
       load: Math.round(trained.reduce((sum, entry) => sum + entry.load, 0)),
