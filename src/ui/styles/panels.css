@@ -180,7 +180,8 @@
   background: var(--bg-lift);
   box-shadow: inset 3px 0 0 var(--data);
 }
-.sports__toggle {
+.sports__toggle,
+.zrl__toggle {
   flex-direction: row;
   align-items: center;
   gap: 8px;
@@ -192,7 +193,8 @@
   color: var(--text);
   cursor: pointer;
 }
-.sports__toggle input {
+.sports__toggle input,
+.zrl__toggle input {
   width: auto;
   accent-color: var(--data);
 }
@@ -227,6 +229,12 @@
   background: var(--bad);
   border-color: var(--bad);
   color: var(--on-data);
+}
+
+.zrl__switches {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .zrl__hint {

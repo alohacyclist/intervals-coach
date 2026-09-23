@@ -9,7 +9,10 @@ import type {
   SportThreshold,
   TrainingBreak,
   WorkoutDestination,
+  EnteredZrlRace,
+  ZrlFormat,
   ZrlRace,
+  ZrlSettings,
   ZwiftRoute,
 } from './types.ts'
 import { ALL_BREAK_KINDS, ALL_SPORTS, ZRL_FORMATS } from './types.ts'
@@ -63,6 +66,7 @@ const DEFAULT_CONFIG: CoachConfig = {
   breaks: [],
   proposals: [],
   zrlRaces: [],
+  zrl: { enabled: false, taper: true },
   destinations: {},
   planStart: new Date().toISOString().slice(0, 10),
 }
@@ -305,21 +309,21 @@ const validateRoute = (raw: unknown): ZwiftRoute | null => {
 }
 
 /** One race per date, newest entry winning; a broken entry is dropped, not rejected. */
-export const validateZrlRaces = (raw: unknown): readonly ZrlRace[] => {
+export const validateZrlRaces = (raw: unknown): readonly EnteredZrlRace[] => {
   const entries = Array.isArray(raw) ? raw : []
   const valid = entries
     .map((entry) => (entry ?? {}) as Record<string, unknown>)
     .filter(
       (entry) =>
         isIsoDate(entry['date']) &&
-        ZRL_FORMATS.includes(entry['format'] as ZrlRace['format']) &&
+        ZRL_FORMATS.includes(entry['format'] as ZrlFormat) &&
         Number.isInteger(entry['laps']) &&
         Number(entry['laps']) >= 1 &&
         Number(entry['laps']) <= MAX_ZRL_LAPS,
     )
     .map((entry) => ({
       date: String(entry['date']),
-      format: entry['format'] as ZrlRace['format'],
+      format: entry['format'] as ZrlFormat,
       route: entry['route'] == null ? null : validateRoute(entry['route']),
       laps: Number(entry['laps']),
     }))
@@ -327,6 +331,18 @@ export const validateZrlRaces = (raw: unknown): readonly ZrlRace[] => {
   return [...byDate.values()]
     .sort((left, right) => left.date.localeCompare(right.date))
     .slice(-MAX_ZRL_RACES)
+}
+
+/**
+ * Stored before the switch existed, a config with races entered was planning
+ * around them, so it keeps doing that; one without never raced in the app.
+ */
+const validateZrlSettings = (raw: unknown, races: readonly ZrlRace[]): ZrlSettings => {
+  const entry = (raw ?? {}) as Record<string, unknown>
+  return {
+    enabled: typeof entry['enabled'] === 'boolean' ? entry['enabled'] : races.length > 0,
+    taper: typeof entry['taper'] === 'boolean' ? entry['taper'] : true,
+  }
 }
 
 export const ALL_DESTINATIONS: readonly WorkoutDestination[] = [
@@ -363,6 +379,7 @@ export const validateConfig = (raw: unknown): CoachConfig => {
     breaks: validateBreaks(input['breaks']),
     proposals: validateProposals(input['proposals']),
     zrlRaces: validateZrlRaces(input['zrlRaces']),
+    zrl: validateZrlSettings(input['zrl'], validateZrlRaces(input['zrlRaces'])),
     destinations: validateDestinations(input['destinations']),
     planStart: isIsoDate(input['planStart']) ? input['planStart'] : DEFAULT_CONFIG.planStart,
   }

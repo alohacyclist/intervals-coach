@@ -88,6 +88,7 @@ export const config: CoachConfig = {
   breaks: [],
   proposals: [],
   zrlRaces: [],
+  zrl: { enabled: false, taper: true },
   destinations: {},
   planStart: '2026-08-31',
 }

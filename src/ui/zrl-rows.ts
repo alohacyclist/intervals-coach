@@ -1,4 +1,4 @@
-import type { ZrlFormat, ZrlRace, ZwiftRoute } from '../coach/types.ts'
+import type { EnteredZrlRace, ZrlFormat, ZwiftRoute } from '../coach/types.ts'
 import { addDays, weekdayDe } from '../coach/dates.ts'
 
 /** One line of the round as it is being edited: the route is still typed text. */
@@ -21,14 +21,14 @@ const MAX_WEEKS = 12
 
 export const routeLabel = (route: ZwiftRoute): string => `${route.name} · ${route.world}`
 
-export const rowOf = (race: ZrlRace): ZrlRow => ({
+export const rowOf = (race: EnteredZrlRace): ZrlRow => ({
   date: race.date,
   format: race.format,
   route: race.route ? routeLabel(race.route) : '',
   laps: race.laps,
 })
 
-export const inputOf = (race: ZrlRace): ZrlRaceInput => ({
+export const inputOf = (race: EnteredZrlRace): ZrlRaceInput => ({
   date: race.date,
   format: race.format,
   laps: race.laps,
