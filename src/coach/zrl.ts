@@ -6,8 +6,10 @@ import type {
   WorkoutTemplate,
   ZrlFormat,
   ZrlRace,
+  ZrlSettings,
 } from './types.ts'
 import { ZRL_FORMAT_LABELS } from './types.ts'
+import { parseIso } from './dates.ts'
 
 /** Zwift names every league race after it: "Zwift - TTT: Zwift Racing League: … on <route> in <world>". */
 const ZRL_PATTERN = /zwift racing league/i
@@ -69,8 +71,31 @@ export const raceSamples = (activities: readonly Activity[]): readonly RaceSampl
       load: activity.load,
     }))
 
-export const zrlRaceOn = (races: readonly ZrlRace[], date: string): ZrlRace | null =>
+export const zrlRaceOn = <Race extends ZrlRace>(races: readonly Race[], date: string): Race | null =>
   races.find((race) => race.date === date) ?? null
+
+export const formatLabel = (race: ZrlRace): string =>
+  race.format ? ZRL_FORMAT_LABELS[race.format] : 'Format offen'
+
+/** Every league round races on Tuesdays, whatever the time slot. */
+const LEAGUE_WEEKDAY = 2
+
+/**
+ * The race the plan works with on a day. With the league switched on, every
+ * Tuesday is one; an entered race adds the format and route the estimate needs.
+ */
+export const leagueRaceOn = (
+  settings: ZrlSettings,
+  races: readonly ZrlRace[],
+  date: string,
+): ZrlRace | null => {
+  if (!settings.enabled) return null
+  const entered = zrlRaceOn(races, date)
+  if (entered) return entered
+  return parseIso(date).getUTCDay() === LEAGUE_WEEKDAY
+    ? { date, format: null, route: null, laps: 1 }
+    : null
+}
 
 const median = (values: readonly number[]): number | null => {
   if (values.length === 0) return null
@@ -139,7 +164,8 @@ export const estimateRace = (
     const format = zrlRaceOn(entered, sample.date)?.format
     return format ? KIND_OF_FORMAT[format] : sample.teamTimeTrial ? 'ttt' : 'mass'
   }
-  const kind = KIND_OF_FORMAT[race.format]
+  // Most league weeks are bunch races, and they cost the most: the safe guess.
+  const kind: Kind = race.format ? KIND_OF_FORMAT[race.format] : 'mass'
   const own = history.filter((sample) => kindOf(sample) === kind)
   // A new format borrows from the closest one until it has a history of its own.
   const same =
@@ -182,7 +208,7 @@ export const raceTemplate = (race: ZrlRace, estimate: RaceEstimate): WorkoutTemp
   id: ZRL_TEMPLATE_ID,
   sport: 'Ride',
   stimulus: estimate.stimulus,
-  name: `ZRL ${ZRL_FORMAT_LABELS[race.format]}${race.route ? ` · ${race.route.name}` : ''}`,
+  name: `ZRL ${formatLabel(race)}${race.route ? ` · ${race.route.name}` : ''}`,
   minutes: estimate.minutes,
   load: estimate.load,
   phases: ALL_PHASES,

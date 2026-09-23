@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
-import type { CoachConfig, ZwiftRoute } from '../../coach/types.ts'
+import type { CoachConfig, ZrlSettings, ZwiftRoute } from '../../coach/types.ts'
 import { ZRL_FORMATS, ZRL_FORMAT_LABELS } from '../../coach/types.ts'
 import { weekdayDe } from '../../coach/dates.ts'
-import { fetchZwiftRoutes, putZrlRaces } from '../api.ts'
+import { fetchZwiftRoutes, putZrlRaces, putZrlSettings } from '../api.ts'
 import type { ZrlRow } from '../zrl-rows.ts'
 import { inputOf, nextTuesday, racesFrom, routeLabel, rowOf, withRound } from '../zrl-rows.ts'
 
@@ -25,6 +25,25 @@ export const ZrlPanel = ({ config, today, onSaved }: Props) => {
   const [saved, setSaved] = useState(false)
   const [dirty, setDirty] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [league, setLeague] = useState<ZrlSettings>(config.zrl)
+  const [switching, setSwitching] = useState(false)
+
+  useEffect(() => setLeague(config.zrl), [config.zrl])
+
+  // A switch applies on the spot, like every other per-item action in the app.
+  const switchLeague = async (next: ZrlSettings) => {
+    setLeague(next)
+    setSwitching(true)
+    setError(null)
+    try {
+      onSaved(await putZrlSettings(next))
+    } catch (caught) {
+      setLeague(config.zrl)
+      setError(caught instanceof Error ? caught.message : 'Speichern fehlgeschlagen')
+    } finally {
+      setSwitching(false)
+    }
+  }
 
   useEffect(() => {
     fetchZwiftRoutes().then(setRoutes, () =>
@@ -71,10 +90,30 @@ export const ZrlPanel = ({ config, today, onSaved }: Props) => {
       <div className="settings__head">
         <h2>Zwift Racing League</h2>
       </div>
+      <div className="zrl__switches">
+        <label className="zrl__toggle">
+          <input
+            type="checkbox"
+            checked={league.enabled}
+            disabled={switching}
+            onChange={() => void switchLeague({ ...league, enabled: !league.enabled })}
+          />
+          ZRL-Termine im Trainingsplan berücksichtigen
+        </label>
+        <label className="zrl__toggle">
+          <input
+            type="checkbox"
+            checked={league.taper}
+            disabled={switching || !league.enabled}
+            onChange={() => void switchLeague({ ...league, taper: !league.taper })}
+          />
+          Taper: Tag vor dem Rennen locker mit kurzen Antritten
+        </label>
+      </div>
       <p className="zrl__hint">
-        Einmal pro Runde eintragen — Format und Route stehen bei WTRL oder Zwift Insider. Jeder
-        Renndienstag wird ein Qualitätstag, der Tag davor locker. Ob du fährst, entscheidest du am
-        Tag selbst.
+        Eingeschaltet wird jeder Dienstag ein Renntag — ein Qualitätstag, die Alternative steht
+        immer daneben, ob du fährst, entscheidest du am Tag selbst. Ohne Eintrag ist die Schätzung
+        grob; Format und Route stehen bei WTRL oder Zwift Insider. Zwischen zwei Runden ausschalten.
       </p>
 
       <div className="grid">

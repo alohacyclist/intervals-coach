@@ -6,7 +6,7 @@ import { intensityClass } from '../src/coach/library.ts'
 import { completedFrom } from '../src/coach/done.ts'
 import { buildHistory } from '../src/coach/adherence.ts'
 import { ZRL_TEMPLATE_ID } from '../src/coach/zrl.ts'
-import type { Activity, CoachConfig, ZrlRace } from '../src/coach/types.ts'
+import type { Activity, CoachConfig, EnteredZrlRace } from '../src/coach/types.ts'
 import { activity, baselineWellness, config, TODAY, wellness } from './fixtures.ts'
 
 const stateFrom = (activities: readonly Activity[]) =>
@@ -17,7 +17,7 @@ const rested = [
   activity(11, 'Run', { load: 50, intensity: 70 }),
 ]
 
-const raceIn = (days: number, overrides: Partial<ZrlRace> = {}): ZrlRace => ({
+const raceIn = (days: number, overrides: Partial<EnteredZrlRace> = {}): EnteredZrlRace => ({
   date: addDays(TODAY, days),
   format: 'scratch',
   route: {
@@ -33,9 +33,13 @@ const raceIn = (days: number, overrides: Partial<ZrlRace> = {}): ZrlRace => ({
   ...overrides,
 })
 
-const withRaces = (races: readonly ZrlRace[], extra: Partial<CoachConfig> = {}): CoachConfig => ({
+const withRaces = (
+  races: readonly EnteredZrlRace[],
+  extra: Partial<CoachConfig> = {},
+): CoachConfig => ({
   ...config,
   zrlRaces: races,
+  zrl: { enabled: true, taper: true },
   ...extra,
 })
 
@@ -112,9 +116,53 @@ describe('the day before a race', () => {
     expect(today?.notes.join(' ')).toContain('Krankheit')
   })
 
-  it('never offers the openers on an ordinary day', () => {
+  it('never offers the openers while the league is switched off', () => {
+    const off = withRaces([], { zrl: { enabled: false, taper: true } })
+    expect(planDays(stateFrom(rested), off, 7).flatMap(ids)).not.toContain('bike-zrl-openers')
+  })
+
+  it('trains as planned without a taper, and still keeps a test away from the race', () => {
+    const noTaper = withRaces([raceIn(1)], { zrl: { enabled: true, taper: false } })
+    const [today, tomorrow] = planDays(stateFrom(rested), noTaper, 2)
+    expect(today?.notes.join(' ')).not.toContain('Morgen ZRL')
+    expect(ids(today)).not.toContain('bike-zrl-openers')
+    expect(ids(tomorrow)[0]).toBe(ZRL_TEMPLATE_ID)
+  })
+})
+
+describe('the league switch', () => {
+  // TODAY is a Wednesday, so the sixth day ahead is the next league Tuesday.
+  const TUESDAY_INDEX = 6
+
+  it('ignores an entered race while switched off', () => {
+    const off = withRaces([raceIn(0)], { zrl: { enabled: false, taper: true } })
+    const [today] = planDays(stateFrom(rested), off, 1)
+    expect(ids(today)).not.toContain(ZRL_TEMPLATE_ID)
+  })
+
+  it('makes every Tuesday a race day without anything entered', () => {
     const days = planDays(stateFrom(rested), withRaces([]), 7)
-    expect(days.flatMap(ids)).not.toContain('bike-zrl-openers')
+    const tuesday = days[TUESDAY_INDEX]
+    expect(tuesday?.date).toBe(addDays(TODAY, TUESDAY_INDEX))
+    expect(tuesday?.dayType).toBe('KEY')
+    expect(tuesday?.options[0]?.template.id).toBe(ZRL_TEMPLATE_ID)
+    expect(tuesday?.options[0]?.template.name).toBe('ZRL Format offen')
+    expect(tuesday?.options[0]?.race?.race.format).toBeNull()
+    expect(tuesday?.options[0]?.race?.rough).toBe(true)
+    expect(days.filter((day) => ids(day).includes(ZRL_TEMPLATE_ID))).toHaveLength(1)
+  })
+
+  it('tapers into an assumed Tuesday just as into an entered one', () => {
+    const days = planDays(stateFrom(rested), withRaces([]), 7)
+    const monday = days[TUESDAY_INDEX - 1]
+    expect(monday?.dayType).toBe('EASY')
+    expect(ids(monday)).toContain('bike-zrl-openers')
+  })
+
+  it('takes format and route from an entry on that Tuesday', () => {
+    const entered = withRaces([raceIn(TUESDAY_INDEX, { format: 'ttt' })])
+    const tuesday = planDays(stateFrom(rested), entered, 7)[TUESDAY_INDEX]
+    expect(tuesday?.options[0]?.template.name).toBe('ZRL Mannschaftszeitfahren · Rising Empire')
   })
 })
 
