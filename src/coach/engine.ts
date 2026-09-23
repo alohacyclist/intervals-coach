@@ -148,7 +148,7 @@ const MIN_SESSIONS_FOR_A_PATTERN = 4
  * The concession is capped, and the ceiling the athlete stated is untouched: on a
  * week that does work out, nothing stands in the way of five.
  */
-const effectiveWeeklyMin = (config: CoachConfig, state: TrainingState): number => {
+export const effectiveWeeklyMin = (config: CoachConfig, state: TrainingState): number => {
   const { min } = config.profile.weeklySessions
   const managed = Math.round(state.sessionsPerWeekRecent)
   if (state.sessionsPerWeekRecent * 4 < MIN_SESSIONS_FOR_A_PATTERN) return min

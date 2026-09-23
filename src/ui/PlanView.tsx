@@ -7,6 +7,7 @@ import { HistoryStrip } from './components/HistoryStrip.tsx'
 import { ThresholdCard } from './components/ThresholdCard.tsx'
 import { DestinationBar } from './components/DestinationBar.tsx'
 import { StateHeader } from './components/StateHeader.tsx'
+import { WeekOutlookCard } from './components/WeekOutlookCard.tsx'
 import { DayCard } from './components/DayCard.tsx'
 import { SettingsPanel } from './components/SettingsPanel.tsx'
 import { BreakBar } from './components/BreakBar.tsx'
@@ -105,6 +106,8 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
           onSettings={() => setShowSettings((open) => !open)}
         />
       )}
+
+      {plan && <WeekOutlookCard week={plan.week} />}
 
       {plan?.state.dataIssue && <DataIssueBanner issue={plan.state.dataIssue} />}
 

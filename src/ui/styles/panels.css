@@ -275,3 +275,92 @@
 .destinations__sport .destinations__row {
   flex: 1;
 }
+
+/* Wochenstruktur: was noch offen ist, ohne es an einen Tag zu nageln. */
+.outlook {
+  border: 1px solid var(--rule);
+  border-left: 2px solid var(--data);
+  display: flex;
+  flex-direction: column;
+}
+.outlook__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px 12px;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--rule);
+}
+.outlook__title {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.outlook__span {
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  color: var(--faint);
+  text-transform: uppercase;
+}
+.outlook__counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 28px;
+  margin: 0;
+  padding: 12px 14px;
+}
+.outlook__counts dt {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin-bottom: 5px;
+}
+.outlook__counts dd {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.outlook__ticks {
+  display: inline-flex;
+  gap: 3px;
+}
+.tick {
+  width: 14px;
+  height: 6px;
+  border: 1px solid var(--rule-loud);
+  display: inline-block;
+}
+.tick--done {
+  background: var(--data);
+  border-color: var(--data);
+}
+.outlook__line {
+  padding: 0 14px 12px;
+  font-size: 13px;
+  color: var(--dim);
+}
+.outlook__gaps {
+  list-style: none;
+  margin: 0;
+  padding: 0 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  color: var(--faint);
+}
+.outlook__gaps li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  border-top: 1px dotted var(--rule);
+  padding-top: 4px;
+}

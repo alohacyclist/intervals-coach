@@ -3,6 +3,7 @@ import type { CoachConfig, Progress } from '../coach/types.ts'
 import { ApiError, getConfig, getProgress } from './api.ts'
 import { FitnessCurve } from './components/FitnessCurve.tsx'
 import { WeekBars } from './components/WeekBars.tsx'
+import { SeasonBand } from './components/SeasonBand.tsx'
 import { LevelLadder } from './components/LevelLadder.tsx'
 import { BenchmarkCard } from './components/BenchmarkCard.tsx'
 import { GoalsPanel } from './components/GoalsPanel.tsx'
@@ -100,6 +101,8 @@ export const ProgressView = ({ onNeedsOnboarding }: Props) => {
       </section>
 
       <FitnessCurve points={progress.fitness} />
+
+      <SeasonBand season={progress.season} />
 
       <WeekBars weeks={progress.weeks} />
 

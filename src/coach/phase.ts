@@ -1,5 +1,5 @@
-import type { AthleteProfile, CoachConfig, Goal, Phase, Sport } from './types.ts'
-import { diffDays, startOfWeek, weeksBetween } from './dates.ts'
+import type { AthleteProfile, CoachConfig, Goal, Phase, SeasonWeek, Sport } from './types.ts'
+import { addDays, diffDays, startOfWeek, weeksBetween } from './dates.ts'
 
 /** Weeks remaining until a goal date, or null for open-ended goals. */
 export const weeksToGoal = (goal: Goal, today: string): number | null =>
@@ -57,12 +57,50 @@ const openEndedPhase = (planStart: string, today: string): Phase => {
   return block % 2 === 0 ? 'BASE' : 'BUILD'
 }
 
-export const phaseForSport = (config: CoachConfig, sport: Sport, today: string): Phase => {
+/** The phase the block is in, before the recovery week is laid over it. */
+const basePhaseForSport = (config: CoachConfig, sport: Sport, today: string): Phase => {
   const goal = goalForSport(config.goals, sport, today)
   const weeksLeft = goal ? weeksToGoal(goal, today) : null
-  const phase = weeksLeft === null ? openEndedPhase(config.planStart, today) : datedPhase(weeksLeft)
+  return weeksLeft === null ? openEndedPhase(config.planStart, today) : datedPhase(weeksLeft)
+}
+
+export const phaseForSport = (config: CoachConfig, sport: Sport, today: string): Phase => {
+  const phase = basePhaseForSport(config, sport, today)
   if (phase === 'TAPER') return phase
   return isRecoveryWeek(config.planStart, today) ? 'RECOVERY' : phase
+}
+
+/**
+ * The weeks from here to the goal, as the calendar already decides them. Nothing
+ * in here depends on how training goes: this is the one view that does not move
+ * when a session is missed, which is what makes it worth showing.
+ */
+export const seasonBand = (
+  config: CoachConfig,
+  today: string,
+  maxWeeks = 16,
+): readonly SeasonWeek[] => {
+  const sport = primaryGoal(config.goals, today)?.sport ?? config.profile.sports[0]?.sport ?? 'Ride'
+  const goal = primaryGoal(config.goals, today)
+  const thisWeek = startOfWeek(today)
+  const weeksToTarget = goal?.targetDate
+    ? weeksBetween(thisWeek, startOfWeek(goal.targetDate)) + 1
+    : maxWeeks
+  const weeks = Math.max(1, Math.min(weeksToTarget, maxWeeks))
+
+  return Array.from({ length: weeks }, (_unused, index) => {
+    const start = addDays(thisWeek, index * 7)
+    const phase = basePhaseForSport(config, sport, start)
+    return {
+      start,
+      phase,
+      // Tapering outranks the recovery week, exactly as it does in phaseForSport —
+      // otherwise the goal week would read as a reduced week as well.
+      recovery: phase !== 'TAPER' && isRecoveryWeek(config.planStart, start),
+      current: index === 0,
+      goalWeek: goal?.targetDate !== undefined && startOfWeek(goal.targetDate) === start,
+    }
+  })
 }
 
 const PHASE_HARD_BUDGET: Readonly<Record<Phase, number>> = {

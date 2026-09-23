@@ -245,3 +245,90 @@
     visibility: hidden;
   }
 }
+
+/* Phasenband: eine Zelle je Kalenderwoche, Farbe sagt die Phase. */
+.band {
+  display: flex;
+  gap: 2px;
+  list-style: none;
+  margin: 0;
+  padding: 14px;
+}
+.band__week {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  height: 34px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 3px;
+  border: 1px solid var(--rule);
+  background: var(--bg-sink);
+}
+.band__week--base {
+  background: color-mix(in srgb, var(--data) 18%, transparent);
+}
+.band__week--build {
+  background: color-mix(in srgb, var(--data) 42%, transparent);
+}
+.band__week--specific {
+  background: color-mix(in srgb, var(--data) 66%, transparent);
+}
+.band__week--taper {
+  background: color-mix(in srgb, var(--data) 26%, transparent);
+  border-style: dashed;
+}
+/* Die reduzierte Woche ist eine Lücke im Block, nicht eine weitere Stufe. */
+.band__week--recovery {
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 3px,
+    color-mix(in srgb, var(--data) 22%, transparent) 3px,
+    color-mix(in srgb, var(--data) 22%, transparent) 6px
+  );
+}
+.band__week--current {
+  outline: 2px solid var(--data);
+  outline-offset: -1px;
+}
+.band__week--goal {
+  border-color: var(--ink);
+  border-width: 2px;
+}
+.band__label {
+  font-size: 8.5px;
+  letter-spacing: 0.02em;
+  color: var(--faint);
+}
+/* Auf dem Telefon passt kein Datum mehr in eine Zelle: die Legende trägt den
+   Zeitraum, das Band nur noch die Form der Saison. */
+@media (max-width: 560px) {
+  .band__label {
+    display: none;
+  }
+  .band {
+    gap: 1px;
+    padding: 14px 10px;
+  }
+}
+
+/* Die Legende zeigt dieselben Marken wie das Band, nicht die der Kurven. */
+.chart__key--current {
+  height: 11px;
+  background: transparent;
+  outline: 2px solid var(--data);
+  outline-offset: -1px;
+}
+.chart__key--recovery {
+  height: 11px;
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 2px,
+    color-mix(in srgb, var(--data) 40%, transparent) 2px,
+    color-mix(in srgb, var(--data) 40%, transparent) 4px
+  );
+  border: 1px solid var(--rule);
+}

@@ -24,6 +24,8 @@ import { addDays } from '../src/coach/dates.ts'
 import { buildState } from '../src/coach/state.ts'
 import { planFromMorning } from '../src/coach/today.ts'
 import { assessGoals } from '../src/coach/feasibility.ts'
+import { weekOutlook } from '../src/coach/week.ts'
+import { seasonBand } from '../src/coach/phase.ts'
 import { buildHistory } from '../src/coach/adherence.ts'
 import { completionsFrom, scheduledFrom } from '../src/coach/progression.ts'
 import { benchmarkStatus } from '../src/coach/benchmark.ts'
@@ -122,6 +124,7 @@ const buildProgressView = async (deps: RouteDeps): Promise<Progress> => {
     benchmark: benchmarkStatus(config, completions, activities, today),
     feasibility: assessGoals(config.goals, config.profile, today),
     sports: config.profile.sports.map((setting) => setting.sport),
+    season: seasonBand(config, today),
   })
 }
 
@@ -202,6 +205,7 @@ const buildPlan = async (deps: RouteDeps, days: number, intent?: Intent): Promis
     destinations,
     days: planned,
     scheduled: scheduledFrom(events).filter((entry) => entry.date >= today),
+    week: weekOutlook(state, config),
   }
 }
 
