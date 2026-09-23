@@ -301,6 +301,8 @@ export type TrainingState = {
   readonly daysSinceHard: Readonly<Record<Sport, number>>
   /** Load of that most recent hard session — how much recovery it actually bought. */
   readonly lastHardLoad: Readonly<Record<Sport, number>>
+  /** Sessions per week over the last four weeks — what the athlete really manages. */
+  readonly sessionsPerWeekRecent: number
   readonly hardSessionsLast7: number
   readonly hardSessionsThisWeek: number
   readonly sessionsThisWeek: number
@@ -390,6 +392,12 @@ export type WorkoutTemplate = {
   readonly measures?: 'vo2' | 'threshold'
   /** Only offered around a race: the race itself, or the openers the day before. */
   readonly occasion?: 'race' | 'pre-race'
+  /**
+   * Written for one kind of goal and offered only to athletes who carry it. Race
+   * pace is not a better threshold session, it is a different one — and useless
+   * to someone chasing a watt number.
+   */
+  readonly goalKind?: GoalKind
 }
 
 export type DayType = 'KEY' | 'EASY' | 'RECOVERY' | 'REST'
