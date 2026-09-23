@@ -558,6 +558,35 @@ export type FamilyLevel = {
   readonly next: string | null
 }
 
+/**
+ * One calendar week of the season. Derived from the plan start and the goal date
+ * alone, so this band reads the same tomorrow whatever today's training does.
+ */
+export type SeasonWeek = {
+  readonly start: string
+  readonly phase: Phase
+  readonly recovery: boolean
+  readonly current: boolean
+  readonly goalWeek: boolean
+}
+
+/**
+ * What is still open this week, without nailing it to a day. A missed Tuesday
+ * moves nothing here; it only leaves the count where it was.
+ */
+export type WeekOutlook = {
+  readonly weekStart: string
+  /** Days remaining in the week, today included. */
+  readonly daysLeft: number
+  readonly sessions: { readonly done: number; readonly planned: number; readonly max: number }
+  readonly quality: { readonly done: number; readonly budget: number }
+  readonly phase: Phase
+  readonly recoveryWeek: boolean
+  readonly longDone: boolean
+  /** Stimuli the athlete's sports can deliver and have not seen in a fortnight. */
+  readonly openStimuli: readonly StimulusRecency[]
+}
+
 export type Progress = {
   readonly today: string
   readonly historyDays: number
@@ -566,6 +595,7 @@ export type Progress = {
   readonly levels: readonly FamilyLevel[]
   readonly benchmark: BenchmarkStatus
   readonly feasibility: readonly Feasibility[]
+  readonly season: readonly SeasonWeek[]
   readonly totals: {
     readonly sessions: number
     readonly load: number
@@ -584,4 +614,5 @@ export type Plan = {
   readonly destinations: readonly DestinationState[]
   readonly days: readonly PlannedDay[]
   readonly scheduled: readonly ScheduledWorkout[]
+  readonly week: WeekOutlook
 }
