@@ -39,6 +39,22 @@ const lastHardLoad = (activities: readonly Activity[], today: string, sport: Spo
   return Math.max(...hard.filter((entry) => entry.age === newest).map((entry) => entry.load))
 }
 
+/** Four weeks, because a single week says more about the week than the athlete. */
+const FREQUENCY_DAYS = 28
+
+/**
+ * Sessions per week the athlete actually manages, as opposed to the number they
+ * committed to during onboarding. Everything carrying a load counts, however it
+ * came about — the plan is interested in what the week holds, not in obedience.
+ */
+const sessionsPerWeek = (activities: readonly Activity[], today: string): number => {
+  const sessions = activities.filter((activity) => {
+    const age = diffDays(activity.date, today)
+    return age >= 0 && age < FREQUENCY_DAYS && activity.load > 0 && activity.sport !== 'Other'
+  })
+  return Math.round((sessions.length / (FREQUENCY_DAYS / 7)) * 10) / 10
+}
+
 const RECENT_DAYS = 14
 
 const consecutiveRestDays = (activities: readonly Activity[], today: string): number => {
@@ -162,6 +178,7 @@ export const buildState = (
     lastHardLoad: Object.fromEntries(
       ALL_SPORTS.map((sport) => [sport, lastHardLoad(activities, today, sport)]),
     ) as Record<Sport, number>,
+    sessionsPerWeekRecent: sessionsPerWeek(activities, today),
     hardSessionsLast7: last7.filter(isHardActivity).length,
     hardSessionsThisWeek: thisWeek.filter(isHardActivity).length,
     sessionsThisWeek: thisWeek.filter((activity) => activity.sport !== 'Other').length,

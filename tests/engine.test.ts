@@ -711,6 +711,101 @@ describe('recognising a workout that was already done', () => {
     expect(today?.dayType).toBe('REST')
   })
 
+  it('offers a long ride once the time budget allows one', () => {
+    const roomy = withMinutes({ min: 45, normal: 90, max: 150 })
+    const rides = planDays(stateFrom(rested), roomy, 7, measured)
+      .flatMap((day) => day.options)
+      .filter((option) => option.sport === 'Ride')
+      .map((option) => option.template.stimulus)
+
+    expect(rides).toContain('LONG')
+  })
+
+  it('keeps the long ride out of a 60 minute budget', () => {
+    const tight = withMinutes({ min: 30, normal: 45, max: 60 })
+    const rides = planDays(stateFrom(rested), tight, 7, measured)
+      .flatMap((day) => day.options)
+      .filter((option) => option.sport === 'Ride')
+
+    expect(rides.every((option) => option.template.minutes <= 60)).toBe(true)
+  })
+
+  /**
+   * Race pace belongs in the specific block, three weeks out — not in a base
+   * phase months before the race, where the fixture's 10k goal normally sits.
+   */
+  it('brings race pace once the race is close, for the athlete who is racing', () => {
+    const racingSoon = {
+      ...config,
+      goals: config.goals.map((goal) =>
+        goal.sport === 'Run' ? { ...goal, targetDate: addDays(TODAY, 21) } : goal,
+      ),
+    }
+    const templates = planDays(stateFrom(rested), racingSoon, 14, measured)
+      .flatMap((day) => day.options)
+      .map((option) => option.template)
+
+    expect(templates.some((template) => template.goalKind === 'raceTime')).toBe(true)
+    // Nothing goal-specific ever leaks into the sport that carries a watt goal.
+    expect(
+      templates.some((template) => template.sport === 'Ride' && template.goalKind !== undefined),
+    ).toBe(false)
+  })
+
+  it('never offers race pace to a watt goal', () => {
+    const wattsOnly = {
+      ...config,
+      goals: config.goals.map((goal) => ({ ...goal, kind: 'ftp' as const })),
+    }
+    const templates = planDays(stateFrom(rested), wattsOnly, 14, measured)
+      .flatMap((day) => day.options)
+      .map((option) => option.template)
+
+    expect(templates.every((template) => template.goalKind === undefined)).toBe(true)
+  })
+
+  /**
+   * The easy day exists because yesterday was hard, so tempo on top of it would
+   * build exactly the grey middle that a hard-easy week is meant to avoid.
+   */
+  it('keeps the easy day after a hard one genuinely easy', () => {
+    const race = activity(1, 'Ride', {
+      name: 'ZRL Race',
+      load: 30,
+      intensity: 110,
+      movingTimeSec: 900,
+      zoneSeconds: { Z1: 180, Z3: 60, Z4: 240, Z5: 420 },
+    })
+    const [today] = planDays(stateFrom([...rested, race]), config, 1, measured)
+
+    expect(today?.dayType).toBe('EASY')
+    expect(today?.options.length).toBeGreaterThan(0)
+    expect(
+      today?.options.map((option) => intensityClass(option.template.stimulus)),
+    ).toEqual(today?.options.map(() => 'easy'))
+  })
+
+  it('plans against the frequency the athlete actually manages', () => {
+    const ambitious = {
+      ...config,
+      profile: { ...config.profile, weeklySessions: { min: 5, max: 6 } },
+    }
+    // Eight sessions in four weeks: two a week, not five.
+    const twiceAWeek = Array.from({ length: 8 }, (_unused, index) =>
+      activity(3 + index * 3, index % 2 === 0 ? 'Ride' : 'Run', { load: 55, intensity: 70 }),
+    )
+    const notes = planDays(stateFrom(twiceAWeek), ambitious, 1, measured)[0]?.notes.join(' ') ?? ''
+
+    expect(notes).toContain('Vorgenommen 5 Einheiten/Woche')
+    expect(notes).toContain('geplant wird mit 3')
+  })
+
+  it('does not lower the plan for someone who is only just coming back', () => {
+    // An empty month is a return, not a habit — and a return needs the full plan.
+    const notes = planDays(stateFrom(rested), config, 1, measured)[0]?.notes.join(' ') ?? ''
+    expect(notes).not.toContain('geplant wird mit')
+  })
+
   it('does not let a run rule out the ride that shares its wording', () => {
     // A workout name means one session on a bike and another in running shoes;
     // only the sport that actually did it should be steered away from it.
