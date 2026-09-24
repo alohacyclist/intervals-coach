@@ -97,7 +97,7 @@ export const DayCard = ({
         ))}
       </ul>
 
-      {trained && <DoneStrip sessions={day.completed} />}
+      {trained && <DoneStrip sessions={day.completed} date={day.date} />}
 
       {day.optional && !trained && (
         <p className="rest-hint">

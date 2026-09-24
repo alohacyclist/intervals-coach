@@ -1,5 +1,5 @@
 import type { SessionTier } from '../coach/types.ts'
-import type { CoachConfig, Plan, Progress, ZrlSettings, ZwiftRoute } from '../coach/types.ts'
+import type { CoachConfig, Execution, Plan, Progress, ZrlSettings, ZwiftRoute } from '../coach/types.ts'
 import type { ZrlRaceInput } from './zrl-rows.ts'
 
 export class ApiError extends Error {
@@ -58,6 +58,12 @@ export const login = (passwort: string): Promise<{ ok: true }> =>
 
 export const getSportSettings = (): Promise<SportSettings> =>
   request<SportSettings>('/api/sport-settings')
+
+/** One completed session against the proposal it fulfilled; loaded when looked at. */
+export const getExecution = (activityId: string, templateId: string, date: string): Promise<Execution> =>
+  request<Execution>(
+    `/api/execution/${encodeURIComponent(activityId)}?template=${encodeURIComponent(templateId)}&date=${date}`,
+  )
 
 export const getPlan = (days: number, intent?: string): Promise<Plan> =>
   request<Plan>(`/api/plan?days=${days}${intent ? `&intent=${intent}` : ''}`)
