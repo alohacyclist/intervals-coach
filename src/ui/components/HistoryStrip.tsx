@@ -1,5 +1,6 @@
 import type { AdherenceDay, AdherenceStatus } from '../../coach/types.ts'
 import { SPORT_LABELS } from '../../coach/types.ts'
+import { ExecutionCard, comparable } from './ExecutionCard.tsx'
 
 const STATUS_LABEL: Readonly<Record<AdherenceStatus, string>> = {
   done: 'geplant und absolviert',
@@ -28,6 +29,12 @@ const lastPlanned = (history: readonly AdherenceDay[]): AdherenceDay | undefined
 export const HistoryStrip = ({ history }: { readonly history: readonly AdherenceDay[] }) => {
   const last = lastPlanned(history)
   const trained = history.filter((day) => day.load > 0).length
+  // Today's session already shows its comparison on today's card.
+  const today = history[history.length - 1]?.date
+  const compare =
+    last && last.status === 'done' && last.date !== today && last.activityId && comparable(last.templateId)
+      ? { activityId: last.activityId, templateId: last.templateId, date: last.date }
+      : null
 
   return (
     <section className="history">
@@ -62,6 +69,10 @@ export const HistoryStrip = ({ history }: { readonly history: readonly Adherence
             <span className="history__miss">nicht absolviert</span>
           )}
         </p>
+      )}
+
+      {compare && (
+        <ExecutionCard activityId={compare.activityId} templateId={compare.templateId} date={compare.date} />
       )}
 
       {/* A legend is understood once; after that it is only chrome above the data. */}

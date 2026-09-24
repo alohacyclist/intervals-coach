@@ -1,3 +1,4 @@
+import type { ActualInterval } from '../src/coach/execution.ts'
 import type {
   Activity,
   DestinationState,
@@ -339,25 +340,41 @@ export type WorkInterval = {
 }
 
 /**
- * The work intervals of one activity. Fetched only for a completed threshold
- * test: the app prescribed a maximal block, so it should read what the block
- * actually produced instead of waiting for someone else's estimate to move.
+ * Every interval intervals.icu detected in one activity, in order. The order is
+ * what the planned-against-done comparison pairs by, so recoveries stay in.
  */
-export const fetchActivityIntervals = async (
+export const fetchIntervals = async (
   auth: IntervalsAuth,
   activityId: string,
-): Promise<readonly WorkInterval[]> => {
+): Promise<readonly ActualInterval[]> => {
   const raw = (await request(auth, `/activity/${activityId}/intervals`)) as Record<string, unknown>
   const list = Array.isArray(raw['icu_intervals']) ? raw['icu_intervals'] : []
   return list
     .map((entry) => entry as Record<string, unknown>)
-    .filter((entry) => entry['type'] === 'WORK')
     .map((entry) => ({
+      kind: entry['type'] === 'WORK' ? ('work' as const) : ('recovery' as const),
       seconds: num(entry['moving_time']),
       averageWatts: nullableNum(entry['average_watts']),
       averageSpeedMps: nullableNum(entry['average_speed']),
     }))
 }
+
+/**
+ * The work intervals of one activity. Fetched for a completed threshold test:
+ * the app prescribed a maximal block, so it should read what the block actually
+ * produced instead of waiting for someone else's estimate to move.
+ */
+export const fetchActivityIntervals = async (
+  auth: IntervalsAuth,
+  activityId: string,
+): Promise<readonly WorkInterval[]> =>
+  (await fetchIntervals(auth, activityId))
+    .filter((interval) => interval.kind === 'work')
+    .map(({ seconds, averageWatts, averageSpeedMps }) => ({ seconds, averageWatts, averageSpeedMps }))
+
+/** One activity, for the comparison view — the plan loads its list in bulk. */
+export const fetchActivity = async (auth: IntervalsAuth, activityId: string): Promise<Activity> =>
+  mapActivity(await request<RawActivity>(auth, `/activity/${activityId}`))
 
 export const createWorkoutEvent = async (
   auth: IntervalsAuth,
