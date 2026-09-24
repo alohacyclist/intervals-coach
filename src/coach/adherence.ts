@@ -80,6 +80,12 @@ const dayFor = (
     completedSport: completed?.sport ?? null,
     compliance: paired?.compliance ?? null,
     load: Math.round(trained.reduce((sum, activity) => sum + activity.load, 0)),
+    activityId: completed?.id ?? null,
+    templateId: !completed
+      ? null
+      : isZrlRace(completed)
+        ? ZRL_TEMPLATE_ID
+        : (completions.find((completion) => completion.activityId === completed.id)?.templateId ?? null),
   }
 }
 

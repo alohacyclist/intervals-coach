@@ -72,7 +72,7 @@ const DEFAULT_CONFIG: CoachConfig = {
 }
 
 /** Shape and calendar both: "2026-02-30" looks like a date and would break every weekday lookup. */
-const isIsoDate = (value: unknown): value is string =>
+export const isIsoDate = (value: unknown): value is string =>
   typeof value === 'string' &&
   /^\d{4}-\d{2}-\d{2}$/.test(value) &&
   new Date(`${value}T00:00:00Z`).toISOString().slice(0, 10) === value

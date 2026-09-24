@@ -6,6 +6,7 @@ import {
   ValidationError,
   validateConfig,
   validateZrlRaces,
+  isIsoDate,
   MAX_ZRL_RACES,
 } from '../src/coach/config-schema.ts'
 import type { IntervalsAuth } from './intervals.ts'
@@ -13,7 +14,9 @@ import {
   IntervalsError,
   createWorkoutEvent,
   fetchActivities,
+  fetchActivity,
   fetchEvents,
+  fetchIntervals,
   fetchDestinations,
   fetchSportSettings,
   fetchWellness,
@@ -44,6 +47,8 @@ import type { SessionTier } from '../src/coach/types.ts'
 const TIERS: readonly SessionTier[] = ['min', 'normal', 'max']
 import { activeBreak, endedBefore } from '../src/coach/breaks.ts'
 import { findTemplate } from '../src/coach/library.ts'
+import { compareExecution, plannedBlocks } from '../src/coach/execution.ts'
+import { defaultThreshold, thresholdFor } from '../src/coach/thresholds.ts'
 import { describeWorkout } from '../src/coach/format.ts'
 import type { Intent, Plan, Progress } from '../src/coach/types.ts'
 
@@ -294,6 +299,49 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
       },
     })
     return context.json({ config: await store.save(merged), settings })
+  })
+
+  /**
+   * One completed session set against the proposal it fulfilled. Loaded when the
+   * athlete looks at it, not with the plan: three extra calls to intervals.icu are
+   * worth it for the session in question and not for every morning.
+   */
+  app.get('/api/execution/:activityId', async (context) => {
+    const activityId = context.req.param('activityId')
+    // It becomes part of a path on intervals.icu, so only an id's own characters get through.
+    if (!/^[A-Za-z0-9_-]{1,40}$/.test(activityId)) {
+      return context.json({ error: 'Ungültige Aktivität' }, 400)
+    }
+    const template = findTemplate(context.req.query('template') ?? '')
+    if (!template || template.occasion !== undefined) {
+      return context.json({ error: 'Zu dieser Einheit gibt es keinen Plan zum Vergleichen' }, 404)
+    }
+    const date = context.req.query('date')
+
+    const { auth, store } = await resolve(context)
+    const config = await store.load()
+    const threshold = thresholdFor(config.profile, template.sport) ?? defaultThreshold(template.sport)
+    const [activity, intervals, events] = await Promise.all([
+      fetchActivity(auth, activityId),
+      fetchIntervals(auth, activityId),
+      isIsoDate(date) ? fetchEvents(auth, date, date) : Promise.resolve([]),
+    ])
+    const pushed =
+      scheduledFrom(events).find((entry) => entry.templateId === template.id)?.minutes ?? null
+
+    return context.json(
+      compareExecution({
+        activityId,
+        sport: template.sport,
+        template,
+        blocks: plannedBlocks(template, threshold, pushed),
+        threshold,
+        intervals,
+        load: activity.load,
+        movingSeconds: activity.movingTimeSec,
+        compliance: activity.compliance,
+      }),
+    )
   })
 
   /** Raw sport settings, used to prefill onboarding before any config exists. */

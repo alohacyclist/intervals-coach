@@ -249,6 +249,10 @@ export type AdherenceDay = {
   readonly completedSport: Sport | 'Other' | null
   readonly compliance: number | null
   readonly load: number
+  /** The activity shown as done, so the comparison view can be opened from here. */
+  readonly activityId: string | null
+  /** The proposal it fulfilled, when one is known. */
+  readonly templateId: string | null
 }
 
 export type StrengthExercise = {
@@ -577,6 +581,52 @@ export type FamilyLevel = {
  * One calendar week of the season. Derived from the plan start and the goal date
  * alone, so this band reads the same tomorrow whatever today's training does.
  */
+/** One planned work interval set against the detected one it was paired with. */
+export type ExecutedStep = {
+  readonly index: number
+  readonly plannedSeconds: number
+  /** Target band, percent of threshold. */
+  readonly low: number
+  readonly high: number
+  /** Null when no detected interval was left to pair with this one. */
+  readonly actualSeconds: number | null
+  readonly actualPercent: number | null
+  /** "297 W" or "3:52 /km", as the athlete reads it on the device. */
+  readonly actualValue: string | null
+  readonly verdict: 'on' | 'over' | 'under' | null
+  readonly cutShort: boolean
+}
+
+/** A planned step as drawn in the execution strip. */
+export type ExecutionSegment = ProfileSegment & {
+  readonly state: 'rest' | 'on' | 'off' | 'missing'
+  /** Share of the planned duration actually ridden or run, 0 to 1. */
+  readonly done: number
+}
+
+export type Execution = {
+  readonly activityId: string
+  readonly templateName: string
+  readonly sport: Sport
+  readonly metric: SportThreshold['metric']
+  readonly steps: readonly ExecutedStep[]
+  readonly segments: readonly ExecutionSegment[]
+  readonly workPlannedSeconds: number
+  readonly workDoneSeconds: number
+  readonly inTargetSeconds: number
+  /** For a long session the length is the whole point, so it is compared too. */
+  readonly duration: { readonly planned: number; readonly actual: number }
+  readonly load: { readonly planned: number; readonly actual: number }
+  readonly compliance: number | null
+  /**
+   * Planned and detected work intervals differ in number. They are still paired
+   * by order, and this says so instead of letting a guess pass as a fact.
+   */
+  readonly mismatch: { readonly planned: number; readonly detected: number } | null
+  /** Why no interval could be compared at all, in words for the athlete. */
+  readonly unavailable: string | null
+}
+
 export type SeasonWeek = {
   readonly start: string
   readonly phase: Phase

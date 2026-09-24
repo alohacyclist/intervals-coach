@@ -128,6 +128,11 @@
   flex-direction: column;
   gap: 6px;
 }
+.done__entry {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
 .done__item {
   margin: 0;
   display: flex;
@@ -452,5 +457,291 @@
     order: 3;
     flex-basis: 100%;
     padding-left: 20px;
+  }
+}
+
+/*
+ * Soll und Ist. Grau ist der Plan, Bernstein das Gefahrene. Getroffen heißt
+ * gefüllt, daneben heißt hohl, die Richtung steht als Symbol darüber — kein Rot
+ * und kein Grün: gegen das Bernstein der App trennen die beiden weder bei
+ * Farbschwäche noch, im hellen Modus, mit vollem Farbsehen sicher.
+ */
+.exec {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--rule-soft);
+  margin-top: 4px;
+}
+.history .exec {
+  margin-top: 0;
+  padding: 0 14px 12px;
+  border-top-color: var(--rule);
+}
+.exec__quiet {
+  margin: 0;
+  padding: 6px 0 0;
+  font-size: 12px;
+  color: var(--faint);
+}
+.history .exec__quiet {
+  padding: 8px 14px;
+  border-top: 1px solid var(--rule);
+}
+
+.exec__kpis {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  margin: 0;
+  border-bottom: 1px solid var(--rule-soft);
+}
+.exec__kpis div {
+  padding: 10px 12px 10px 0;
+}
+.exec__kpis div + div {
+  padding-left: 12px;
+  border-left: 1px solid var(--rule-soft);
+}
+.exec__kpis dt {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin-bottom: 3px;
+}
+.exec__kpis dd {
+  margin: 0;
+  font-family: var(--sans);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.exec__kpis small {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--dim);
+}
+
+.exec__strip {
+  position: relative;
+  padding: 22px 0 6px;
+}
+.exec__strip--plain {
+  padding-top: 10px;
+}
+.exec__svg {
+  display: block;
+  width: 100%;
+  height: 48px;
+}
+.exec__marks {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 4px;
+  height: 16px;
+}
+.exec__mark {
+  position: absolute;
+  transform: translateX(-50%);
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+}
+.exec__rest {
+  fill: color-mix(in srgb, var(--rule-loud) 70%, transparent);
+}
+.exec__hit {
+  fill: var(--data);
+}
+.exec__off {
+  fill: transparent;
+  stroke: var(--data);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+.exec__missing {
+  fill: none;
+  stroke: var(--faint);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.exec__note {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--dim);
+}
+.exec__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin: 4px 0 0;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.exec__legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.exec__key {
+  width: 12px;
+  height: 9px;
+  display: inline-block;
+}
+.exec__key--hit {
+  background: var(--data);
+}
+.exec__key--off {
+  border: 2px solid var(--data);
+}
+.exec__key--missing {
+  border: 1px solid var(--faint);
+}
+
+.exec__more {
+  margin-top: 8px;
+}
+.exec__more > summary {
+  padding: 6px 0;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+.exec__more > summary .readout {
+  margin-left: auto;
+  color: var(--faint);
+}
+
+/* Eine feste rechte Spalte für alle Zeilen: sonst rechnet jede Zeile ihr eigenes
+   Raster, und der Zielbereich steht in jeder Zeile an einer anderen Stelle. */
+.exec__rows {
+  list-style: none;
+  margin: 0;
+  padding: 8px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.exec__row {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr) 180px;
+  grid-template-areas:
+    'n track value'
+    'n time word';
+  gap: 5px 12px;
+  align-items: center;
+}
+.exec__index {
+  grid-area: n;
+  align-self: start;
+  padding-top: 2px;
+  font-size: 11px;
+  color: var(--faint);
+}
+.exec__track {
+  grid-area: track;
+  position: relative;
+  height: 18px;
+  border-bottom: 1px solid var(--rule);
+}
+.exec__band {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  background: color-mix(in srgb, var(--ink) 14%, transparent);
+}
+.exec__dot {
+  position: absolute;
+  top: 50%;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--data);
+  box-shadow: 0 0 0 2px var(--bg);
+}
+.exec__dot--on {
+  background: var(--ink);
+}
+.exec__value {
+  grid-area: value;
+  font-size: 11.5px;
+  color: var(--text);
+  white-space: nowrap;
+  text-align: right;
+}
+.exec__time {
+  grid-area: time;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 10px;
+  color: var(--faint);
+}
+/* Gleich breiter Text, gleich lange Balken — egal ob 8:30 oder 12:00. */
+.exec__time .readout {
+  min-width: 13ch;
+  text-align: right;
+}
+.exec__meter {
+  flex: 1;
+  height: 4px;
+  background: var(--rule-soft);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.exec__meter span {
+  display: block;
+  height: 100%;
+  background: var(--dim);
+  border-radius: 2px;
+}
+.exec__word {
+  grid-area: word;
+  font-size: 12px;
+  color: var(--dim);
+  text-align: right;
+  white-space: nowrap;
+}
+.exec__scale {
+  display: flex;
+  justify-content: space-between;
+  margin: 6px calc(180px + 12px) 0 calc(16px + 12px);
+  font-size: 9px;
+  color: var(--faint);
+}
+
+@media (max-width: 560px) {
+  .exec__kpis dd {
+    font-size: 16px;
+  }
+  .exec__kpis small {
+    display: block;
+    font-size: 10.5px;
+  }
+  .exec__row {
+    grid-template-columns: 14px minmax(0, 1fr);
+    grid-template-areas:
+      'n track'
+      'n value'
+      'n time'
+      'n word';
+  }
+  .exec__value,
+  .exec__word {
+    text-align: left;
+  }
+  .exec__scale {
+    margin-right: 0;
+    margin-left: calc(14px + 12px);
   }
 }
