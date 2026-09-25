@@ -595,6 +595,8 @@ export type ExecutedStep = {
   readonly actualValue: string | null
   readonly verdict: 'on' | 'over' | 'under' | null
   readonly cutShort: boolean
+  /** Detected pieces joined into this interval: more than one means it was interrupted. */
+  readonly pieces: number
 }
 
 /** A planned step as drawn in the execution strip. */
