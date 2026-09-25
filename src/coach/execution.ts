@@ -127,72 +127,169 @@ export type ExecutionInput = {
   readonly compliance: number | null
 }
 
-/**
- * Which detected interval belongs to which planned one. Order alone is not
- * enough: one surge between the third and fourth interval would pair the plan's
- * fourth with the surge and shift every interval after it by one. So the pairing
- * keeps the order and, where the counts differ, leaves out whichever intervals
- * fit the planned durations worst — a 90 second surge among four-minute
- * intervals is the one left over, not the last interval ridden.
- *
- * Returns, for each planned interval, the index of its detected partner or -1.
- */
-export const pairIntervals = (
-  planned: readonly number[],
-  detected: readonly number[],
-): readonly number[] => {
-  const cost = (plan: number, actual: number): number =>
-    plan > 0 && actual > 0 ? Math.abs(Math.log(actual / plan)) : 10
-  // Match the shorter list completely into the longer one, keeping both in order.
-  const plannedShorter = planned.length <= detected.length
-  const short = plannedShorter ? planned : detected
-  const long = plannedShorter ? detected : planned
-  const costOf = (i: number, j: number) =>
-    plannedShorter ? cost(short[i]!, long[j]!) : cost(long[j]!, short[i]!)
+/** A planned work interval as the alignment sees it: how long, and in which band. */
+export type PlannedWork = { readonly seconds: number; readonly low: number; readonly high: number }
 
-  const rows = short.length + 1
-  const columns = long.length + 1
-  const table = Array.from({ length: rows }, (_row, i) =>
-    Array.from({ length: columns }, () => (i === 0 ? 0 : Number.POSITIVE_INFINITY)),
+/** A detected work interval: how long, how hard, and how long the pause before it was. */
+export type DetectedWork = {
+  readonly seconds: number
+  readonly percent: number | null
+  readonly gapBefore: number
+}
+
+/** Leaving a planned interval unpaired costs this much — it has to be the better story. */
+const MISSED = 2
+/** Leaving a detected interval out costs almost nothing: surges and strides happen. */
+const LEFT_OUT = 0.05
+/** Ten percentage points outside the target band weigh as much as double the duration. */
+const POINTS_PER_UNIT = 10
+/** A stop at a crossing or a pressed pause button splits an interval, rarely more than twice. */
+const MAX_PIECES = 3
+const MAX_PAUSE_SECONDS = 120
+/** Two pieces are slightly worse evidence than one; on a tie, the single piece wins. */
+const PER_EXTRA_PIECE = 0.1
+
+const weightedPercent = (pieces: readonly DetectedWork[]): number | null => {
+  const known = pieces.filter((piece) => piece.percent !== null)
+  const seconds = known.reduce((sum, piece) => sum + piece.seconds, 0)
+  return seconds === 0 ? null : known.reduce((sum, piece) => sum + piece.percent! * piece.seconds, 0) / seconds
+}
+
+const pairingCost = (plan: PlannedWork, pieces: readonly DetectedWork[]): number => {
+  const seconds = pieces.reduce((sum, piece) => sum + piece.seconds, 0)
+  const duration = plan.seconds > 0 && seconds > 0 ? Math.abs(Math.log(seconds / plan.seconds)) : 10
+  const percent = weightedPercent(pieces)
+  const intensity =
+    percent === null ? 0 : Math.max(0, plan.low - percent, percent - plan.high) / POINTS_PER_UNIT
+  return duration + intensity + (pieces.length - 1) * PER_EXTRA_PIECE
+}
+
+/**
+ * Which detected intervals make up which planned one.
+ *
+ * Order is kept, so a long warm-up cannot slide anything. Within that order the
+ * pairing weighs duration *and* intensity: judged by duration alone, a session
+ * whose last interval was split by a pressed stop button had its fourth interval
+ * paired with the cool-down, because four minutes of jogging matched four
+ * minutes better than either half of the real interval did. Now the two halves
+ * may count as one interval, and the cool-down, thirty points below the band,
+ * never passes for it.
+ *
+ * Returns, per planned interval, the indices of its detected pieces — empty when
+ * it was not done.
+ */
+export const alignIntervals = (
+  planned: readonly PlannedWork[],
+  detected: readonly DetectedWork[],
+): readonly (readonly number[])[] => {
+  type Choice =
+    | { readonly kind: 'miss' }
+    | { readonly kind: 'skip' }
+    | { readonly kind: 'pair'; readonly pieces: number }
+  const rows = planned.length + 1
+  const columns = detected.length + 1
+  const cost = Array.from({ length: rows }, () => Array.from({ length: columns }, () => 0))
+  const choice: Choice[][] = Array.from({ length: rows }, () =>
+    Array.from({ length: columns }, (): Choice => ({ kind: 'skip' })),
   )
-  for (let i = 1; i < rows; i += 1) {
-    for (let j = i; j < columns; j += 1) {
-      table[i]![j] = Math.min(table[i]![j - 1]!, table[i - 1]![j - 1]! + costOf(i - 1, j - 1))
+
+  for (let i = 0; i < rows; i += 1) {
+    for (let j = 0; j < columns; j += 1) {
+      if (i === 0 && j === 0) continue
+      // Evaluated in this order and replaced only on a strict improvement, so a tie
+      // leaves the *later* element out: a session stopped early misses its last
+      // interval, and an extra one at the end is the one left over.
+      let best = Number.POSITIVE_INFINITY
+      let picked: Choice = { kind: 'skip' }
+      if (i > 0) {
+        best = cost[i - 1]![j]! + MISSED
+        picked = { kind: 'miss' }
+      }
+      if (j > 0 && cost[i]![j - 1]! + LEFT_OUT < best) {
+        best = cost[i]![j - 1]! + LEFT_OUT
+        picked = { kind: 'skip' }
+      }
+      if (i > 0) {
+        for (let pieces = 1; pieces <= Math.min(MAX_PIECES, j); pieces += 1) {
+          const group = detected.slice(j - pieces, j)
+          // Only pieces separated by a short pause belong to one interval.
+          if (group.slice(1).some((piece) => piece.gapBefore > MAX_PAUSE_SECONDS)) break
+          const total = cost[i - 1]![j - pieces]! + pairingCost(planned[i - 1]!, group)
+          if (total < best) {
+            best = total
+            picked = { kind: 'pair', pieces }
+          }
+        }
+      }
+      cost[i]![j] = best
+      choice[i]![j] = picked
     }
   }
 
-  // Walk back from the end. On a tie the later element is the one left out, so a
-  // session stopped early reads as missing its last interval, not its first.
-  const partner = new Map<number, number>()
-  let i = short.length
-  let j = long.length
-  while (i > 0 && j > 0) {
-    if (table[i]![j - 1]! <= table[i - 1]![j - 1]! + costOf(i - 1, j - 1) && j - 1 >= i) {
+  const result: number[][] = planned.map(() => [])
+  let i = planned.length
+  let j = detected.length
+  while (i > 0 || j > 0) {
+    const step = choice[i]![j]!
+    if (step.kind === 'miss') {
+      i -= 1
+    } else if (step.kind === 'skip') {
       j -= 1
     } else {
-      partner.set(i - 1, j - 1)
+      result[i - 1] = Array.from({ length: step.pieces }, (_piece, offset) => j - step.pieces + offset)
       i -= 1
-      j -= 1
+      j -= step.pieces
     }
   }
-
-  return planned.map((_plan, index) => {
-    if (plannedShorter) return partner.get(index) ?? -1
-    const match = [...partner.entries()].find(([, plannedIndex]) => plannedIndex === index)
-    return match ? match[0] : -1
-  })
+  return result
 }
+
+/** Several pieces read as one interval: time adds up, intensity is averaged over time. */
+const combine = (pieces: readonly ActualInterval[]): ActualInterval => {
+  const seconds = pieces.reduce((sum, piece) => sum + piece.seconds, 0)
+  const weighted = (pick: (piece: ActualInterval) => number | null): number | null =>
+    seconds > 0 && pieces.every((piece) => pick(piece) !== null)
+      ? pieces.reduce((sum, piece) => sum + pick(piece)! * piece.seconds, 0) / seconds
+      : null
+  return {
+    kind: 'work',
+    seconds,
+    averageWatts: weighted((piece) => piece.averageWatts),
+    averageSpeedMps: weighted((piece) => piece.averageSpeedMps),
+  }
+}
+
+/**
+ * Short intervals — 40/20, 30/30 — come back from intervals.icu as one block per
+ * set. Matched one by one, every forty seconds would read as missed, which is
+ * the opposite of what happened. Below this length, and with far fewer detected
+ * than planned, the comparison declines instead.
+ */
+const SHORT_INTERVAL_SECONDS = 90
 
 export const compareExecution = (input: ExecutionInput): Execution => {
   const { template, blocks, threshold } = input
   const compareBlocks = !NO_BLOCKS_TO_COMPARE.includes(template.stimulus)
   const plan = planOf(blocks, threshold, compareBlocks)
   const planned = plan.filter((step) => step.work)
-  const detected = input.intervals.filter(
-    (interval) => interval.kind === 'work' && interval.seconds >= MIN_DETECTED_SECONDS,
-  )
+  // Work intervals in order, each with the pause before it: a short pause is what
+  // tells two pieces of one interval apart from two intervals.
+  const detected: { readonly interval: ActualInterval; readonly gapBefore: number }[] = []
+  let pause = 0
+  for (const interval of input.intervals) {
+    if (interval.kind === 'work' && interval.seconds >= MIN_DETECTED_SECONDS) {
+      detected.push({ interval, gapBefore: pause })
+      pause = 0
+    } else {
+      pause += interval.seconds
+    }
+  }
 
-  const measurable = detected.some((interval) => percentOfThreshold(interval, threshold) !== null)
+  const measurable = detected.some(({ interval }) => percentOfThreshold(interval, threshold) !== null)
+  const shortIntervals =
+    planned.length > 0 &&
+    planned.every((step) => step.seconds <= SHORT_INTERVAL_SECONDS) &&
+    detected.length < planned.length / 2
   const unavailable =
     planned.length === 0
       ? null
@@ -202,16 +299,26 @@ export const compareExecution = (input: ExecutionInput): Execution => {
           ? threshold.metric === 'power'
             ? 'Keine Leistungsdaten — die Einheit lief ohne Wattmessung.'
             : 'Keine Tempodaten für die Intervalle.'
-          : null
+          : shortIntervals
+            ? 'Kurze Intervalle fasst intervals.icu zu Blöcken zusammen — einzeln lassen sie sich nicht vergleichen.'
+            : null
 
-  const partners = pairIntervals(
-    planned.map((step) => step.seconds),
-    detected.map((interval) => interval.seconds),
+  const alignment = alignIntervals(
+    planned.map((step) => {
+      const range = step.range ?? { low: step.percent, high: step.percent }
+      return { seconds: step.seconds, low: range.low, high: range.high }
+    }),
+    detected.map(({ interval, gapBefore }) => ({
+      seconds: interval.seconds,
+      percent: percentOfThreshold(interval, threshold),
+      gapBefore,
+    })),
   )
 
   const steps: readonly ExecutedStep[] = planned.map((step, index) => {
-    const partner = partners[index] ?? -1
-    const actual = unavailable === null && partner >= 0 ? detected[partner] : undefined
+    const pieces = unavailable === null ? (alignment[index] ?? []) : []
+    const actual =
+      pieces.length === 0 ? undefined : combine(pieces.map((piece) => detected[piece]!.interval))
     const percent = actual ? percentOfThreshold(actual, threshold) : null
     const rounded = percent === null ? null : Math.round(percent)
     const range = step.range ?? { low: step.percent, high: step.percent }
@@ -226,6 +333,7 @@ export const compareExecution = (input: ExecutionInput): Execution => {
       verdict:
         rounded === null ? null : rounded > range.high ? 'over' : rounded < range.low ? 'under' : 'on',
       cutShort: actual !== undefined && actual.seconds < step.seconds * CUT_SHORT_BELOW,
+      pieces: pieces.length,
     }
   })
 
@@ -275,8 +383,13 @@ export const compareExecution = (input: ExecutionInput): Execution => {
       actual: Math.round(input.load),
     },
     compliance: input.compliance === null ? null : Math.round(input.compliance),
+    // Worth a note when something was left over or something is missing — not when
+    // pieces were only joined back into the intervals they came from.
     mismatch:
-      unavailable === null && planned.length > 0 && detected.length !== planned.length
+      unavailable === null &&
+      planned.length > 0 &&
+      (steps.reduce((sum, step) => sum + step.pieces, 0) !== detected.length ||
+        steps.some((step) => step.pieces === 0))
         ? { planned: planned.length, detected: detected.length }
         : null,
     unavailable,

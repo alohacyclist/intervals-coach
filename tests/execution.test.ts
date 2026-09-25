@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { compareExecution, pairIntervals, plannedBlocks } from '../src/coach/execution.ts'
+import { alignIntervals, compareExecution, plannedBlocks } from '../src/coach/execution.ts'
 import type { ActualInterval } from '../src/coach/execution.ts'
 import { findTemplate } from '../src/coach/library.ts'
 import { totalSeconds } from '../src/coach/variant.ts'
@@ -160,10 +160,105 @@ describe('planned against done', () => {
   })
 
   it('pairs in order and by duration, and misses the last interval of a session stopped early', () => {
-    expect(pairIntervals([720, 720, 720], [720, 720])).toEqual([0, 1, -1])
-    expect(pairIntervals([240, 240, 240], [240, 60, 240, 240])).toEqual([0, 2, 3])
-    expect(pairIntervals([240, 240], [240, 240])).toEqual([0, 1])
-    expect(pairIntervals([300], [])).toEqual([-1])
+    const plan = (seconds: number) => ({ seconds, low: 97, high: 102 })
+    const seen = (seconds: number, percent: number | null = null) => ({ seconds, percent, gapBefore: 300 })
+    expect(alignIntervals([plan(720), plan(720), plan(720)], [seen(720), seen(720)])).toEqual([[0], [1], []])
+    expect(alignIntervals([plan(240), plan(240), plan(240)], [seen(240), seen(60), seen(240), seen(240)])).toEqual([
+      [0],
+      [2],
+      [3],
+    ])
+    expect(alignIntervals([plan(240), plan(240)], [seen(240), seen(240)])).toEqual([[0], [1]])
+    expect(alignIntervals([plan(300)], [])).toEqual([[]])
+  })
+
+  it('never lets a jog pass for an interval, however well its length fits', () => {
+    const plan = { seconds: 240, low: 104, high: 108 }
+    // Four minutes of cool-down at 73 % against two pieces of a real interval.
+    const cooldown = { seconds: 247, percent: 73, gapBefore: 0 }
+    const halves = [
+      { seconds: 140, percent: 107, gapBefore: 180 },
+      { seconds: 95, percent: 106, gapBefore: 15 },
+    ]
+    expect(alignIntervals([plan], [...halves, cooldown])).toEqual([[0, 1]])
+    // And on its own, the jog is not the interval either: it was not done.
+    expect(alignIntervals([plan], [cooldown])).toEqual([[]])
+  })
+
+  it('does not join two intervals that had a real recovery between them', () => {
+    const plan = { seconds: 240, low: 104, high: 108 }
+    const apart = [
+      { seconds: 120, percent: 106, gapBefore: 300 },
+      { seconds: 120, percent: 106, gapBefore: 180 },
+    ]
+    expect(alignIntervals([plan], apart).flat().length).toBe(1)
+  })
+
+  /**
+   * The first real comparison, rebuilt from the Strava splits: four by four
+   * minutes, the fourth interrupted by a pressed stop button, and a cool-down
+   * that intervals.icu happened to file as work. By duration alone the fourth
+   * interval was paired with the cool-down and read as 73 %, "zu leicht".
+   */
+  describe('the Formkontrolle run with a stop in the last interval', () => {
+    const benchmark = findTemplate('bench-run-4x4') as WorkoutTemplate
+    const pace: SportThreshold = { metric: 'pace', thresholdSecPerKm: 240 }
+    const at = (seconds: number, secPerKm: number, kind: 'work' | 'recovery' = 'work'): ActualInterval => ({
+      kind,
+      seconds,
+      averageWatts: null,
+      averageSpeedMps: 1000 / secPerKm,
+    })
+    const session = [
+      at(400, 300, 'recovery'),
+      at(25, 250),
+      at(60, 300, 'recovery'),
+      at(25, 245),
+      at(60, 300, 'recovery'),
+      at(224, 225),
+      at(180, 330, 'recovery'),
+      at(224, 228),
+      at(180, 330, 'recovery'),
+      at(230, 230),
+      at(180, 330, 'recovery'),
+      at(140, 224),
+      at(12, 400, 'recovery'),
+      at(95, 227),
+      at(60, 320, 'recovery'),
+      at(247, 328),
+    ]
+    const run = (intervals: readonly ActualInterval[]) => compare(intervals, benchmark, pace)
+
+    it('still says that detection found more than was planned', () => {
+      expect(run(session).mismatch).toEqual({ planned: 4, detected: 8 })
+    })
+
+    it('says nothing when the only difference was a split interval joined back', () => {
+      const clean = session.filter((interval) => interval.seconds !== 25 && interval.seconds !== 247)
+      expect(run(clean).mismatch).toBeNull()
+    })
+
+    it('reads the fourth interval as the two pieces it was run in', () => {
+      const fourth = run(session).steps[3]
+      expect(fourth).toMatchObject({ verdict: 'on', pieces: 2, cutShort: false, actualSeconds: 235 })
+    })
+
+    it('leaves the cool-down out of every interval', () => {
+      expect(run(session).steps.every((step) => step.actualValue !== '5:28 /km')).toBe(true)
+      expect(run(session).steps.map((step) => step.verdict)).toEqual(['on', 'on', 'on', 'on'])
+    })
+
+    it('calls the fourth not done if it really was not, instead of borrowing the cool-down', () => {
+      const withoutFourth = session.filter((interval) => ![140, 95].includes(interval.seconds))
+      expect(run(withoutFourth).steps[3]).toMatchObject({ verdict: null, actualSeconds: null })
+    })
+  })
+
+  it('declines to judge forty-second intervals that came back as one block per set', () => {
+    const micro = findTemplate('bike-vo2-3040') as WorkoutTemplate
+    const result = compare([work(360, 330), easy(240), work(360, 328), easy(240), work(360, 325)], micro)
+    expect(result.unavailable).toContain('Blöcken')
+    expect(result.segments.every((segment) => segment.state === 'rest')).toBe(true)
   })
 
   it('compares against the shortened version when that is what was pushed', () => {

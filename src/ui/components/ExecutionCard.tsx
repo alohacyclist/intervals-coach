@@ -68,7 +68,9 @@ const Strip = ({ segments, steps }: { readonly segments: readonly ExecutionSegme
           const title = step
             ? `Intervall ${step.index}: ${
                 step.verdict ? `${step.actualPercent} % (${WORDS[step.verdict]})` : 'nicht gefahren'
-              }, ${step.actualSeconds === null ? '–' : clock(step.actualSeconds)} von ${clock(step.plannedSeconds)}`
+              }, ${step.actualSeconds === null ? '–' : clock(step.actualSeconds)} von ${clock(step.plannedSeconds)}${
+                step.pieces > 1 ? ', mit Unterbrechung' : ''
+              }`
             : segment.label ?? 'Pause'
           if (segment.state === 'rest') {
             return (
@@ -145,6 +147,7 @@ const Rows = ({ steps }: { readonly steps: readonly ExecutedStep[] }) => {
               </span>
               <span className="exec__word">
                 {verdict ? WORDS[verdict] : ''}
+                {step.pieces > 1 ? ', mit Unterbrechung' : ''}
                 {step.cutShort ? ', abgebrochen' : ''}
               </span>
             </li>
