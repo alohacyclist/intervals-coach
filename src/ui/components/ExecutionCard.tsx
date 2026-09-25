@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { ExecutedStep, Execution, ExecutionSegment } from '../../coach/types.ts'
+import { SPORT_DONE } from '../../coach/types.ts'
 import { getExecution } from '../api.ts'
 import { ZRL_TEMPLATE_ID } from '../../coach/zrl.ts'
 
@@ -32,7 +33,15 @@ const HEIGHT = 46
 const GAP = 1.1
 const CEILING = 130
 
-const Strip = ({ segments, steps }: { readonly segments: readonly ExecutionSegment[]; readonly steps: readonly ExecutedStep[] }) => {
+const Strip = ({
+  segments,
+  steps,
+  done,
+}: {
+  readonly segments: readonly ExecutionSegment[]
+  readonly steps: readonly ExecutedStep[]
+  readonly done: string
+}) => {
   const total = segments.reduce((sum, segment) => sum + segment.seconds, 0)
   if (total === 0) return null
   const ceiling = Math.max(CEILING, ...segments.map((segment) => segment.percent))
@@ -67,7 +76,7 @@ const Strip = ({ segments, steps }: { readonly segments: readonly ExecutionSegme
           const y = HEIGHT - height
           const title = step
             ? `Intervall ${step.index}: ${
-                step.verdict ? `${step.actualPercent} % (${WORDS[step.verdict]})` : 'nicht gefahren'
+                step.verdict ? `${step.actualPercent} % (${WORDS[step.verdict]})` : `nicht ${done}`
               }, ${step.actualSeconds === null ? '–' : clock(step.actualSeconds)} von ${clock(step.plannedSeconds)}${
                 step.pieces > 1 ? ', mit Unterbrechung' : ''
               }`
@@ -110,7 +119,7 @@ const axisFor = (steps: readonly ExecutedStep[]): { readonly from: number; reado
   return { from, to: Math.max(to, from + 10) }
 }
 
-const Rows = ({ steps }: { readonly steps: readonly ExecutedStep[] }) => {
+const Rows = ({ steps, done }: { readonly steps: readonly ExecutedStep[]; readonly done: string }) => {
   const axis = axisFor(steps)
   const at = (percent: number) => ((percent - axis.from) / (axis.to - axis.from)) * 100
 
@@ -133,7 +142,7 @@ const Rows = ({ steps }: { readonly steps: readonly ExecutedStep[] }) => {
               </span>
               <span className="exec__value readout">
                 {step.actualPercent === null
-                  ? 'nicht gefahren'
+                  ? `nicht ${done}`
                   : `${step.actualValue ?? ''} · ${step.actualPercent} %`}
                 {verdict && <b> {SYMBOL[verdict]}</b>}
               </span>
@@ -184,8 +193,13 @@ export const ExecutionCard = ({ activityId, templateId, date }: Props) => {
 
   if (failed) return <p className="exec__quiet">Soll-Ist-Vergleich gerade nicht verfügbar.</p>
   if (!execution) return <p className="exec__quiet">Soll-Ist-Vergleich wird geladen…</p>
+  return <ExecutionView execution={execution} />
+}
 
+/** The comparison itself, apart from loading it — so it can be rendered and checked as it is. */
+export const ExecutionView = ({ execution }: { readonly execution: Execution }) => {
   const { steps } = execution
+  const done = SPORT_DONE[execution.sport]
   const compared = steps.length > 0 && execution.unavailable === null
   // Over-unders carry several targets; one label would then name only the first.
   const first = steps[0]
@@ -232,7 +246,7 @@ export const ExecutionCard = ({ activityId, templateId, date }: Props) => {
         </div>
       </dl>
 
-      <Strip segments={execution.segments} steps={compared ? steps : []} />
+      <Strip segments={execution.segments} steps={compared ? steps : []} done={done} />
 
       {execution.unavailable && <p className="exec__note">{execution.unavailable}</p>}
       {execution.mismatch && (
@@ -250,13 +264,13 @@ export const ExecutionCard = ({ activityId, templateId, date }: Props) => {
           <p className="exec__legend">
             <span><i className="exec__key exec__key--hit" /> im Ziel</span>
             <span><i className="exec__key exec__key--off" /> daneben</span>
-            <span><i className="exec__key exec__key--missing" /> nicht gefahren</span>
+            <span><i className="exec__key exec__key--missing" /> nicht {done}</span>
           </p>
           <details className="disclose exec__more">
             <summary>
               Intervall für Intervall <span className="readout">{band}</span>
             </summary>
-            <Rows steps={steps} />
+            <Rows steps={steps} done={done} />
           </details>
         </>
       )}
