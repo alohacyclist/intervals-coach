@@ -9,6 +9,16 @@ export const SPORT_LABELS: Readonly<Record<Sport, string>> = {
 }
 
 /**
+ * How a session is said to have been done. A run is not "gefahren", and a text
+ * that serves every sport has to ask for the word instead of assuming the bike.
+ */
+export const SPORT_DONE: Readonly<Record<Sport, string>> = {
+  Ride: 'gefahren',
+  Run: 'gelaufen',
+  Swim: 'geschwommen',
+}
+
+/**
  * Every sport is steered by a different quantity. Keeping them in one union lets
  * the engine stay sport-agnostic while each sport keeps its own natural metric.
  */
