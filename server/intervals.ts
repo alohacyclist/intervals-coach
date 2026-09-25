@@ -88,6 +88,7 @@ const mapActivity = (raw: RawActivity): Activity => ({
   id: String(raw['id'] ?? ''),
   source: typeof raw['source'] === 'string' ? raw['source'] : null,
   date: String(raw['start_date_local'] ?? '').slice(0, 10),
+  startedAt: typeof raw['start_date'] === 'string' ? raw['start_date'] : null,
   sport: toSport(raw['type']),
   name: String(raw['name'] ?? ''),
   load: num(raw['icu_training_load']),

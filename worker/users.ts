@@ -38,6 +38,18 @@ export const saveUser = async (
   return user
 }
 
+/**
+ * For writes the athlete did not cause — a token refreshed by the cron. The
+ * expiry stays anchored to the last visit, or the promised twelve months would
+ * never run out for an account whose owner stopped coming.
+ */
+export const saveUserUnseen = async (namespace: KVNamespace, secret: string, user: User): Promise<User> => {
+  await namespace.put(userKey(user.athleteId), await encryptJson(user, secret), {
+    expiration: Math.floor(Date.parse(user.lastSeenAt) / 1000) + RETENTION_SECONDS,
+  })
+  return user
+}
+
 export const needsTouch = (user: User, now: number = Date.now()): boolean =>
   now - Date.parse(user.lastSeenAt) > TOUCH_AFTER_MS
 

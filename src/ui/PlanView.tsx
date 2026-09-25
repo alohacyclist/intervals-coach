@@ -10,6 +10,7 @@ import { StateHeader } from './components/StateHeader.tsx'
 import { WeekOutlookCard } from './components/WeekOutlookCard.tsx'
 import { DayCard } from './components/DayCard.tsx'
 import { SettingsPanel } from './components/SettingsPanel.tsx'
+import { stravaResult } from './components/StravaPanel.tsx'
 import { BreakBar } from './components/BreakBar.tsx'
 import { ZrlPanel } from './components/ZrlPanel.tsx'
 
@@ -33,7 +34,8 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
   const [config, setConfig] = useState<CoachConfig | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
-  const [showSettings, setShowSettings] = useState(false)
+  // Back from Strava's consent page, the athlete expects to see how it went.
+  const [showSettings, setShowSettings] = useState(() => stravaResult() !== null)
   const settingsRef = useRef<HTMLDivElement | null>(null)
 
   // On a phone the panel opens below the fold, which looks like nothing happened.

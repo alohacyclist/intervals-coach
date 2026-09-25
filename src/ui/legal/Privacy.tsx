@@ -50,10 +50,17 @@ export const Privacy = () => (
         Einwilligung und deines letzten Besuchs.
       </li>
       <li>
+        <strong>Nur wenn du Strava verbindest:</strong> die von Strava ausgestellten OAuth-Token
+        (verschlüsselt, AES-GCM), deine Strava-Athleten-ID und dein Name dort sowie die Liste der
+        Einheiten, deren Auswertung die App bereits auf Strava ergänzt hat. Um eine Einheit auf
+        Strava zu finden, liest die App Startzeit und Sportart deiner Strava-Aktivitäten rund um
+        diese Einheit und die Beschreibung der gefundenen Aktivität; beides wird nicht gespeichert.
+      </li>
+      <li>
         <strong>Sitzungs-Cookie:</strong> ein signiertes Cookie (<code>HttpOnly</code>,{' '}
         <code>Secure</code>, <code>SameSite=Lax</code>, 30 Tage Laufzeit), das nur deine
-        Athleten-ID enthält, plus ein kurzlebiges Cookie während der Anmeldung zum Schutz gegen
-        CSRF. Beide sind für den Betrieb erforderlich; eine Einwilligung nach § 25 TDDDG ist dafür
+        Athleten-ID enthält, plus ein kurzlebiges Cookie während der Anmeldung und während der
+        Verbindung mit Strava zum Schutz gegen CSRF. Beide sind für den Betrieb erforderlich; eine Einwilligung nach § 25 TDDDG ist dafür
         nicht nötig.
       </li>
       <li>
@@ -98,6 +105,16 @@ export const Privacy = () => (
       übernimmst, den neuen Wert in deine dortigen Sport-Einstellungen. Für dein Verhältnis zu
       intervals.icu gilt deren eigene Datenschutzerklärung.
     </p>
+    <p>
+      <strong>Strava, nur wenn du es in den Einstellungen verbindest:</strong> Nach jeder erkannten
+      Einheit schreibt die App eine kurze Auswertung in die Beschreibung der passenden Aktivität auf
+      Strava — Name der Einheit, wie viele Intervalle im Zielbereich lagen, Zeit im Zielbereich,
+      Trainingsbelastung, ein Verlaufsbild aus Textzeichen und einen Link zu dieser App. Deine
+      Herzfrequenz schreibt sie dort nicht hinein. Dafür ruft die App auch ohne deinen Besuch etwa
+      alle 20 Minuten deine Einheiten der letzten zwei Tage bei intervals.icu ab. Wer die
+      Beschreibung auf Strava sieht, bestimmen deine Sichtbarkeitseinstellungen dort. Für dein
+      Verhältnis zu Strava gilt deren eigene Datenschutzerklärung.
+    </p>
 
     <h2>Empfänger</h2>
     <p>
@@ -111,7 +128,8 @@ export const Privacy = () => (
     <p>
       Token, Konfiguration und Kontodaten werden gelöscht, sobald du dein Konto löschst oder deine
       Einwilligung widerrufst — spätestens jedoch <strong>{RETENTION_MONTHS} Monate</strong> nach
-      deinem letzten Besuch. Die Löschung nach Fristablauf erfolgt automatisch. Trainings- und
+      deinem letzten Besuch. Die Strava-Verbindung wird außerdem gelöscht, sobald du sie in den
+      Einstellungen trennst; dabei entzieht die App sich auch auf Strava selbst den Zugriff. Die Löschung nach Fristablauf erfolgt automatisch. Trainings- und
       Gesundheitsdaten werden ohnehin nicht gespeichert, sondern bei jedem Aufruf neu abgerufen.
     </p>
 
