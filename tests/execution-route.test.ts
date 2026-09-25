@@ -40,6 +40,11 @@ describe('the planned-against-done endpoint', () => {
           { type: 'WORK', moving_time: 720, average_watts: watts(99) },
         ],
       },
+      '/activity/i123/streams.json': [
+        { type: 'time', data: Array.from({ length: 3600 }, (_, second) => second) },
+        { type: 'watts', data: Array(3600).fill(watts(100)) },
+        { type: 'heartrate', data: Array(3600).fill(150) },
+      ],
       '/activity/i123': { id: 'i123', type: 'Ride', icu_training_load: 86, compliance: 91 },
       '/athlete/i0/events': [],
     })
@@ -53,6 +58,35 @@ describe('the planned-against-done endpoint', () => {
     expect(body.compliance).toBe(91)
     // The day's calendar is read, so a shortened push is compared as shortened.
     expect(calls.some((call) => call.includes('/events?oldest=2026-09-23&newest=2026-09-23'))).toBe(true)
+  })
+
+  it('draws the session over time from its streams, a few hundred points for an hour', async () => {
+    intervalsIcu({
+      '/activity/i5/intervals': { icu_intervals: [] },
+      '/activity/i5/streams.json': [
+        { type: 'time', data: Array.from({ length: 3600 }, (_, second) => second) },
+        { type: 'watts', data: Array(3600).fill(watts(100)) },
+      ],
+      '/activity/i5': { id: 'i5', type: 'Ride', icu_training_load: 60 },
+      '/athlete/i0/events': [],
+    })
+    const body = (await (await app.request('/api/execution/i5?template=bike-thr-3x12')).json()) as Execution
+    expect(body.trace?.points.length).toBe(720)
+    expect(body.trace?.points[100]?.percent).toBe(100)
+  })
+
+  it('still compares when the streams cannot be read', async () => {
+    intervalsIcu({
+      '/activity/i6/intervals': { icu_intervals: [{ type: 'WORK', moving_time: 720, average_watts: watts(100) }] },
+      // Answered with a 404 by the stub.
+      '/activity/i6/streams.json': undefined,
+      '/activity/i6': { id: 'i6', type: 'Ride', icu_training_load: 60 },
+    })
+    const response = await app.request('/api/execution/i6?template=bike-thr-3x12')
+    const body = (await response.json()) as Execution
+    expect(response.status).toBe(200)
+    expect(body.trace).toBeNull()
+    expect(body.steps[0]?.verdict).toBe('on')
   })
 
   it('compares against the shortened version the calendar says was pushed', async () => {

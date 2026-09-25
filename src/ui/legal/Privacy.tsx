@@ -30,7 +30,8 @@ export const Privacy = () => (
         <strong>Trainings- und Gesundheitsdaten aus deinem intervals.icu-Konto:</strong> Aktivitäten
         der letzten 180 Tage (Datum, Sportart, Dauer, Trainingsbelastung, Intensität, Herzfrequenz,
         Zeit in den Trainingszonen) und Erholungswerte der letzten 60 Tage
-        (Herzratenvariabilität, Ruhepuls, Schlafdauer, subjektives Befinden). Diese Daten werden bei
+        (Herzratenvariabilität, Ruhepuls, Schlafdauer, subjektives Befinden), für eine absolvierte
+        Einheit zusätzlich ihr Verlauf von Leistung, Tempo und Herzfrequenz. Diese Daten werden bei
         jedem Seitenaufruf frisch von intervals.icu abgerufen, im Arbeitsspeicher ausgewertet und{' '}
         <strong>nicht gespeichert</strong>.
       </li>

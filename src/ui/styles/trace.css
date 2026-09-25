@@ -1,0 +1,183 @@
+/*
+ * Der Verlauf. Grau ist der Zielkorridor, Bernstein das Gefahrene — die Linie
+ * und die Stellen, an denen sie im Korridor lag. Wie im Streifen gilt: gefüllt
+ * heißt getroffen. Der Puls bekommt einen eigenen Streifen mit eigener Skala,
+ * nie eine zweite Achse im selben Bild.
+ */
+.trace {
+  margin: 0;
+  padding-top: 8px;
+  display: flex;
+  flex-direction: column;
+  touch-action: pan-y;
+  user-select: none;
+}
+
+.trace__labels {
+  position: relative;
+  height: 18px;
+}
+.trace__label {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.trace__plot,
+.trace__heart {
+  position: relative;
+}
+.trace__plot svg,
+.trace__heart svg {
+  display: block;
+  width: 100%;
+}
+.trace__plot svg {
+  height: 170px;
+}
+.trace__heart {
+  margin-top: 10px;
+  border-bottom: 1px solid var(--rule);
+}
+.trace__heart svg {
+  height: 40px;
+}
+
+.trace__grid {
+  stroke: var(--rule);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+  vector-effect: non-scaling-stroke;
+}
+.trace__grid--threshold {
+  stroke: var(--rule-loud);
+  stroke-dasharray: none;
+}
+.trace__band {
+  fill: color-mix(in srgb, var(--dim) 22%, transparent);
+}
+.trace__hit {
+  fill: var(--data);
+}
+.trace__area {
+  fill: color-mix(in srgb, var(--data) 13%, transparent);
+}
+.trace__line {
+  fill: none;
+  stroke: var(--data);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+.trace__shade {
+  fill: var(--rule-soft);
+}
+.trace__pulse {
+  fill: none;
+  stroke: var(--dim);
+  stroke-width: 1.25;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.trace__tick {
+  position: absolute;
+  left: 0;
+  transform: translateY(-115%);
+  font-size: 9.5px;
+  color: var(--faint);
+  pointer-events: none;
+}
+.trace__tick--top {
+  top: 0;
+  transform: none;
+}
+.trace__tick--bottom {
+  top: auto;
+  bottom: 0;
+  transform: none;
+}
+.trace__beat {
+  position: absolute;
+  bottom: 2px;
+  transform: translateX(-50%);
+  font-size: 10px;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.trace__cursor {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--ink);
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.trace__axis {
+  position: relative;
+  height: 16px;
+  margin-top: 3px;
+}
+.trace__time {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  font-size: 9.5px;
+  color: var(--faint);
+  white-space: nowrap;
+}
+.trace__time--first {
+  transform: none;
+}
+.trace__time--last {
+  transform: translateX(-100%);
+}
+
+.trace__readout {
+  margin: 2px 0 0;
+  min-height: 16px;
+  font-size: 11px;
+  color: var(--ink);
+}
+.trace__readout--hint {
+  color: var(--faint);
+}
+
+.exec__key--band {
+  background: color-mix(in srgb, var(--dim) 22%, transparent);
+}
+.exec__key--line {
+  height: 2px;
+  background: var(--data);
+}
+.exec__key--pulse {
+  height: 2px;
+  background: var(--dim);
+}
+
+/* What can be done with a finished session: share its picture, write it to Strava. */
+.exec__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  margin-top: 10px;
+}
+.history .exec__actions {
+  padding: 0 14px 12px;
+}
+.exec__sent {
+  font-size: 11px;
+  color: var(--faint);
+}
+.exec__note--action {
+  flex-basis: 100%;
+  margin: 0;
+}

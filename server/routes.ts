@@ -14,9 +14,7 @@ import {
   IntervalsError,
   createWorkoutEvent,
   fetchActivities,
-  fetchActivity,
   fetchEvents,
-  fetchIntervals,
   fetchDestinations,
   fetchSportSettings,
   fetchWellness,
@@ -47,8 +45,7 @@ import type { SessionTier } from '../src/coach/types.ts'
 const TIERS: readonly SessionTier[] = ['min', 'normal', 'max']
 import { activeBreak, endedBefore } from '../src/coach/breaks.ts'
 import { findTemplate } from '../src/coach/library.ts'
-import { compareExecution, plannedBlocks } from '../src/coach/execution.ts'
-import { defaultThreshold, thresholdFor } from '../src/coach/thresholds.ts'
+import { loadExecution } from './execution-load.ts'
 import { describeWorkout } from '../src/coach/format.ts'
 import type { Intent, Plan, Progress } from '../src/coach/types.ts'
 
@@ -320,28 +317,8 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
 
     const { auth, store } = await resolve(context)
     const config = await store.load()
-    const threshold = thresholdFor(config.profile, template.sport) ?? defaultThreshold(template.sport)
-    const [activity, intervals, events] = await Promise.all([
-      fetchActivity(auth, activityId),
-      fetchIntervals(auth, activityId),
-      isIsoDate(date) ? fetchEvents(auth, date, date) : Promise.resolve([]),
-    ])
-    const pushed =
-      scheduledFrom(events).find((entry) => entry.templateId === template.id)?.minutes ?? null
-
-    return context.json(
-      compareExecution({
-        activityId,
-        sport: template.sport,
-        template,
-        blocks: plannedBlocks(template, threshold, pushed),
-        threshold,
-        intervals,
-        load: activity.load,
-        movingSeconds: activity.movingTimeSec,
-        compliance: activity.compliance,
-      }),
-    )
+    const { execution } = await loadExecution(auth, config.profile, activityId, template, isIsoDate(date) ? date : null)
+    return context.json(execution)
   })
 
   /** Raw sport settings, used to prefill onboarding before any config exists. */

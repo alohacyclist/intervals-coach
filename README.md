@@ -301,6 +301,15 @@ Passwortwechsel. Der OAuth-`state` läuft über ein eigenes kurzlebiges Cookie g
 `/datenschutz` und `/impressum` liegen als Entwurf bei und müssen vor der Veröffentlichung
 mit echten Angaben gefüllt werden.
 
+## Soll und Ist
+
+Unter jeder erkannten Einheit steht der Soll-Ist-Vergleich. Liefert intervals.icu die Streams
+(Leistung, beim Laufen Tempo, dazu Puls), zeichnet die Karte den **Verlauf**: die Kurve über den
+Zielkorridoren, gefüllt dort, wo sie im Korridor lag, der Puls als eigener Streifen darunter. Der
+Worker dampft die Streams auf höchstens 720 Punkte ein (Rad 10-s-, Lauf 30-s-Mittel). Ohne
+Streams — Becken, keine Leistungsmessung, Intervalle ohne Position — bleibt der Blockstreifen.
+„Bild teilen“ zeichnet dieselbe Ansicht als 1080 × 1080-PNG fürs Teilen-Menü des Handys.
+
 ## Struktur
 
 ```
