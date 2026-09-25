@@ -1,4 +1,5 @@
 import type { ActualInterval } from '../src/coach/execution.ts'
+import type { ActivityStreams } from '../src/coach/trace.ts'
 import type {
   Activity,
   DestinationState,
@@ -356,7 +357,31 @@ export const fetchIntervals = async (
       seconds: num(entry['moving_time']),
       averageWatts: nullableNum(entry['average_watts']),
       averageSpeedMps: nullableNum(entry['average_speed']),
+      averageHeartrate: nullableNum(entry['average_heartrate']),
+      startSeconds: nullableNum(entry['start_time']),
+      endSeconds: nullableNum(entry['end_time']),
     }))
+}
+
+const STREAM_TYPES = ['time', 'watts', 'velocity_smooth', 'heartrate'] as const
+
+/**
+ * The recorded streams of one activity, for drawing the session over time. Only
+ * what the drawing needs is asked for; an hour is still 3600 samples of each.
+ */
+export const fetchStreams = async (auth: IntervalsAuth, activityId: string): Promise<ActivityStreams> => {
+  const raw = await request<unknown>(auth, `/activity/${activityId}/streams.json?types=${STREAM_TYPES.join(',')}`)
+  const list = Array.isArray(raw) ? raw.map((entry) => entry as Record<string, unknown>) : []
+  const stream = (type: (typeof STREAM_TYPES)[number]): readonly (number | null)[] | null => {
+    const data = list.find((entry) => entry['type'] === type)?.['data']
+    return Array.isArray(data) ? data.map(nullableNum) : null
+  }
+  return {
+    time: stream('time') ?? [],
+    watts: stream('watts'),
+    speed: stream('velocity_smooth'),
+    heartRate: stream('heartrate'),
+  }
 }
 
 /**

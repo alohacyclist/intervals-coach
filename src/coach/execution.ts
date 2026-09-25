@@ -3,6 +3,7 @@ import type {
   Execution,
   ExecutedStep,
   ExecutionSegment,
+  ExecutionTrace,
   Sport,
   SportThreshold,
   Stimulus,
@@ -25,6 +26,10 @@ export type ActualInterval = {
   readonly seconds: number
   readonly averageWatts: number | null
   readonly averageSpeedMps: number | null
+  readonly averageHeartrate: number | null
+  /** Elapsed seconds into the activity, on the same clock as its streams. */
+  readonly startSeconds: number | null
+  readonly endSeconds: number | null
 }
 
 /** A step at or above this share of threshold is work; below it, the ground between. */
@@ -125,6 +130,7 @@ export type ExecutionInput = {
   readonly load: number
   readonly movingSeconds: number
   readonly compliance: number | null
+  readonly trace: ExecutionTrace | null
 }
 
 /** A planned work interval as the alignment sees it: how long, and in which band. */
@@ -256,6 +262,10 @@ const combine = (pieces: readonly ActualInterval[]): ActualInterval => {
     seconds,
     averageWatts: weighted((piece) => piece.averageWatts),
     averageSpeedMps: weighted((piece) => piece.averageSpeedMps),
+    averageHeartrate: weighted((piece) => piece.averageHeartrate),
+    // The pause between two pieces belongs to the interval: it is where it was broken.
+    startSeconds: pieces[0]?.startSeconds ?? null,
+    endSeconds: pieces[pieces.length - 1]?.endSeconds ?? null,
   }
 }
 
@@ -334,6 +344,11 @@ export const compareExecution = (input: ExecutionInput): Execution => {
         rounded === null ? null : rounded > range.high ? 'over' : rounded < range.low ? 'under' : 'on',
       cutShort: actual !== undefined && actual.seconds < step.seconds * CUT_SHORT_BELOW,
       pieces: pieces.length,
+      span:
+        actual?.startSeconds != null && actual.endSeconds != null
+          ? { from: actual.startSeconds, to: actual.endSeconds }
+          : null,
+      heartRate: actual?.averageHeartrate == null ? null : Math.round(actual.averageHeartrate),
     }
   })
 
@@ -393,5 +408,6 @@ export const compareExecution = (input: ExecutionInput): Execution => {
         ? { planned: planned.length, detected: detected.length }
         : null,
     unavailable,
+    trace: input.trace,
   }
 }

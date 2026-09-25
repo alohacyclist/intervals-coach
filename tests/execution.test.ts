@@ -13,12 +13,18 @@ const work = (seconds: number, watts: number | null): ActualInterval => ({
   seconds,
   averageWatts: watts,
   averageSpeedMps: null,
+  averageHeartrate: null,
+  startSeconds: null,
+  endSeconds: null,
 })
 const easy = (seconds: number): ActualInterval => ({
   kind: 'recovery',
   seconds,
   averageWatts: 150,
   averageSpeedMps: null,
+  averageHeartrate: null,
+  startSeconds: null,
+  endSeconds: null,
 })
 
 const compare = (
@@ -36,6 +42,7 @@ const compare = (
     load: 74,
     movingSeconds: 3990,
     compliance: 78,
+    trace: null,
   })
 
 /** The session from the drafts: first too hot, second clean, third faded and stopped. */
@@ -124,7 +131,7 @@ describe('planned against done', () => {
     const run = findTemplate('run-thr-5x1k') as WorkoutTemplate
     const pace: SportThreshold = { metric: 'pace', thresholdSecPerKm: 240 }
     // 3:50 per km against a threshold of 4:00 per km.
-    const fast: ActualInterval = { kind: 'work', seconds: 230, averageWatts: null, averageSpeedMps: 1000 / 230 }
+    const fast: ActualInterval = { ...work(230, null), averageSpeedMps: 1000 / 230 }
     const result = compare(Array.from({ length: 5 }, () => fast), run, pace)
     expect(result.steps[0]?.actualPercent).toBe(104)
     expect(result.steps[0]?.actualValue).toBe('3:50 /km')
@@ -150,6 +157,9 @@ describe('planned against done', () => {
       seconds,
       averageWatts: null,
       averageSpeedMps: 1000 / secPerKm,
+      averageHeartrate: null,
+      startSeconds: null,
+      endSeconds: null,
     })
     const withSurge = [at(236, 236), at(233, 233), at(240, 240), at(90, 225), at(238, 238), at(246, 246)]
     const result = compare(withSurge, run, pace)
@@ -208,6 +218,9 @@ describe('planned against done', () => {
       seconds,
       averageWatts: null,
       averageSpeedMps: 1000 / secPerKm,
+      averageHeartrate: null,
+      startSeconds: null,
+      endSeconds: null,
     })
     const session = [
       at(400, 300, 'recovery'),
@@ -266,5 +279,54 @@ describe('planned against done', () => {
     const short = plannedBlocks(threshold3x12, FTP, 45)
     expect(totalSeconds(short, FTP)).toBeLessThan(totalSeconds(full, FTP))
     expect(plannedBlocks(threshold3x12, FTP, threshold3x12.minutes)).toBe(threshold3x12.blocks)
+  })
+})
+
+describe('where each interval lay in the activity', () => {
+  const placed = (from: number, to: number, watts: number, heart: number): ActualInterval => ({
+    ...work(to - from, watts),
+    averageHeartrate: heart,
+    startSeconds: from,
+    endSeconds: to,
+  })
+  const gap = (from: number, to: number): ActualInterval => ({ ...easy(to - from), startSeconds: from, endSeconds: to })
+
+  it('carries the span and the heart rate of each paired interval', () => {
+    const result = compare([
+      gap(0, 900),
+      placed(900, 1620, 290, 158),
+      gap(1620, 1920),
+      placed(1920, 2640, 285, 163),
+      gap(2640, 2940),
+      placed(2940, 3660, 280, 167),
+    ])
+    expect(result.steps.map((step) => step.span)).toEqual([
+      { from: 900, to: 1620 },
+      { from: 1920, to: 2640 },
+      { from: 2940, to: 3660 },
+    ])
+    expect(result.steps.map((step) => step.heartRate)).toEqual([158, 163, 167])
+  })
+
+  it('spans an interrupted interval from its first piece to its last, the pause included', () => {
+    const result = compare([
+      gap(0, 900),
+      placed(900, 1620, 290, 158),
+      gap(1620, 1920),
+      placed(1920, 2640, 285, 163),
+      gap(2640, 2940),
+      placed(2940, 3400, 280, 160),
+      gap(3400, 3440),
+      placed(3440, 3700, 280, 170),
+    ])
+    const third = result.steps[2]
+    expect(third).toMatchObject({ pieces: 2, span: { from: 2940, to: 3700 } })
+    // Time-weighted: 460 s at 160 and 260 s at 170.
+    expect(third?.heartRate).toBe(164)
+  })
+
+  it('knows no span for an interval that was not done or not placed', () => {
+    const result = compare([work(720, 290)])
+    expect(result.steps.every((step) => step.span === null && step.heartRate === null)).toBe(true)
   })
 })

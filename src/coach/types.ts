@@ -607,6 +607,28 @@ export type ExecutedStep = {
   readonly cutShort: boolean
   /** Detected pieces joined into this interval: more than one means it was interrupted. */
   readonly pieces: number
+  /** Where the paired pieces lie in the activity, in elapsed seconds; null when unknown. */
+  readonly span: { readonly from: number; readonly to: number } | null
+  readonly heartRate: number | null
+}
+
+/** One slice of the session as drawn: elapsed time, share of threshold, heart rate. */
+export type TracePoint = {
+  readonly seconds: number
+  readonly percent: number | null
+  /** Watts, or metres per second for pace — what the readout names. */
+  readonly value: number | null
+  readonly heartRate: number | null
+}
+
+/** The session over time, already reduced to what a card can draw. */
+export type ExecutionTrace = {
+  readonly seconds: number
+  /** Seconds each point stands for. */
+  readonly step: number
+  /** Seconds the intensity was averaged over, so the legend can say so. */
+  readonly smoothing: number
+  readonly points: readonly TracePoint[]
 }
 
 /** A planned step as drawn in the execution strip. */
@@ -637,6 +659,8 @@ export type Execution = {
   readonly mismatch: { readonly planned: number; readonly detected: number } | null
   /** Why no interval could be compared at all, in words for the athlete. */
   readonly unavailable: string | null
+  /** Null without a usable stream: pool swims, or a ride without a meter. */
+  readonly trace: ExecutionTrace | null
 }
 
 export type SeasonWeek = {
