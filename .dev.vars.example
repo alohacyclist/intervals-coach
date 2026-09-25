@@ -2,3 +2,6 @@
 INTERVALS_API_KEY=your_api_key_here
 INTERVALS_ATHLETE_ID=i000000
 APP_PASSWORD=choose_a_long_password
+# Optional: connect Strava (https://www.strava.com/settings/api)
+# STRAVA_CLIENT_ID=12345
+# STRAVA_CLIENT_SECRET=your_strava_client_secret

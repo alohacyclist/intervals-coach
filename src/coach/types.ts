@@ -219,6 +219,8 @@ export type Activity = {
   /** Where intervals.icu got the activity from — STRAVA payloads arrive empty. */
   readonly source: string | null
   readonly date: string
+  /** The start as an instant (UTC, ISO 8601): what finds the same session on another platform. */
+  readonly startedAt: string | null
   readonly sport: Sport | 'Other'
   readonly name: string
   readonly load: number
