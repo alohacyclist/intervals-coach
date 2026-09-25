@@ -15,6 +15,10 @@
       "id": "e86729e84e5f45f1b71dfb9dce9bdf19",
     },
   ],
+  // Writes the summary of each newly recognised session under it on Strava.
+  "triggers": {
+    "crons": ["*/20 * * * *"],
+  },
   "observability": {
     "enabled": true,
   },

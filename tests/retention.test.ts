@@ -5,6 +5,7 @@ import {
   loadUser,
   needsTouch,
   saveUser,
+  saveUserUnseen,
   touchUser,
   userConfigStore,
 } from '../worker/users.ts'
@@ -12,18 +13,22 @@ import type { User } from '../worker/users.ts'
 import type { KVNamespace, KVPutOptions } from '../worker/bindings.ts'
 import { config } from './fixtures.ts'
 
-type Entry = { readonly value: string; readonly ttl: number | undefined }
+type Entry = { readonly value: string; readonly ttl: number | undefined; readonly expiration?: number }
 
 const fakeKv = () => {
   const store = new Map<string, Entry>()
   const namespace: KVNamespace = {
     get: async (key) => store.get(key)?.value ?? null,
     put: async (key: string, value: string, options?: KVPutOptions) => {
-      store.set(key, { value, ttl: options?.expirationTtl })
+      store.set(key, { value, ttl: options?.expirationTtl, expiration: options?.expiration })
     },
     delete: async (key: string) => {
       store.delete(key)
     },
+    list: async ({ prefix }) => ({
+      keys: [...store.keys()].filter((key) => key.startsWith(prefix)).map((name) => ({ name })),
+      list_complete: true,
+    }),
   }
   return { namespace, store }
 }
@@ -67,6 +72,13 @@ describe('retention', () => {
 
     expect(store.get('user:i123')?.ttl).toBe(RETENTION_SECONDS)
     expect(store.get('config:i123')?.ttl).toBe(RETENTION_SECONDS)
+  })
+
+  it('keeps the expiry at the last visit when a token is refreshed with nobody looking', async () => {
+    const { namespace, store } = fakeKv()
+    await saveUserUnseen(namespace, SECRET, user({ lastSeenAt: '2026-03-01T00:00:00.000Z' }))
+    expect(store.get('user:i123')?.ttl).toBeUndefined()
+    expect(store.get('user:i123')?.expiration).toBe(Date.parse('2026-03-01T00:00:00.000Z') / 1000 + RETENTION_SECONDS)
   })
 
   it('writes at most once a week, not once a request', () => {

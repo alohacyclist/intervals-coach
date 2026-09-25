@@ -1,7 +1,9 @@
 import { sign, verify } from './crypto.ts'
 
 const COOKIE_NAME = 'coach_session'
-const STATE_COOKIE = 'coach_oauth_state'
+/** One per flow: a sign-in in one tab must not overwrite the state a Strava connection waits for. */
+export const STATE_COOKIES = { intervals: 'coach_oauth_state', strava: 'coach_strava_state' } as const
+export type OAuthFlow = keyof typeof STATE_COOKIES
 
 /**
  * Thirty days. Long enough that a training rhythm with a week off never meets a
@@ -75,9 +77,10 @@ export const shouldRenew = (session: Session, now: number = Math.floor(Date.now(
   session.exp - now < MAX_AGE_SECONDS - RENEW_AFTER_SECONDS
 
 /** The OAuth state parameter, mirrored into a short lived cookie to stop CSRF. */
-export const createStateCookie = (state: string, secure = true): string =>
-  cookie(STATE_COOKIE, state, 600, secure)
+export const createStateCookie = (state: string, secure = true, flow: OAuthFlow = 'intervals'): string =>
+  cookie(STATE_COOKIES[flow], state, 600, secure)
 
-export const readState = (header: string | null): string | null => readCookie(header, STATE_COOKIE)
+export const readState = (header: string | null, flow: OAuthFlow = 'intervals'): string | null =>
+  readCookie(header, STATE_COOKIES[flow])
 
-export const clearStateCookie = (): string => cookie(STATE_COOKIE, '', 0)
+export const clearStateCookie = (flow: OAuthFlow = 'intervals'): string => cookie(STATE_COOKIES[flow], '', 0)

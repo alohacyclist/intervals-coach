@@ -203,6 +203,29 @@
   min-width: 170px;
 }
 
+/* Strava sits between the settings and the account, separated like the account. */
+.strava {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-start;
+  margin-top: 4px;
+  padding-top: 14px;
+  border-top: 1px solid var(--rule);
+}
+.strava h3 {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.strava__result {
+  font-size: 14px;
+  color: var(--ink);
+}
+
 /* Deleting an account is separated by a rule, never mixed into the save row. */
 .danger {
   display: flex;
