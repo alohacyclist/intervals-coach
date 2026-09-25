@@ -19,6 +19,7 @@ export const activity = (
   id: `a-${daysAgo}-${sport}`,
   source: 'GARMIN',
   date: addDays(TODAY, -daysAgo),
+  startedAt: `${addDays(TODAY, -daysAgo)}T05:30:00Z`,
   sport,
   name: `${sport} ${daysAgo}`,
   load: 60,

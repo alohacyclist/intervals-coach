@@ -301,7 +301,7 @@ Passwortwechsel. Der OAuth-`state` läuft über ein eigenes kurzlebiges Cookie g
 `/datenschutz` und `/impressum` liegen als Entwurf bei und müssen vor der Veröffentlichung
 mit echten Angaben gefüllt werden.
 
-## Soll und Ist
+## Soll und Ist, Strava
 
 Unter jeder erkannten Einheit steht der Soll-Ist-Vergleich. Liefert intervals.icu die Streams
 (Leistung, beim Laufen Tempo, dazu Puls), zeichnet die Karte den **Verlauf**: die Kurve über den
@@ -309,6 +309,35 @@ Zielkorridoren, gefüllt dort, wo sie im Korridor lag, der Puls als eigener Stre
 Worker dampft die Streams auf höchstens 720 Punkte ein (Rad 10-s-, Lauf 30-s-Mittel). Ohne
 Streams — Becken, keine Leistungsmessung, Intervalle ohne Position — bleibt der Blockstreifen.
 „Bild teilen“ zeichnet dieselbe Ansicht als 1080 × 1080-PNG fürs Teilen-Menü des Handys.
+
+**Strava** ist optional und in beiden Modi möglich. Das Gerät lädt weiter selbst zu Strava hoch;
+die App schreibt nur die Auswertung als Absatz in die Beschreibung der passenden Aktivität
+(gleiche Sportart, Start höchstens zehn Minuten auseinander). Eigener Text bleibt stehen, ein
+zweiter Lauf ersetzt nur den eigenen Absatz. Bilder nimmt die öffentliche Strava-API nicht an —
+daher der Verlauf als Zeile aus Blockzeichen. Puls steht bewusst nicht darin: Strava lässt ihn
+pro Aktivität verbergen, eine Beschreibung würde ihn trotzdem zeigen.
+
+Geschrieben wird automatisch per Cron (alle 20 Minuten, erkannte Einheiten der letzten zwei
+Tage) und auf Knopfdruck unter jeder Einheit. Einrichtung:
+
+1. Strava-Abo (seit Juni 2026 Voraussetzung für API-Zugang) und unter
+   <https://www.strava.com/settings/api> eine App anlegen. *Authorization Callback Domain* =
+   Domain des Workers, z. B. `intervals-coach.example.com`.
+2. Secrets setzen und deployen:
+
+   ```bash
+   npx wrangler secret put STRAVA_CLIENT_ID
+   npx wrangler secret put STRAVA_CLIENT_SECRET
+   npm run deploy
+   ```
+
+3. In der App: Einstellungen → Strava → „Mit Strava verbinden“.
+
+Neue Strava-Apps bedienen einen Athleten, per Self-Upgrade bis zehn; darüber verlangt Strava
+ein Review. Scopes: `activity:read_all` (auch private Aktivitäten finden) und `activity:write`.
+Die Verbindung liegt verschlüsselt in KV und folgt derselben Frist wie das Konto; die Schreibzugriffe
+des Crons verlängern sie nicht. „Strava trennen“ und das Löschen des Kontos entziehen der App auch
+auf Strava den Zugriff.
 
 ## Struktur
 
@@ -333,6 +362,7 @@ worker/        Cloudflare-Worker-Entry
   login-throttle.ts  Fehlversuche pro IP, 15-Minuten-Fenster
   crypto.ts    HMAC-Signatur und AES-GCM-Verschlüsselung (Web Crypto)
   users.ts     Nutzer- und Konfigurationsspeicher in KV, je Athlet
+  strava*.ts   Strava: OAuth und API, Speicher, Abgleich, Routen, Cron
 src/ui/        React-Oberfläche
   styles/      Designrichtung „Messgerät“, Tokens für hell und dunkel
   theme.ts     Moduswahl, gespeichert je Browser

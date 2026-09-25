@@ -12,6 +12,7 @@ const MINUTE_LABELS = {
   max: 'Min. — wenn viel Zeit ist',
 } as const
 import { DeleteAccount } from './DeleteAccount.tsx'
+import { StravaPanel } from './StravaPanel.tsx'
 
 type Props = {
   readonly config: CoachConfig
@@ -198,6 +199,8 @@ export const SettingsPanel = ({ config, onSaved, onClose, canDelete }: Props) =>
           FTP & Pace von intervals.icu holen
         </button>
       </div>
+
+      <StravaPanel />
 
       {canDelete && <DeleteAccount />}
     </section>

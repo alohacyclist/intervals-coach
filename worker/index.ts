@@ -3,7 +3,16 @@ import type { Context } from 'hono'
 import { createApiRoutes } from '../server/routes.ts'
 import type { RouteDeps } from '../server/routes.ts'
 import { kvConfigStore } from './config-store-kv.ts'
-import { deleteUser, loadUser, needsTouch, saveUser, touchUser, userConfigStore, hasConfig } from './users.ts'
+import {
+  deleteUser,
+  loadUser,
+  needsTouch,
+  saveUser,
+  saveUserUnseen,
+  touchUser,
+  userConfigStore,
+  hasConfig,
+} from './users.ts'
 import { authorizeUrl, exchangeCode, fetchAthlete, refreshTokens } from './oauth.ts'
 import type { OAuthApp } from './oauth.ts'
 import { randomToken, secretEquals } from './crypto.ts'
@@ -18,8 +27,12 @@ import {
   shouldRenew,
 } from './session.ts'
 import type { Session } from './session.ts'
-import type { Bindings } from './bindings.ts'
+import type { Bindings, ExecutionContext } from './bindings.ts'
 import { isMultiUser } from './bindings.ts'
+import { createStravaRoutes, stravaApp } from './strava-routes.ts'
+import { withdraw } from './strava.ts'
+import { deleteLink, loadLink, renewLink } from './strava-store.ts'
+import { syncStrava } from './strava-cron.ts'
 
 const REFRESH_MARGIN_SECONDS = 120
 
@@ -31,15 +44,15 @@ const app = new Hono<{ Bindings: Bindings }>()
 /** Plain http only happens under `wrangler dev`; there a Secure cookie is never stored. */
 const isSecure = (context: Context): boolean => new URL(context.req.url).protocol === 'https:'
 
-const oauthApp = (context: Context): OAuthApp => {
-  const env = context.env as Bindings
-  return {
-    clientId: env.INTERVALS_CLIENT_ID ?? '',
-    clientSecret: env.INTERVALS_CLIENT_SECRET ?? '',
-    // Derived from the request so localhost and production share one code path.
-    redirectUri: `${new URL(context.req.url).origin}/auth/callback`,
-  }
-}
+const oauthAppFor = (env: Bindings, origin: string): OAuthApp => ({
+  clientId: env.INTERVALS_CLIENT_ID ?? '',
+  clientSecret: env.INTERVALS_CLIENT_SECRET ?? '',
+  redirectUri: `${origin}/auth/callback`,
+})
+
+// Derived from the request so localhost and production share one code path.
+const oauthApp = (context: Context): OAuthApp =>
+  oauthAppFor(context.env as Bindings, new URL(context.req.url).origin)
 
 /**
  * Multi user sessions are signed with `SESSION_SECRET`. Single user sessions fall
@@ -69,26 +82,29 @@ const renewIfNeeded = async (context: Context, session: Session): Promise<void> 
   )
 }
 
-/** Signed-in user's dependencies, refreshing the access token when it is close to expiry. */
-const multiUserDeps = async (context: Context, athleteId: string): Promise<RouteDeps> => {
-  const env = context.env as Bindings
+/**
+ * One athlete's dependencies, refreshing the access token when it is close to
+ * expiry. `present` is whether the athlete is the one asking: only a visit
+ * renews the retention window, never the cron acting while nobody looks.
+ */
+const athleteDeps = async (env: Bindings, athleteId: string, present: boolean): Promise<RouteDeps> => {
   const secret = env.SESSION_SECRET ?? ''
   const user = await loadUser(env.COACH_CONFIG, secret, athleteId)
   if (!user) throw new Error('Sitzung ungültig — bitte neu anmelden')
 
   const expiringSoon = user.tokens.expiresAt < Math.floor(Date.now() / 1000) + REFRESH_MARGIN_SECONDS
+  // A refresh needs no redirect, so the cron can do it without knowing the origin.
   const tokens =
     expiringSoon && user.tokens.refreshToken
-      ? await refreshTokens(oauthApp(context), user.tokens.refreshToken)
+      ? await refreshTokens(oauthAppFor(env, ''), user.tokens.refreshToken)
       : user.tokens
 
-  // One write covers both jobs: the new token and the renewed retention window.
-  if (tokens !== user.tokens || needsTouch(user)) {
-    await touchUser(env.COACH_CONFIG, secret, {
-      ...user,
-      tokens,
-      lastSeenAt: new Date().toISOString(),
-    })
+  if (present && (tokens !== user.tokens || needsTouch(user))) {
+    // One write covers both jobs: the new token and the renewed retention window.
+    await touchUser(env.COACH_CONFIG, secret, { ...user, tokens, lastSeenAt: new Date().toISOString() })
+    await renewLink(env.COACH_CONFIG, athleteId)
+  } else if (tokens !== user.tokens) {
+    await saveUserUnseen(env.COACH_CONFIG, secret, { ...user, tokens })
   }
 
   return {
@@ -97,8 +113,7 @@ const multiUserDeps = async (context: Context, athleteId: string): Promise<Route
   }
 }
 
-const singleUserDeps = (context: Context): RouteDeps => {
-  const env = context.env as Bindings
+const singleUserDeps = (env: Bindings): RouteDeps => {
   return {
     auth: {
       kind: 'apiKey',
@@ -251,22 +266,52 @@ app.delete('/api/account', async (context) => {
   const athleteId = await sessionAthlete(context)
   if (!athleteId) return context.json({ error: 'Nicht angemeldet', needsLogin: true }, 401)
 
+  // Strava is told first, while the token to tell it with still exists.
+  const link = await loadLink(env.COACH_CONFIG, sessionSecret(env), athleteId)
+  if (link) await withdraw(stravaApp(env, new URL(context.req.url).origin), link.tokens)
+  await deleteLink(env.COACH_CONFIG, athleteId)
   await deleteUser(env.COACH_CONFIG, athleteId)
   context.header('Set-Cookie', clearSessionCookie())
   return context.json({ ok: true })
 })
 
+const resolveDeps = async (context: Context): Promise<RouteDeps> => {
+  const env = context.env as Bindings
+  if (!isMultiUser(env)) return singleUserDeps(env)
+  const athleteId = await sessionAthlete(context)
+  if (!athleteId) throw new Error('Nicht angemeldet')
+  return athleteDeps(env, athleteId, true)
+}
+
 app.route(
   '/',
-  createApiRoutes(async (context) => {
-    const env = context.env as Bindings
-    if (!isMultiUser(env)) return singleUserDeps(context)
-    const athleteId = await sessionAthlete(context)
-    if (!athleteId) throw new Error('Nicht angemeldet')
-    return multiUserDeps(context, athleteId)
+  createStravaRoutes({
+    subjectOf: sessionAthlete,
+    secretOf: sessionSecret,
+    depsOf: resolveDeps,
+    secure: isSecure,
   }),
 )
 
+app.route('/', createApiRoutes(resolveDeps))
+
 app.all('*', (context) => (context.env as Bindings).ASSETS.fetch(context.req.raw))
 
-export default app
+export { app }
+
+/**
+ * Requests go to the app; the cron trigger in wrangler.jsonc writes the summary
+ * of every newly recognised session under it on Strava.
+ */
+export default {
+  fetch: app.fetch,
+  scheduled: (_event: unknown, env: Bindings, execution: ExecutionContext): void => {
+    execution.waitUntil(
+      syncStrava(env, {
+        secret: sessionSecret(env),
+        depsFor: async (subject) => (isMultiUser(env) ? athleteDeps(env, subject, false) : singleUserDeps(env)),
+        keepExpiry: isMultiUser(env),
+      }),
+    )
+  },
+}

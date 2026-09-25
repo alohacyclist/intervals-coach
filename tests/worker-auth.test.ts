@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import app from '../worker/index.ts'
+import { app } from '../worker/index.ts'
 import type { Bindings, KVNamespace, KVPutOptions } from '../worker/bindings.ts'
 import { MAX_ATTEMPTS } from '../worker/login-throttle.ts'
 import { sign } from '../worker/crypto.ts'
@@ -14,6 +14,10 @@ const fakeKv = (): KVNamespace => {
     delete: async (key: string) => {
       store.delete(key)
     },
+    list: async ({ prefix }) => ({
+      keys: [...store.keys()].filter((key) => key.startsWith(prefix)).map((name) => ({ name })),
+      list_complete: true,
+    }),
   }
 }
 

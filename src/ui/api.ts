@@ -110,3 +110,51 @@ export const pushWorkout = (
 
 export const deleteAccount = (): Promise<{ ok: boolean }> =>
   request<{ ok: boolean }>('/api/account', { method: 'DELETE' })
+
+export type StravaStatus = {
+  /** False when the operator has not set up a Strava app; the app then says nothing about Strava. */
+  readonly available: boolean
+  readonly connected: boolean
+  readonly name: string | null
+  /** intervals.icu activities whose summary is already on Strava. */
+  readonly posted: readonly string[]
+}
+
+export type StravaOutcome = {
+  readonly status: 'posted' | 'not-found' | 'no-comparison'
+  readonly activityId: string
+  readonly stravaId?: string
+}
+
+const NO_STRAVA: StravaStatus = { available: false, connected: false, name: null, posted: [] }
+
+/** Several cards ask at once; one request answers them all until something changes. */
+let stravaStatus: Promise<StravaStatus> | null = null
+
+/** Anything but a real answer — the app shell from a static host, an old server — means no Strava. */
+const asStravaStatus = (payload: Partial<StravaStatus>): StravaStatus =>
+  typeof payload.available === 'boolean' && typeof payload.connected === 'boolean' && Array.isArray(payload.posted)
+    ? { available: payload.available, connected: payload.connected, name: payload.name ?? null, posted: payload.posted }
+    : NO_STRAVA
+
+export const getStrava = (fresh = false): Promise<StravaStatus> => {
+  if (fresh || stravaStatus === null) {
+    // The local Node server has no Strava; that is "not set up", not an error.
+    stravaStatus = request<Partial<StravaStatus>>('/api/strava').then(asStravaStatus, () => NO_STRAVA)
+  }
+  return stravaStatus
+}
+
+export const disconnectStrava = async (): Promise<StravaStatus> => {
+  await request('/api/strava', { method: 'DELETE' })
+  return getStrava(true)
+}
+
+export const postToStrava = async (activityId: string, templateId: string, date: string): Promise<StravaOutcome> => {
+  const outcome = await request<StravaOutcome>('/api/strava/sessions', {
+    method: 'POST',
+    body: JSON.stringify({ activityId, templateId, date }),
+  })
+  if (outcome.status === 'posted') void getStrava(true)
+  return outcome
+}
