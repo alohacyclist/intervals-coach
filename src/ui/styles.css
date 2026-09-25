@@ -2,6 +2,7 @@
 @import './styles/tokens.css';
 @import './styles/shell.css';
 @import './styles/day.css';
+@import './styles/trace.css';
 @import './styles/panels.css';
 @import './styles/progress.css';
 @import './styles/pages.css';

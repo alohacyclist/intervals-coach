@@ -3,6 +3,9 @@ import type { ExecutedStep, Execution, ExecutionSegment } from '../../coach/type
 import { SPORT_DONE } from '../../coach/types.ts'
 import { getExecution } from '../api.ts'
 import { ZRL_TEMPLATE_ID } from '../../coach/zrl.ts'
+import { ExecutionTrace } from './ExecutionTrace.tsx'
+import { ExecutionActions } from './ExecutionActions.tsx'
+import { drawableTrace, intensityWord, isCompared } from '../trace-geometry.ts'
 
 /**
  * Planned against done. The strip answers "did it sit" in a glance; the rows
@@ -193,14 +196,22 @@ export const ExecutionCard = ({ activityId, templateId, date }: Props) => {
 
   if (failed) return <p className="exec__quiet">Soll-Ist-Vergleich gerade nicht verfügbar.</p>
   if (!execution) return <p className="exec__quiet">Soll-Ist-Vergleich wird geladen…</p>
-  return <ExecutionView execution={execution} />
+  return (
+    <>
+      <ExecutionView execution={execution} />
+      <ExecutionActions execution={execution} activityId={activityId} templateId={templateId} date={date} />
+    </>
+  )
 }
 
 /** The comparison itself, apart from loading it — so it can be rendered and checked as it is. */
 export const ExecutionView = ({ execution }: { readonly execution: Execution }) => {
   const { steps } = execution
   const done = SPORT_DONE[execution.sport]
-  const compared = steps.length > 0 && execution.unavailable === null
+  const compared = isCompared(execution)
+  const trace = drawableTrace(execution)
+  // What was not done has no place on the clock, so it is named instead.
+  const undone = steps.filter((step) => step.actualSeconds === null)
   // Over-unders carry several targets; one label would then name only the first.
   const first = steps[0]
   const band =
@@ -246,7 +257,16 @@ export const ExecutionView = ({ execution }: { readonly execution: Execution }) 
         </div>
       </dl>
 
-      <Strip segments={execution.segments} steps={compared ? steps : []} done={done} />
+      {trace ? (
+        <ExecutionTrace execution={execution} trace={trace} compared={compared} />
+      ) : (
+        <Strip segments={execution.segments} steps={compared ? steps : []} done={done} />
+      )}
+      {trace && compared && undone.length > 0 && (
+        <p className="exec__note">
+          Nicht {done}: Intervall {undone.map((step) => step.index).join(', ')}.
+        </p>
+      )}
 
       {execution.unavailable && <p className="exec__note">{execution.unavailable}</p>}
       {execution.mismatch && (
@@ -259,13 +279,32 @@ export const ExecutionView = ({ execution }: { readonly execution: Execution }) 
         </p>
       )}
 
+      {trace && (
+        <p className="exec__legend">
+          {compared && (
+            <>
+              <span><i className="exec__key exec__key--band" /> Zielkorridor</span>
+              <span><i className="exec__key exec__key--hit" /> Zeit im Korridor</span>
+            </>
+          )}
+          <span>
+            <i className="exec__key exec__key--line" /> {intensityWord(execution.metric)},{' '}
+            {trace.smoothing}-s-Mittel
+          </span>
+          {trace.points.some((point) => point.heartRate !== null) && (
+            <span><i className="exec__key exec__key--pulse" /> Puls</span>
+          )}
+        </p>
+      )}
       {compared && (
         <>
-          <p className="exec__legend">
-            <span><i className="exec__key exec__key--hit" /> im Ziel</span>
-            <span><i className="exec__key exec__key--off" /> daneben</span>
-            <span><i className="exec__key exec__key--missing" /> nicht {done}</span>
-          </p>
+          {!trace && (
+            <p className="exec__legend">
+              <span><i className="exec__key exec__key--hit" /> im Ziel</span>
+              <span><i className="exec__key exec__key--off" /> daneben</span>
+              <span><i className="exec__key exec__key--missing" /> nicht {done}</span>
+            </p>
+          )}
           <details className="disclose exec__more">
             <summary>
               Intervall für Intervall <span className="readout">{band}</span>
