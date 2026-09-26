@@ -543,6 +543,10 @@ export type BenchmarkResult = {
   readonly previousDate: string | null
   readonly previousAverageHr: number | null
   readonly verdict: 'first' | 'better' | 'unchanged' | 'worse' | 'unknown'
+  /** Compared over the work intervals, pace per beat; or over the whole activity, heart rate alone. */
+  readonly basis: 'intervals' | 'activity'
+  /** Pace or power per heartbeat against last time, in percent; positive is better. */
+  readonly efficiencyChange: number | null
   readonly message: string
 }
 
@@ -659,6 +663,8 @@ export type Execution = {
   readonly compliance: number | null
   /** Why no interval could be compared at all, in words for the athlete. */
   readonly unavailable: string | null
+  /** For the reference session: how it compares with the one before. Only the card asks for it. */
+  readonly benchmark?: BenchmarkResult | null
   /** Null without a usable stream: pool swims, or a ride without a meter. */
   readonly trace: ExecutionTrace | null
 }

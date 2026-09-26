@@ -269,6 +269,22 @@ export const ExecutionView = ({ execution }: { readonly execution: Execution }) 
       )}
 
       {execution.unavailable && <p className="exec__note">{execution.unavailable}</p>}
+      {execution.benchmark && (
+        <p className="exec__benchmark">
+          <strong
+            className={
+              execution.benchmark.verdict === 'better'
+                ? 'history__ok'
+                : execution.benchmark.verdict === 'worse'
+                  ? 'history__miss'
+                  : ''
+            }
+          >
+            Formkontrolle:
+          </strong>{' '}
+          {execution.benchmark.message}
+        </p>
+      )}
 
       {trace && (
         <p className="exec__legend">
