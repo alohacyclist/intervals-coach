@@ -2,6 +2,23 @@
    hairlines, same stencilled labels as the plan — a second dial on the same
    instrument, not a second instrument. */
 
+/* Zeitraum: one choice for everything below it, so it sits above all of it. */
+.span-switch {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.span-switch__label {
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  color: var(--faint);
+}
+.totals--stale {
+  opacity: 0.55;
+}
+
 .totals,
 .chart,
 .ladder {
@@ -171,6 +188,10 @@
   background: transparent;
   border: 1px solid var(--data);
 }
+.weeks__item--quiet .weeks__label,
+.weeks__item--quiet .weeks__value {
+  visibility: hidden;
+}
 .weeks__label {
   flex: none;
   padding-bottom: 10px;
@@ -239,9 +260,9 @@
   .weeks {
     height: 160px;
   }
-  /* Twelve dates do not fit; every second one still gives the rhythm. */
-  .weeks__item:nth-child(even) .weeks__label,
-  .weeks__item:nth-child(even) .weeks__value {
+  /* Twelve dates do not fit; half of them still give the rhythm. */
+  .weeks__item--quiet-narrow .weeks__label,
+  .weeks__item--quiet-narrow .weeks__value {
     visibility: hidden;
   }
 }
