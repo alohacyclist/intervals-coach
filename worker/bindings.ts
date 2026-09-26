@@ -48,6 +48,11 @@ export type Bindings = {
   readonly INTERVALS_API_KEY?: string
   readonly INTERVALS_ATHLETE_ID?: string
   readonly APP_PASSWORD?: string
+
+  /** Optional in either mode: set all three to open the waitlist on the landing page. */
+  readonly BREVO_API_KEY?: string
+  readonly BREVO_LIST_ID?: string
+  readonly BREVO_DOI_TEMPLATE_ID?: string
 }
 
 export type MultiUserBindings = Bindings & {

@@ -14,6 +14,9 @@ import { ErrorBoundary } from './components/ErrorBoundary.tsx'
 
 const PLAN_PATH = '/app'
 const PROGRESS_PATH = '/verlauf'
+const LOGIN_PATH = '/login'
+/** Where the confirmation link in the waitlist mail lands. */
+const CONFIRMED_PATH = '/warteliste/bestaetigt'
 
 /**
  * Two questions, two pages: what do I do today, and am I getting anywhere. The
@@ -102,12 +105,24 @@ export const App = () => {
   if (!me) return <Shell><p className="loading">Einen Moment…</p></Shell>
 
   if (!me.authenticated) {
+    // Until intervals.icu opens the app to everyone, visitors meet the waitlist and the
+    // owner signs in at /login; afterwards the landing page carries the sign-in itself.
+    const signIn = me.mode === 'single' && path === LOGIN_PATH
     return (
       <Shell>
-        {me.mode === 'single' ? (
-          <PasswordLogin onDone={() => void load()} />
+        {signIn ? (
+          <PasswordLogin
+            onDone={() => {
+              go(PLAN_PATH)
+              void load()
+            }}
+          />
         ) : (
-          <Landing error={new URLSearchParams(window.location.search).get('fehler')} />
+          <Landing
+            mode={me.mode === 'single' ? 'waitlist' : 'signup'}
+            error={new URLSearchParams(window.location.search).get('fehler')}
+            confirmed={path === CONFIRMED_PATH}
+          />
         )}
       </Shell>
     )

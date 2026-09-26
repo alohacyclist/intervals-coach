@@ -123,6 +123,8 @@
   color: var(--ink);
 }
 .landing__steps span {
+  /* Under the title, not under the number: the grid would otherwise start a new row in the first column. */
+  grid-column: 2;
   color: var(--dim);
   font-size: 14px;
 }
@@ -152,6 +154,91 @@
 .landing__legal {
   font-size: 12.5px;
   border-bottom: 0;
+}
+
+/* The waitlist: one field and one button on a line, the fine print under it. */
+.waitlist {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 520px;
+}
+.waitlist__field {
+  gap: 8px;
+}
+.waitlist__row {
+  display: flex;
+  gap: 8px;
+}
+.waitlist__row input {
+  flex: 1;
+  min-width: 0;
+  font-size: 15px;
+  padding: 11px 12px;
+}
+.waitlist__row .cta {
+  align-self: stretch;
+  flex: none;
+}
+.waitlist .landing__hint {
+  letter-spacing: 0.02em;
+  line-height: 1.5;
+}
+.waitlist .landing__hint a {
+  color: inherit;
+}
+/* Off screen rather than display:none, which some bots know to skip. */
+.waitlist__trap {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+.waitlist__done {
+  max-width: 520px;
+  padding: 12px 14px;
+  border-left: 3px solid var(--good);
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* Three pictures of the app: a row that scrolls on a phone, a grid on a desk. */
+.shots {
+  display: grid;
+  grid-auto-flow: column;
+  /* The next picture peeks in from the right, so the row reads as one to swipe. */
+  grid-auto-columns: min(78%, 300px);
+  align-items: start;
+  gap: 14px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding-bottom: 6px;
+}
+@media (min-width: 760px) {
+  .shots {
+    grid-auto-flow: row;
+    grid-template-columns: repeat(3, 1fr);
+    overflow: visible;
+  }
+}
+.shots__item {
+  margin: 0;
+  scroll-snap-align: start;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.shots__item img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--rule);
+  background: var(--bg-sink);
+}
+.shots__item figcaption {
+  font-size: 13.5px;
+  color: var(--dim);
 }
 
 /* ------------------------------------------------------------- onboarding */
