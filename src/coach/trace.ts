@@ -30,8 +30,34 @@ type Drawable = Exclude<SportThreshold, { readonly metric: 'swimPace' }>
 const percentOf = (value: number, threshold: Drawable): number =>
   threshold.metric === 'power' ? (value / threshold.ftp) * 100 : (threshold.thresholdSecPerKm * value) / 10
 
+/**
+ * Watches on smart recording write a sample only every few seconds, sparser the
+ * slower the pace — so a five-second slot in a jog can come up empty. A hole that
+ * short is the recording, not a stop; a real pause runs longer and stays a gap.
+ */
+const BRIDGE_SECONDS = 20
+
 const meanOf = (sums: readonly number[], counts: readonly number[]): readonly (number | null)[] =>
   sums.map((sum, index) => (counts[index]! > 0 ? sum / counts[index]! : null))
+
+/** Empty slots between two recorded ones at most BRIDGE_SECONDS apart, filled in a straight line. */
+const bridged = (values: readonly (number | null)[], step: number): readonly (number | null)[] => {
+  const reach = Math.floor(BRIDGE_SECONDS / step)
+  const filled = [...values]
+  let previous = -1
+  values.forEach((value, index) => {
+    if (value === null) return
+    const gap = index - previous
+    if (previous >= 0 && gap > 1 && gap <= reach) {
+      const from = values[previous]!
+      for (let slot = previous + 1; slot < index; slot++) {
+        filled[slot] = from + ((value - from) * (slot - previous)) / gap
+      }
+    }
+    previous = index
+  })
+  return filled
+}
 
 const averaged = (values: readonly (number | null)[], window: number): readonly (number | null)[] =>
   values.map((value, index) => {
@@ -74,8 +100,8 @@ export const buildTrace = (streams: ActivityStreams, threshold: SportThreshold):
   })
 
   const window = Math.max(1, Math.round(SMOOTHING_SECONDS[threshold.metric] / step))
-  const values = averaged(meanOf(sums, counts), window)
-  const hearts = meanOf(beats, beatCounts)
+  const values = averaged(bridged(meanOf(sums, counts), step), window)
+  const hearts = bridged(meanOf(beats, beatCounts), step)
 
   const points: readonly TracePoint[] = values.map((value, index) => ({
     seconds: index * step,

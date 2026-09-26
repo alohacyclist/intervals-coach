@@ -284,7 +284,7 @@ export const ExecutionView = ({ execution }: { readonly execution: Execution }) 
           {compared && (
             <>
               <span><i className="exec__key exec__key--band" /> Zielkorridor</span>
-              <span><i className="exec__key exec__key--hit" /> Zeit im Korridor</span>
+              <span><i className="exec__key exec__key--inband" /> Zeit im Korridor</span>
             </>
           )}
           <span>
