@@ -68,7 +68,8 @@ export const getExecution = (activityId: string, templateId: string, date: strin
 export const getPlan = (days: number, intent?: string): Promise<Plan> =>
   request<Plan>(`/api/plan?days=${days}${intent ? `&intent=${intent}` : ''}`)
 
-export const getProgress = (): Promise<Progress> => request<Progress>('/api/progress')
+export const getProgress = (days: number): Promise<Progress> =>
+  request<Progress>(`/api/progress?days=${days}`)
 
 export const getConfig = (): Promise<CoachConfig> => request<CoachConfig>('/api/config')
 

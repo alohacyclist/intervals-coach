@@ -42,15 +42,34 @@ const STIMULUS_LABELS: Readonly<Record<Stimulus, string>> = {
   RECOVERY: 'Regeneration',
 }
 
+/** The spans the page can be read over; the middle one is what it opens with. */
+export const PROGRESS_SPANS = [30, 90, 180, 365] as const
+export type ProgressSpan = (typeof PROGRESS_SPANS)[number]
+export const DEFAULT_PROGRESS_SPAN: ProgressSpan = 180
+
+export const isProgressSpan = (days: number): days is ProgressSpan =>
+  (PROGRESS_SPANS as readonly number[]).includes(days)
+
+/**
+ * Days of training read before the span starts. Fitness is an average over
+ * six weeks: started from zero on the first day shown, a thirty-day view would
+ * draw a month of "building up" that never happened. Three time constants in,
+ * what is left of that zero is five per cent.
+ */
+export const FITNESS_WARMUP_DAYS = 3 * CTL_DAYS
+
+/** One bar per calendar week of the span, and never fewer than a month's worth. */
+export const weeksFor = (historyDays: number): number => Math.max(4, Math.ceil(historyDays / 7))
+
 /** The same curve the plan steers by, kept as a series instead of its last value. */
 const fitnessSeries = (activities: readonly Activity[], today: string, historyDays: number) => {
   const from = addDays(today, -historyDays)
-  const loads = dailyLoads(activities, from, today)
-  const ctl = ewmaSeries(loads, CTL_DAYS)
-  const atl = ewmaSeries(loads, ATL_DAYS)
-  return loads.map((_, index) => ({
+  const loads = dailyLoads(activities, addDays(from, -FITNESS_WARMUP_DAYS), today)
+  const ctl = ewmaSeries(loads, CTL_DAYS).slice(FITNESS_WARMUP_DAYS)
+  const atl = ewmaSeries(loads, ATL_DAYS).slice(FITNESS_WARMUP_DAYS)
+  return ctl.map((value, index) => ({
     date: addDays(from, index),
-    ctl: Math.round((ctl[index] ?? 0) * 10) / 10,
+    ctl: Math.round(value * 10) / 10,
     atl: Math.round((atl[index] ?? 0) * 10) / 10,
   }))
 }

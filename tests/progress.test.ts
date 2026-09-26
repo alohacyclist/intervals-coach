@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Activity } from '../src/coach/types.ts'
 import type { Completion } from '../src/coach/progression.ts'
-import { buildProgress } from '../src/coach/progress.ts'
+import { buildProgress, isProgressSpan, weeksFor } from '../src/coach/progress.ts'
 import { addDays, startOfWeek } from '../src/coach/dates.ts'
 import { activity, TODAY } from './fixtures.ts'
 
@@ -96,5 +96,25 @@ describe('buildProgress', () => {
     expect(rider.levels.every((entry) => entry.sport === 'Ride')).toBe(true)
     // No sports named at all still means the whole library, as the tests use it.
     expect(buildProgress([], [], TODAY).levels.some((entry) => entry.sport === 'Swim')).toBe(true)
+  })
+})
+
+describe('progress span', () => {
+  it('starts a short span from the fitness already built, not from zero', () => {
+    const before = Array.from({ length: 60 }, (_, index) => activity(31 + index, 'Ride', { load: 80 }))
+    const progress = buildProgress(before, [], TODAY, 30)
+    expect(progress.fitness).toHaveLength(31)
+    expect(progress.fitness[0]!.ctl).toBeGreaterThan(40)
+  })
+
+  it('gives a bar per week of the span, at least four', () => {
+    expect(weeksFor(30)).toBe(5)
+    expect(weeksFor(365)).toBe(53)
+    expect(weeksFor(7)).toBe(4)
+  })
+
+  it('accepts only the offered spans', () => {
+    expect(isProgressSpan(90)).toBe(true)
+    expect(isProgressSpan(360)).toBe(false)
   })
 })
