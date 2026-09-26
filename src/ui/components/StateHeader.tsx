@@ -16,7 +16,7 @@ type Props = {
 export const StateHeader = ({ state, onRefresh, onSettings, busy }: Props) => (
   <header className="header">
     <div className="header__top">
-      <h1>Intervals Coach</h1>
+      <h1>Formkurve</h1>
       <div className="header__actions">
         <button type="button" onClick={onSettings}>
           Einstellungen
