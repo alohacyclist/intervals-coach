@@ -1,4 +1,4 @@
-import { OPERATOR, PROCESSOR, RETENTION_MONTHS, SUPERVISOR } from './operator.ts'
+import { MAILER, OPERATOR, PROCESSOR, RETENTION_MONTHS, SUPERVISOR } from './operator.ts'
 
 export const Privacy = () => (
   <article className="legal">
@@ -114,6 +114,23 @@ export const Privacy = () => (
       alle 20 Minuten deine Einheiten der letzten zwei Tage bei intervals.icu ab. Wer die
       Beschreibung auf Strava sieht, bestimmen deine Sichtbarkeitseinstellungen dort. Für dein
       Verhältnis zu Strava gilt deren eigene Datenschutzerklärung.
+    </p>
+
+    <h2>Warteliste</h2>
+    <p>
+      Wenn du dich auf der Startseite für die Warteliste einträgst, verarbeiten wir deine
+      E-Mail-Adresse, um dich einmal zu benachrichtigen, sobald Formkurve für alle offen ist.
+      Rechtsgrundlage ist deine Einwilligung nach <strong>Art. 6 Abs. 1 lit. a DSGVO</strong>. Sie
+      wird erst wirksam, wenn du den Link in der Bestätigungsmail anklickst (Double-Opt-In); dabei
+      werden Zeitpunkt und IP-Adresse der Anmeldung und der Bestätigung als Nachweis gespeichert.
+    </p>
+    <p>
+      Die App selbst speichert deine Adresse nicht, sondern gibt sie direkt an {MAILER.name},{' '}
+      {MAILER.address}, weiter, das die Liste als Auftragsverarbeiter nach Art. 28 DSGVO führt und
+      die Mails verschickt. Die Daten bleiben in der EU. Jede Mail enthält einen Link zum Abmelden;
+      du kannst die Einwilligung auch jederzeit per Mail an{' '}
+      <a href={`mailto:${OPERATOR.email}`}>{OPERATOR.email}</a> widerrufen. Gelöscht wird deine
+      Adresse, sobald du dich abmeldest, spätestens aber sechs Monate nach dem Start von Formkurve.
     </p>
 
     <h2>Empfänger</h2>

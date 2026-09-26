@@ -25,5 +25,15 @@ export const PROCESSOR = {
   address: '101 Townsend St, San Francisco, CA 94107, USA',
 } as const
 
+/**
+ * Sends the waitlist's confirmation and launch mails and keeps the list. EU based,
+ * so no transfer to a third country; the operator concludes the data processing
+ * agreement in the Brevo account. Verify the address before every publication.
+ */
+export const MAILER = {
+  name: 'Sendinblue SAS (Brevo)',
+  address: '106 boulevard Haussmann, 75008 Paris, Frankreich',
+} as const
+
 /** Inactive accounts are erased after this long — enforced by the key lifetime in KV. */
 export const RETENTION_MONTHS = 12

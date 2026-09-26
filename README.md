@@ -262,6 +262,28 @@ nie kurz im falschen Modus aufblitzt. Die Schriften (IBM Plex Mono und Sans Cond
 sind mit ausgeliefert und werden nicht von Google geladen — bei Gesundheitsdaten auf der
 Seite wäre die Übertragung der Besucher-IP an Dritte nicht vertretbar.
 
+## Warteliste (Brevo)
+
+Solange die App im Einzelbetrieb läuft, zeigt `formkurve.org` Besuchern die Landingpage mit
+einer Warteliste; der Betreiber meldet sich unter `/login` an. Im Mehrbenutzer-Betrieb steht
+dort stattdessen „Mit intervals.icu anmelden".
+
+Die Adresse wird nicht gespeichert, sondern per `POST /v3/contacts/doubleOptinConfirmation`
+direkt an Brevo gegeben. Brevo schickt die Bestätigungsmail (Double-Opt-In), nimmt die Adresse
+erst nach dem Klick in die Liste auf, hält den Einwilligungsnachweis und den Abmeldelink. Der
+Bestätigungslink führt zurück auf `/warteliste/bestaetigt`. Die Route ist ohne Sitzung
+erreichbar, nimmt nur eine Adresse an, erlaubt fünf Versuche pro IP und Stunde und hat ein
+unsichtbares Köderfeld gegen Bots. Ohne die drei Secrets antwortet sie „noch nicht eingerichtet".
+
+```bash
+npx wrangler secret put BREVO_API_KEY           # Brevo → SMTP & API → API-Schlüssel
+npx wrangler secret put BREVO_LIST_ID           # Zahl, Kontakte → Listen
+npx wrangler secret put BREVO_DOI_TEMPLATE_ID   # Zahl, Vorlage mit Double-Opt-In-Link
+```
+
+Die Bilder der Landingpage (`public/landing/`) sind aus synthetischen Daten erzeugt, nie aus
+einem echten Konto.
+
 ## Mehrbenutzer-Betrieb
 
 Die App kennt zwei Modi und schaltet automatisch um:
