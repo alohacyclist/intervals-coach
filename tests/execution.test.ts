@@ -87,14 +87,11 @@ describe('planned against done', () => {
     const withSurge = [easy(600), work(12, 450), ...uneven]
     const result = compare(withSurge)
     expect(result.steps.map((step) => step.verdict)).toEqual(['over', 'on', 'under'])
-    expect(result.mismatch).toBeNull()
   })
 
-  it('says so when detection and plan disagree, rather than guessing quietly', () => {
+  it('pairs by order when more was detected than planned', () => {
     const four = [...uneven, easy(300), work(400, 290)]
     const result = compare(four)
-    expect(result.mismatch).toEqual({ planned: 3, detected: 4 })
-    // Still paired by order — the mismatch is information, not a refusal.
     expect(result.steps.map((step) => step.verdict)).toEqual(['over', 'on', 'under'])
   })
 
@@ -102,7 +99,6 @@ describe('planned against done', () => {
     const two = uneven.slice(0, 4)
     const result = compare(two)
     expect(result.steps[2]).toMatchObject({ actualSeconds: null, verdict: null })
-    expect(result.mismatch).toEqual({ planned: 3, detected: 2 })
     const work = result.segments.filter((segment) => segment.state !== 'rest')
     expect(work.map((segment) => segment.state)).toEqual(['off', 'on', 'missing'])
   })
@@ -117,7 +113,6 @@ describe('planned against done', () => {
     const result = compare(noPower)
     expect(result.unavailable).toContain('Wattmessung')
     expect(result.steps.every((step) => step.verdict === null)).toBe(true)
-    expect(result.mismatch).toBeNull()
     // Ridden, just not measured: nothing may be drawn as missed.
     expect(result.segments.every((segment) => segment.state === 'rest')).toBe(true)
   })
@@ -166,7 +161,6 @@ describe('planned against done', () => {
 
     expect(result.steps.map((step) => step.actualSeconds)).toEqual([236, 233, 240, 238, 246])
     expect(result.steps.every((step) => !step.cutShort)).toBe(true)
-    expect(result.mismatch).toEqual({ planned: 5, detected: 6 })
   })
 
   it('pairs in order and by duration, and misses the last interval of a session stopped early', () => {
@@ -241,15 +235,6 @@ describe('planned against done', () => {
       at(247, 328),
     ]
     const run = (intervals: readonly ActualInterval[]) => compare(intervals, benchmark, pace)
-
-    it('still says that detection found more than was planned', () => {
-      expect(run(session).mismatch).toEqual({ planned: 4, detected: 8 })
-    })
-
-    it('says nothing when the only difference was a split interval joined back', () => {
-      const clean = session.filter((interval) => interval.seconds !== 25 && interval.seconds !== 247)
-      expect(run(clean).mismatch).toBeNull()
-    })
 
     it('reads the fourth interval as the two pieces it was run in', () => {
       const fourth = run(session).steps[3]

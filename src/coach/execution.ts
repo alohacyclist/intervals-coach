@@ -398,15 +398,9 @@ export const compareExecution = (input: ExecutionInput): Execution => {
       actual: Math.round(input.load),
     },
     compliance: input.compliance === null ? null : Math.round(input.compliance),
-    // Worth a note when something was left over or something is missing — not when
-    // pieces were only joined back into the intervals they came from.
-    mismatch:
-      unavailable === null &&
-      planned.length > 0 &&
-      (steps.reduce((sum, step) => sum + step.pieces, 0) !== detected.length ||
-        steps.some((step) => step.pieces === 0))
-        ? { planned: planned.length, detected: detected.length }
-        : null,
+    // No count of detected against planned: intervals.icu marks warm-up, jogs and
+    // cool-down as work often enough that the number misleads, and what matters —
+    // an interval not run — already shows as missing.
     unavailable,
     trace: input.trace,
   }
