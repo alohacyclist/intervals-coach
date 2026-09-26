@@ -123,6 +123,14 @@
   color: var(--dim);
   max-width: 78ch;
 }
+.destinations__note > summary {
+  margin-bottom: 4px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
 
 /* A warning keeps the amber edge; the panel itself stays on the page ground. */
 .issue {

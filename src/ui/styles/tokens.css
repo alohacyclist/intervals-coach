@@ -12,17 +12,19 @@
  */
 
 :root {
-  --bg: #f1f3f2;
-  --bg-lift: #e6eae9;
-  --bg-sink: #e9ecec;
-  --rule: #d2d8d7;
-  --rule-soft: #e0e5e4;
-  --rule-loud: #b4bdbc;
+  /* The page is stone, the panels are paper on it: two surfaces, not one glare. */
+  --page: #e3e1db;
+  --bg: #f6f5f1;
+  --bg-lift: #eeece6;
+  --bg-sink: #efeee9;
+  --rule: #d5d2c9;
+  --rule-soft: #e5e3dc;
+  --rule-loud: #b5b1a7;
 
-  --ink: #12181a;
-  --text: #2b3335;
-  --dim: #545f60;
-  --faint: #5e6968;
+  --ink: #141819;
+  --text: #2a3032;
+  --dim: #4d5657;
+  --faint: #596263;
 
   --data: #a85a00;
   --on-data: #fbfcfb;
@@ -44,17 +46,18 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
-    --bg: #0a0d0e;
-    --bg-lift: #0e1314;
-    --bg-sink: #070a0b;
-    --rule: #1e2526;
-    --rule-soft: #171d1e;
-    --rule-loud: #2a3233;
+    --page: #070909;
+    --bg: #111617;
+    --bg-lift: #172021;
+    --bg-sink: #0b0f10;
+    --rule: #253032;
+    --rule-soft: #1b2425;
+    --rule-loud: #354244;
 
-    --ink: #eef2f2;
-    --text: #cfd6d6;
-    --dim: #7d8887;
-    --faint: #6b7676;
+    --ink: #f2f5f5;
+    --text: #dae0e0;
+    --dim: #a6b0b0;
+    --faint: #909b9b;
 
     --data: #ffa62b;
     --on-data: #0a0d0e;
@@ -73,17 +76,18 @@
 }
 
 :root[data-theme='dark'] {
-  --bg: #0a0d0e;
-  --bg-lift: #0e1314;
-  --bg-sink: #070a0b;
-  --rule: #1e2526;
-  --rule-soft: #171d1e;
-  --rule-loud: #2a3233;
+  --page: #070909;
+  --bg: #111617;
+  --bg-lift: #172021;
+  --bg-sink: #0b0f10;
+  --rule: #253032;
+  --rule-soft: #1b2425;
+  --rule-loud: #354244;
 
-  --ink: #eef2f2;
-  --text: #cfd6d6;
-  --dim: #7d8887;
-  --faint: #6b7676;
+  --ink: #f2f5f5;
+  --text: #dae0e0;
+  --dim: #a6b0b0;
+  --faint: #909b9b;
 
   --data: #ffa62b;
   --on-data: #0a0d0e;
@@ -106,7 +110,7 @@
 
 body {
   margin: 0;
-  background: var(--bg);
+  background: var(--page);
   color: var(--text);
   font-family: var(--sans);
   font-size: 15px;
@@ -114,12 +118,12 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Labels are stencilled, the way a panel labels its fields. */
+/* Labels are stencilled, the way a panel labels its fields — large enough to read at arm's length. */
 .metrics dt {
   font-family: var(--mono);
-  font-size: 9.5px;
+  font-size: 10.5px;
   font-weight: 500;
-  letter-spacing: 0.11em;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--faint);
 }
@@ -232,9 +236,9 @@ label {
   flex-direction: column;
   gap: 4px;
   font-family: var(--mono);
-  font-size: 9.5px;
+  font-size: 10.5px;
   font-weight: 500;
-  letter-spacing: 0.11em;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--faint);
 }
@@ -249,4 +253,25 @@ label {
     transition: none !important;
     animation: none !important;
   }
+}
+
+/* Every panel is a sheet on the page. The page tone shows between them, so
+   the eye finds the next block by its edge rather than by reading. */
+.header,
+.day,
+.history,
+.intent,
+.pause,
+.outlook,
+.goals,
+.settings,
+.destinations,
+.benchmark,
+.issue,
+.totals,
+.chart,
+.ladder,
+.onboarding fieldset,
+.consent {
+  background: var(--bg);
 }

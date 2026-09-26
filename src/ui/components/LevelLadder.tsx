@@ -52,13 +52,19 @@ export const LevelLadder = ({ levels }: Props) => {
 
           <span className="rung__next">
             {entry.level >= entry.top
-              ? `Oberste Stufe: ${entry.current ?? '—'}. Ab hier steigert sich die Einheit über die Schwellenwerte, nicht über die Stufe.`
+              ? `${entry.current ?? '—'} · oberste Stufe`
               : entry.next
-                ? `Angeboten: ${entry.current ?? '—'}. Eine saubere, vollständige Absolvierung schaltet „${entry.next}“ frei.`
-                : `Angeboten: ${entry.current ?? '—'}.`}
+                ? `${entry.current ?? '—'} → ${entry.next}`
+                : (entry.current ?? '—')}
           </span>
         </div>
       ))}
+
+      {/* The rule once for all rungs, instead of once in every one. */}
+      <p className="ladder__rule">
+        Die nächste Stufe wird frei, wenn die angebotene Einheit sauber und vollständig absolviert
+        ist. Auf der obersten steigern sich die Einheiten über die Schwellenwerte.
+      </p>
     </section>
   )
 }
