@@ -97,7 +97,10 @@ export type Goal = {
   readonly label: string
   /** Watts for `ftp`, seconds for `raceTime`. */
   readonly targetValue: number
-  /** Watts for `ftp`, seconds for `raceTime`. Current level at plan start. */
+  /**
+   * Watts for `ftp`, seconds for `raceTime`. An FTP goal always carries the
+   * profile's FTP; a race time is the athlete's own latest result.
+   */
   readonly currentValue: number
   readonly distanceKm?: number
   /** ISO date (YYYY-MM-DD). Absent for open-ended goals. */

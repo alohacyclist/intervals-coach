@@ -170,3 +170,26 @@ describe('migrating the time budget', () => {
     ])
   })
 })
+
+describe('FTP goal', () => {
+  const withFtp = (ftp: number) => ({
+    ...DEFAULT_CONFIG,
+    profile: {
+      ...DEFAULT_CONFIG.profile,
+      sports: DEFAULT_CONFIG.profile.sports.map((setting) =>
+        setting.sport === 'Ride' ? { ...setting, threshold: { metric: 'power' as const, ftp } } : setting,
+      ),
+    },
+  })
+
+  it('follows the FTP of the profile, however it changed', () => {
+    const goal = validateConfig(withFtp(289)).goals.find((entry) => entry.kind === 'ftp')
+    expect(goal?.currentValue).toBe(289)
+  })
+
+  it('leaves a race time as the athlete entered it', () => {
+    const before = DEFAULT_CONFIG.goals.find((entry) => entry.kind === 'raceTime')
+    const after = validateConfig(withFtp(289)).goals.find((entry) => entry.kind === 'raceTime')
+    expect(after?.currentValue).toBe(before?.currentValue)
+  })
+})

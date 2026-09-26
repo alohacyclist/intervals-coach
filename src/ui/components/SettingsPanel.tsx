@@ -4,6 +4,7 @@ import { EQUIPMENT_LABELS } from '../../coach/types.ts'
 import { formatSeconds } from '../../coach/dates.ts'
 import { putConfig, syncSettings } from '../api.ts'
 import { parseMmSs } from '../format-input.ts'
+import { ftpOf } from '../../coach/thresholds.ts'
 import { SportPicker } from './SportPicker.tsx'
 
 const MINUTE_LABELS = {
@@ -24,6 +25,7 @@ type Props = {
 
 export const SettingsPanel = ({ config, onSaved, onClose, canDelete }: Props) => {
   const [draft, setDraft] = useState<CoachConfig>(config)
+  const ftp = ftpOf(draft.profile)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
@@ -148,18 +150,26 @@ export const SettingsPanel = ({ config, onSaved, onClose, canDelete }: Props) =>
               onChange={(event) => patchGoal(goal.id, { label: event.target.value })}
             />
           </label>
-          <label>
-            {goal.kind === 'ftp' ? 'Aktuell (W)' : 'Aktuell (mm:ss)'}
-            <input
-              type="text"
-              defaultValue={goal.kind === 'ftp' ? String(goal.currentValue) : formatSeconds(goal.currentValue)}
-              onBlur={(event) =>
-                patchGoal(goal.id, {
-                  currentValue: goal.kind === 'ftp' ? Number(event.target.value) : parseMmSs(event.target.value),
-                })
-              }
-            />
-          </label>
+          {goal.kind === 'ftp' && ftp !== null ? (
+            // Follows the FTP above: a second place to type it would only drift apart.
+            <label>
+              Aktuell (W)
+              <input type="text" value={String(ftp)} readOnly title="Folgt der FTP bei den Sportarten" />
+            </label>
+          ) : (
+            <label>
+              {goal.kind === 'ftp' ? 'Aktuell (W)' : 'Aktuell (mm:ss)'}
+              <input
+                type="text"
+                defaultValue={goal.kind === 'ftp' ? String(goal.currentValue) : formatSeconds(goal.currentValue)}
+                onBlur={(event) =>
+                  patchGoal(goal.id, {
+                    currentValue: goal.kind === 'ftp' ? Number(event.target.value) : parseMmSs(event.target.value),
+                  })
+                }
+              />
+            </label>
+          )}
           <label>
             {goal.kind === 'ftp' ? 'Ziel (W)' : 'Ziel (mm:ss)'}
             <input
