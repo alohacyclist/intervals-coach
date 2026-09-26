@@ -29,7 +29,10 @@ import { weekOutlook } from '../src/coach/week.ts'
 import { seasonBand } from '../src/coach/phase.ts'
 import { buildHistory } from '../src/coach/adherence.ts'
 import { completionsFrom, scheduledFrom } from '../src/coach/progression.ts'
-import { benchmarkStatus } from '../src/coach/benchmark.ts'
+import { benchmarkCompletions, benchmarkStatus, compareBenchmarks } from '../src/coach/benchmark.ts'
+import type { WorkReading } from '../src/coach/efficiency.ts'
+import { workReading } from '../src/coach/efficiency.ts'
+import { executionSuggestions, readWork, readWorkMany } from './work-readings.ts'
 import {
   buildProgress,
   DEFAULT_PROGRESS_SPAN,
@@ -42,7 +45,7 @@ import { adoptThreshold, thresholdSuggestions } from '../src/coach/threshold-dri
 import type { ObservedThresholds } from '../src/coach/threshold-drift.ts'
 import { matchedCompletions, mergeCompletions } from '../src/coach/matching.ts'
 import { withProposal } from '../src/coach/proposals.ts'
-import type { DayProposal, PlannedDay, Sport } from '../src/coach/types.ts'
+import type { BenchmarkResult, CoachConfig, DayProposal, Execution, PlannedDay, Sport, WorkoutTemplate } from '../src/coach/types.ts'
 import { readThresholdTests } from './threshold-tests.ts'
 import { ZWIFT_ROUTES, findRoute } from './zwift-routes.ts'
 import { isZrlRace } from '../src/coach/zrl.ts'
@@ -111,6 +114,51 @@ const rememberProposals = async (store: ConfigStore, days: readonly PlannedDay[]
   if (proposals !== latest.proposals) await store.save(validateConfig({ ...latest, proposals }))
 }
 
+/** The repeated comparison session, not the threshold test: only it is compared with its predecessor. */
+const isReference = (template: WorkoutTemplate): boolean =>
+  template.benchmark === true && template.measures !== 'threshold'
+
+/**
+ * A reference session set against the one before it, for the card under the
+ * session itself — where the athlete looks, not only on the progress page.
+ */
+const referenceResult = async (
+  auth: IntervalsAuth,
+  config: CoachConfig,
+  sport: Sport,
+  activityId: string,
+  date: string | null,
+  execution: Execution,
+): Promise<BenchmarkResult | null> => {
+  const today = localToday()
+  const [activities, events] = await Promise.all([
+    fetchActivities(auth, addDays(today, -PROGRESSION_DAYS), today),
+    fetchEvents(auth, addDays(today, -PROGRESSION_DAYS), today),
+  ])
+  const completions = mergeCompletions(
+    completionsFrom(events, activities),
+    matchedCompletions(config.proposals, activities, config.profile),
+  )
+  const current = activities.find((activity) => activity.id === activityId)
+  const on = date ?? current?.date ?? today
+  const earlier = benchmarkCompletions(sport, completions).filter(
+    (completion) => completion.activityId !== activityId && completion.date <= on,
+  )
+  const previous = earlier[earlier.length - 1] ?? null
+  const previousActivity = previous ? activities.find((activity) => activity.id === previous.activityId) : undefined
+  return compareBenchmarks(
+    sport,
+    { date: on, reading: workReading(execution), averageHr: current?.averageHr ?? null },
+    previous
+      ? {
+          date: previous.date,
+          reading: await readWork(auth, config.profile, previous, previousActivity),
+          averageHr: previousActivity?.averageHr ?? null,
+        }
+      : null,
+  )
+}
+
 /**
  * The development view. Deliberately lighter than the plan: it needs the same
  * activity history the plan already reads, but neither wellness nor the
@@ -128,8 +176,15 @@ const buildProgressView = async (deps: RouteDeps, span: ProgressSpan): Promise<P
     completionsFrom(events, activities),
     matchedCompletions(config.proposals, activities, config.profile),
   )
+  // The last two reference sessions per sport, read over their work intervals.
+  const references = config.profile.sports.flatMap((setting) =>
+    benchmarkCompletions(setting.sport, completions).slice(-2),
+  )
+  const readings = await readWorkMany(deps.auth, config.profile, references, activities).catch(
+    () => new Map<string, WorkReading>(),
+  )
   return buildProgress(activities, completions, today, span, weeksFor(span), {
-    benchmark: benchmarkStatus(config, completions, activities, today),
+    benchmark: benchmarkStatus(config, completions, activities, today, readings),
     feasibility: assessGoals(config.goals, config.profile, today),
     sports: config.profile.sports.map((setting) => setting.sport),
     season: seasonBand(config, today),
@@ -182,11 +237,13 @@ const buildPlan = async (deps: RouteDeps, days: number, intent?: Intent): Promis
   const tests = await readThresholdTests(deps.auth, config, recognised(proposals), today)
   const completions = tests.completions
   const estimated = thresholdSuggestions(config.profile, observedThresholds(wellness, settings))
-  // A measurement outranks an estimate for the same sport, always.
-  const suggestions = [
-    ...tests.suggestions,
-    ...estimated.filter((entry) => !tests.suggestions.some((hit) => hit.sport === entry.sport)),
-  ]
+  // Optional like the other extras: a failed read must not take the plan down.
+  const executed = await executionSuggestions(deps.auth, config, completions, activities, today).catch(() => [])
+  // A test outranks what the sessions show, and both outrank an estimate, for the same sport.
+  const ranked = [tests.suggestions, executed, estimated]
+  const suggestions = ranked.flatMap((level, rank) =>
+    level.filter((entry) => !ranked.slice(0, rank).some((above) => above.some((hit) => hit.sport === entry.sport))),
+  )
 
   const planned = planFromMorning(
     activities,
@@ -325,8 +382,12 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
 
     const { auth, store } = await resolve(context)
     const config = await store.load()
-    const { execution } = await loadExecution(auth, config.profile, activityId, template, isIsoDate(date) ? date : null)
-    return context.json(execution)
+    const day = isIsoDate(date) ? date : null
+    const { execution } = await loadExecution(auth, config.profile, activityId, template, day)
+    const benchmark = isReference(template)
+      ? await referenceResult(auth, config, template.sport, activityId, day, execution).catch(() => null)
+      : null
+    return context.json({ ...execution, benchmark })
   })
 
   /** Raw sport settings, used to prefill onboarding before any config exists. */

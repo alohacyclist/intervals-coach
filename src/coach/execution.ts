@@ -48,6 +48,10 @@ const WARM_OR_COOL = /^(ein|aus)(fahren|laufen|schwimmen)$/i
 /** Sessions whose point is duration, not the blocks inside it. */
 const NO_BLOCKS_TO_COMPARE: readonly Stimulus[] = ['ENDURANCE', 'RECOVERY', 'LONG', 'NEURO']
 
+/** Whether a session has work intervals with targets to hold, rather than only a length. */
+export const comparesBlocks = (template: WorkoutTemplate): boolean =>
+  !NO_BLOCKS_TO_COMPARE.includes(template.stimulus)
+
 const rangeOf = (target: string): { readonly low: number; readonly high: number } | null => {
   const values = percentages(target)
   if (values.length === 0) return null
@@ -279,7 +283,7 @@ const SHORT_INTERVAL_SECONDS = 90
 
 export const compareExecution = (input: ExecutionInput): Execution => {
   const { template, blocks, threshold } = input
-  const compareBlocks = !NO_BLOCKS_TO_COMPARE.includes(template.stimulus)
+  const compareBlocks = comparesBlocks(template)
   const plan = planOf(blocks, threshold, compareBlocks)
   const planned = plan.filter((step) => step.work)
   // Work intervals in order, each with the pause before it: a short pause is what

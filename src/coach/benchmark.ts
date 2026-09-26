@@ -10,10 +10,14 @@ import type { Completion } from './progression.ts'
 import { LIBRARY } from './library.ts'
 import { diffDays } from './dates.ts'
 import { selectedSports } from './thresholds.ts'
+import type { WorkReading } from './efficiency.ts'
+import { efficiencyChange } from './efficiency.ts'
 
 export const BENCHMARK_INTERVAL_WEEKS = 8
 /** Heart rate wanders a couple of beats day to day; less than this proves nothing. */
 const MEANINGFUL_HR_DELTA = 2
+/** Two beats at 160 is 1.25 %; pace per beat needs a little more than that to mean something. */
+const MEANINGFUL_EFFICIENCY_PERCENT = 1.5
 
 export const benchmarkTemplateFor = (sport: Sport) =>
   LIBRARY.find(
@@ -73,8 +77,8 @@ export const benchmarkDue = (
     templateId: template.id,
     reason:
       done.length === 0
-        ? 'Formkontrolle: dieselbe Einheit alle acht Wochen, unverändert. Verglichen wird die Herzfrequenz, die sie kostet — heute wird die erste Referenz gesetzt.'
-        : `Formkontrolle: dieselbe Einheit wie vor ${Math.floor(since / 7)} Wochen, identische Vorgaben. Weniger Schläge für dieselbe Arbeit ist der Fortschritt.`,
+        ? 'Formkontrolle: dieselbe Einheit alle acht Wochen. Verglichen wird Tempo bzw. Leistung pro Herzschlag in den Intervallen — heute wird die erste Referenz gesetzt.'
+        : `Formkontrolle: dieselbe Einheit wie vor ${Math.floor(since / 7)} Wochen. Mehr Arbeit pro Herzschlag ist der Fortschritt.`,
   }
 }
 
@@ -92,7 +96,7 @@ const verdictFor = (
   return delta < 0 ? 'better' : 'worse'
 }
 
-const describe = (result: Omit<BenchmarkResult, 'message'>): string => {
+const describe = (result: Omit<BenchmarkResult, 'message' | 'basis' | 'efficiencyChange'>): string => {
   const { averageHr, previousAverageHr, previousDate } = result
   if (result.verdict === 'first') {
     return averageHr === null
@@ -112,32 +116,106 @@ const describe = (result: Omit<BenchmarkResult, 'message'>): string => {
     : `${Math.round(averageHr)} bpm statt ${Math.round(previousAverageHr)}${since}: ${delta} Schläge mehr. Ermüdung, Hitze oder ein Formverlust — erst beim nächsten Mal wiederholen, bevor du daraus etwas ableitest.`
 }
 
+/** One reference session as the comparison needs it. */
+export type BenchmarkSession = {
+  readonly date: string
+  /** The work intervals alone; null when intervals.icu gave none to read. */
+  readonly reading: WorkReading | null
+  /** Over the whole activity: the fallback when the intervals cannot be read. */
+  readonly averageHr: number | null
+}
+
+const shortDate = (date: string): string => `${date.slice(8, 10)}.${date.slice(5, 7)}.`
+
+const intensityWord = (sport: Sport): string => (sport === 'Ride' ? 'Leistung' : 'Tempo')
+
+/**
+ * Pace per heartbeat over the work intervals: faster at the same heart rate, or
+ * the same pace at a lower one, is the progress this session exists to show. A
+ * session run faster than last time no longer reads as a loss because it cost
+ * more beats.
+ */
+const byIntervals = (
+  sport: Sport,
+  latest: BenchmarkSession & { readonly reading: WorkReading },
+  previous: BenchmarkSession & { readonly reading: WorkReading },
+): BenchmarkResult | null => {
+  const change = efficiencyChange(latest.reading, previous.reading)
+  if (change === null) return null
+  const verdict: BenchmarkResult['verdict'] =
+    Math.abs(change) < MEANINGFUL_EFFICIENCY_PERCENT ? 'unchanged' : change > 0 ? 'better' : 'worse'
+  const describeReading = (reading: WorkReading) =>
+    `${Math.round(reading.percent)} % bei ${Math.round(reading.heartRate!)} bpm`
+  const facts = `${intensityWord(sport)} ${describeReading(latest.reading)}, am ${shortDate(previous.date)} ${describeReading(previous.reading)}`
+  const amount = Math.abs(Math.round(change * 10) / 10).toLocaleString('de-DE')
+  const message =
+    verdict === 'unchanged'
+      ? `${facts}: gleiche Effizienz.`
+      : verdict === 'better'
+        ? `${facts}: ${amount} % effizienter. Das ist der Fortschritt.`
+        : `${facts}: ${amount} % weniger effizient. Ermüdung, Hitze oder ein Formverlust — erst beim nächsten Mal wiederholen, bevor du daraus etwas ableitest.`
+  return {
+    sport,
+    date: latest.date,
+    averageHr: latest.reading.heartRate,
+    previousDate: previous.date,
+    previousAverageHr: previous.reading.heartRate,
+    verdict,
+    basis: 'intervals',
+    efficiencyChange: Math.round(change * 10) / 10,
+    message,
+  }
+}
+
+/** The latest reference session against the one before it. */
+export const compareBenchmarks = (
+  sport: Sport,
+  latest: BenchmarkSession,
+  previous: BenchmarkSession | null,
+): BenchmarkResult => {
+  if (previous && latest.reading && previous.reading) {
+    const result = byIntervals(sport, { ...latest, reading: latest.reading }, { ...previous, reading: previous.reading })
+    if (result) return result
+  }
+  const partial = {
+    sport,
+    date: latest.date,
+    // A first reference is best set over the work it will be compared on next time.
+    averageHr: previous === null ? (latest.reading?.heartRate ?? latest.averageHr) : latest.averageHr,
+    previousDate: previous?.date ?? null,
+    previousAverageHr: previous?.averageHr ?? null,
+    verdict: verdictFor(latest.averageHr, previous?.averageHr ?? null, previous !== null),
+    basis: 'activity' as const,
+    efficiencyChange: null,
+  }
+  return { ...partial, message: describe(partial) }
+}
+
+/** The reference sessions of one sport, oldest first. */
+export const benchmarkCompletions = (sport: Sport, completions: readonly Completion[]): readonly Completion[] => {
+  const template = benchmarkTemplateFor(sport)
+  if (!template) return []
+  return completions
+    .filter((completion) => completion.templateId === template.id && completion.evidence !== 'similar')
+    .sort((left, right) => left.date.localeCompare(right.date))
+}
+
 const resultFor = (
   sport: Sport,
   completions: readonly Completion[],
   activities: readonly Activity[],
+  readings: ReadonlyMap<string, WorkReading>,
 ): BenchmarkResult | null => {
-  const template = benchmarkTemplateFor(sport)
-  if (!template) return null
-  const done = completions
-    .filter((completion) => completion.templateId === template.id)
-    .sort((left, right) => left.date.localeCompare(right.date))
+  const done = benchmarkCompletions(sport, completions)
   const latest = done[done.length - 1]
   if (!latest) return null
-
-  const hrOf = (completion: Completion) =>
-    activities.find((activity) => activity.id === completion.activityId)?.averageHr ?? null
   const previous = done[done.length - 2] ?? null
-
-  const partial = {
-    sport,
-    date: latest.date,
-    averageHr: hrOf(latest),
-    previousDate: previous?.date ?? null,
-    previousAverageHr: previous ? hrOf(previous) : null,
-    verdict: verdictFor(hrOf(latest), previous ? hrOf(previous) : null, previous !== null),
-  }
-  return { ...partial, message: describe(partial) }
+  const session = (completion: Completion): BenchmarkSession => ({
+    date: completion.date,
+    reading: readings.get(completion.activityId) ?? null,
+    averageHr: activities.find((activity) => activity.id === completion.activityId)?.averageHr ?? null,
+  })
+  return compareBenchmarks(sport, session(latest), previous ? session(previous) : null)
 }
 
 /**
@@ -149,6 +227,8 @@ export const benchmarkStatus = (
   completions: readonly Completion[],
   activities: readonly Activity[],
   today: string,
+  /** Work intervals of the reference sessions, by activity; without them heart rate is compared over the whole activity. */
+  readings: ReadonlyMap<string, WorkReading> = new Map(),
 ): BenchmarkStatus => {
   const sports = selectedSports(config.profile)
   const anyBenchmark = completions
@@ -168,7 +248,7 @@ export const benchmarkStatus = (
       return template ? [{ sport, templateId: template.id, name: template.name }] : []
     }),
     results: sports.flatMap((sport) => {
-      const result = resultFor(sport, completions, activities)
+      const result = resultFor(sport, completions, activities, readings)
       return result ? [result] : []
     }),
   }

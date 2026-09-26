@@ -1,5 +1,7 @@
 import type { AthleteProfile, Sport, SportThreshold, ThresholdSuggestion } from './types.ts'
 import { formatSeconds } from './dates.ts'
+import type { WorkReading } from './efficiency.ts'
+import { thresholdImplied } from './efficiency.ts'
 
 /** Below this the difference is noise, not drift. */
 const REPORT_THRESHOLD_PERCENT = 3
@@ -101,6 +103,57 @@ export const measuredSuggestion = (
     message:
       `Aus deiner Standortbestimmung: ${render(value)} statt ${render(configured)}. ` +
       'Das ist gemessen, nicht geschätzt — alle Vorgaben sollten jetzt darauf stehen.',
+  }
+}
+
+/** Points of threshold outside the band, on average, before two sessions say the targets are off. */
+export const EXECUTION_DRIFT_POINTS = 3
+
+/** A compared interval session, newest first where a list is passed. */
+export type ReadSession = { readonly date: string; readonly reading: WorkReading }
+
+/**
+ * The targets set from the threshold, held against what the athlete actually
+ * did. Two interval sessions in a row that sat well above their bands mean the
+ * threshold is behind; two well below are a reason to check it, not to lower
+ * it — tired legs look the same.
+ */
+export const executionSuggestion = (
+  profile: AthleteProfile,
+  sport: Sport,
+  sessions: readonly ReadSession[],
+): ThresholdSuggestion | null => {
+  const setting = profile.sports.find((entry) => entry.sport === sport)
+  const [latest, before] = sessions
+  if (!setting || !latest || !before) return null
+  const deviations = [latest.reading.deviation, before.reading.deviation]
+  const above = deviations.every((deviation) => deviation >= EXECUTION_DRIFT_POINTS)
+  const below = deviations.every((deviation) => deviation <= -EXECUTION_DRIFT_POINTS)
+  if (!above && !below) return null
+
+  const configured = valueOf(setting.threshold)
+  const implied = thresholdImplied(setting.threshold.metric, configured, [latest.reading, before.reading])
+  if (implied === null || Math.round(implied) === Math.round(configured)) return null
+  const drift = improvementPercent(setting.threshold.metric, configured, implied)
+  const render = (amount: number) =>
+    setting.threshold.metric === 'power'
+      ? `${Math.round(amount)} W`
+      : `${formatSeconds(amount)}${setting.threshold.metric === 'swimPace' ? '/100m' : '/km'}`
+  const average = Math.abs((deviations[0]! + deviations[1]!) / 2).toLocaleString('de-DE', { maximumFractionDigits: 1 })
+  const dates = [before.date, latest.date].map((date) => `${date.slice(8, 10)}.${date.slice(5, 7)}.`).join(' und ')
+
+  return {
+    sport,
+    metric: setting.threshold.metric,
+    configured,
+    observed: implied,
+    driftPercent: Math.round(drift * 10) / 10,
+    action: above ? 'adopt' : 'verify',
+    message: above
+      ? `Deine Intervalle am ${dates} lagen im Schnitt ${average} Punkte über dem Zielbereich. ` +
+        `Das passt zu einer Schwelle von ${render(implied)} statt ${render(configured)} — die Vorgaben sind zu leicht geworden.`
+      : `Deine Intervalle am ${dates} lagen im Schnitt ${average} Punkte unter dem Zielbereich. ` +
+        `Rechnerisch wären das ${render(implied)} statt ${render(configured)}. Müde Beine sehen genauso aus — bestätige es mit der Standortbestimmung, bevor du den Wert senkst.`,
   }
 }
 
