@@ -18,10 +18,12 @@ import {
 } from '../trace-geometry.ts'
 
 /**
- * The session over time: what was ridden or run as a line over the target
- * corridors, heart rate in its own strip below. The corridor fills where the
- * line sat inside it — filled means hit, as everywhere else on this card — so
- * a hot start, a stop at the lights and a fade at the end each show as a hole.
+ * The session over time: what was ridden or run as a line in front of the
+ * target corridors, heart rate in its own strip below. The corridor fills where
+ * the line sat inside it — filled means hit, as everywhere else on this card —
+ * so a hot start, a stop at the lights and a fade at the end each show as a
+ * hole. The ground under the line goes first, so it never hides a corridor, and
+ * the line last, so it reads through the filled part.
  *
  * Drawn in a 1000 × 100 box stretched to the card, like the strip it replaces;
  * text stays HTML so it is never stretched with it.
@@ -99,6 +101,7 @@ export const ExecutionTrace = ({ execution, trace, compared }: Props) => {
               className={percent === 100 ? 'trace__grid trace__grid--threshold' : 'trace__grid'}
             />
           ))}
+          <path d={areaPath(intensity, W, H)} className="trace__area" />
           {corridors.map((corridor) => (
             <g key={corridor.step.index}>
               <rect
@@ -120,7 +123,6 @@ export const ExecutionTrace = ({ execution, trace, compared }: Props) => {
               ))}
             </g>
           ))}
-          <path d={areaPath(intensity, W, H)} className="trace__area" />
           <path d={line} className="trace__line" />
         </svg>
         <span className="trace__tick readout" style={{ top: `${y(100)}%` }}>

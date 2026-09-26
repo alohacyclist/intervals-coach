@@ -50,6 +50,14 @@ describe('the session over time', () => {
     expect(during.every((point) => point.percent === null)).toBe(true)
   })
 
+  it('bridges the sparse samples of smart recording instead of breaking the line', () => {
+    // A sample every seven seconds leaves every few five-second slots empty.
+    const time = Array.from({ length: 60 }, (_, index) => index * 7)
+    const sparse: ActivityStreams = { time, watts: Array(60).fill(250), speed: null, heartRate: Array(60).fill(140) }
+    const trace = buildTrace(sparse, FTP) as ExecutionTrace
+    expect(trace.points.every((point) => point.percent === 100 && point.heartRate === 140)).toBe(true)
+  })
+
   it('keeps a five hour ride to a few hundred points', () => {
     const trace = buildTrace(ride(Array(5 * 3600).fill(200)), FTP) as ExecutionTrace
     expect(trace.points.length).toBeLessThanOrEqual(721)

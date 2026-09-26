@@ -61,7 +61,8 @@
   fill: color-mix(in srgb, var(--dim) 22%, transparent);
 }
 .trace__hit {
-  fill: var(--data);
+  /* See-through, so the line drawn over it still shows where in the band it ran. */
+  fill: color-mix(in srgb, var(--data) 45%, transparent);
 }
 .trace__area {
   fill: color-mix(in srgb, var(--data) 13%, transparent);
@@ -152,6 +153,9 @@
 
 .exec__key--band {
   background: color-mix(in srgb, var(--dim) 22%, transparent);
+}
+.exec__key--inband {
+  background: color-mix(in srgb, var(--data) 45%, transparent);
 }
 .exec__key--line {
   height: 2px;

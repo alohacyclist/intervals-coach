@@ -28,6 +28,7 @@ const DIM = '#8a9594'
 const FAINT = '#6b7676'
 const DATA = '#ffa62b'
 const BAND = 'rgba(125, 136, 135, 0.26)'
+const HIT = 'rgba(255, 166, 43, 0.45)'
 const RULE = '#1e2526'
 const RULE_LOUD = '#2f3839'
 const SHADE = '#141a1b'
@@ -122,20 +123,25 @@ const drawTrace = (context: CanvasRenderingContext2D, execution: Execution, trac
   })
   context.setLineDash([])
 
+  // Ground first, corridors over it, the line last — as on the card.
+  const intensity = intensityLine(trace, ceiling)
+  context.save()
+  context.translate(PLOT.x, PLOT.y)
+  context.fillStyle = 'rgba(255, 166, 43, 0.13)'
+  context.fill(new Path2D(areaPath(intensity, PLOT.width, PLOT.height)))
+  context.restore()
+
   corridors.forEach((corridor) => {
     const top = y(corridor.step.high)
     const height = y(corridor.step.low) - top
     context.fillStyle = BAND
     context.fillRect(x(corridor.from), top, x(corridor.to) - x(corridor.from), height)
-    context.fillStyle = DATA
+    context.fillStyle = HIT
     corridor.runs.forEach((run) => context.fillRect(x(run.from), top, x(run.to) - x(run.from), height))
     text(context, corridorLabel(corridor, total), (x(corridor.from) + x(corridor.to)) / 2, PLOT.y - 22, `600 26px ${MONO}`, INK, 'center')
   })
 
-  const intensity = intensityLine(trace, ceiling)
   context.translate(PLOT.x, PLOT.y)
-  context.fillStyle = 'rgba(255, 166, 43, 0.13)'
-  context.fill(new Path2D(areaPath(intensity, PLOT.width, PLOT.height)))
   context.strokeStyle = DATA
   context.lineWidth = 4
   context.lineJoin = 'round'
