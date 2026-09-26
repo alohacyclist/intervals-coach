@@ -18,6 +18,7 @@ import type {
 import { ALL_BREAK_KINDS, ALL_SPORTS, ZRL_FORMATS } from './types.ts'
 import type { Equipment } from './types.ts'
 import { MAX_PROPOSAL_DAYS } from './proposals.ts'
+import { ftpOf } from './thresholds.ts'
 
 export class ValidationError extends Error {
   constructor(readonly issues: readonly string[]) {
@@ -366,15 +367,31 @@ const validateDestinations = (raw: unknown): CoachConfig['destinations'] => {
   )
 }
 
+/**
+ * An FTP goal starts from the FTP the profile has now: however the FTP changed —
+ * a test adopted, a sync from intervals.icu, a hand edit — the goal follows,
+ * instead of holding the value it was set up with.
+ */
+const inStepWithFtp = (goals: readonly Goal[], profile: AthleteProfile): readonly Goal[] => {
+  const ftp = ftpOf(profile)
+  return ftp === null
+    ? goals
+    : goals.map((goal) => (goal.kind === 'ftp' && goal.currentValue !== ftp ? { ...goal, currentValue: ftp } : goal))
+}
+
 export const validateConfig = (raw: unknown): CoachConfig => {
   const issues: string[] = []
   const input = (raw ?? {}) as Record<string, unknown>
   const goalsInput = Array.isArray(input['goals']) ? input['goals'] : []
   if (goalsInput.length === 0) issues.push('Mindestens ein Ziel wird benötigt')
 
+  const profile = validateProfile(input['profile'], issues)
   const config: CoachConfig = {
-    profile: validateProfile(input['profile'], issues),
-    goals: goalsInput.map((goal, index) => validateGoal(goal, index, issues)),
+    profile,
+    goals: inStepWithFtp(
+      goalsInput.map((goal, index) => validateGoal(goal, index, issues)),
+      profile,
+    ),
     strengthLog: validateStrengthLog(input['strengthLog']),
     breaks: validateBreaks(input['breaks']),
     proposals: validateProposals(input['proposals']),
