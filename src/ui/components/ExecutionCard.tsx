@@ -269,15 +269,6 @@ export const ExecutionView = ({ execution }: { readonly execution: Execution }) 
       )}
 
       {execution.unavailable && <p className="exec__note">{execution.unavailable}</p>}
-      {execution.mismatch && (
-        <p className="exec__note">
-          Erkannt wurden {execution.mismatch.detected} Intervalle, geplant waren{' '}
-          {execution.mismatch.planned} — zugeordnet nach Reihenfolge und Dauer
-          {execution.mismatch.detected > execution.mismatch.planned
-            ? '; was zu keinem geplanten passte, bleibt außen vor.'
-            : '.'}
-        </p>
-      )}
 
       {trace && (
         <p className="exec__legend">

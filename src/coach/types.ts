@@ -657,11 +657,6 @@ export type Execution = {
   readonly duration: { readonly planned: number; readonly actual: number }
   readonly load: { readonly planned: number; readonly actual: number }
   readonly compliance: number | null
-  /**
-   * Planned and detected work intervals differ in number. They are still paired
-   * by order, and this says so instead of letting a guess pass as a fact.
-   */
-  readonly mismatch: { readonly planned: number; readonly detected: number } | null
   /** Why no interval could be compared at all, in words for the athlete. */
   readonly unavailable: string | null
   /** Null without a usable stream: pool swims, or a ride without a meter. */
