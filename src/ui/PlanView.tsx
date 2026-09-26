@@ -85,21 +85,6 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
 
   return (
     <>
-      <div className="account">
-        <span>
-          {me.mode === 'multi' ? (
-            <>
-              Angemeldet als {me.name}
-              {me.consentAt &&
-                ` · Einwilligung ${new Date(me.consentAt).toLocaleDateString('de-DE')}`}
-            </>
-          ) : (
-            'Angemeldet'
-          )}
-        </span>
-        <a href="/auth/logout">Abmelden</a>
-      </div>
-
       {plan && (
         <StateHeader
           state={plan.state}
@@ -107,49 +92,6 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
           onRefresh={() => void load()}
           onSettings={() => setShowSettings((open) => !open)}
         />
-      )}
-
-      {plan && <WeekOutlookCard week={plan.week} />}
-
-      {plan?.state.dataIssue && <DataIssueBanner issue={plan.state.dataIssue} />}
-
-      {plan && plan.thresholdSuggestions.length > 0 && (
-        <ThresholdCard
-          suggestions={plan.thresholdSuggestions}
-          date={plan.days[0]?.date ?? ''}
-          onAdopted={() => void load()}
-        />
-      )}
-
-      {plan && plan.history.length > 0 && <HistoryStrip history={plan.history} />}
-
-      {plan && config && (
-        <BreakBar config={config} today={plan.days[0]?.date ?? ''} onChanged={() => void load()} />
-      )}
-
-      {plan && (
-        <div className="intent">
-          <span className="intent__label">Heute</span>
-          {INTENTS.map((option) => (
-            <button
-              key={option.label}
-              type="button"
-              className={intent === option.key ? 'intent__on' : ''}
-              onClick={() => setIntent(option.key)}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {error && (
-        <p className="error error--block">
-          {error}
-          <button type="button" onClick={() => void load()}>
-            Erneut versuchen
-          </button>
-        </p>
       )}
 
       {showSettings && config && (
@@ -177,6 +119,41 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
         </div>
       )}
 
+      {plan?.state.dataIssue && <DataIssueBanner issue={plan.state.dataIssue} />}
+
+      {plan && plan.thresholdSuggestions.length > 0 && (
+        <ThresholdCard
+          suggestions={plan.thresholdSuggestions}
+          date={plan.days[0]?.date ?? ''}
+          onAdopted={() => void load()}
+        />
+      )}
+
+      {plan && (
+        <div className="intent">
+          <span className="intent__label">Heute</span>
+          {INTENTS.map((option) => (
+            <button
+              key={option.label}
+              type="button"
+              className={intent === option.key ? 'intent__on' : ''}
+              onClick={() => setIntent(option.key)}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {error && (
+        <p className="error error--block">
+          {error}
+          <button type="button" onClick={() => void load()}>
+            Erneut versuchen
+          </button>
+        </p>
+      )}
+
       {!plan && !error && <p className="loading">Lade Daten von intervals.icu…</p>}
 
       {plan?.days.map((day, index) => (
@@ -190,6 +167,15 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
           scheduled={(plan?.scheduled ?? []).filter((entry) => entry.date === day.date)}
         />
       ))}
+
+      {/* Today leads; how the week is going and what can be set for it follow. */}
+      {plan && <WeekOutlookCard week={plan.week} />}
+
+      {plan && plan.history.length > 0 && <HistoryStrip history={plan.history} />}
+
+      {plan && config && (
+        <BreakBar config={config} today={plan.days[0]?.date ?? ''} onChanged={() => void load()} />
+      )}
 
       {plan && config && (
         <DestinationBar
@@ -205,7 +191,14 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
       {plan && (
         <footer className="footer">
           Stand: {new Date(plan.generatedAt).toLocaleString('de-DE')} ·{' '}
-          <a href="/datenschutz">Datenschutz</a> · <a href="/impressum">Impressum</a>
+          <a href="/datenschutz">Datenschutz</a> · <a href="/impressum">Impressum</a> ·{' '}
+          <a href="/auth/logout">Abmelden</a>
+          {me.mode === 'multi' && (
+            <span className="footer__account">
+              Angemeldet als {me.name}
+              {me.consentAt && ` · Einwilligung ${new Date(me.consentAt).toLocaleDateString('de-DE')}`}
+            </span>
+          )}
         </footer>
       )}
     </>
