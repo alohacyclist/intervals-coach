@@ -33,6 +33,7 @@ import { createStravaRoutes, stravaApp } from './strava-routes.ts'
 import { withdraw } from './strava.ts'
 import { deleteLink, loadLink, renewLink } from './strava-store.ts'
 import { syncStrava } from './strava-cron.ts'
+import { allowSignup, brevoConfig, isEmail, requestDoubleOptIn } from './waitlist.ts'
 
 const REFRESH_MARGIN_SECONDS = 120
 
@@ -227,6 +228,30 @@ app.get('/api/me', async (context) => {
     athleteId: session.athleteId,
     consentAt: user?.consentAt ?? null,
   })
+})
+
+/**
+ * The waitlist is the one write open to anyone, so it takes nothing but an
+ * address, keeps none of it, and is limited per client. A filled honeypot field
+ * is answered like a success, so a bot learns nothing from it.
+ */
+app.post('/api/waitlist', async (context) => {
+  const env = context.env as Bindings
+  const config = brevoConfig(env, new URL(context.req.url).origin)
+  if (!config) return context.json({ error: 'Die Warteliste ist noch nicht eingerichtet.' }, 503)
+
+  const body = (await context.req.json().catch(() => ({}))) as { email?: unknown; website?: unknown }
+  if (typeof body.website === 'string' && body.website.length > 0) return context.json({ ok: true })
+  const email = typeof body.email === 'string' ? body.email.trim() : ''
+  if (!isEmail(email)) return context.json({ error: 'Das sieht nicht nach einer E-Mail-Adresse aus.' }, 400)
+
+  const client = context.req.header('CF-Connecting-IP') ?? 'unbekannt'
+  if (!(await allowSignup(env.COACH_CONFIG, client))) {
+    return context.json({ error: 'Zu viele Versuche. Bitte in einer Stunde erneut.' }, 429)
+  }
+  return (await requestDoubleOptIn(config, email)) === 'sent'
+    ? context.json({ ok: true })
+    : context.json({ error: 'Das Eintragen hat nicht geklappt. Bitte später noch einmal versuchen.' }, 502)
 })
 
 // ------------------------------------------------------------- access control

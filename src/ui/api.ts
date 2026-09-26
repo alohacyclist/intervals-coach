@@ -52,6 +52,10 @@ export type SportSettings = {
 
 export const getMe = (): Promise<Me> => request<Me>('/api/me')
 
+/** The waitlist on the landing page; `website` is the honeypot and stays empty for people. */
+export const joinWaitlist = (email: string, website: string): Promise<{ ok: true }> =>
+  request<{ ok: true }>('/api/waitlist', { method: 'POST', body: JSON.stringify({ email, website }) })
+
 /** Single user mode only: trades the shared password for a session cookie. */
 export const login = (passwort: string): Promise<{ ok: true }> =>
   request<{ ok: true }>('/api/login', { method: 'POST', body: JSON.stringify({ passwort }) })
