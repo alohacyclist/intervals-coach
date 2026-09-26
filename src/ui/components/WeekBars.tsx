@@ -16,12 +16,13 @@ type Props = {
  * so the latest always reads.
  */
 const LABELS_WIDE = 12
-const LABELS_NARROW = 6
 
+/** A phone labels every second of the wide labels, so its set is always a subset. */
 const quiet = (index: number, count: number): string => {
   const fromEnd = count - 1 - index
-  if (fromEnd % Math.ceil(count / LABELS_WIDE) !== 0) return 'weeks__item--quiet'
-  return fromEnd % Math.ceil(count / LABELS_NARROW) !== 0 ? 'weeks__item--quiet-narrow' : ''
+  const wide = Math.ceil(count / LABELS_WIDE)
+  if (fromEnd % wide !== 0) return 'weeks__item--quiet'
+  return fromEnd % (wide * 2) !== 0 ? 'weeks__item--quiet-narrow' : ''
 }
 
 const label = (week: WeekLoad): string => `${week.start.slice(8, 10)}.${week.start.slice(5, 7)}.`

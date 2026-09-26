@@ -138,12 +138,28 @@
   color: var(--data);
   font-variant-numeric: tabular-nums;
 }
-.metrics--sport {
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+.metrics--key {
+  grid-template-columns: repeat(3, 1fr);
+}
+.metrics--key dd {
+  font-size: 28px;
+}
+.header__more {
+  border-top: 1px solid var(--rule);
+}
+.header__more > summary {
+  padding: 10px 14px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.header__more .metrics {
   margin: 0;
 }
-.metrics--sport dd {
-  font-size: 15px;
+.header__more .metrics dd {
+  font-size: 17px;
   color: var(--text);
 }
 
@@ -370,16 +386,6 @@
   padding: 24px 0;
 }
 
-.account {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-family: var(--mono);
-  font-size: 10.5px;
-  letter-spacing: 0.06em;
-  color: var(--faint);
-}
-
 .footer {
   padding-top: 14px;
   border-top: 1px solid var(--rule);
@@ -390,6 +396,11 @@
   color: var(--faint);
   text-align: center;
 }
+.footer__account {
+  display: block;
+  margin-top: 6px;
+  text-transform: none;
+}
 
 @media (max-width: 860px) {
   .metrics {
@@ -398,9 +409,11 @@
 }
 
 @media (max-width: 560px) {
-  .metrics,
-  .metrics--sport {
+  .metrics {
     grid-template-columns: repeat(2, 1fr);
+  }
+  .metrics--key {
+    grid-template-columns: repeat(3, 1fr);
   }
   .intent__label {
     display: none;

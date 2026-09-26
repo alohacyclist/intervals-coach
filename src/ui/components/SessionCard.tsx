@@ -105,7 +105,8 @@ export const SessionCard = ({
       </div>
 
       <h3>{session.template.name}</h3>
-      <p className="session__reason">{session.reason}</p>
+      {/* The pick says why in one line; an alternative keeps it with the rest of the why. */}
+      {recommended && <p className="session__reason">{session.reason}</p>}
       {session.race && <p className="session__race readout">{raceFacts(session.race)}</p>}
 
       {variants.length > 1 ? (
@@ -150,6 +151,7 @@ export const SessionCard = ({
       {/* The one sentence why stays above; the coaching prose is a tap away. */}
       <details className="disclose session__why">
         <summary>Warum diese Einheit</summary>
+        {!recommended && <p className="session__note">{session.reason}</p>}
         {trimmed && (
           <p className="session__note">
             {active?.cuts.join(' · ')}. Intervalllänge und Zielwerte bleiben unverändert — nur das

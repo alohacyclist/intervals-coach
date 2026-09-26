@@ -91,31 +91,30 @@ export const DayCard = ({
 
   const body = (
     <>
-      <ul className="notes">
-        {day.notes.map((note) => (
-          <li key={note}>{note}</li>
-        ))}
-      </ul>
+      {/* The reason for the day reads first; the numbers behind it wait for a tap. */}
+      {day.notes.length > 0 && (
+        <p className={day.notes.length > 1 ? 'day__reason' : 'day__reason day__reason--alone'}>{day.notes[0]}</p>
+      )}
+      {day.notes.length > 1 && (
+        <details className="disclose day__why">
+          <summary>Hintergrund</summary>
+          <ul className="notes">
+            {day.notes.slice(1).map((note) => (
+              <li key={note}>{note}</li>
+            ))}
+          </ul>
+        </details>
+      )}
 
       {trained && <DoneStrip sessions={day.completed} date={day.date} />}
 
-      {day.optional && !trained && (
-        <p className="rest-hint">
-          <span>
-            <strong>Über deinem Wochenpensum.</strong> Eingeplant ist heute nichts mehr — nach zwei
-            Ruhetagen bist du aber erholt und dein Budget für harte Einheiten ist noch nicht
-            ausgeschöpft. Nimm es, wenn du Lust hast; lass es aus, ohne dass der Plan darunter
-            leidet.
-          </span>
-        </p>
-      )}
+      {/* A voluntary day says so in its badge and its reason; a third telling was noise. */}
 
       {day.recommended === 'REST' && !trained && (
         <p className="rest-hint">
           <span>
-            <strong>Heute ist Pause vorgesehen.</strong> Ruhetage sind Teil des Plans, nicht das
-            Ausbleiben davon — die Anpassung passiert dazwischen. Falls du dich trotzdem bewegen
-            willst, stehen unten die lockersten Varianten.
+            <strong>Heute ist Pause.</strong> Wer sich trotzdem bewegen will: unten die lockersten
+            Varianten.
           </span>
         </p>
       )}

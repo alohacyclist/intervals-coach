@@ -84,10 +84,11 @@ export const DestinationBar = ({ config, destinations, onSaved }: Props) => {
         )
       })}
 
-      <p className="destinations__note">
+      <details className="disclose destinations__note">
+        <summary>Wie das funktioniert</summary>
         intervals.icu leitet je Konto weiter, nicht je Einheit. Die App stellt die Schalter deshalb
         kurz vor jedem Senden auf die Sportart um.
-      </p>
+      </details>
       {error && <p className="error">{error}</p>}
     </section>
   )

@@ -84,20 +84,39 @@
   border-color: var(--bad);
 }
 
+.day__reason {
+  padding: 11px 14px 4px;
+  font-size: 14px;
+  color: var(--text);
+}
+.day__why {
+  border-bottom: 1px solid var(--rule);
+}
+.day__why > summary {
+  padding: 4px 14px 10px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.day__reason--alone {
+  padding-bottom: 11px;
+  border-bottom: 1px solid var(--rule);
+}
 .notes {
   list-style: none;
   margin: 0;
-  padding: 10px 14px;
+  padding: 0 14px 10px;
   display: flex;
   flex-direction: column;
   gap: 3px;
-  border-bottom: 1px solid var(--rule);
 }
 .notes:empty {
   display: none;
 }
 .notes li {
-  font-size: 12.5px;
+  font-size: 13px;
   color: var(--dim);
 }
 
