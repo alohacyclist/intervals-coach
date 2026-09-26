@@ -94,7 +94,7 @@ export const describeBlocks = (
   note: string,
   reason: string,
 ): string =>
-  `${toIntervalsText(blocks)}\n\n${note}\n\nWarum heute: ${reason}\n\n(automatisch erstellt von intervals-coach)`
+  `${toIntervalsText(blocks)}\n\n${note}\n\nWarum heute: ${reason}\n\n(automatisch erstellt von Formkurve)`
 
 export const describeWorkout = (template: WorkoutTemplate, reason: string): string =>
   describeBlocks(template.blocks, template.coachNote, reason)

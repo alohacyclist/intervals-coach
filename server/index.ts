@@ -18,7 +18,7 @@ const start = (): void => {
   }
 
   serve({ fetch: app.fetch, port: env.port }, ({ port }) => {
-    console.log(`intervals-coach api → http://localhost:${port}`)
+    console.log(`formkurve api → http://localhost:${port}`)
   })
 }
 
