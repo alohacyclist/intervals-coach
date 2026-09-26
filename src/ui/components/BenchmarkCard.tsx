@@ -25,9 +25,8 @@ export const BenchmarkCard = ({ status }: { readonly status: BenchmarkStatus }) 
     </div>
 
     <p className="benchmark__meta">
-      Alle {status.intervalWeeks} Wochen dieselbe Einheit, unverändert. Verglichen wird die
-      Herzfrequenz, die sie kostet — weniger Schläge für dieselbe Arbeit ist der Fortschritt. Sie
-      setzt keine Werte: das macht die Standortbestimmung mit dem 20-Minuten-Maximalblock.
+      Alle {status.intervalWeeks} Wochen dieselbe Einheit. Verglichen wird Tempo bzw. Leistung pro
+      Herzschlag in den Arbeitsintervallen — mehr Arbeit für denselben Puls ist der Fortschritt.
     </p>
 
     {status.results.map((result) => (

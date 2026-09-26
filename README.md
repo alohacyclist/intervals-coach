@@ -163,9 +163,20 @@ oder nur Körpergewicht. Ohne Gewichte übernehmen einbeinige Arbeit, langsame A
 und Plyometrie die Rolle der Last.
 
 **Formkontrolle.** Alle 8 Wochen legt die App dieselbe Referenzeinheit (4×4 min) auf einen
-Qualitätstag — unverändert, damit die Ergebnisse vergleichbar bleiben. Verglichen wird
-Leistung gegen Herzfrequenz: weniger Schläge für dieselbe Arbeit ist der Fortschritt. Sie
-setzt keine Werte und kostet keinen maximalen Test; das ist Aufgabe der Standortbestimmung.
+Qualitätstag — unverändert, damit die Ergebnisse vergleichbar bleiben. Verglichen wird nur
+über die Arbeitsintervalle, und zwar Tempo bzw. Leistung pro Herzschlag gegenüber der
+vorigen Formkontrolle: ab 1,5 % Unterschied heißt das effizienter oder weniger effizient.
+Wer diesmal schneller lief, wird dadurch nicht für den höheren Puls bestraft. Beide Werte
+werden gegen die aktuelle Schwelle gelesen, sind also auch nach einer Schwellenänderung
+vergleichbar. Ohne lesbare Intervalle fällt der Vergleich auf den Puls der ganzen Einheit
+zurück. Das Ergebnis steht in der Soll-Ist-Karte der Einheit und auf der Verlauf-Seite.
+
+**Vorgaben gegen Ausführung.** Liegen die letzten zwei erkannten Intervalleinheiten einer
+Sportart (höchstens 28 Tage alt, keine Tests oder Rennen) beide im Schnitt mindestens 3
+Punkte über ihrem Zielbereich, schlägt die App die Schwelle vor, bei der die Arbeit mittig im
+Band gelegen hätte — zum Übernehmen, wie jeden anderen Vorschlag. Liegen beide 3 Punkte
+darunter, wird nur zur Prüfung geraten: müde Beine sehen genauso aus. Ein Test geht diesem
+Vorschlag vor, und dieser Vorschlag geht dem Schätzwert von intervals.icu vor.
 Nicht in Tapering- oder Erholungswochen, nicht über dem Zeitbudget, nicht direkt nach einer
 Pause und nie am selben Tag wie ein Schwellentest.
 
