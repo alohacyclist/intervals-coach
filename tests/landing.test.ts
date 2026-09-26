@@ -5,7 +5,7 @@ import { Landing, landingError } from '../src/ui/Landing.tsx'
 import { EXPIRED_SESSION_URL } from '../src/ui/api.ts'
 
 describe('landing copy', () => {
-  const html = renderToStaticMarkup(createElement(Landing, { error: null }))
+  const html = renderToStaticMarkup(createElement(Landing, { mode: 'signup', error: null }))
 
   it('speaks of every chosen sport, swimming included, not of two', () => {
     expect(html).not.toMatch(/zwei Vorschläge/i)
@@ -44,12 +44,28 @@ describe('landing copy', () => {
   })
 })
 
+describe('the landing page before the app is open to everyone', () => {
+  const html = renderToStaticMarkup(createElement(Landing, { mode: 'waitlist', error: null }))
+
+  it('asks for an address instead of a sign-in, and leads the owner to /login', () => {
+    expect(html).toContain('type="email"')
+    expect(html).not.toContain('Mit intervals.icu anmelden')
+    expect(html).toContain('href="/login"')
+  })
+
+  it('thanks a confirmed address and does not ask for it again', () => {
+    const back = renderToStaticMarkup(createElement(Landing, { mode: 'waitlist', error: null, confirmed: true }))
+    expect(back).toContain('Bestätigt.')
+    expect(back).not.toContain('type="email"')
+  })
+})
+
 describe('the reason a sign-in page gives', () => {
   it('says the session ran out when a view sent the athlete back after a 401', () => {
     const reason = new URL(EXPIRED_SESSION_URL, 'https://formkurve.org').searchParams.get('fehler')
     expect(reason).toBe('abgelaufen')
     expect(landingError('abgelaufen')).toBe('Deine Anmeldung ist abgelaufen. Bitte melde dich neu an.')
-    expect(renderToStaticMarkup(createElement(Landing, { error: 'abgelaufen' }))).toContain(
+    expect(renderToStaticMarkup(createElement(Landing, { mode: 'signup', error: 'abgelaufen' }))).toContain(
       'Deine Anmeldung ist abgelaufen.',
     )
   })
