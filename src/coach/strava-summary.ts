@@ -7,7 +7,11 @@ import type { Execution, Sport } from './types.ts'
  */
 
 /** Marks the paragraph as this app's, so a second run replaces it instead of adding another. */
-export const SIGNATURE = 'geplant und ausgewertet mit intervals-coach'
+export const SIGNATURE = 'geplant und ausgewertet mit Formkurve'
+/** Written before the app was named Formkurve; still this app's paragraph to replace. */
+const EARLIER_SIGNATURES = ['geplant und ausgewertet mit intervals-coach']
+const isOurs = (paragraph: string): boolean =>
+  [SIGNATURE, ...EARLIER_SIGNATURES].some((signature) => paragraph.includes(signature))
 
 const BLOCKS = '▁▂▃▄▅▆▇█'
 /** Fits one line of the Strava app on a phone. */
@@ -79,7 +83,7 @@ export const withSummary = (description: string | null, summary: string): string
   const own = (description ?? '')
     .split(/\n\s*\n/)
     .map((paragraph) => paragraph.trim())
-    .filter((paragraph) => paragraph.length > 0 && !paragraph.includes(SIGNATURE))
+    .filter((paragraph) => paragraph.length > 0 && !isOurs(paragraph))
   return [...own, summary].join('\n\n')
 }
 

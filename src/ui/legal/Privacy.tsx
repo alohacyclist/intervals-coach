@@ -5,7 +5,7 @@ export const Privacy = () => (
     <h1>Datenschutzerklärung</h1>
 
     <p>
-      Intervals Coach verarbeitet Gesundheitsdaten. Diese Erklärung sagt in einfacher Sprache, was
+      Formkurve verarbeitet Gesundheitsdaten. Diese Erklärung sagt in einfacher Sprache, was
       damit passiert, warum, wie lange und wie du es wieder rückgängig machst.
     </p>
 

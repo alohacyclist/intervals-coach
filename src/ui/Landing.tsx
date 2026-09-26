@@ -21,7 +21,7 @@ export const Landing = ({ error }: { readonly error: string | null }) => {
   return (
     <div className="landing">
       <header className="landing__hero">
-        <p className="landing__eyebrow">Intervals Coach</p>
+        <p className="landing__eyebrow">Formkurve</p>
         <h1>Dein Trainingsplan für die nächsten drei Tage — aus deinen eigenen Daten.</h1>
         <p className="landing__lead">
           Der Coach liest deine Einheiten und Erholungswerte aus intervals.icu und schlägt für

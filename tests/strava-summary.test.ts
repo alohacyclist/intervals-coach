@@ -83,6 +83,11 @@ describe('writing it into the description', () => {
     const before = withSummary('Gut gelaufen.', `Alt · 1 von 3 im Ziel\n— ${SIGNATURE}`)
     expect(withSummary(before, summary)).toBe(`Gut gelaufen.\n\n${summary}`)
   })
+
+  it('also replaces a paragraph written under the earlier name', () => {
+    const before = 'Gut gelaufen.\n\nAlt · 1 von 3 im Ziel\n— geplant und ausgewertet mit intervals-coach'
+    expect(withSummary(before, summary)).toBe(`Gut gelaufen.\n\n${summary}`)
+  })
 })
 
 describe('finding the same session on Strava', () => {

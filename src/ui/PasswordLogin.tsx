@@ -27,7 +27,7 @@ export const PasswordLogin = ({ onDone }: { readonly onDone: () => void }) => {
 
   return (
     <form className="login" onSubmit={(event) => void submit(event)}>
-      <h1>Intervals Coach</h1>
+      <h1>Formkurve</h1>
       <p className="login__lead">
         Angemeldet bleibst du 30 Tage. Jeder Besuch verlängert das wieder — nach einem Monat
         ohne Nutzung fragt der Coach erneut.
