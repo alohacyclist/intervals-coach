@@ -288,7 +288,8 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
       return context.json({ error: error.message, needsOnboarding: true }, 409)
     }
     if (error instanceof ValidationError) return context.json({ error: error.message, issues: error.issues }, 400)
-    if (error instanceof IntervalsError) return context.json({ error: error.message }, 502)
+    // Written for the athlete (a missing scope says to sign in again), unlike a gateway's own 502.
+    if (error instanceof IntervalsError) return context.json({ error: error.message, forAthlete: true }, 502)
     console.error(error)
     return context.json({ error: error.message ?? 'Unbekannter Fehler' }, 500)
   })
