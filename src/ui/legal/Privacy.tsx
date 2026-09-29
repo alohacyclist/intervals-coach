@@ -113,8 +113,9 @@ export const Privacy = () => (
       Einheit schreibt die App eine kurze Auswertung in die Beschreibung der passenden Aktivität auf
       Strava — Name der Einheit, wie viele Intervalle im Zielbereich lagen, Zeit im Zielbereich,
       Trainingsbelastung, ein Verlaufsbild aus Textzeichen und einen Link zu dieser App. Deine
-      Herzfrequenz schreibt sie dort nicht hinein. Dafür ruft die App auch ohne deinen Besuch etwa
-      alle 20 Minuten deine Einheiten der letzten zwei Tage bei intervals.icu ab. Wer die
+      Herzfrequenz schreibt sie dort nicht hinein. Dafür ruft die App auch ohne deinen Besuch an Tagen,
+      für die sie dir eine Einheit vorgeschlagen hat, tagsüber bis zu etwa alle 30 Minuten deine
+      Einheiten der letzten zwei Tage bei intervals.icu ab. Wer die
       Beschreibung auf Strava sieht, bestimmen deine Sichtbarkeitseinstellungen dort. Für dein
       Verhältnis zu Strava gilt deren eigene Datenschutzerklärung.
     </p>
