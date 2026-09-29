@@ -76,11 +76,24 @@ background:
 
 No write access to activities or wellness, and no delete access anywhere.
 
-**Scale and data**
-Myself and a handful of training partners; non-commercial, free, no data resale. Training
-and wellness data are fetched per request and not stored. Only the OAuth tokens
-(AES-GCM encrypted) and each athlete's goal settings are persisted. Athletes sign an
-explicit consent for health data (GDPR Art. 9) before connecting.
+**Scale and business model**
+It starts as a free beta: my training partners first, then an open beta announced in the
+forum. I expect a few dozen athletes in the first months and at most a few hundred in the
+first year — well below the 500 users of the default allowance; if it ever gets close, I'll
+write before, not after. Free during the beta. A paid tier may follow later to cover
+running costs; before introducing one I'd talk it through with you first, and I'm happy
+to align it with your terms and your supporters. No data resale, no advertising, ever.
+
+**Data and API usage**
+Training and wellness data are fetched when the athlete opens the app and not stored;
+answers are kept for at most five minutes, encrypted, so a reload does not ask the API
+again, and every write clears them. Only the OAuth tokens (AES-GCM encrypted) and each
+athlete's goal settings are persisted. Athletes give explicit consent for health data
+(GDPR Art. 9) before connecting. A plan takes five to six requests; an optional Strava
+feature looks for new sessions only on days with a proposed workout, backing off to once
+every two hours — around 10–25 requests per connected athlete and day. Requests are
+throttled per athlete, and the logs warn when the daily allowance runs low. Data from
+Garmin devices is attributed as Garmin's API brand guidelines require.
 
 Thanks for building intervals.icu and keeping the API open.
 
