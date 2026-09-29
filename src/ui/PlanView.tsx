@@ -7,6 +7,8 @@ import { HistoryStrip } from './components/HistoryStrip.tsx'
 import { ThresholdCard } from './components/ThresholdCard.tsx'
 import { DestinationBar } from './components/DestinationBar.tsx'
 import { StateHeader } from './components/StateHeader.tsx'
+import { MetricsPanel } from './components/MetricsPanel.tsx'
+import { todaySummary } from '../coach/wording.ts'
 import { WeekOutlookCard } from './components/WeekOutlookCard.tsx'
 import { DayCard } from './components/DayCard.tsx'
 import { SettingsPanel } from './components/SettingsPanel.tsx'
@@ -87,7 +89,13 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
     <>
       {plan && (
         <StateHeader
-          state={plan.state}
+          summary={todaySummary({
+            readiness: plan.state.readiness.score,
+            tsb: plan.state.overall.tsb,
+            dayType: plan.days[0]?.dayType ?? 'EASY',
+            trained: (plan.days[0]?.completed.length ?? 0) > 0,
+          })}
+          readiness={plan.state.readiness.score}
           busy={busy}
           onRefresh={() => void load()}
           onSettings={() => setShowSettings((open) => !open)}
@@ -119,24 +127,17 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
         </div>
       )}
 
-      {plan?.state.dataIssue && <DataIssueBanner issue={plan.state.dataIssue} />}
-
-      {plan && plan.thresholdSuggestions.length > 0 && (
-        <ThresholdCard
-          suggestions={plan.thresholdSuggestions}
-          date={plan.days[0]?.date ?? ''}
-          onAdopted={() => void load()}
-        />
-      )}
-
       {plan && (
-        <div className="intent">
-          <span className="intent__label">Heute</span>
+        <div className="intent" role="group" aria-label="Wie soll heute werden?">
+          <span className="intent__label" aria-hidden="true">
+            Heute
+          </span>
           {INTENTS.map((option) => (
             <button
               key={option.label}
               type="button"
               className={intent === option.key ? 'intent__on' : ''}
+              aria-pressed={intent === option.key}
               onClick={() => setIntent(option.key)}
             >
               {option.label}
@@ -146,7 +147,7 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
       )}
 
       {error && (
-        <p className="error error--block">
+        <p className="error error--block" role="alert">
           {error}
           <button type="button" onClick={() => void load()}>
             Erneut versuchen
@@ -154,7 +155,11 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
         </p>
       )}
 
-      {!plan && !error && <p className="loading">Lade Daten von intervals.icu…</p>}
+      {!plan && !error && (
+        <p className="loading" role="status">
+          Lade Daten von intervals.icu…
+        </p>
+      )}
 
       {plan?.days.map((day, index) => (
         <DayCard
@@ -168,8 +173,20 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
         />
       ))}
 
-      {/* Today leads; how the week is going and what can be set for it follow. */}
+      {/* Today leads; what needs fixing, how the week is going and the numbers behind it follow. */}
+      {plan?.state.dataIssue && <DataIssueBanner issue={plan.state.dataIssue} />}
+
+      {plan && plan.thresholdSuggestions.length > 0 && (
+        <ThresholdCard
+          suggestions={plan.thresholdSuggestions}
+          date={plan.days[0]?.date ?? ''}
+          onAdopted={() => void load()}
+        />
+      )}
+
       {plan && <WeekOutlookCard week={plan.week} />}
+
+      {plan && <MetricsPanel state={plan.state} sports={(config?.profile.sports ?? []).map((setting) => setting.sport)} />}
 
       {plan && plan.history.length > 0 && <HistoryStrip history={plan.history} />}
 
