@@ -1,5 +1,6 @@
 import type { Feasibility, Goal } from '../../coach/types.ts'
 import { formatClock } from '../../coach/dates.ts'
+import { formatDistance } from '../../coach/format.ts'
 
 const VERDICT_LABEL: Record<Feasibility['verdict'], string> = {
   'on-track': 'realistisch',
@@ -11,7 +12,7 @@ const VERDICT_LABEL: Record<Feasibility['verdict'], string> = {
 const goalValue = (goal: Goal, current: number): string =>
   goal.kind === 'ftp'
     ? `${current} W → ${goal.targetValue} W`
-    : `${formatClock(current)} → ${formatClock(goal.targetValue)} auf ${goal.distanceKm ?? 10} km`
+    : `${formatClock(current)} → ${formatClock(goal.targetValue)}${goal.distanceKm === undefined ? '' : ` auf ${formatDistance(goal.sport, goal.distanceKm)}`}`
 
 const remaining = (goal: Goal, weeksLeft: number | null): string => {
   if (goal.targetDate === undefined) return 'ohne Zieldatum'

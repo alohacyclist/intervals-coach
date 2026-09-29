@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { addDays, diffDays, formatSeconds, startOfWeek, weekdayDe, weeksBetween } from '../src/coach/dates.ts'
+import { addDays, diffDays, formatSeconds, localIsoDate, startOfWeek, weekdayDe, weeksBetween } from '../src/coach/dates.ts'
 
 describe('dates', () => {
+  it('names the date on the device’s own clock, not in UTC, around midnight too', () => {
+    expect(localIsoDate(new Date(2026, 8, 29, 0, 30))).toBe('2026-09-29')
+    expect(localIsoDate(new Date(2026, 8, 29, 23, 30))).toBe('2026-09-29')
+    expect(localIsoDate(new Date(2026, 0, 1, 0, 5))).toBe('2026-01-01')
+  })
+
   it('adds and subtracts days across month boundaries', () => {
     expect(addDays('2026-08-31', 1)).toBe('2026-09-01')
     expect(addDays('2026-03-01', -1)).toBe('2026-02-28')
