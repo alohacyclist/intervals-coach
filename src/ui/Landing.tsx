@@ -43,6 +43,16 @@ const STEPS: readonly { readonly title: string; readonly body: string }[] = [
   },
 ]
 
+/** The sentence for each `?fehler=` the worker or a view sends back to the start page. */
+const ERRORS: Readonly<Record<string, string>> = {
+  abgelehnt: 'Zugriff wurde abgelehnt. Ohne Freigabe kann der Plan deine Daten nicht lesen.',
+  einwilligung: 'Ohne Einwilligung in die Verarbeitung deiner Gesundheitsdaten ist keine Anmeldung möglich.',
+  abgelaufen: 'Deine Anmeldung ist abgelaufen. Bitte melde dich neu an.',
+}
+
+export const landingError = (code: string): string =>
+  ERRORS[code] ?? 'Die Anmeldung ist fehlgeschlagen. Bitte noch einmal versuchen.'
+
 export const Landing = ({ error }: { readonly error: string | null }) => {
   const [consented, setConsented] = useState(false)
 
@@ -62,11 +72,7 @@ export const Landing = ({ error }: { readonly error: string | null }) => {
 
         {error && (
           <p className="error error--block" role="alert">
-            {error === 'abgelehnt'
-              ? 'Zugriff wurde abgelehnt. Ohne Freigabe kann der Plan deine Daten nicht lesen.'
-              : error === 'einwilligung'
-                ? 'Ohne Einwilligung in die Verarbeitung deiner Gesundheitsdaten ist keine Anmeldung möglich.'
-                : 'Die Anmeldung ist fehlgeschlagen. Bitte noch einmal versuchen.'}
+            {landingError(error)}
           </p>
         )}
 

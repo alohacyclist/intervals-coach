@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { Landing } from '../src/ui/Landing.tsx'
+import { Landing, landingError } from '../src/ui/Landing.tsx'
+import { EXPIRED_SESSION_URL } from '../src/ui/api.ts'
 
 describe('landing copy', () => {
   const html = renderToStaticMarkup(createElement(Landing, { error: null }))
@@ -40,5 +41,22 @@ describe('landing copy', () => {
   it('keeps sign-in locked until consent is given', () => {
     expect(html).toContain('cta cta--locked')
     expect(html).toContain('aria-disabled="true"')
+  })
+})
+
+describe('the reason a sign-in page gives', () => {
+  it('says the session ran out when a view sent the athlete back after a 401', () => {
+    const reason = new URL(EXPIRED_SESSION_URL, 'https://formkurve.org').searchParams.get('fehler')
+    expect(reason).toBe('abgelaufen')
+    expect(landingError('abgelaufen')).toBe('Deine Anmeldung ist abgelaufen. Bitte melde dich neu an.')
+    expect(renderToStaticMarkup(createElement(Landing, { error: 'abgelaufen' }))).toContain(
+      'Deine Anmeldung ist abgelaufen.',
+    )
+  })
+
+  it('keeps the known refusals and falls back to a failed sign-in for anything else', () => {
+    expect(landingError('abgelehnt')).toContain('Zugriff wurde abgelehnt')
+    expect(landingError('einwilligung')).toContain('Ohne Einwilligung')
+    expect(landingError('state')).toBe('Die Anmeldung ist fehlgeschlagen. Bitte noch einmal versuchen.')
   })
 })

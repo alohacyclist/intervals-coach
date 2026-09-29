@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { CoachConfig, Progress } from '../coach/types.ts'
-import { ApiError, getConfig, getProgress } from './api.ts'
+import { ApiError, EXPIRED_SESSION_URL, getConfig, getProgress } from './api.ts'
 import { FitnessCurve } from './components/FitnessCurve.tsx'
 import { WeekBars } from './components/WeekBars.tsx'
 import { SeasonBand } from './components/SeasonBand.tsx'
@@ -67,7 +67,7 @@ export const ProgressView = ({ onNeedsOnboarding }: Props) => {
         return
       }
       if (caught instanceof ApiError && caught.needsLogin) {
-        window.location.href = '/'
+        window.location.href = EXPIRED_SESSION_URL
         return
       }
       setError(caught instanceof Error ? caught.message : 'Unbekannter Fehler')

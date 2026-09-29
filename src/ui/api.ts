@@ -15,6 +15,9 @@ export class ApiError extends Error {
   }
 }
 
+/** Where a view sends an athlete whose session intervals.icu no longer accepts; Landing names the reason. */
+export const EXPIRED_SESSION_URL = '/?fehler=abgelaufen'
+
 const send = async (path: string, init?: RequestInit): Promise<Response> => {
   try {
     return await fetch(path, {
