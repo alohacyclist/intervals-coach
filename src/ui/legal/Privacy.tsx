@@ -132,7 +132,8 @@ export const Privacy = () => (
     <p>
       Token, Konfiguration und Kontodaten werden gelöscht, sobald du dein Konto löschst oder deine
       Einwilligung widerrufst — spätestens jedoch <strong>{RETENTION_MONTHS} Monate</strong> nach
-      deinem letzten Besuch. Die Strava-Verbindung wird außerdem gelöscht, sobald du sie in den
+      deinem letzten Besuch. Beim Löschen des Kontos entzieht sich die App auch bei intervals.icu
+      selbst den Zugriff. Die Strava-Verbindung wird außerdem gelöscht, sobald du sie in den
       Einstellungen trennst; dabei entzieht die App sich auch auf Strava selbst den Zugriff. Die Löschung nach Fristablauf erfolgt automatisch. Trainings- und
       Gesundheitsdaten werden nicht dauerhaft gespeichert, sondern höchstens fünf Minuten
       verschlüsselt zwischengehalten und danach neu abgerufen.

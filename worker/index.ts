@@ -15,7 +15,7 @@ import {
   hasConfig,
 } from './users.ts'
 import type { User } from './users.ts'
-import { OAuthError, authorizeUrl, exchangeCode, fetchAthlete, refreshTokens } from './oauth.ts'
+import { OAuthError, authorizeUrl, disconnectApp, exchangeCode, fetchAthlete, refreshTokens } from './oauth.ts'
 import type { OAuthApp, TokenSet } from './oauth.ts'
 import { randomToken, secretEquals } from './crypto.ts'
 import { blocked, clearFailures, recordFailure } from './login-throttle.ts'
@@ -325,6 +325,20 @@ app.use('*', async (context, next) => {
   if (context.res.status === 401 && isMultiUser(env)) context.header('Set-Cookie', clearSessionCookie())
 })
 
+/**
+ * Best effort, like the Strava withdrawal: a failure is logged and the account
+ * is erased all the same. The token is refreshed first if it is about to
+ * expire, as an expired one would be refused.
+ */
+const disconnectIntervals = async (env: Bindings, athleteId: string): Promise<void> => {
+  try {
+    const { auth } = await athleteDeps(env, athleteId, false)
+    if (auth.kind === 'bearer') await disconnectApp(auth.accessToken)
+  } catch (error) {
+    console.error('intervals.icu access not withdrawn', athleteId, error)
+  }
+}
+
 /** Art. 17 in one request: erase the account, then end the session. */
 app.delete('/api/account', async (context) => {
   const env = context.env as Bindings
@@ -336,6 +350,8 @@ app.delete('/api/account', async (context) => {
   const link = await loadLink(env.COACH_CONFIG, sessionSecret(env), athleteId)
   if (link) await withdraw(stravaApp(env, new URL(context.req.url).origin), link.tokens)
   await deleteLink(env.COACH_CONFIG, athleteId)
+  // Before the tokens are erased with the account.
+  await disconnectIntervals(env, athleteId)
   await deleteUser(env.COACH_CONFIG, athleteId)
   await cacheFor(context, athleteId)?.clear()
   context.header('Set-Cookie', clearSessionCookie())
