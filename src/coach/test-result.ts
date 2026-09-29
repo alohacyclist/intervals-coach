@@ -62,6 +62,64 @@ const bestSustained = (
   }, null)
 }
 
+/** How far a stretch may miss the prescribed distance and still count as it. */
+const DISTANCE_TOLERANCE = 0.1
+/** Beyond these, a "CSS" says more about the recording than about the swimmer. */
+const MIN_CSS_SEC_PER_100M = 55
+const MAX_CSS_SEC_PER_100M = 240
+
+type Stretch = { readonly from: number; readonly to: number; readonly metres: number; readonly seconds: number }
+
+type Piece = { readonly seconds: number; readonly metres: number }
+
+const pieceOf = (effort: MeasuredEffort): Piece | null =>
+  effort.averageSpeedMps !== null && effort.averageSpeedMps > 0
+    ? { seconds: effort.seconds, metres: effort.seconds * effort.averageSpeedMps }
+    : null
+
+/** Every run of neighbouring efforts that covers about `metres`, with its time scaled to exactly that. */
+const stretchesOf = (efforts: readonly MeasuredEffort[], metres: number): readonly Stretch[] => {
+  const pieces = efforts.map(pieceOf)
+  return pieces.flatMap((_unused, from) => {
+    const following = pieces.slice(from)
+    // A piece without speed cannot be measured, so it ends the run rather than skewing it.
+    const gap = following.indexOf(null)
+    const run = (gap === -1 ? following : following.slice(0, gap)) as readonly Piece[]
+    return run
+      .map((_piece, offset) => {
+        const part = run.slice(0, offset + 1)
+        const covered = part.reduce((sum, piece) => sum + piece.metres, 0)
+        const seconds = part.reduce((sum, piece) => sum + piece.seconds, 0)
+        return { from, to: from + offset, covered, seconds }
+      })
+      .filter(({ covered }) => Math.abs(covered - metres) <= metres * DISTANCE_TOLERANCE)
+      .map(({ from: start, to, covered, seconds }) => ({ from: start, to, metres, seconds: (seconds * metres) / covered }))
+  })
+}
+
+const fastest = (stretches: readonly Stretch[]): Stretch | null =>
+  stretches.reduce<Stretch | null>((best, stretch) => (best === null || stretch.seconds < best.seconds ? stretch : best), null)
+
+const overlaps = (left: Stretch, right: Stretch): boolean => left.from <= right.to && right.from <= left.to
+
+/**
+ * Critical swim speed from a 400 m and a 200 m all out: the pace of the extra
+ * 200 m, (t400 − t200) ÷ 2 per 100 m. The 200 is found first, as the fastest
+ * stretch of that length; the 400 is the fastest one that does not share an
+ * effort with it, because intervals.icu may hand the two back in pieces and
+ * with the easy swim between them typed as work.
+ */
+export const cssFromTest = (efforts: readonly MeasuredEffort[]): number | null => {
+  const short = fastest(stretchesOf(efforts, 200))
+  if (short === null) return null
+  const long = fastest(stretchesOf(efforts, 400).filter((stretch) => !overlaps(stretch, short)))
+  if (long === null) return null
+  // The 200 has to be the quicker pace, or the difference measures nothing.
+  if (short.seconds / 200 >= long.seconds / 400) return null
+  const css = (long.seconds - short.seconds) / 2
+  return css >= MIN_CSS_SEC_PER_100M && css <= MAX_CSS_SEC_PER_100M ? Math.round(css) : null
+}
+
 /**
  * The threshold this test measured, in the sport's own unit — null when the
  * activity holds no sustained block, which means the test was not completed as
@@ -77,14 +135,15 @@ export const thresholdFromTest = (
     )
     return watts === null ? null : { metric: 'power', value: Math.round(watts * POWER_FACTOR) }
   }
+  if (sport === 'Swim') {
+    const css = cssFromTest(efforts)
+    return css === null ? null : { metric: 'swimPace', value: css }
+  }
 
   // Speed rather than pace, so that faster is larger and the best window is a maximum.
   const speed = bestSustained(efforts, (effort) =>
     effort.averageSpeedMps !== null && effort.averageSpeedMps > 0 ? effort.averageSpeedMps : null,
   )
   if (speed === null) return null
-  const secPerKm = (1000 / speed) * PACE_FACTOR
-  return sport === 'Run'
-    ? { metric: 'pace', value: Math.round(secPerKm) }
-    : { metric: 'swimPace', value: Math.round(secPerKm / 10) }
+  return { metric: 'pace', value: Math.round((1000 / speed) * PACE_FACTOR) }
 }
