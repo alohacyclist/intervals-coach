@@ -1,5 +1,12 @@
 # OAuth client request — email to david@intervals.icu
 
+Since 2026-08-28 David's OAuth guide asks for the application form at
+`https://intervals.icu/oauth/apply` (logged in as the athlete who will own the app)
+instead of an email; the app stays "Pending" until approved, but client id and secret
+are available right away. Use the text below as the form's content, and send it as an
+email only if the form has no room for it
+([guide, post 1](https://forum.intervals.icu/t/intervals-icu-oauth-support/2759)).
+
 Before sending: open `https://formkurve.org/logo.png` (must load, square, ≥128 px — the
 source is 512 × 512) and `https://formkurve.org/datenschutz` (must carry real contact
 details, not the draft placeholders). Attach two or three screenshots made from demo
