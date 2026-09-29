@@ -34,6 +34,35 @@ export class IntervalsError extends Error {
   }
 }
 
+/**
+ * The athlete's grant is gone — revoked on intervals.icu, or the refresh was
+ * refused. Only a new sign-in helps, so the session ends with it.
+ */
+export class ReauthRequiredError extends Error {
+  constructor(message = 'Die Anmeldung bei intervals.icu ist abgelaufen. Bitte neu anmelden.') {
+    super(message)
+    this.name = 'ReauthRequiredError'
+  }
+}
+
+/**
+ * What the athlete reads. The upstream body stays in the logs: it can carry
+ * internals of intervals.icu that are nobody's business in the browser.
+ */
+export const upstreamMessage = (kind: IntervalsAuth['kind'], status: number): string => {
+  if (status === 429) return 'intervals.icu drosselt gerade die Anfragen. Bitte in ein paar Minuten noch einmal versuchen.'
+  if (status >= 500) return 'intervals.icu ist gerade nicht erreichbar. Bitte später noch einmal versuchen.'
+  if (status === 401 || status === 403) {
+    return kind === 'apiKey'
+      ? `intervals.icu ${status} — API-Key oder Athlete-ID prüfen (intervals.icu → Settings → Developer).`
+      : // A missing scope, not a lost session: signing out and in again grants the current scopes.
+        `intervals.icu ${status}: Zugriff verweigert. Abmelden und neu anmelden erteilt die nötigen Rechte.`
+  }
+  return `intervals.icu ${status}: Anfrage abgelehnt.`
+}
+
+const UNREACHABLE = 599
+
 // btoa exists in both Node and workerd, unlike Buffer.
 const authHeader = (auth: IntervalsAuth): string =>
   auth.kind === 'bearer' ? `Bearer ${auth.accessToken}` : `Basic ${btoa(`API_KEY:${auth.apiKey}`)}`
@@ -50,18 +79,17 @@ const request = async <T>(
       'Content-Type': 'application/json',
       ...init.headers,
     },
+  }).catch((error: unknown) => {
+    console.error('intervals.icu unreachable', path, error)
+    throw new IntervalsError(upstreamMessage(auth.kind, UNREACHABLE), UNREACHABLE)
   })
 
   if (!response.ok) {
     const body = await response.text().catch(() => '')
-    const hint =
-      response.status === 401 || response.status === 403
-        ? ' — API-Key oder Athlete-ID prüfen (intervals.icu → Settings → Developer).'
-        : ''
-    throw new IntervalsError(
-      `intervals.icu ${response.status}: ${body.slice(0, 300)}${hint}`,
-      response.status,
-    )
+    console.error('intervals.icu refused', response.status, init.method ?? 'GET', path, body.slice(0, 300))
+    // RFC 6750: 401 is a dead token, 403 a scope the grant lacks — only the first ends the session.
+    if (auth.kind === 'bearer' && response.status === 401) throw new ReauthRequiredError()
+    throw new IntervalsError(upstreamMessage(auth.kind, response.status), response.status)
   }
 
   return response.status === 204 ? (null as T) : ((await response.json()) as T)

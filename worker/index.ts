@@ -1,7 +1,8 @@
 import { Hono } from 'hono'
 import type { Context } from 'hono'
-import { createApiRoutes } from '../server/routes.ts'
+import { apiErrorResponse, createApiRoutes } from '../server/routes.ts'
 import type { RouteDeps } from '../server/routes.ts'
+import { IntervalsError, ReauthRequiredError, upstreamMessage } from '../server/intervals.ts'
 import { kvConfigStore } from './config-store-kv.ts'
 import {
   deleteUser,
@@ -13,8 +14,9 @@ import {
   userConfigStore,
   hasConfig,
 } from './users.ts'
-import { authorizeUrl, exchangeCode, fetchAthlete, refreshTokens } from './oauth.ts'
-import type { OAuthApp } from './oauth.ts'
+import type { User } from './users.ts'
+import { OAuthError, authorizeUrl, exchangeCode, fetchAthlete, refreshTokens } from './oauth.ts'
+import type { OAuthApp, TokenSet } from './oauth.ts'
 import { randomToken, secretEquals } from './crypto.ts'
 import { blocked, clearFailures, recordFailure } from './login-throttle.ts'
 import {
@@ -83,6 +85,39 @@ const renewIfNeeded = async (context: Context, session: Session): Promise<void> 
 }
 
 /**
+ * Requests of one athlete that arrive together share one refresh: if intervals.icu
+ * rotates refresh tokens, a second refresh with the old one would be refused.
+ */
+const refreshing = new Map<string, Promise<TokenSet>>()
+
+const refreshOnce = (env: Bindings, athleteId: string, refreshToken: string): Promise<TokenSet> => {
+  const running = refreshing.get(athleteId)
+  if (running) return running
+  const next = refreshTokens(oauthAppFor(env, ''), refreshToken).finally(() => refreshing.delete(athleteId))
+  refreshing.set(athleteId, next)
+  return next
+}
+
+/**
+ * A refused refresh can still mean another Worker instance used the rotated
+ * token first — its result is in KV then. Otherwise the grant is gone and only
+ * a new sign-in helps; a failing service is not a reason to end the session.
+ */
+const freshTokens = async (env: Bindings, secret: string, user: User, refreshToken: string): Promise<TokenSet> => {
+  try {
+    return await refreshOnce(env, user.athleteId, refreshToken)
+  } catch (error) {
+    if (!(error instanceof OAuthError && error.refused)) {
+      console.error('intervals.icu token refresh failed', user.athleteId, error)
+      throw new IntervalsError(upstreamMessage('bearer', 503), 503)
+    }
+    const stored = await loadUser(env.COACH_CONFIG, secret, user.athleteId)
+    if (stored && stored.tokens.refreshToken !== refreshToken) return stored.tokens
+    throw new ReauthRequiredError()
+  }
+}
+
+/**
  * One athlete's dependencies, refreshing the access token when it is close to
  * expiry. `present` is whether the athlete is the one asking: only a visit
  * renews the retention window, never the cron acting while nobody looks.
@@ -90,13 +125,13 @@ const renewIfNeeded = async (context: Context, session: Session): Promise<void> 
 const athleteDeps = async (env: Bindings, athleteId: string, present: boolean): Promise<RouteDeps> => {
   const secret = env.SESSION_SECRET ?? ''
   const user = await loadUser(env.COACH_CONFIG, secret, athleteId)
-  if (!user) throw new Error('Sitzung ungültig — bitte neu anmelden')
+  if (!user) throw new ReauthRequiredError()
 
   const expiringSoon = user.tokens.expiresAt < Math.floor(Date.now() / 1000) + REFRESH_MARGIN_SECONDS
   // A refresh needs no redirect, so the cron can do it without knowing the origin.
   const tokens =
     expiringSoon && user.tokens.refreshToken
-      ? await refreshTokens(oauthAppFor(env, ''), user.tokens.refreshToken)
+      ? await freshTokens(env, secret, user, user.tokens.refreshToken)
       : user.tokens
 
   if (present && (tokens !== user.tokens || needsTouch(user))) {
@@ -270,7 +305,9 @@ app.use('*', async (context, next) => {
   if (!session) return context.json({ error: 'Nicht angemeldet', needsLogin: true }, 401)
 
   await renewIfNeeded(context, session)
-  return next()
+  await next()
+  // A dead grant ends the session too, or the page would bounce between the plan and a sign-in it never reaches.
+  if (context.res.status === 401 && isMultiUser(env)) context.header('Set-Cookie', clearSessionCookie())
 })
 
 /** Art. 17 in one request: erase the account, then end the session. */
@@ -293,7 +330,7 @@ const resolveDeps = async (context: Context): Promise<RouteDeps> => {
   const env = context.env as Bindings
   if (!isMultiUser(env)) return singleUserDeps(env)
   const athleteId = await sessionAthlete(context)
-  if (!athleteId) throw new Error('Nicht angemeldet')
+  if (!athleteId) throw new ReauthRequiredError()
   return athleteDeps(env, athleteId, true)
 }
 
@@ -310,6 +347,8 @@ app.route(
 app.route('/', createApiRoutes(resolveDeps))
 
 app.all('*', (context) => (context.env as Bindings).ASSETS.fetch(context.req.raw))
+
+app.onError(apiErrorResponse)
 
 export { app }
 
