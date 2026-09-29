@@ -49,8 +49,8 @@ export const Privacy = () => (
         einträgst.
       </li>
       <li>
-        <strong>Anmeldename und Athleten-ID</strong> aus intervals.icu sowie der Zeitpunkt deiner
-        Einwilligung und deines letzten Besuchs.
+        <strong>Anmeldename, Athleten-ID und Zeitzone</strong> aus intervals.icu sowie der Zeitpunkt
+        deiner Einwilligung und deines letzten Besuchs.
       </li>
       <li>
         <strong>Nur wenn du Strava verbindest:</strong> die von Strava ausgestellten OAuth-Token

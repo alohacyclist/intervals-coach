@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 import type { Context } from 'hono'
-import { apiErrorResponse, createApiRoutes } from '../server/routes.ts'
+import { DEFAULT_TIMEZONE, apiErrorResponse, createApiRoutes, validTimeZone } from '../server/routes.ts'
 import type { RouteDeps } from '../server/routes.ts'
 import { IntervalsError, ReauthRequiredError, upstreamMessage } from '../server/intervals.ts'
 import { kvConfigStore } from './config-store-kv.ts'
@@ -147,6 +147,7 @@ const athleteDeps = async (env: Bindings, athleteId: string, present: boolean): 
   return {
     auth: { kind: 'bearer', accessToken: tokens.accessToken, athleteId },
     store: userConfigStore(env.COACH_CONFIG, athleteId),
+    timezone: user.timezone ?? DEFAULT_TIMEZONE,
   }
 }
 
@@ -216,6 +217,7 @@ app.get('/auth/callback', async (context) => {
       // Reaching this point required the consent gate above; the first pass is the record.
       consentAt: existing?.consentAt ?? now,
       lastSeenAt: now,
+      timezone: validTimeZone(athlete.timezone) ?? existing?.timezone ?? DEFAULT_TIMEZONE,
     })
 
     context.header('Set-Cookie', await createSessionCookie(athlete.id, secret, isSecure(context)), {
@@ -392,6 +394,9 @@ export default {
         depsFor: async (subject) => (isMultiUser(env) ? athleteDeps(env, subject, false) : singleUserDeps(env)),
         storeFor: (subject) =>
           isMultiUser(env) ? userConfigStore(env.COACH_CONFIG, subject) : kvConfigStore(env.COACH_CONFIG),
+        timezoneFor: async (subject) =>
+          (isMultiUser(env) ? (await loadUser(env.COACH_CONFIG, sessionSecret(env), subject))?.timezone : null) ??
+          DEFAULT_TIMEZONE,
         keepExpiry: isMultiUser(env),
       }),
     )
