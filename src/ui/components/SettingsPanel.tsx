@@ -246,7 +246,7 @@ export const SettingsPanel = ({ config, onSaved, onClose, canDelete }: Props) =>
           disabled={busy}
           onClick={() => run(async () => (await syncSettings()).config)}
         >
-          FTP & Pace von intervals.icu holen
+          Schwellen von intervals.icu holen
         </button>
       </div>
 
