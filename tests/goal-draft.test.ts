@@ -58,6 +58,11 @@ describe('a race goal typed into the form', () => {
     const errors = goalErrors(race({ distance: '10', target: '36:00', targetDate: '2020-01-01' }), tri, TODAY)
     expect(errors.targetDate).toContain('Vergangenheit')
   })
+
+  it('lets a stored goal keep a date that has since passed', () => {
+    const stored = race({ distance: '10', target: '36:00', targetDate: '2020-01-01' })
+    expect(goalErrors(stored, tri, null)).toEqual({})
+  })
 })
 
 describe('an FTP goal typed into the form', () => {
