@@ -17,6 +17,10 @@ const RESULTS: Readonly<Record<string, string>> = {
   fehler: 'Die Verbindung mit Strava ist fehlgeschlagen. Bitte noch einmal versuchen.',
 }
 
+/** Official assets from developers.strava.com/guidelines, served unmodified from public/strava. */
+const CONNECT_BUTTON = '/strava/btn_strava_connect_with_orange.svg'
+const COMPATIBLE_LOGO = '/strava/api_logo_cptblWith_strava_horiz_orange.svg'
+
 /** Set when Strava sent the athlete back; the plan opens the settings for it. */
 export const stravaResult = (): string | null => new URLSearchParams(window.location.search).get('strava')
 
@@ -71,12 +75,16 @@ export const StravaPanel = () => {
             Strava. Bilder nimmt Strava von anderen Apps nicht an — dafür gibt es unter jeder Einheit „Bild
             teilen“.
           </p>
-          <a className="cta cta--button" href="/auth/strava/login">
-            Mit Strava verbinden
+          {/* Strava's own button, unaltered, as its brand guidelines require. */}
+          <a className="strava__connect" href="/auth/strava/login">
+            <img src={CONNECT_BUTTON} alt="Connect with Strava" width={237} height={48} />
           </a>
         </>
       )}
       {error && <p className="error">{error}</p>}
+      <p className="strava__compatible">
+        <img src={COMPATIBLE_LOGO} alt="Compatible with Strava" width={213} height={18} />
+      </p>
     </div>
   )
 }
