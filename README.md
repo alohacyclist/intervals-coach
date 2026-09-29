@@ -273,10 +273,13 @@ Die App kennt zwei Modi und schaltet automatisch um:
 | Zugangsdaten | ein persönlicher API-Key im Secret | pro Nutzer ein OAuth-Token, verschlüsselt in KV |
 | Konfiguration | ein Datensatz | ein Datensatz je Athlet |
 
-intervals.icu verlangt für Apps mit mehreren Nutzern ausdrücklich OAuth. Der Client muss
-per Mail bei `david@intervals.icu` beantragt werden — mit App-Name, Beschreibung,
-Website-URL, quadratischem Logo (≥128 px), Datenschutz-URL und den Redirect-URIs.
-`http://localhost/` ist immer erlaubt, der Flow lässt sich also vor der Freigabe testen.
+intervals.icu verlangt für Apps mit mehreren Nutzern ausdrücklich OAuth. Der Client wird
+über das Formular unter `https://intervals.icu/oauth/apply` beantragt (angemeldet als der
+Athlet, dem die App gehören soll) — mit App-Name, Beschreibung, Website-URL, quadratischem
+Logo (≥128 px), Datenschutz-URL und den Redirect-URIs. Bis zur Freigabe steht die App auf
+„Pending“ und der OAuth-Flow funktioniert noch nicht; Client-ID und Secret gibt es aber
+sofort unter „Manage App“ in `/settings/apps`. Text für den Antrag:
+[docs/oauth-request-email.md](docs/oauth-request-email.md).
 
 Angefragte Scopes, kommagetrennt wie intervals.icu sie erwartet:
 `ACTIVITY:READ,WELLNESS:READ,CALENDAR:WRITE,SETTINGS:WRITE` — lesen, Einheiten planen und
