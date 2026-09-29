@@ -78,8 +78,9 @@ export const getExecution = (activityId: string, templateId: string, date: strin
     `/api/execution/${encodeURIComponent(activityId)}?template=${encodeURIComponent(templateId)}&date=${date}`,
   )
 
-export const getPlan = (days: number, intent?: string): Promise<Plan> =>
-  request<Plan>(`/api/plan?days=${days}${intent ? `&intent=${intent}` : ''}`)
+/** `fresh` skips the server's few minutes of memory — for the refresh button, not for reloads after a change. */
+export const getPlan = (days: number, intent?: string, fresh = false): Promise<Plan> =>
+  request<Plan>(`/api/plan?days=${days}${intent ? `&intent=${intent}` : ''}${fresh ? '&frisch=1' : ''}`)
 
 export const getProgress = (days: number): Promise<Progress> =>
   request<Progress>(`/api/progress?days=${days}`)

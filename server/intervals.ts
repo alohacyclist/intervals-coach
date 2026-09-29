@@ -13,9 +13,29 @@ import type {
  * Credentials for one athlete. A personal API key covers the single user setup;
  * OAuth bearer tokens are what intervals.icu requires for multi user apps.
  */
-export type IntervalsAuth =
+export type IntervalsAuth = (
   | { readonly kind: 'apiKey'; readonly apiKey: string; readonly athleteId: string }
   | { readonly kind: 'bearer'; readonly accessToken: string; readonly athleteId: string }
+) & {
+  /** Where the Worker keeps recent answers for this athlete; absent under Node and in the cron. */
+  readonly cache?: ResponseCache
+}
+
+/**
+ * A few minutes of memory for GET answers of one athlete. intervals.icu grants
+ * about a hundred requests per athlete and day, and one plan takes five or six;
+ * reloading after a settings change should not spend them again. Any write
+ * through `request` clears it, because it may have changed what was read.
+ */
+export type ResponseCache = {
+  readonly read: (path: string) => Promise<unknown>
+  readonly write: (path: string, value: unknown) => Promise<void>
+  readonly clear: () => Promise<void>
+}
+
+/** For an explicit refresh: asks intervals.icu again and keeps the new answers. */
+export const bypassingReads = (auth: IntervalsAuth): IntervalsAuth =>
+  auth.cache ? { ...auth, cache: { ...auth.cache, read: async () => undefined } } : auth
 
 const BASE_URL = 'https://intervals.icu/api/v1'
 
@@ -72,6 +92,12 @@ const request = async <T>(
   path: string,
   init: RequestInit = {},
 ): Promise<T> => {
+  const reading = (init.method ?? 'GET') === 'GET'
+  if (reading && auth.cache) {
+    const hit = await auth.cache.read(path)
+    if (hit !== undefined) return hit as T
+  }
+
   const response = await fetch(`${BASE_URL}${path}`, {
     ...init,
     headers: {
@@ -92,7 +118,9 @@ const request = async <T>(
     throw new IntervalsError(upstreamMessage(auth.kind, response.status), response.status)
   }
 
-  return response.status === 204 ? (null as T) : ((await response.json()) as T)
+  const value = response.status === 204 ? null : ((await response.json()) as T)
+  if (auth.cache) await (reading ? auth.cache.write(path, value) : auth.cache.clear())
+  return value as T
 }
 
 const toSport = (type: unknown): Sport | 'Other' => {

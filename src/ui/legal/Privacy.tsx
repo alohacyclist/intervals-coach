@@ -31,9 +31,12 @@ export const Privacy = () => (
         der letzten 180 Tage (Datum, Sportart, Dauer, Trainingsbelastung, Intensität, Herzfrequenz,
         Zeit in den Trainingszonen) und Erholungswerte der letzten 60 Tage
         (Herzratenvariabilität, Ruhepuls, Schlafdauer, subjektives Befinden), für eine absolvierte
-        Einheit zusätzlich ihr Verlauf von Leistung, Tempo und Herzfrequenz. Diese Daten werden bei
-        jedem Seitenaufruf frisch von intervals.icu abgerufen, im Arbeitsspeicher ausgewertet und{' '}
-        <strong>nicht gespeichert</strong>.
+        Einheit zusätzlich ihr Verlauf von Leistung, Tempo und Herzfrequenz. Diese Daten werden von
+        intervals.icu abgerufen, im Arbeitsspeicher ausgewertet und{' '}
+        <strong>nicht dauerhaft gespeichert</strong>. Damit Aufrufe kurz hintereinander intervals.icu
+        nicht jedes Mal neu abfragen, hält die Anwendung die Antworten höchstens fünf Minuten
+        verschlüsselt (AES-GCM) im Zwischenspeicher des Rechenzentrums vor; danach verfallen sie
+        automatisch. „Aktualisieren“ ruft sie sofort neu ab.
       </li>
       <li>
         <strong>Zugangs-Token:</strong> Die von intervals.icu ausgestellten OAuth-Token, damit du
@@ -130,7 +133,8 @@ export const Privacy = () => (
       Einwilligung widerrufst — spätestens jedoch <strong>{RETENTION_MONTHS} Monate</strong> nach
       deinem letzten Besuch. Die Strava-Verbindung wird außerdem gelöscht, sobald du sie in den
       Einstellungen trennst; dabei entzieht die App sich auch auf Strava selbst den Zugriff. Die Löschung nach Fristablauf erfolgt automatisch. Trainings- und
-      Gesundheitsdaten werden ohnehin nicht gespeichert, sondern bei jedem Aufruf neu abgerufen.
+      Gesundheitsdaten werden nicht dauerhaft gespeichert, sondern höchstens fünf Minuten
+      verschlüsselt zwischengehalten und danach neu abgerufen.
     </p>
 
     <h2>Deine Rechte</h2>
