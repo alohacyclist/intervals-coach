@@ -13,6 +13,7 @@ import type { IntervalsAuth } from './intervals.ts'
 import {
   IntervalsError,
   ReauthRequiredError,
+  bypassingReads,
   createWorkoutEvent,
   fetchActivities,
   fetchEvents,
@@ -85,6 +86,12 @@ export type RouteDeps = {
  * session and the Worker bindings in the hosted multi user setup.
  */
 export type DepsResolver = (context: Context) => Promise<RouteDeps>
+
+/** `?frisch=1` is the refresh button: whatever intervals.icu says now, not a few minutes ago. */
+const resolveFor = async (resolve: DepsResolver, context: Context): Promise<RouteDeps> => {
+  const deps = await resolve(context)
+  return context.req.query('frisch') === '1' ? { ...deps, auth: bypassingReads(deps.auth) } : deps
+}
 
 /**
  * What intervals.icu currently measures. The estimated FTP comes from actual
@@ -296,7 +303,8 @@ export const apiErrorResponse = (error: Error, context: Context): Response => {
 export const createApiRoutes = (resolve: DepsResolver): Hono => {
   const app = new Hono()
 
-  // Plan data changes as soon as an activity syncs, so it must never be cached.
+  // Plan data changes as soon as an activity syncs, so the browser must never keep it.
+  // The Worker's own few minutes of memory are cleared by every write and skipped by `frisch=1`.
   app.use('/api/*', async (context, next) => {
     await next()
     context.header('Cache-Control', 'no-store, max-age=0')
@@ -326,7 +334,7 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
   app.get('/api/progress', async (context) => {
     const requested = Number(context.req.query('days') ?? DEFAULT_PROGRESS_SPAN)
     const span = isProgressSpan(requested) ? requested : DEFAULT_PROGRESS_SPAN
-    return context.json(await buildProgressView(await resolve(context), span))
+    return context.json(await buildProgressView(await resolveFor(resolve, context), span))
   })
 
   app.get('/api/plan', async (context) => {
@@ -334,13 +342,14 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
     const days = Number.isFinite(requested) ? Math.min(Math.max(Math.trunc(requested), 1), 7) : 3
     const wish = context.req.query('intent')
     const intent = wish === 'hard' || wish === 'easy' || wish === 'rest' ? wish : undefined
-    return context.json(await buildPlan(await resolve(context), days, intent))
+    return context.json(await buildPlan(await resolveFor(resolve, context), days, intent))
   })
 
   /** Pulls FTP and threshold pace from intervals.icu into the stored profile. */
   app.post('/api/sync-settings', async (context) => {
     const { auth, store } = await resolve(context)
-    const settings = await fetchSportSettings(auth)
+    // The athlete asked for what intervals.icu holds now.
+    const settings = await fetchSportSettings(bypassingReads(auth))
     const config = await store.load()
     // Only the sports the athlete actually trains are updated; the rest is theirs.
     const synced = config.profile.sports.map((setting) => {
@@ -536,7 +545,9 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
       return context.json({ error: `variant muss eines von ${TIERS.join(', ')} sein` }, 400)
     }
 
-    const deps = await resolve(context)
+    const resolved = await resolve(context)
+    // Whether this version is already on the calendar must come from the calendar as it is now.
+    const deps = { ...resolved, auth: bypassingReads(resolved.auth) }
     const plan = await buildPlan(deps, 7)
     const planned = plan.days
       .find((day) => day.date === body.date)
