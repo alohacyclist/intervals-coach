@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { thresholdFromTest } from '../src/coach/test-result.ts'
+import { cssFromTest, thresholdFromTest } from '../src/coach/test-result.ts'
+import { thresholdTestFor } from '../src/coach/library.ts'
 import { measuredSuggestion } from '../src/coach/threshold-drift.ts'
 import { config } from './fixtures.ts'
 
@@ -48,6 +49,63 @@ describe('reading a threshold off the test', () => {
 
   it('has nothing to read from a ride without power', () => {
     expect(thresholdFromTest('Ride', [effort(20, null, 9)])).toBeNull()
+  })
+})
+
+const swim = (metres: number, seconds: number) => ({
+  seconds,
+  averageWatts: null,
+  averageSpeedMps: metres / seconds,
+})
+const wall = (seconds: number) => ({ seconds, averageWatts: null, averageSpeedMps: null })
+
+describe('reading CSS off the 400/200 test', () => {
+  // 400 m in 6:40 and 200 m in 3:10: the extra 200 m took 210 s, so CSS is 1:45/100 m.
+  it('takes half the time difference as the pace per 100 m', () => {
+    const test = [
+      swim(400, 500),
+      ...[1, 2, 3, 4].flatMap(() => [swim(50, 53), wall(20)]),
+      swim(400, 400),
+      swim(200, 250),
+      swim(200, 190),
+      swim(200, 250),
+    ]
+    expect(cssFromTest(test)).toBe(105)
+    expect(thresholdFromTest('Swim', test)).toEqual({ metric: 'swimPace', value: 105 })
+  })
+
+  it('finds both efforts when they come back in lengths, with the easy swim typed as work', () => {
+    const test = [
+      swim(400, 500),
+      ...Array.from({ length: 8 }, () => swim(50, 50)),
+      ...Array.from({ length: 4 }, () => swim(50, 62)),
+      ...Array.from({ length: 4 }, () => swim(50, 47.5)),
+      swim(200, 250),
+    ]
+    expect(cssFromTest(test)).toBe(105)
+  })
+
+  it('reads a slower club swimmer just as well', () => {
+    // 400 m in 8:20, 200 m in 3:58: CSS 2:11/100 m.
+    expect(cssFromTest([swim(400, 500), wall(300), swim(200, 238)])).toBe(131)
+  })
+
+  it('says nothing when one of the two efforts is missing', () => {
+    expect(cssFromTest([swim(400, 400), swim(200, 250)].slice(0, 1))).toBeNull()
+    expect(cssFromTest([swim(200, 190)])).toBeNull()
+    expect(cssFromTest([])).toBeNull()
+  })
+
+  it('says nothing when the 200 was not the quicker pace, which would be no test', () => {
+    expect(cssFromTest([swim(400, 400), wall(300), swim(200, 205)])).toBeNull()
+  })
+
+  it('has nothing to read from a swim without speed', () => {
+    expect(cssFromTest([wall(400), wall(190)])).toBeNull()
+  })
+
+  it('is what the plan schedules to measure swimming', () => {
+    expect(thresholdTestFor('Swim')?.id).toBe('test-swim-css')
   })
 })
 
