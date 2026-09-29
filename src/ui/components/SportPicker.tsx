@@ -4,11 +4,13 @@ import { ALL_SPORTS, SPORT_LABELS } from '../../coach/types.ts'
 import { defaultThreshold } from '../../coach/thresholds.ts'
 import type { Prefilled, ThresholdEdit, ThresholdSources } from '../threshold-input.ts'
 import { SOURCE_NOTES, shownText, thresholdFromText } from '../threshold-input.ts'
+import type { GlossaryTerm } from '../glossary.ts'
+import { Term } from './Term.tsx'
 
-const THRESHOLD_LABEL: Readonly<Record<Sport, string>> = {
-  Ride: 'FTP (Watt)',
-  Run: 'Schwellenpace (min/km)',
-  Swim: 'CSS (min/100 m)',
+const THRESHOLD_LABEL: Readonly<Record<Sport, { readonly term: GlossaryTerm; readonly name: string; readonly unit: string }>> = {
+  Ride: { term: 'ftp', name: 'FTP', unit: 'Watt' },
+  Run: { term: 'thresholdPace', name: 'Schwellenpace', unit: 'min/km' },
+  Swim: { term: 'css', name: 'CSS', unit: 'min/100 m' },
 }
 
 const INVALID: Readonly<Record<Sport, string>> = {
@@ -88,6 +90,7 @@ export const SportPicker = ({ sports, sources, onChange, onValidity, prefill = e
         const messageId = `${baseId}-${sport}`
         const wrong = invalid.includes(sport)
         const note = wrong ? INVALID[sport] : source !== undefined && source !== 'own' ? SOURCE_NOTES[source] : null
+        const label = THRESHOLD_LABEL[sport]
         return (
           <div key={sport} className={`sports__row ${setting ? 'sports__row--on' : ''}`}>
             <label className="sports__toggle">
@@ -95,10 +98,14 @@ export const SportPicker = ({ sports, sources, onChange, onValidity, prefill = e
               {SPORT_LABELS[sport]}
             </label>
             {setting && (
-              <label className="sports__threshold">
-                {THRESHOLD_LABEL[sport]}
+              // Not a <label>: the explaining button inside would become the labelled control.
+              <div className="field sports__threshold">
+                <span>
+                  <Term term={label.term}>{label.name}</Term> ({label.unit})
+                </span>
                 <input
                   type="text"
+                  aria-label={`${label.name} (${label.unit})`}
                   value={shownText(edits[sport], setting.threshold)}
                   onChange={(event) => type(setting, event.target.value)}
                   aria-invalid={wrong}
@@ -109,7 +116,7 @@ export const SportPicker = ({ sports, sources, onChange, onValidity, prefill = e
                     {note}
                   </small>
                 )}
-              </label>
+              </div>
             )}
           </div>
         )
