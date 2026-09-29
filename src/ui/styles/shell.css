@@ -34,7 +34,7 @@
   border: 0;
   border-right: 1px solid var(--rule);
   padding: 4px 9px;
-  font-size: 9.5px;
+  font-size: 12px;
   letter-spacing: 0.13em;
   color: var(--faint);
 }
@@ -168,7 +168,7 @@
 }
 .datasource__count {
   font-family: var(--mono);
-  font-size: 10.5px;
+  font-size: 12px;
   color: var(--faint);
   font-variant-numeric: tabular-nums;
 }
@@ -191,7 +191,7 @@
 }
 .history__summary {
   font-family: var(--mono);
-  font-size: 10.5px;
+  font-size: 12px;
   letter-spacing: 0.06em;
   color: var(--faint);
   font-variant-numeric: tabular-nums;
@@ -227,22 +227,34 @@
 .history__day--done::after {
   background: var(--good);
 }
-.history__day--race::after {
-  background: var(--data);
-}
-.history__day--switched::after {
-  background: var(--run);
-}
-.history__day--unplanned::after {
-  background: var(--swim);
-}
 .history__day--missed::after {
-  background: var(--warn);
+  background: var(--bad);
+}
+/* Only done and missed carry a colour; the other states are told apart by their
+   mark, so sport colours and the recommendation orange keep one meaning each. */
+.history__day--race::after,
+.history__day--switched::after,
+.history__day--unplanned::after {
+  background: var(--dim);
+}
+.history__mark {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1;
+  color: var(--dim);
+}
+.history__day--done .history__mark {
+  color: var(--good);
+}
+.history__day--missed .history__mark {
+  color: var(--bad);
 }
 .history__weekday {
   display: block;
   font-family: var(--mono);
-  font-size: 9.5px;
+  font-size: 12px;
   letter-spacing: 0.11em;
   text-transform: uppercase;
   color: var(--faint);
@@ -270,10 +282,10 @@
   color: var(--good);
 }
 .history__alt {
-  color: var(--run);
+  color: var(--text);
 }
 .history__miss {
-  color: var(--warn);
+  color: var(--bad);
 }
 .history__key {
   border-top: 1px solid var(--rule);
@@ -281,7 +293,7 @@
 }
 .history__key > summary {
   font-family: var(--mono);
-  font-size: 9.5px;
+  font-size: 12px;
   font-weight: 500;
   letter-spacing: 0.13em;
   text-transform: uppercase;
@@ -293,7 +305,7 @@
   gap: 4px 14px;
   padding: 9px 0 2px 20px;
   font-family: var(--mono);
-  font-size: 9.5px;
+  font-size: 12px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--faint);
@@ -304,9 +316,20 @@
   gap: 5px;
 }
 .history__dot {
-  width: 10px;
-  height: 3px;
   display: inline-block;
+  min-width: 12px;
+  font-style: normal;
+  text-align: center;
+  color: var(--dim);
+}
+.history__dot::after {
+  content: none;
+}
+.history__dot.history__day--done {
+  color: var(--good);
+}
+.history__dot.history__day--missed {
+  color: var(--bad);
 }
 
 /* ------------------------------------------------------------ intent switch */
@@ -320,7 +343,7 @@
 }
 .intent__label {
   font-family: var(--mono);
-  font-size: 9.5px;
+  font-size: 12px;
   font-weight: 500;
   letter-spacing: 0.11em;
   text-transform: uppercase;
@@ -368,7 +391,7 @@
 }
 .loading {
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--faint);
@@ -379,7 +402,7 @@
   padding-top: 14px;
   border-top: 1px solid var(--rule);
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 12px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--faint);
@@ -438,14 +461,14 @@
 .pause__label,
 .pause__unit {
   font-family: var(--mono);
-  font-size: 9.5px;
+  font-size: 12px;
   font-weight: 500;
   letter-spacing: 0.11em;
   text-transform: uppercase;
   color: var(--faint);
 }
 .pause__left {
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 0.06em;
   color: var(--warn);
 }

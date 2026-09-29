@@ -35,7 +35,7 @@
 .goals h2,
 .history__head h2 {
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -82,7 +82,7 @@
 
 .benchmark__meta {
   font-family: var(--mono);
-  font-size: 10.5px;
+  font-size: 12px;
   color: var(--faint);
 }
 .benchmark__result {
@@ -102,7 +102,7 @@
 
 .destinations__meta {
   font-family: var(--mono);
-  font-size: 10.5px;
+  font-size: 12px;
   color: var(--faint);
 }
 .destinations__row {
@@ -126,7 +126,7 @@
 .destinations__note > summary {
   margin-bottom: 4px;
   font-family: var(--mono);
-  font-size: 10.5px;
+  font-size: 12px;
   letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--faint);
@@ -141,7 +141,7 @@
 }
 .issue h2 {
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -223,7 +223,7 @@
 }
 .strava h3 {
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -246,7 +246,7 @@
 }
 .danger h3 {
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -333,13 +333,13 @@
 }
 .outlook__title {
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.16em;
   text-transform: uppercase;
 }
 .outlook__span {
-  font-size: 9.5px;
+  font-size: 12px;
   letter-spacing: 0.08em;
   color: var(--faint);
   text-transform: uppercase;
@@ -353,7 +353,7 @@
 }
 .outlook__counts dt {
   font-family: var(--mono);
-  font-size: 9.5px;
+  font-size: 12px;
   letter-spacing: 0.11em;
   text-transform: uppercase;
   color: var(--faint);
@@ -392,7 +392,7 @@
   flex-direction: column;
   gap: 4px;
   font-family: var(--mono);
-  font-size: 10.5px;
+  font-size: 12px;
   letter-spacing: 0.04em;
   color: var(--faint);
 }
