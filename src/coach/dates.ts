@@ -12,6 +12,10 @@ export const parseIso = (iso: string): Date => {
 
 export const toIso = (date: Date): string => date.toISOString().slice(0, 10)
 
+/** The date on the device's own clock — what "today" means to someone typing a date, where UTC is a day off around midnight. */
+export const localIsoDate = (date: Date = new Date()): string =>
+  [date.getFullYear(), date.getMonth() + 1, date.getDate()].map((part) => String(part).padStart(2, '0')).join('-')
+
 export const addDays = (iso: string, days: number): string =>
   toIso(new Date(parseIso(iso).getTime() + days * MS_PER_DAY))
 

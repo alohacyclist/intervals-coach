@@ -65,4 +65,41 @@ describe('how far the goal still is', () => {
     const profile = { ...config.profile, weeklySessions: { min: 3, max: 5 } }
     expect(assessGoals([runGoal], profile, TODAY)[0]?.verdict).toBe('on-track')
   })
+
+  it('holds CSS for about half an hour, so a swim projection is not an hour pace', () => {
+    // CSS 1:45/100 m: the 400 m a few seconds per 100 m quicker, 1500 m close to CSS.
+    const profile = {
+      ...config.profile,
+      sports: [{ sport: 'Swim' as const, threshold: { metric: 'swimPace' as const, cssSecPer100m: 105 } }],
+    }
+    const swim = (distanceKm: number, target: number) => ({
+      id: `swim-${distanceKm}`,
+      sport: 'Swim' as const,
+      kind: 'raceTime' as const,
+      label: 'Schwimmen',
+      targetValue: target,
+      currentValue: target + 60,
+      distanceKm,
+      priority: 'A' as const,
+    })
+    const [short, olympic] = assessGoals([swim(0.4, 380), swim(1.5, 1500)], profile, TODAY)
+    expect(short?.currentValue).toBe(402)
+    expect(olympic?.currentValue).toBe(1569)
+    expect(olympic?.message).toContain('1500 m')
+    expect(olympic?.message).toContain('1:45/100m')
+    expect(olympic?.message).toContain('CSS')
+  })
+
+  it('does not invent 10 km when a race goal has no distance', () => {
+    const [run] = assessGoals([{ ...runGoal, distanceKm: undefined }], config.profile, TODAY)
+    expect(run?.currentValue).toBe(runGoal.currentValue)
+    expect(run?.message).not.toContain('10 km')
+    expect(run?.message).toContain('ohne Distanz')
+  })
+
+  it('writes a half marathon time with hours', () => {
+    const half = { ...runGoal, distanceKm: 21.1, targetValue: 6300 }
+    const [run] = assessGoals([half], config.profile, TODAY)
+    expect(run?.message).toContain('→ 1:45:00 auf 21,1 km')
+  })
 })

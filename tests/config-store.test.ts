@@ -72,6 +72,36 @@ describe('config validation', () => {
     expect(() => validateConfig({ ...DEFAULT_CONFIG, goals: [] })).toThrow(/Mindestens ein Ziel/)
   })
 
+  it('saves a swim goal, which onboarding offers', () => {
+    const swim = {
+      id: 'swim-1500',
+      sport: 'Swim',
+      kind: 'raceTime',
+      label: '1500 m Schwimmen in 25:00',
+      targetValue: 1500,
+      currentValue: 1620,
+      distanceKm: 1.5,
+      priority: 'A',
+    }
+    expect(validateConfig({ ...DEFAULT_CONFIG, goals: [swim] }).goals[0]?.sport).toBe('Swim')
+  })
+
+  it('rejects a race goal without a distance instead of assuming 10 km', () => {
+    const race = { ...DEFAULT_CONFIG.goals[1]!, sport: 'Swim', distanceKm: undefined }
+    expect(() => validateConfig({ ...DEFAULT_CONFIG, goals: [race] })).toThrow(/distanceKm/)
+    expect(() => validateConfig({ ...DEFAULT_CONFIG, goals: [{ ...race, distanceKm: 0 }] })).toThrow(/distanceKm/)
+  })
+
+  it('keeps a stored running goal from before distances were required at the 10 km it was shown as', () => {
+    const stored = { ...DEFAULT_CONFIG.goals[1]!, distanceKm: undefined }
+    expect(validateConfig({ ...DEFAULT_CONFIG, goals: [stored] }).goals[0]?.distanceKm).toBe(10)
+  })
+
+  it('rejects an FTP goal for a sport without FTP', () => {
+    const broken = { ...DEFAULT_CONFIG.goals[0]!, sport: 'Run' }
+    expect(() => validateConfig({ ...DEFAULT_CONFIG, goals: [broken] })).toThrow(/FTP-Ziel/)
+  })
+
   it('rejects a malformed target date', () => {
     const broken = {
       ...DEFAULT_CONFIG,
