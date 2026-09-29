@@ -57,7 +57,7 @@ export const StravaPanel = () => {
   return (
     <div className="strava">
       <h3>Strava</h3>
-      {result && RESULTS[result] && <p className="strava__result">{RESULTS[result]}</p>}
+      {result && RESULTS[result] && <p className="strava__result" role="status">{RESULTS[result]}</p>}
       {status.connected ? (
         <>
           <p className="hint">
@@ -81,7 +81,7 @@ export const StravaPanel = () => {
           </a>
         </>
       )}
-      {error && <p className="error">{error}</p>}
+      {error && <p className="error" role="alert">{error}</p>}
       <p className="strava__compatible">
         <img src={COMPATIBLE_LOGO} alt="Compatible with Strava" width={213} height={18} />
       </p>
