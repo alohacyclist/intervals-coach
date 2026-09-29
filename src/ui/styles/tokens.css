@@ -232,7 +232,9 @@ select:focus {
   border-color: var(--data);
 }
 
-label {
+/* .field: a label look for a field whose caption holds a button, which a <label> may not. */
+label,
+.field {
   display: flex;
   flex-direction: column;
   gap: 4px;
