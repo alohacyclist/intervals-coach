@@ -9,6 +9,7 @@ import type {
   Stimulus,
   WeekLoad,
 } from './types.ts'
+import { STIMULUS_LABELS } from './types.ts'
 import { addDays, diffDays, startOfWeek } from './dates.ts'
 import { ATL_DAYS, CTL_DAYS, dailyLoads, ewmaSeries } from './fitness.ts'
 import { LIBRARY } from './library.ts'
@@ -29,17 +30,6 @@ const EMPTY_BENCHMARK: BenchmarkStatus = {
   intervalWeeks: 0,
   sessions: [],
   results: [],
-}
-
-const STIMULUS_LABELS: Readonly<Record<Stimulus, string>> = {
-  VO2: 'VO2max',
-  THRESHOLD: 'Schwelle',
-  SWEETSPOT: 'Sweetspot',
-  TEMPO: 'Tempo',
-  NEURO: 'Antritte',
-  ENDURANCE: 'Grundlage',
-  LONG: 'Lange Einheit',
-  RECOVERY: 'Regeneration',
 }
 
 /** The spans the page can be read over; the middle one is what it opens with. */

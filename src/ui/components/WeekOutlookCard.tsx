@@ -1,4 +1,5 @@
 import type { WeekOutlook } from '../../coach/types.ts'
+import { STIMULUS_LABELS } from '../../coach/types.ts'
 import { PHASE_LABELS } from '../../coach/phase.ts'
 
 /**
@@ -9,13 +10,6 @@ import { PHASE_LABELS } from '../../coach/phase.ts'
 
 type Props = {
   readonly week: WeekOutlook
-}
-
-const STIMULUS_LABELS: Readonly<Record<string, string>> = {
-  VO2: 'VO2max',
-  THRESHOLD: 'Schwelle',
-  SWEETSPOT: 'Sweetspot',
-  LONG: 'Lange Einheit',
 }
 
 const SPORT_LABELS: Readonly<Record<string, string>> = {
@@ -86,7 +80,7 @@ export const WeekOutlookCard = ({ week }: Props) => {
           {week.openStimuli.map((entry) => (
             <li key={`${entry.sport}-${entry.stimulus}`}>
               <span>
-                {STIMULUS_LABELS[entry.stimulus] ?? entry.stimulus} ·{' '}
+                {STIMULUS_LABELS[entry.stimulus]} ·{' '}
                 {SPORT_LABELS[entry.sport] ?? entry.sport}
               </span>
               <span className="readout">
