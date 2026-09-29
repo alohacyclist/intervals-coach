@@ -15,6 +15,7 @@ import { SettingsPanel } from './components/SettingsPanel.tsx'
 import { stravaResult } from './components/StravaPanel.tsx'
 import { BreakBar } from './components/BreakBar.tsx'
 import { ZrlPanel } from './components/ZrlPanel.tsx'
+import { zrlRelevant } from './zrl-relevance.ts'
 
 const PLAN_DAYS = 3
 
@@ -114,7 +115,7 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
               void load()
             }}
           />
-          {plan && (
+          {plan && zrlRelevant(config, plan.state, plan.destinations) && (
             <ZrlPanel
               config={config}
               today={plan.days[0]?.date ?? plan.state.today}
