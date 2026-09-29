@@ -2,8 +2,12 @@ const AUTHORIZE_URL = 'https://intervals.icu/oauth/authorize'
 // Outside /api/v1, unlike every other call: /api/v1/oauth/token answers 404.
 const TOKEN_URL = 'https://intervals.icu/api/oauth/token'
 
-/** Read training and wellness data, write planned workouts. Nothing else. */
-export const SCOPES = 'ACTIVITY:READ WELLNESS:READ CALENDAR:WRITE'
+/**
+ * Read training and wellness data, write planned workouts, read and (on the
+ * athlete's click) change sport settings and upload flags. intervals.icu wants
+ * the scopes comma-separated; GET/PUT /athlete/{id} and sport-settings fall under SETTINGS.
+ */
+export const SCOPES = 'ACTIVITY:READ,WELLNESS:READ,CALENDAR:WRITE,SETTINGS:WRITE'
 
 export type OAuthApp = {
   readonly clientId: string

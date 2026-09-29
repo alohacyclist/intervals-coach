@@ -52,29 +52,29 @@ https://formkurve.org/datenschutz
 - http://localhost:8787/auth/callback
 
 **Scopes**
-`ACTIVITY:READ WELLNESS:READ CALENDAR:WRITE`, plus whatever covers the settings access
-below — I could not find it documented (I assume `SETTINGS:READ` / `SETTINGS:WRITE`).
-If those endpoints are off limits for OAuth clients, I'll drop the features.
+`ACTIVITY:READ,WELLNESS:READ,CALENDAR:WRITE,SETTINGS:WRITE`
 
 - `ACTIVITY:READ` — fitness, fatigue and form per sport; the last hard session; planned
   vs. completed pairing; intervals and streams of a single activity for the comparison
 - `WELLNESS:READ` — HRV, resting heart rate and sleep against the athlete's baseline, and
   the eFTP estimate
-- `CALENDAR:WRITE` — write the chosen workout to the athlete's calendar
+- `CALENDAR:WRITE` — read planned workouts and write the chosen workout to the athlete's
+  calendar
+- `SETTINGS:WRITE` — the athlete record and sport settings, each write only on an explicit
+  click by the athlete, never in the background:
+  - `GET /athlete/0` — name and timezone at sign-in, so the plan's days are the athlete's
+    days
+  - `GET /athlete/{id}/sport-settings` — prefill FTP, threshold pace and CSS at sign-up
+  - `PUT /athlete/{id}/sport-settings/{type}` — keep FTP and threshold pace in step when
+    the athlete adopts a new value in the app (for example after a test), since
+    intervals.icu computes load and compliance from its own numbers
+  - `GET /athlete/{id}` and `PUT /athlete/{id}` — show which devices are linked and set
+    the `*_upload_workouts` flags, so a session reaches the right watch, head unit or
+    trainer. Only the single flag is sent, never the whole record. If you'd rather not
+    grant this, I'll point athletes to your settings page instead and ask for
+    `SETTINGS:READ` only.
 
-Settings access, each write only on an explicit click by the athlete, never in the
-background:
-
-- `GET /athlete/{id}/sport-settings` — prefill FTP, threshold pace and CSS at sign-up
-- `PUT /athlete/{id}/sport-settings/{type}` — keep FTP and threshold pace in step when the
-  athlete adopts a new value in the app (for example after a test), since intervals.icu
-  computes load and compliance from its own numbers
-- `GET /athlete/{id}` and `PUT /athlete/{id}` — show which devices are linked and set
-  the `*_upload_workouts` flags, so a session reaches the right watch, head unit or
-  trainer. Only the single flag is sent, never the whole record. If you'd rather not
-  expose this, I'll point athletes to your settings page instead.
-
-No write access to activities or wellness, and no delete access anywhere.
+No write access to activities or wellness, and the app never deletes anything.
 
 **Scale and business model**
 It starts as a free beta: my training partners first, then an open beta announced in the
