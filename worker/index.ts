@@ -127,6 +127,20 @@ const singleUserDeps = (env: Bindings): RouteDeps => {
 const singleUserConfigured = (env: Bindings): boolean =>
   Boolean(env.APP_PASSWORD && env.INTERVALS_API_KEY && env.INTERVALS_ATHLETE_ID)
 
+// ------------------------------------------------------------------ health
+
+/**
+ * For an uptime monitor: public, cacheless, and says nothing about anyone. A
+ * deployment that lost its secrets answers 503, so the monitor notices before
+ * the athletes do; which secret is missing stays in the deploy logs.
+ */
+app.get('/healthz', (context) => {
+  const env = context.env as Bindings
+  const ok = isMultiUser(env) || singleUserConfigured(env)
+  context.header('Cache-Control', 'no-store')
+  return context.json({ ok, version: env.CF_VERSION_METADATA?.id ?? null }, ok ? 200 : 503)
+})
+
 // ---------------------------------------------------------------- auth routes
 
 app.get('/auth/login', async (context) => {
