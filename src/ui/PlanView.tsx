@@ -16,6 +16,7 @@ import { stravaResult } from './components/StravaPanel.tsx'
 import { BreakBar } from './components/BreakBar.tsx'
 import { ZrlPanel } from './components/ZrlPanel.tsx'
 import { zrlRelevant } from './zrl-relevance.ts'
+import { GarminAttribution } from './components/GarminAttribution.tsx'
 
 const PLAN_DAYS = 3
 
@@ -102,6 +103,7 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
           onSettings={() => setShowSettings((open) => !open)}
         />
       )}
+      {plan && <GarminAttribution attribution={plan.garmin} />}
 
       {showSettings && config && (
         <div ref={settingsRef}>

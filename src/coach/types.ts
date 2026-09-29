@@ -251,7 +251,15 @@ export type Activity = {
   readonly averageHr: number | null
   /** Seconds per training zone, keyed Z1..Z7 and SS, from power or heart rate. */
   readonly zoneSeconds: Readonly<Record<string, number>>
+  /** The recording device as intervals.icu names it, e.g. "Garmin Edge 530". */
+  readonly device?: string | null
 }
+
+/**
+ * Garmin's API terms want every view built on data from their devices to say
+ * so, naming the device where it is known. Null when no Garmin data is involved.
+ */
+export type GarminAttribution = { readonly devices: readonly string[] }
 
 /** A workout on the intervals.icu calendar. */
 export type PlannedEvent = {
@@ -679,6 +687,8 @@ export type Execution = {
   readonly benchmark?: BenchmarkResult | null
   /** Null without a usable stream: pool swims, or a ride without a meter. */
   readonly trace: ExecutionTrace | null
+  /** "Garmin <device>" when the session was recorded on a Garmin; the card and the picture name it. */
+  readonly garmin?: string | null
 }
 
 export type SeasonWeek = {
@@ -723,6 +733,7 @@ export type Progress = {
     readonly sessionsBySport: Readonly<Record<string, number>>
     readonly longestBreak: number
   }
+  readonly garmin?: GarminAttribution | null
 }
 
 export type Plan = {
@@ -734,4 +745,5 @@ export type Plan = {
   readonly days: readonly PlannedDay[]
   readonly scheduled: readonly ScheduledWorkout[]
   readonly week: WeekOutlook
+  readonly garmin?: GarminAttribution | null
 }

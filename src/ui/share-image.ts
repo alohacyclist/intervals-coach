@@ -77,6 +77,8 @@ const fittedTitle = (context: CanvasRenderingContext2D, title: string, start: nu
 
 const drawHeader = (context: CanvasRenderingContext2D, execution: Execution, meta: ShareMeta) => {
   text(context, dateLine(meta), MARGIN, 96, `500 24px ${MONO}`, FAINT)
+  // Garmin's terms: the device stays named in every picture made from its data.
+  if (execution.garmin) text(context, execution.garmin, SIZE - MARGIN, 96, `500 24px ${MONO}`, FAINT, 'right')
   const size = fittedTitle(context, execution.templateName, 66)
   text(context, execution.templateName, MARGIN, 172, `600 ${size}px ${SANS}`, INK)
 

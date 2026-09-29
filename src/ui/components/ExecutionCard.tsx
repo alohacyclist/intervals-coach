@@ -6,6 +6,7 @@ import { ZRL_TEMPLATE_ID } from '../../coach/zrl.ts'
 import { ExecutionTrace } from './ExecutionTrace.tsx'
 import { ExecutionActions } from './ExecutionActions.tsx'
 import { drawableTrace, intensityWord, isCompared } from '../trace-geometry.ts'
+import { GarminDevice } from './GarminAttribution.tsx'
 
 /**
  * Planned against done. The strip answers "did it sit" in a glance; the rows
@@ -221,6 +222,7 @@ export const ExecutionView = ({ execution }: { readonly execution: Execution }) 
 
   return (
     <section className="exec" aria-label={`Soll und Ist: ${execution.templateName}`}>
+      <GarminDevice device={execution.garmin} />
       <dl className="exec__kpis">
         {compared ? (
           <>
