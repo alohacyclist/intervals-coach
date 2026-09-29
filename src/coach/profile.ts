@@ -1,6 +1,6 @@
 import type { Block, IntensityClass, ProfileSegment, SportThreshold } from './types.ts'
 import { flattenBlocks } from './library.ts'
-import { percentages } from './format.ts'
+import { percentages, REST_TARGET } from './format.ts'
 import { estimateSeconds } from './variant.ts'
 
 /**
@@ -22,6 +22,7 @@ export const intensityOfPercent = (percent: number): IntensityClass =>
 
 /** A ramp spans two values; the middle is the one height it can be drawn at. */
 const percentOf = (target: string): number => {
+  if (target === REST_TARGET) return 0
   const values = percentages(target)
   if (values.length === 0) return UNSPECIFIED_PERCENT
   return Math.round(values.reduce((sum, value) => sum + value, 0) / values.length)
