@@ -48,6 +48,7 @@ export type Me = {
 export type SportSettings = {
   readonly ftp: number | null
   readonly thresholdPaceSecPerKm: number | null
+  readonly cssSecPer100m: number | null
 }
 
 export const getMe = (): Promise<Me> => request<Me>('/api/me')
