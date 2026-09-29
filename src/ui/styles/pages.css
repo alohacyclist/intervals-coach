@@ -192,6 +192,13 @@
   color: var(--dim);
   max-width: 68ch;
 }
+/* Garmin's source line: present under the data it concerns, never louder than it. */
+.attribution {
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--faint);
+}
 
 /* ------------------------------------------------------------------- legal */
 
