@@ -52,6 +52,9 @@ const fromIntervals = (sport: Sport, settings: SportSettings | null): SportThres
   if (sport === 'Run' && settings.thresholdPaceSecPerKm) {
     return { metric: 'pace', thresholdSecPerKm: settings.thresholdPaceSecPerKm }
   }
+  if (sport === 'Swim' && settings.cssSecPer100m) {
+    return { metric: 'swimPace', cssSecPer100m: settings.cssSecPer100m }
+  }
   return null
 }
 

@@ -171,7 +171,7 @@ export const Onboarding = ({ onDone }: { readonly onDone: () => void }) => {
         <legend>Was trainierst du</legend>
         <p className="hint">
           Der Plan zeigt für jeden Tag zu jeder gewählten Sportart eine Einheit — du nimmst die, für
-          die du Zeit hast. Die Schwellenwerte holt er, wenn möglich, aus deinen intervals.icu-Einstellungen.
+          die du Zeit hast. FTP, Laufpace und CSS holt er, wenn möglich, aus deinen intervals.icu-Einstellungen.
         </p>
         <SportPicker
           sports={draft.sports}
