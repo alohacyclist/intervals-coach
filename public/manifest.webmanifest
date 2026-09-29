@@ -1,0 +1,17 @@
+{
+  "name": "Formkurve",
+  "short_name": "Formkurve",
+  "description": "Jeden Tag eine Einheit pro Sportart plus Kurzfassung – du wählst, der Trainingsreiz stimmt.",
+  "lang": "de",
+  "start_url": "/app",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#e3e1db",
+  "theme_color": "#e3e1db",
+  "icons": [
+    { "src": "/logo.svg", "sizes": "any", "type": "image/svg+xml" },
+    { "src": "/logo.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "/favicon.png", "sizes": "64x64", "type": "image/png" }
+  ]
+}
