@@ -37,6 +37,14 @@ export const formatSeconds = (totalSeconds: number): string => {
   return `${minutes}:${String(seconds).padStart(2, '0')}`
 }
 
+/** A race time the way it is written down: hours only once there are any. */
+export const formatClock = (totalSeconds: number): string => {
+  const rounded = Math.round(totalSeconds)
+  if (rounded < 3600) return formatSeconds(rounded)
+  const hours = Math.floor(rounded / 3600)
+  return `${hours}:${formatSeconds(rounded - hours * 3600).padStart(5, '0')}`
+}
+
 export const formatDuration = (totalSeconds: number): string => {
   const rounded = Math.round(totalSeconds)
   const hours = Math.floor(rounded / 3600)
