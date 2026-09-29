@@ -1,5 +1,6 @@
 const AUTHORIZE_URL = 'https://intervals.icu/oauth/authorize'
-const TOKEN_URL = 'https://intervals.icu/api/v1/oauth/token'
+// Outside /api/v1, unlike every other call: /api/v1/oauth/token answers 404.
+const TOKEN_URL = 'https://intervals.icu/api/oauth/token'
 
 /** Read training and wellness data, write planned workouts. Nothing else. */
 export const SCOPES = 'ACTIVITY:READ WELLNESS:READ CALENDAR:WRITE'
