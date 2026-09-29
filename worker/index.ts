@@ -36,6 +36,7 @@ import { withdraw } from './strava.ts'
 import { deleteLink, loadLink, renewLink } from './strava-store.ts'
 import { syncStrava } from './strava-cron.ts'
 import { edgeCache, responseCache } from './response-cache.ts'
+import { withinLimit } from './api-throttle.ts'
 
 const REFRESH_MARGIN_SECONDS = 120
 
@@ -310,6 +311,11 @@ app.use('*', async (context, next) => {
 
   const session = await currentSession(context)
   if (!session) return context.json({ error: 'Nicht angemeldet', needsLogin: true }, 401)
+
+  if (isMultiUser(env) && !(await withinLimit(env.API_LIMITER, session.athleteId))) {
+    context.header('Retry-After', '60')
+    return context.json({ error: 'Zu viele Anfragen auf einmal. Bitte eine Minute warten.' }, 429)
+  }
 
   await renewIfNeeded(context, session)
   await next()

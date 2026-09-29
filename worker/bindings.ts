@@ -38,10 +38,17 @@ export type VersionMetadata = {
   readonly timestamp?: string
 }
 
+/** Cloudflare's rate limiting binding: counts per key within the period set in wrangler.jsonc. */
+export type RateLimiter = {
+  limit(options: { readonly key: string }): Promise<{ readonly success: boolean }>
+}
+
 export type Bindings = {
   readonly ASSETS: Fetcher
   readonly COACH_CONFIG: KVNamespace
   readonly CF_VERSION_METADATA?: VersionMetadata
+  /** Multi user mode: requests per athlete and minute on `/api/*`. */
+  readonly API_LIMITER?: RateLimiter
 
   /** Multi user mode: set all three to enable "sign in with intervals.icu". */
   readonly INTERVALS_CLIENT_ID?: string
