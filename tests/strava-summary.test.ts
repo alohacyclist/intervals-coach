@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { SIGNATURE, findStravaMatch, sparkline, summaryOf, withSummary } from '../src/coach/strava-summary.ts'
+import { SIGNATURE, findStravaMatch, referralUrl, sparkline, summaryOf, withSummary } from '../src/coach/strava-summary.ts'
 import { compareExecution } from '../src/coach/execution.ts'
 import type { ActualInterval } from '../src/coach/execution.ts'
 import { findTemplate } from '../src/coach/library.ts'
@@ -51,7 +51,16 @@ describe('the text under a session on Strava', () => {
     expect(lines[0]).toBe(`${template.name} · 2 von 3 im Ziel ✓✓↓`)
     expect(lines[1]).toMatch(/^[▁▂▃▄▅▆▇█ ]{24}$/)
     expect(lines[2]).toBe('Im Ziel 24:00 von 36:00 · 83 TSS')
-    expect(lines[3]).toBe(`— ${SIGNATURE} · https://coach.example`)
+    expect(lines[3]).toBe(`— ${SIGNATURE} · https://coach.example/?ref=strava`)
+  })
+
+  it('marks the link as coming from Strava, and leaves out an unusable one', () => {
+    expect(referralUrl('https://formkurve.org')).toBe('https://formkurve.org/?ref=strava')
+    expect(referralUrl('https://formkurve.org/app?x=1')).toBe('https://formkurve.org/app?x=1&ref=strava')
+    expect(referralUrl('javascript:alert(1)')).toBeNull()
+    expect(referralUrl('not a url')).toBeNull()
+    expect(referralUrl(null)).toBeNull()
+    expect(summaryOf(threeDone, 'not a url').split('\n').at(-1)).toBe(`— ${SIGNATURE}`)
   })
 
   it('never names the heart rate, which Strava lets the athlete hide', () => {

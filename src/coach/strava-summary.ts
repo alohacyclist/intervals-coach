@@ -51,7 +51,21 @@ export const sparkline = (execution: Execution, width: number = SPARK_WIDTH): st
 const isCompared = (execution: Execution): boolean =>
   execution.steps.length > 0 && execution.unavailable === null
 
+/** The app's address with a referral mark, so visits from Strava can be told apart. Null when unusable. */
+export const referralUrl = (appUrl: string | null): string | null => {
+  if (!appUrl) return null
+  try {
+    const url = new URL(appUrl)
+    if (url.protocol !== 'https:' && url.protocol !== 'http:') return null
+    url.searchParams.set('ref', 'strava')
+    return url.toString()
+  } catch {
+    return null
+  }
+}
+
 export const summaryOf = (execution: Execution, appUrl: string | null): string => {
+  const link = referralUrl(appUrl)
   const compared = isCompared(execution)
   const hit = execution.steps.filter((step) => step.verdict === 'on').length
   const verdicts = execution.steps.map((step) => (step.verdict ? SYMBOL[step.verdict] : '·')).join('')
@@ -71,7 +85,7 @@ export const summaryOf = (execution: Execution, appUrl: string | null): string =
     figures.join(' · '),
     // Garmin's terms follow its data wherever it is shown, this text included.
     execution.garmin ? `Daten: ${execution.garmin}` : null,
-    `— ${SIGNATURE}${appUrl ? ` · ${appUrl}` : ''}`,
+    `— ${SIGNATURE}${link ? ` · ${link}` : ''}`,
   ]
     .filter((line): line is string => line !== null)
     .join('\n')
