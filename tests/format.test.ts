@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { toHumanSteps, toIntervalsText } from '../src/coach/format.ts'
-import { findTemplate } from '../src/coach/library.ts'
+import { findTemplate, flattenBlocks, LIBRARY } from '../src/coach/library.ts'
+import { profileOf } from '../src/coach/profile.ts'
 import { BIKE_THRESHOLD, RUN_THRESHOLD, SWIM_THRESHOLD } from './fixtures.ts'
 
 const template = (id: string) => {
@@ -46,5 +47,38 @@ describe('workout formatting', () => {
   it('keeps swim distances in metres', () => {
     const steps = toHumanSteps(template('swim-endurance-1500').blocks, SWIM_THRESHOLD)
     expect(steps.join(' ')).toContain('1500 m @')
+  })
+})
+
+describe('rests in the pool', () => {
+  const css = template('swim-thr-10x100')
+
+  it('sends a rest step to intervals.icu instead of a slow pace', () => {
+    const text = toIntervalsText(css.blocks)
+    expect(text).toContain('- 20s intensity=rest')
+    expect(text).not.toMatch(/\d+s 50% Pace/)
+  })
+
+  it('shows a pause at the wall, not a pace', () => {
+    const steps = toHumanSteps(css.blocks, SWIM_THRESHOLD)
+    expect(steps.join(' ')).toContain('20s @ Pause am Rand')
+    expect(steps.join(' ')).not.toContain('3:40/100m')
+  })
+
+  it('leaves no swim rest behind as a paced step', () => {
+    const swims = LIBRARY.filter((entry) => entry.sport === 'Swim')
+    for (const entry of swims) {
+      const paced = flattenBlocks(entry.blocks).filter(
+        (step) => /^\d+s$/.test(step.duration) && step.target === '50% Pace',
+      )
+      expect([entry.id, paced]).toEqual([entry.id, []])
+    }
+  })
+
+  it('draws a rest as a pause and never counts it as work', () => {
+    const segments = profileOf(css.blocks, SWIM_THRESHOLD)
+    const rest = segments.find((segment) => segment.seconds === 20)
+    expect(rest?.percent).toBe(0)
+    expect(rest?.intensity).toBe('easy')
   })
 })

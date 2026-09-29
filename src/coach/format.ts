@@ -1,6 +1,14 @@
 import type { Block, Sport, Step, SportThreshold, WorkoutTemplate } from './types.ts'
 import { formatSeconds } from './dates.ts'
 
+/**
+ * A pause at the wall. intervals.icu reads "intensity=rest" as a rest step and
+ * hands it to the watch as one, instead of a slow length to be swum.
+ */
+export const REST_TARGET = 'intensity=rest'
+
+export const isRest = (step: Step): boolean => step.target === REST_TARGET
+
 const stepLine = (step: Step): string =>
   ['-', step.duration, step.target, step.cadence, step.label].filter(Boolean).join(' ')
 
@@ -70,13 +78,15 @@ const humanDuration = (duration: string): string => {
 }
 
 const humanStep = (step: Step, threshold: SportThreshold): string =>
-  [
-    `${humanDuration(step.duration)} @ ${humanTarget(step.target, threshold)}`,
-    step.cadence,
-    step.label && `(${step.label})`,
-  ]
-    .filter(Boolean)
-    .join(' ')
+  isRest(step)
+    ? `${humanDuration(step.duration)} @ Pause am Rand`
+    : [
+        `${humanDuration(step.duration)} @ ${humanTarget(step.target, threshold)}`,
+        step.cadence,
+        step.label && `(${step.label})`,
+      ]
+        .filter(Boolean)
+        .join(' ')
 
 /** Human readable steps with absolute watt and pace targets for the UI. */
 export const toHumanSteps = (

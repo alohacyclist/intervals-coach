@@ -11,6 +11,7 @@ import type {
   StrengthSuggestion,
   WorkoutTemplate,
 } from './types.ts'
+import { REST_TARGET } from './format.ts'
 
 const step = (duration: string, target: string, extra: Partial<Step> = {}): Step => ({
   kind: 'step',
@@ -519,6 +520,9 @@ const RUN: readonly WorkoutTemplate[] = [
   },
 ]
 
+/** Pool rests are spent at the wall, not swum slowly: a rest step, not a pace. */
+const wallRest = (duration: string): Step => step(duration, REST_TARGET)
+
 const warmupSwim = (duration: string): Step =>
   step(duration, '60-68% Pace', { label: 'Einschwimmen' })
 
@@ -541,8 +545,8 @@ const SWIM: readonly WorkoutTemplate[] = [
     coachNote: 'Die Standardeinheit an der kritischen Schwimmgeschwindigkeit. Gleichmäßig, letzte 100 nicht schneller als die erste.',
     blocks: [
       warmupSwim('300mtr'),
-      repeat(4, [step('50mtr', '55-62% Pace', { label: 'Technik' }), step('20s', '50% Pace')]),
-      repeat(10, [step('100mtr', '98-102% Pace'), step('20s', '50% Pace')]),
+      repeat(4, [step('50mtr', '55-62% Pace', { label: 'Technik' }), wallRest('20s')]),
+      repeat(10, [step('100mtr', '98-102% Pace'), wallRest('20s')]),
       cooldownSwim('200mtr', '60% Pace'),
     ],
   },
@@ -559,8 +563,8 @@ const SWIM: readonly WorkoutTemplate[] = [
     coachNote: 'Längere Intervalle, gleicher Reiz. Näher am Renntempo für alles ab 750 m.',
     blocks: [
       warmupSwim('300mtr'),
-      repeat(4, [step('50mtr', '55-62% Pace', { label: 'Technik' }), step('20s', '50% Pace')]),
-      repeat(5, [step('200mtr', '96-100% Pace'), step('30s', '50% Pace')]),
+      repeat(4, [step('50mtr', '55-62% Pace', { label: 'Technik' }), wallRest('20s')]),
+      repeat(5, [step('200mtr', '96-100% Pace'), wallRest('30s')]),
       cooldownSwim('200mtr', '60% Pace'),
     ],
   },
@@ -575,8 +579,8 @@ const SWIM: readonly WorkoutTemplate[] = [
     coachNote: 'Kurz und schnell bei sauberer Technik. Sobald der Zug zerfällt, ist die Serie zu Ende — egal wie viele übrig sind.',
     blocks: [
       warmupSwim('300mtr'),
-      repeat(4, [step('50mtr', '55-62% Pace', { label: 'Technik' }), step('20s', '50% Pace')]),
-      repeat(16, [step('50mtr', '110-118% Pace'), step('20s', '50% Pace')]),
+      repeat(4, [step('50mtr', '55-62% Pace', { label: 'Technik' }), wallRest('20s')]),
+      repeat(16, [step('50mtr', '110-118% Pace'), wallRest('20s')]),
       cooldownSwim('200mtr', '60% Pace'),
     ],
   },
@@ -591,7 +595,7 @@ const SWIM: readonly WorkoutTemplate[] = [
     coachNote: 'Aerober Block ohne die Kosten harter Intervalle. Gut am Tag nach einer harten Lauf- oder Radeinheit.',
     blocks: [
       warmupSwim('300mtr'),
-      repeat(3, [step('400mtr', '88-93% Pace'), step('45s', '50% Pace')]),
+      repeat(3, [step('400mtr', '88-93% Pace'), wallRest('45s')]),
       cooldownSwim('200mtr', '60% Pace'),
     ],
   },
@@ -606,8 +610,8 @@ const SWIM: readonly WorkoutTemplate[] = [
     coachNote: 'Im Schwimmen kommt der Fortschritt aus dem Wasserwiderstand, nicht aus der Kraft. Technik ist hier keine Zusatzeinheit, sondern die eigentliche Arbeit.',
     blocks: [
       warmupSwim('300mtr'),
-      repeat(8, [step('50mtr', '55-62% Pace', { label: 'Technik' }), step('20s', '50% Pace')]),
-      repeat(8, [step('50mtr', '95-100% Pace', { label: 'Umsetzen' }), step('30s', '50% Pace')]),
+      repeat(8, [step('50mtr', '55-62% Pace', { label: 'Technik' }), wallRest('20s')]),
+      repeat(8, [step('50mtr', '95-100% Pace', { label: 'Umsetzen' }), wallRest('30s')]),
       cooldownSwim('200mtr', '60% Pace'),
     ],
   },
@@ -635,7 +639,7 @@ const SWIM: readonly WorkoutTemplate[] = [
     coachNote: 'Die 35-Minuten-Version, wenn die Bahn nur kurz frei ist.',
     blocks: [
       warmupSwim('200mtr'),
-      repeat(6, [step('100mtr', '98-102% Pace'), step('20s', '50% Pace')]),
+      repeat(6, [step('100mtr', '98-102% Pace'), wallRest('20s')]),
       cooldownSwim('150mtr', '60% Pace'),
     ],
   },
@@ -712,7 +716,7 @@ const BENCHMARKS: readonly WorkoutTemplate[] = [
       'Zwei maximale Strecken: erst 400 m, dann nach lockerem Schwimmen 200 m, beide gleichmäßig und so schnell wie möglich. Aus der Zeitdifferenz ergibt sich deine CSS: (Zeit 400 − Zeit 200) ÷ 2 pro 100 m.',
     blocks: [
       warmupSwim('400mtr'),
-      repeat(4, [step('50mtr', '90-100% Pace', { label: 'Steigern' }), step('20s', '50% Pace')]),
+      repeat(4, [step('50mtr', '90-100% Pace', { label: 'Steigern' }), wallRest('20s')]),
       step('400mtr', '103-110% Pace', { label: 'Maximal, gleichmäßig' }),
       step('200mtr', '58-66% Pace', { label: 'Locker' }),
       step('200mtr', '106-114% Pace', { label: 'Maximal, gleichmäßig' }),
