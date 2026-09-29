@@ -31,6 +31,12 @@ describe('landing copy', () => {
     expect(html.match(/example__or/g)).toHaveLength(2)
   })
 
+  it('lists the four permissions the sign-in asks for, settings included', () => {
+    expect(html).toContain('vier Berechtigungen')
+    expect(html).toContain('Einstellungen ändern')
+    expect(html).not.toContain('genau drei')
+  })
+
   it('keeps sign-in locked until consent is given', () => {
     expect(html).toContain('cta cta--locked')
     expect(html).toContain('aria-disabled="true"')

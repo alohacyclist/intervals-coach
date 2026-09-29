@@ -145,10 +145,12 @@ export const Landing = ({ error }: { readonly error: string | null }) => {
       <section className="landing__section landing__section--muted">
         <h2>Deine Daten</h2>
         <p>
-          Die Anmeldung läuft über intervals.icu. Formkurve fragt genau drei Berechtigungen an:
-          Aktivitäten lesen, Erholungswerte lesen, geplante Einheiten in deinen Kalender schreiben.
-          Kein Zugriff auf dein Passwort, keine Möglichkeit, etwas zu löschen. Du kannst die
-          Freigabe jederzeit in deinen intervals.icu-Einstellungen widerrufen.
+          Die Anmeldung läuft über intervals.icu. Formkurve fragt vier Berechtigungen an:
+          Aktivitäten lesen, Erholungswerte lesen, geplante Einheiten in deinen Kalender schreiben
+          und Einstellungen ändern. Über die Einstellungen liest Formkurve deine Schwellenwerte und
+          verbundenen Geräte; ändern tut es sie nur, wenn du es anklickst. Kein Zugriff auf dein
+          Passwort, und Formkurve löscht nichts. Du kannst die Freigabe jederzeit in deinen
+          intervals.icu-Einstellungen widerrufen.
         </p>
         <p className="landing__legal">
           <a href="/datenschutz">Datenschutz</a> · <a href="/impressum">Impressum</a>

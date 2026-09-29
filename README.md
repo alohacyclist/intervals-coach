@@ -278,8 +278,11 @@ per Mail bei `david@intervals.icu` beantragt werden — mit App-Name, Beschreibu
 Website-URL, quadratischem Logo (≥128 px), Datenschutz-URL und den Redirect-URIs.
 `http://localhost/` ist immer erlaubt, der Flow lässt sich also vor der Freigabe testen.
 
-Angefragte Scopes: `ACTIVITY:READ WELLNESS:READ CALENDAR:WRITE` — lesen und Einheiten
-planen, nichts löschen.
+Angefragte Scopes, kommagetrennt wie intervals.icu sie erwartet:
+`ACTIVITY:READ,WELLNESS:READ,CALENDAR:WRITE,SETTINGS:WRITE` — lesen, Einheiten planen und
+auf Klick Schwellen und Geräte-Uploads in den Einstellungen setzen, nichts löschen.
+`GET /athlete/{id}` (Profil, Zeitzone, Geräte) braucht laut David `SETTINGS:READ`
+([Forum, Beitrag 47](https://forum.intervals.icu/t/intervals-icu-oauth-support/2759/47)).
 
 Sobald der Client da ist:
 
