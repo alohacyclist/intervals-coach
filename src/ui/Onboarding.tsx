@@ -11,9 +11,10 @@ import { emptyGoalDraft, goalErrors, goalFromDraft, hasErrors } from './goal-dra
 import type { ThresholdSources } from './threshold-input.ts'
 import { prefillSports, prefilledThreshold } from './threshold-input.ts'
 
-type GoalChoice = 'ftp' | 'raceTime'
+type GoalChoice = 'none' | 'ftp' | 'raceTime'
 
 const GOAL_CHOICES: readonly { readonly value: GoalChoice; readonly label: string }[] = [
+  { value: 'none', label: 'Kein konkretes Ziel – fit bleiben' },
   { value: 'raceTime', label: 'Wettkampf – eine Zielzeit' },
   { value: 'ftp', label: 'FTP steigern' },
 ]
@@ -24,7 +25,7 @@ type Draft = {
   equipment: Equipment
   weightKg: string
   goalChoice: GoalChoice
-  goals: Readonly<Record<GoalChoice, GoalDraft>>
+  goals: Readonly<Record<Exclude<GoalChoice, 'none'>, GoalDraft>>
   sessionsMin: string
   sessionsMax: string
   minMinutes: string
@@ -40,7 +41,7 @@ const EMPTY: Draft = {
   sources: {},
   equipment: 'dumbbells',
   weightKg: '75',
-  goalChoice: 'raceTime',
+  goalChoice: 'none',
   goals: { ftp: emptyGoalDraft('ftp', 'ftp', 'Ride'), raceTime: emptyGoalDraft('race', 'raceTime', 'Run') },
   sessionsMin: '2',
   sessionsMax: '4',
@@ -88,28 +89,29 @@ export const Onboarding = ({ onDone }: { readonly onDone: () => void }) => {
   const ridesBike = draft.sports.some((setting) => setting.sport === 'Ride')
   const today = localIsoDate()
   const choices = GOAL_CHOICES.filter((choice) => choice.value !== 'ftp' || ridesBike)
-  const choice = choices.some((entry) => entry.value === draft.goalChoice) ? draft.goalChoice : 'raceTime'
-  const goalDraft = draft.goals[choice]
+  // FTP disappears with the bike; the choice then falls back to no goal rather than a hidden one.
+  const choice = choices.some((entry) => entry.value === draft.goalChoice) ? draft.goalChoice : 'none'
+  const goalDraft = choice === 'none' ? null : draft.goals[choice]
   // A race in a sport no longer trained falls back to the first one that is.
-  const raceSport = draft.sports.some((setting) => setting.sport === goalDraft.sport)
-    ? goalDraft.sport
-    : (draft.sports[0]?.sport ?? goalDraft.sport)
-  const activeDraft = goalDraft.kind === 'raceTime' ? { ...goalDraft, sport: raceSport } : goalDraft
-  const errors = goalErrors(activeDraft, profile, today)
+  const activeDraft =
+    goalDraft?.kind === 'raceTime' && !draft.sports.some((setting) => setting.sport === goalDraft.sport)
+      ? { ...goalDraft, sport: draft.sports[0]?.sport ?? goalDraft.sport }
+      : goalDraft
+  const errors = activeDraft === null ? {} : goalErrors(activeDraft, profile, today)
 
   const setGoal = (next: GoalDraft) =>
-    setDraft((current) => ({ ...current, goals: { ...current.goals, [choice]: next } }))
+    setDraft((current) => ({ ...current, goals: { ...current.goals, [next.kind]: next } }))
 
   const submit = async () => {
     setAttempted(true)
-    const goal = goalFromDraft(activeDraft, profile, today)
-    if (!thresholdsValid || hasErrors(errors) || goal === null) {
+    const goal = activeDraft === null ? null : goalFromDraft(activeDraft, profile, today)
+    if (!thresholdsValid || hasErrors(errors) || (activeDraft !== null && goal === null)) {
       setError('Bitte die markierten Felder prüfen.')
       return
     }
     const config: CoachConfig = {
       profile,
-      goals: [goal],
+      goals: goal === null ? [] : [goal],
       strengthLog: [],
       breaks: [],
       proposals: [],
@@ -185,13 +187,20 @@ export const Onboarding = ({ onDone }: { readonly onDone: () => void }) => {
             </label>
           ))}
         </div>
-        <GoalEditor
-          draft={activeDraft}
-          onChange={setGoal}
-          errors={errors}
-          showMissing={attempted}
-          profile={profile}
-        />
+        {activeDraft === null ? (
+          <p className="hint">
+            Der Plan wechselt Grundlage und Aufbau in Vier-Wochen-Blöcken und setzt ab und zu eine
+            Standortbestimmung. Ein Ziel kannst du jederzeit in den Einstellungen anlegen.
+          </p>
+        ) : (
+          <GoalEditor
+            draft={activeDraft}
+            onChange={setGoal}
+            errors={errors}
+            showMissing={attempted}
+            profile={profile}
+          />
+        )}
       </fieldset>
 
       <fieldset>

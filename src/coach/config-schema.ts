@@ -398,8 +398,8 @@ const inStepWithFtp = (goals: readonly Goal[], profile: AthleteProfile): readonl
 export const validateConfig = (raw: unknown): CoachConfig => {
   const issues: string[] = []
   const input = (raw ?? {}) as Record<string, unknown>
+  // No goal is a goal too: staying fit runs the open-ended base and build blocks.
   const goalsInput = Array.isArray(input['goals']) ? input['goals'] : []
-  if (goalsInput.length === 0) issues.push('Mindestens ein Ziel wird benötigt')
 
   const profile = validateProfile(input['profile'], issues)
   const config: CoachConfig = {
