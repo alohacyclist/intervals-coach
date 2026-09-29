@@ -19,7 +19,7 @@ const stubUpstream = (upstream: Upstream = {}) =>
         json({ access_token: 's', refresh_token: 'r', expires_at: 2_000_000_000, athlete: { id: 5, firstname: 'A' } })
       )
     }
-    if (url.pathname === '/api/v1/oauth/token') {
+    if (url.pathname === '/api/oauth/token') {
       return upstream.token?.() ?? json({ access_token: 'access', refresh_token: 'refresh', expires_in: 3600 })
     }
     if (url.pathname === '/api/v1/athlete/0') return upstream.athlete?.() ?? json({ id: 'i42', name: 'Alex' })
