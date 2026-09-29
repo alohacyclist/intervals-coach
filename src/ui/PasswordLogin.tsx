@@ -33,7 +33,7 @@ export const PasswordLogin = ({ onDone }: { readonly onDone: () => void }) => {
         ohne Nutzung fragt der Coach erneut.
       </p>
 
-      {error && <p className="error error--block">{error}</p>}
+      {error && <p className="error error--block" role="alert">{error}</p>}
 
       <label className="login__field">
         <span>Passwort</span>

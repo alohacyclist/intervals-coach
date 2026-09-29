@@ -61,7 +61,7 @@ export const Landing = ({ error }: { readonly error: string | null }) => {
         <ExampleDay />
 
         {error && (
-          <p className="error error--block">
+          <p className="error error--block" role="alert">
             {error === 'abgelehnt'
               ? 'Zugriff wurde abgelehnt. Ohne Freigabe kann der Plan deine Daten nicht lesen.'
               : error === 'einwilligung'

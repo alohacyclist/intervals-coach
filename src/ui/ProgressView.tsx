@@ -86,7 +86,7 @@ export const ProgressView = ({ onNeedsOnboarding }: Props) => {
 
   if (error) {
     return (
-      <p className="error error--block">
+      <p className="error error--block" role="alert">
         {error}
         <button type="button" onClick={() => void load()}>
           Erneut versuchen
@@ -95,7 +95,7 @@ export const ProgressView = ({ onNeedsOnboarding }: Props) => {
     )
   }
 
-  if (!progress) return <p className="loading">Lade Verlauf von intervals.icu…</p>
+  if (!progress) return <p className="loading" role="status">Lade Verlauf von intervals.icu…</p>
 
   const { totals } = progress
   const sports = Object.entries(totals.sessionsBySport)
@@ -105,7 +105,7 @@ export const ProgressView = ({ onNeedsOnboarding }: Props) => {
   return (
     <>
       <div className="span-switch">
-        <span className="span-switch__label readout">Zeitraum</span>
+        <h1 className="span-switch__title">Verlauf</h1>
         {/* The page stays on the last span while the next one loads, so it does not jump to empty. */}
         <div className="mode" role="group" aria-label="Zeitraum" aria-busy={busy}>
           {PROGRESS_SPANS.map((option) => (

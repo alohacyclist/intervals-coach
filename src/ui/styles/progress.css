@@ -10,10 +10,13 @@
   justify-content: space-between;
   gap: 8px;
 }
-.span-switch__label {
-  font-size: 10.5px;
-  letter-spacing: 0.06em;
-  color: var(--faint);
+.span-switch__title {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--dim);
 }
 .totals--stale {
   opacity: 0.55;
@@ -53,7 +56,7 @@
 .totals__span,
 .chart__span,
 .ladder__hint {
-  font-size: 10.5px;
+  font-size: 12px;
   letter-spacing: 0.06em;
   color: var(--faint);
 }
@@ -71,7 +74,7 @@
 .totals__split {
   padding: 9px 14px;
   border-top: 1px solid var(--rule);
-  font-size: 10.5px;
+  font-size: 12px;
   letter-spacing: 0.08em;
   color: var(--faint);
 }
@@ -96,7 +99,7 @@
   right: 100%;
   margin-right: 8px;
   transform: translateY(-50%);
-  font-size: 9.5px;
+  font-size: 12px;
   letter-spacing: 0.06em;
   color: var(--faint);
   white-space: nowrap;
@@ -107,7 +110,7 @@
   justify-content: space-between;
   gap: 10px;
   padding: 5px 14px 0 44px;
-  font-size: 9.5px;
+  font-size: 12px;
   letter-spacing: 0.08em;
   color: var(--faint);
 }
@@ -120,7 +123,7 @@
   padding: 10px 14px;
   border-top: 1px solid var(--rule);
   font-family: var(--mono);
-  font-size: 9.5px;
+  font-size: 12px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--faint);
@@ -171,7 +174,7 @@
 }
 .weeks__value {
   flex: none;
-  font-size: 9.5px;
+  font-size: 12px;
   color: var(--faint);
   white-space: nowrap;
 }
@@ -205,7 +208,7 @@
 .weeks__label {
   flex: none;
   padding-bottom: 10px;
-  font-size: 9px;
+  font-size: 12px;
   letter-spacing: 0.02em;
   color: var(--faint);
   white-space: nowrap;
@@ -226,7 +229,7 @@
 }
 .rung__name {
   font-family: var(--mono);
-  font-size: 9.5px;
+  font-size: 12px;
   font-weight: 500;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -249,7 +252,7 @@
 }
 .rung__state {
   margin-left: auto;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text);
 }
 .rung__next {

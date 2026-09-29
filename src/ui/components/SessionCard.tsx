@@ -121,6 +121,7 @@ export const SessionCard = ({
               className={
                 variant.tier === tier ? 'variants__pick variants__pick--on' : 'variants__pick'
               }
+              aria-pressed={variant.tier === tier}
               onClick={() => choose(variant.tier)}
             >
               {variant.minutes} min{' '}
@@ -175,7 +176,10 @@ export const SessionCard = ({
               : '→ intervals.icu Kalender'}
         </button>
       )}
-      {push.status === 'error' && <p className="error">{push.message}</p>}
+      {push.status === 'error' && <p className="error" role="alert">{push.message}</p>}
+      <p className="sr-only" role="status">
+        {push.status === 'busy' ? 'Wird an den Kalender gesendet…' : sent.includes(minutes) ? 'Diese Fassung ist jetzt im Kalender.' : ''}
+      </p>
     </article>
   )
 }

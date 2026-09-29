@@ -12,6 +12,17 @@ const STATUS_LABEL: Readonly<Record<AdherenceStatus, string>> = {
   rest: 'Ruhetag',
 }
 
+/** The status as a shape, so it reads without colour, on touch and aloud. */
+export const STATUS_MARK: Readonly<Record<AdherenceStatus, string>> = {
+  done: '✓',
+  race: '⚑',
+  switched: '↔',
+  missed: '✕',
+  open: '○',
+  unplanned: '+',
+  rest: '·',
+}
+
 const sportOf = (day: AdherenceDay): string =>
   day.completedSport && day.completedSport !== 'Other' ? SPORT_LABELS[day.completedSport] : 'Training'
 
@@ -48,6 +59,12 @@ export const HistoryStrip = ({ history }: { readonly history: readonly Adherence
           <li key={day.date} className={`history__day history__day--${day.status}`} title={detail(day)}>
             <span className="history__weekday">{day.weekday}</span>
             <span className="history__load">{day.load > 0 ? day.load : '–'}</span>
+            <span className="history__mark" aria-hidden="true">
+              {STATUS_MARK[day.status]}
+            </span>
+            <span className="sr-only">
+              {STATUS_LABEL[day.status]}, {detail(day)}
+            </span>
           </li>
         ))}
       </ol>
@@ -81,7 +98,10 @@ export const HistoryStrip = ({ history }: { readonly history: readonly Adherence
         <p className="history__legend">
           {(['done', 'race', 'switched', 'unplanned', 'missed', 'rest'] as const).map((status) => (
             <span key={status}>
-              <i className={`history__dot history__day--${status}`} /> {STATUS_LABEL[status]}
+              <i className={`history__dot history__day--${status}`} aria-hidden="true">
+                {STATUS_MARK[status]}
+              </i>{' '}
+              {STATUS_LABEL[status]}
             </span>
           ))}
         </p>
