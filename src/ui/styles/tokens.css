@@ -42,6 +42,10 @@
   --mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
   --sans: 'IBM Plex Sans Condensed', 'Helvetica Neue', Arial, sans-serif;
 
+  /* For third-party artwork that ships one file per background, like Strava's logo. */
+  --light-only: inline;
+  --dark-only: none;
+
   color-scheme: light;
 }
 
@@ -72,6 +76,9 @@
     --warn: #f2c94c;
     --bad: #ff6b5f;
 
+    --light-only: none;
+    --dark-only: inline;
+
     color-scheme: dark;
   }
 }
@@ -101,6 +108,9 @@
   --on-good: #0a0d0e;
   --warn: #f2c94c;
   --bad: #ff6b5f;
+
+  --light-only: none;
+  --dark-only: inline;
 
   color-scheme: dark;
 }
@@ -277,6 +287,13 @@ label,
 .onboarding fieldset,
 .consent {
   background: var(--bg);
+}
+
+.light-only {
+  display: var(--light-only);
+}
+.dark-only {
+  display: var(--dark-only);
 }
 
 .sr-only {
