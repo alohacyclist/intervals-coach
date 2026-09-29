@@ -390,6 +390,8 @@ export default {
       syncStrava(env, {
         secret: sessionSecret(env),
         depsFor: async (subject) => (isMultiUser(env) ? athleteDeps(env, subject, false) : singleUserDeps(env)),
+        storeFor: (subject) =>
+          isMultiUser(env) ? userConfigStore(env.COACH_CONFIG, subject) : kvConfigStore(env.COACH_CONFIG),
         keepExpiry: isMultiUser(env),
       }),
     )

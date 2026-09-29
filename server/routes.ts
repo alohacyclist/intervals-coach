@@ -61,7 +61,7 @@ import { loadExecution } from './execution-load.ts'
 import { describeWorkout } from '../src/coach/format.ts'
 import type { Intent, Plan, Progress } from '../src/coach/types.ts'
 
-const TIMEZONE = 'Europe/Berlin'
+export const DEFAULT_TIMEZONE = 'Europe/Berlin'
 /** Longer than this is not a break any more, it is a different training year. */
 const MAX_BREAK_DAYS = 120
 const ACTIVITY_HISTORY_DAYS = 180
@@ -73,8 +73,12 @@ const RACE_HISTORY_DAYS = 400
 const PROGRESSION_DAYS = 120
 
 /** Local calendar date in the athlete's timezone — sv-SE formats as YYYY-MM-DD. */
-export const localToday = (now: Date = new Date()): string =>
-  now.toLocaleDateString('sv-SE', { timeZone: TIMEZONE })
+export const localToday = (now: Date = new Date(), timeZone: string = DEFAULT_TIMEZONE): string =>
+  now.toLocaleDateString('sv-SE', { timeZone })
+
+/** Local hour, 0 to 23, in the athlete's timezone. */
+export const localHour = (now: Date, timeZone: string = DEFAULT_TIMEZONE): number =>
+  Number(new Intl.DateTimeFormat('en-GB', { hour: 'numeric', hourCycle: 'h23', timeZone }).format(now))
 
 export type RouteDeps = {
   readonly auth: IntervalsAuth
