@@ -126,3 +126,48 @@ describe('deleting an account', () => {
     expect((await call('/api/account', { method: 'DELETE' }, multiUserEnv())).status).toBe(401)
   })
 })
+
+describe('deleting an account on intervals.icu’s side', () => {
+  const DISCONNECT = 'https://intervals.icu/api/v1/disconnect-app'
+
+  it('withdraws the app’s access there, with the athlete’s token', async () => {
+    const env = multiUserEnv()
+    const { a } = await twoAthletes(env)
+    const seen = stubIntervals()
+    await call('/api/account', { method: 'DELETE', headers: { Cookie: a } }, env)
+    expect(seen).toContainEqual({ method: 'DELETE', url: DISCONNECT, authorization: 'Bearer access-iA' })
+  })
+
+  it('refreshes an expired token first, so the withdrawal is accepted', async () => {
+    const env = multiUserEnv()
+    await saveUser(env.COACH_CONFIG, SESSION_SECRET, {
+      ...userOf('iA'),
+      tokens: { accessToken: 'stale', refreshToken: 'refresh-iA', expiresAt: 1 },
+    })
+    const seen: Seen[] = []
+    vi.stubGlobal('fetch', async (input: string, init?: RequestInit) => {
+      seen.push({ method: init?.method ?? 'GET', url: input, authorization: new Headers(init?.headers).get('Authorization') })
+      return input === 'https://intervals.icu/api/oauth/token'
+        ? json({ access_token: 'renewed', refresh_token: 'refresh-2', expires_in: 3600 })
+        : json({})
+    })
+    const response = await call('/api/account', { method: 'DELETE', headers: { Cookie: await sessionFor('iA') } }, env)
+    expect(response.status).toBe(200)
+    expect(seen.find((entry) => entry.url === DISCONNECT)?.authorization).toBe('Bearer renewed')
+  })
+
+  it('still erases everything here when intervals.icu refuses or cannot be reached', async () => {
+    for (const answer of [() => json({ error: 'nope' }, 500), () => Promise.reject(new TypeError('offline'))]) {
+      const kv = fakeKv()
+      const env = multiUserEnv(kv)
+      const { a } = await twoAthletes(env)
+      const logged = vi.spyOn(console, 'error').mockImplementation(() => {})
+      vi.stubGlobal('fetch', async (input: string) => (input === DISCONNECT ? answer() : json({})))
+      const response = await call('/api/account', { method: 'DELETE', headers: { Cookie: a } }, env)
+      expect(response.status).toBe(200)
+      expect([...kv.store.keys()].sort()).toEqual(['user:iB'])
+      expect(logged).toHaveBeenCalled()
+      logged.mockRestore()
+    }
+  })
+})
