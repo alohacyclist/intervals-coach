@@ -53,20 +53,25 @@ export const createStravaRoutes = (helpers: StravaRouteHelpers): Hono<{ Bindings
     if (!grantedEnough(context.req.query('scope'))) return back(context, 'rechte')
 
     const origin = new URL(context.req.url).origin
-    const { tokens, athlete } = await exchangeCode(stravaApp(context.env, origin), code)
     const secret = helpers.secretOf(context.env)
-    const existing = await loadLink(context.env.COACH_CONFIG, secret, subject)
-    await saveLink(context.env.COACH_CONFIG, secret, {
-      subject,
-      stravaAthleteId: athlete.id,
-      name: athlete.name,
-      tokens,
-      appUrl: origin,
-      connectedAt: new Date().toISOString(),
-      // The same Strava account again keeps its record, so nothing is written twice.
-      posted: existing?.stravaAthleteId === athlete.id ? existing.posted : [],
-    })
-    return back(context, 'verbunden')
+    try {
+      const { tokens, athlete } = await exchangeCode(stravaApp(context.env, origin), code)
+      const existing = await loadLink(context.env.COACH_CONFIG, secret, subject)
+      await saveLink(context.env.COACH_CONFIG, secret, {
+        subject,
+        stravaAthleteId: athlete.id,
+        name: athlete.name,
+        tokens,
+        appUrl: origin,
+        connectedAt: new Date().toISOString(),
+        // The same Strava account again keeps its record, so nothing is written twice.
+        posted: existing?.stravaAthleteId === athlete.id ? existing.posted : [],
+      })
+      return back(context, 'verbunden')
+    } catch (error) {
+      console.error('Strava connect failed', error)
+      return back(context, 'fehler')
+    }
   })
 
   app.get('/api/strava', async (context) => {
