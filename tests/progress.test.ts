@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Activity } from '../src/coach/types.ts'
 import type { Completion } from '../src/coach/progression.ts'
-import { buildProgress, isProgressSpan, weeksFor } from '../src/coach/progress.ts'
+import { buildProgress, EARLY_DAYS, isProgressSpan, trackedDays, weeksFor } from '../src/coach/progress.ts'
 import { addDays, startOfWeek } from '../src/coach/dates.ts'
 import { activity, TODAY } from './fixtures.ts'
 
@@ -116,5 +116,23 @@ describe('progress span', () => {
   it('accepts only the offered spans', () => {
     expect(isProgressSpan(90)).toBe(true)
     expect(isProgressSpan(360)).toBe(false)
+  })
+})
+
+describe('trackedDays', () => {
+  const point = (load: number, index: number) => ({ date: `2026-08-${String(index + 1).padStart(2, '0')}`, ctl: load, atl: load })
+
+  it('is zero for an athlete without any load yet', () => {
+    expect(trackedDays([0, 0, 0].map(point))).toBe(0)
+  })
+
+  it('counts from the first day with load, so a new athlete reads as early', () => {
+    const points = [...Array(20).fill(0), 5, 6, 7].map(point)
+    expect(trackedDays(points)).toBe(3)
+    expect(trackedDays(points)).toBeLessThan(EARLY_DAYS)
+  })
+
+  it('counts the whole span for an athlete with history before it', () => {
+    expect(trackedDays(Array(30).fill(40).map(point))).toBe(30)
   })
 })
