@@ -77,10 +77,10 @@ export const distanceKmOf = (draft: GoalDraft): number | null => {
 export const predictedTime = (draft: GoalDraft, profile: AthleteProfile): number | null =>
   projectedRaceTime(profile, draft.sport, distanceKmOf(draft) ?? undefined)
 
-const dateError = (value: string, today: string): string | null => {
+const dateError = (value: string, earliest: string | null): string | null => {
   if (value === '') return null
   if (!isIsoDate(value)) return 'Bitte ein gültiges Datum wählen'
-  return value < today ? 'Das Datum liegt in der Vergangenheit' : null
+  return earliest !== null && value < earliest ? 'Das Datum liegt in der Vergangenheit' : null
 }
 
 const ftpErrors = (draft: GoalDraft, profile: AthleteProfile): GoalErrors => {
@@ -100,8 +100,13 @@ const raceErrors = (draft: GoalDraft, profile: AthleteProfile): GoalErrors => {
   ) as GoalErrors
 }
 
-export const goalErrors = (draft: GoalDraft, profile: AthleteProfile, today: string): GoalErrors => {
-  const date = dateError(draft.targetDate, today)
+/**
+ * What is wrong with the draft, field by field. `earliest` is the first date a
+ * goal may be set for; null lets a stored goal keep a date that has since passed,
+ * so an old goal never blocks saving everything else.
+ */
+export const goalErrors = (draft: GoalDraft, profile: AthleteProfile, earliest: string | null): GoalErrors => {
+  const date = dateError(draft.targetDate, earliest)
   const own = draft.kind === 'ftp' ? ftpErrors(draft, profile) : raceErrors(draft, profile)
   return date === null ? own : { ...own, targetDate: date }
 }
@@ -114,8 +119,8 @@ const autoLabel = (draft: GoalDraft, distanceKm: number, target: number): string
     : `${formatDistance(draft.sport, distanceKm)} ${SPORT_LABELS[draft.sport]} in ${formatClock(target)}`
 
 /** The goal the draft describes, or null while any field is still wrong. */
-export const goalFromDraft = (draft: GoalDraft, profile: AthleteProfile, today: string): Goal | null => {
-  if (hasErrors(goalErrors(draft, profile, today))) return null
+export const goalFromDraft = (draft: GoalDraft, profile: AthleteProfile, earliest: string | null): Goal | null => {
+  if (hasErrors(goalErrors(draft, profile, earliest))) return null
   const dated = draft.targetDate === '' ? {} : { targetDate: draft.targetDate }
   const common = { id: draft.id, sport: draft.sport, kind: draft.kind, priority: draft.priority, ...dated }
 
