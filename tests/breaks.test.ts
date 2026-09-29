@@ -157,4 +157,10 @@ describe('when the plan measures instead of estimating', () => {
       'test-run-thr20',
     )
   })
+
+  it('measures swimming with the CSS test, which used to have none', () => {
+    expect(thresholdTestDue('Swim', [], TODAY, fit, 'BUILD', false, 90, 2)?.templateId).toBe(
+      'test-swim-css',
+    )
+  })
 })
