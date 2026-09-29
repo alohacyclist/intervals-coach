@@ -1,7 +1,7 @@
 import type { Sport, SportSetting, SportThreshold } from '../../coach/types.ts'
 import { ALL_SPORTS, SPORT_LABELS } from '../../coach/types.ts'
 import { defaultThreshold } from '../../coach/thresholds.ts'
-import { formatSeconds, parseMmSs } from '../format-input.ts'
+import { formatSeconds, parseTime } from '../format-input.ts'
 
 const THRESHOLD_LABEL: Readonly<Record<Sport, string>> = {
   Ride: 'FTP (Watt)',
@@ -15,10 +15,16 @@ const thresholdValue = (threshold: SportThreshold): string => {
   return formatSeconds(threshold.cssSecPer100m)
 }
 
-const thresholdFromInput = (sport: Sport, value: string): SportThreshold => {
-  if (sport === 'Ride') return { metric: 'power', ftp: Number(value) }
-  if (sport === 'Run') return { metric: 'pace', thresholdSecPerKm: parseMmSs(value) }
-  return { metric: 'swimPace', cssSecPer100m: parseMmSs(value) }
+const thresholdFromInput = (sport: Sport, value: string): SportThreshold | null => {
+  if (sport === 'Ride') {
+    const ftp = Number(value)
+    return Number.isFinite(ftp) && ftp > 0 ? { metric: 'power', ftp } : null
+  }
+  const seconds = parseTime(value)
+  if (seconds === null) return null
+  return sport === 'Run'
+    ? { metric: 'pace', thresholdSecPerKm: seconds }
+    : { metric: 'swimPace', cssSecPer100m: seconds }
 }
 
 type Props = {
@@ -43,14 +49,11 @@ export const SportPicker = ({ sports, onChange }: Props) => {
           ),
     )
 
-  const setThreshold = (sport: Sport, value: string) =>
-    onChange(
-      sports.map((setting) =>
-        setting.sport === sport
-          ? { ...setting, threshold: thresholdFromInput(sport, value) }
-          : setting,
-      ),
-    )
+  const setThreshold = (sport: Sport, value: string) => {
+    const threshold = thresholdFromInput(sport, value)
+    if (threshold === null) return
+    onChange(sports.map((setting) => (setting.sport === sport ? { ...setting, threshold } : setting)))
+  }
 
   return (
     <div className="sports">
