@@ -366,3 +366,10 @@
   );
   border: 1px solid var(--rule);
 }
+
+.early__text {
+  padding: 12px 14px;
+  font-size: 14px;
+  color: var(--dim);
+  max-width: 70ch;
+}
