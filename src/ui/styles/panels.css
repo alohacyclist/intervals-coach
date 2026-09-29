@@ -233,6 +233,31 @@
   font-size: 14px;
   color: var(--ink);
 }
+/* Strava's artwork at its own size and untouched: 48 px tall as the guidelines
+   require, no hover tint, only the focus ring the rest of the app uses. */
+.strava__connect {
+  display: inline-block;
+  margin: 6px 0;
+  line-height: 0;
+}
+.strava__connect img {
+  width: auto;
+  max-width: none;
+  height: 48px;
+}
+.strava__connect:focus-visible {
+  outline-offset: 3px;
+}
+/* Clear space above so the mark stands apart from the app's own controls. */
+.strava__compatible {
+  margin-top: 6px;
+  padding-top: 12px;
+  line-height: 0;
+}
+.strava__compatible img {
+  width: auto;
+  height: 18px;
+}
 
 /* Deleting an account is separated by a rule, never mixed into the save row. */
 .danger {
