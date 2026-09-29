@@ -83,4 +83,17 @@ describe('prefilling from intervals.icu', () => {
     })
     expect(prefilledThreshold('Run', nothing).source).toBe('estimate')
   })
+
+  it('takes the swim CSS as well, not only FTP and run pace', () => {
+    expect(prefilledThreshold('Swim', settings)).toEqual({
+      threshold: { metric: 'swimPace', cssSecPer100m: 98 },
+      source: 'intervals',
+    })
+    const withSwim: readonly SportSetting[] = [
+      ...defaults,
+      { sport: 'Swim', threshold: { metric: 'swimPace', cssSecPer100m: 110 } },
+    ]
+    expect(prefillSports(withSwim, {}, settings).sources.Swim).toBe('intervals')
+    expect(prefilledThreshold('Swim', nothing).source).toBe('estimate')
+  })
 })
