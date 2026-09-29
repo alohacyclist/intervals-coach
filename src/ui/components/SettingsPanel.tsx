@@ -1,12 +1,14 @@
 import { useState } from 'react'
-import type { CoachConfig, Equipment, Goal } from '../../coach/types.ts'
+import type { CoachConfig, Equipment, Goal, GoalKind } from '../../coach/types.ts'
 import { EQUIPMENT_LABELS } from '../../coach/types.ts'
 import { putConfig, syncSettings } from '../api.ts'
-import { formatClock, parseTime, timeError } from '../format-input.ts'
 import { ftpOf } from '../../coach/thresholds.ts'
+import { localIsoDate } from '../../coach/dates.ts'
 import { SportPicker } from './SportPicker.tsx'
-import { TimeField } from './TimeField.tsx'
+import { GoalEditor } from './GoalEditor.tsx'
 import type { ThresholdSources } from '../threshold-input.ts'
+import type { GoalDraft } from '../goal-draft.ts'
+import { draftFromGoal, emptyGoalDraft, goalErrors, goalFromDraft, hasErrors } from '../goal-draft.ts'
 
 const MINUTE_LABELS = {
   min: 'Min. — schaffe ich immer',
@@ -35,32 +37,34 @@ export const SettingsPanel = ({ config, onSaved, onClose, canDelete }: Props) =>
   const patchProfile = (patch: Partial<CoachConfig['profile']>) =>
     setDraft((current) => ({ ...current, profile: { ...current.profile, ...patch } }))
 
-  const [times, setTimes] = useState<Readonly<Record<string, string>>>(() =>
-    Object.fromEntries(
-      config.goals
-        .filter((goal) => goal.kind === 'raceTime')
-        .flatMap((goal) => [
-          [`${goal.id}:currentValue`, formatClock(goal.currentValue)],
-          [`${goal.id}:targetValue`, formatClock(goal.targetValue)],
-        ]),
-    ),
-  )
-  const timeErrors = Object.fromEntries(
-    Object.entries(times).map(([key, value]) => [key, timeError(value, true)]),
-  )
-  const hasTimeErrors = Object.values(timeErrors).some((message) => message !== null)
+  const [goals, setGoals] = useState<readonly GoalDraft[]>(() => config.goals.map(draftFromGoal))
+  const [attempted, setAttempted] = useState(false)
+  const today = localIsoDate()
+  // A stored goal whose date has passed may stay as it is; a newly set date may not lie behind us.
+  const earliest = (goal: GoalDraft): string | null =>
+    config.goals.some((stored) => stored.id === goal.id && (stored.targetDate ?? '') === goal.targetDate)
+      ? null
+      : today
+  const errors = goals.map((goal) => goalErrors(goal, draft.profile, earliest(goal)))
 
-  const setTime = (goal: Goal, field: 'currentValue' | 'targetValue', value: string) => {
-    setTimes((current) => ({ ...current, [`${goal.id}:${field}`]: value }))
-    const seconds = parseTime(value)
-    if (seconds !== null) patchGoal(goal.id, { [field]: seconds })
-  }
-
-  const patchGoal = (id: string, patch: Partial<Goal>) =>
-    setDraft((current) => ({
+  const setGoal = (next: GoalDraft) =>
+    setGoals((current) => current.map((goal) => (goal.id === next.id ? next : goal)))
+  const removeGoal = (id: string) => setGoals((current) => current.filter((goal) => goal.id !== id))
+  const addGoal = (kind: GoalKind) =>
+    setGoals((current) => [
       ...current,
-      goals: current.goals.map((goal) => (goal.id === id ? { ...goal, ...patch } : goal)),
-    }))
+      emptyGoalDraft(`goal-${Date.now().toString(36)}`, kind, draft.profile.sports[0]?.sport ?? 'Run'),
+    ])
+
+  const save = () => {
+    setAttempted(true)
+    const built = goals.map((goal) => goalFromDraft(goal, draft.profile, earliest(goal)))
+    if (!thresholdsValid || errors.some(hasErrors) || built.some((goal) => goal === null)) {
+      setError('Bitte die markierten Felder prüfen.')
+      return
+    }
+    void run(() => putConfig({ ...draft, goals: built.filter((goal): goal is Goal => goal !== null) }))
+  }
 
   const run = async (action: () => Promise<CoachConfig>) => {
     setBusy(true)
@@ -172,73 +176,34 @@ export const SettingsPanel = ({ config, onSaved, onClose, canDelete }: Props) =>
       </div>
 
       <h3>Ziele</h3>
-      {draft.goals.map((goal) => (
-        <div key={goal.id} className="grid grid--goal">
-          <label>
-            Bezeichnung
-            <input
-              type="text"
-              value={goal.label}
-              onChange={(event) => patchGoal(goal.id, { label: event.target.value })}
-            />
-          </label>
-          {goal.kind === 'ftp' && ftp !== null ? (
-            // Follows the FTP above: a second place to type it would only drift apart.
-            <label>
-              Aktuell (W)
-              <input type="text" value={String(ftp)} readOnly title="Folgt der FTP bei den Sportarten" />
-            </label>
-          ) : goal.kind === 'ftp' ? (
-            <label>
-              Aktuell (W)
-              <input
-                type="text"
-                defaultValue={String(goal.currentValue)}
-                onBlur={(event) => patchGoal(goal.id, { currentValue: Number(event.target.value) })}
-              />
-            </label>
-          ) : (
-            <TimeField
-              label="Aktuell"
-              value={times[`${goal.id}:currentValue`] ?? ''}
-              onChange={(value) => setTime(goal, 'currentValue', value)}
-              error={timeErrors[`${goal.id}:currentValue`] ?? null}
-            />
-          )}
-          {goal.kind === 'ftp' ? (
-            <label>
-              Ziel (W)
-              <input
-                type="text"
-                defaultValue={String(goal.targetValue)}
-                onBlur={(event) => patchGoal(goal.id, { targetValue: Number(event.target.value) })}
-              />
-            </label>
-          ) : (
-            <TimeField
-              label="Ziel"
-              value={times[`${goal.id}:targetValue`] ?? ''}
-              onChange={(value) => setTime(goal, 'targetValue', value)}
-              error={timeErrors[`${goal.id}:targetValue`] ?? null}
-            />
-          )}
-          <label>
-            Zieldatum
-            <input
-              type="date"
-              value={goal.targetDate ?? ''}
-              onChange={(event) =>
-                patchGoal(goal.id, { targetDate: event.target.value === '' ? undefined : event.target.value })
-              }
-            />
-          </label>
-        </div>
+      {goals.length === 0 && <p className="hint">Kein konkretes Ziel – fit bleiben.</p>}
+      {goals.map((goal, index) => (
+        <GoalEditor
+          key={goal.id}
+          draft={goal}
+          onChange={setGoal}
+          errors={errors[index] ?? {}}
+          showMissing={attempted}
+          profile={draft.profile}
+          detailed
+          onRemove={() => removeGoal(goal.id)}
+        />
       ))}
+      <div className="settings__actions">
+        <button type="button" onClick={() => addGoal('raceTime')}>
+          Wettkampfziel hinzufügen
+        </button>
+        {ftp !== null && (
+          <button type="button" onClick={() => addGoal('ftp')}>
+            FTP-Ziel hinzufügen
+          </button>
+        )}
+      </div>
 
       {error && <p className="error">{error}</p>}
 
       <div className="settings__actions">
-        <button type="button" disabled={busy || hasTimeErrors || !thresholdsValid} onClick={() => run(() => putConfig(draft))}>
+        <button type="button" disabled={busy} onClick={save}>
           Speichern
         </button>
         <button
