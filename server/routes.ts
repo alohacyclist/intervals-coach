@@ -76,6 +76,17 @@ const PROGRESSION_DAYS = 120
 export const localToday = (now: Date = new Date(), timeZone: string = DEFAULT_TIMEZONE): string =>
   now.toLocaleDateString('sv-SE', { timeZone })
 
+/** An IANA zone the runtime knows, or null — the profile is external data. */
+export const validTimeZone = (value: unknown): string | null => {
+  if (typeof value !== 'string' || value.length === 0 || value.length > 64) return null
+  try {
+    new Intl.DateTimeFormat('en', { timeZone: value })
+    return value
+  } catch {
+    return null
+  }
+}
+
 /** Local hour, 0 to 23, in the athlete's timezone. */
 export const localHour = (now: Date, timeZone: string = DEFAULT_TIMEZONE): number =>
   Number(new Intl.DateTimeFormat('en-GB', { hour: 'numeric', hourCycle: 'h23', timeZone }).format(now))
@@ -83,7 +94,12 @@ export const localHour = (now: Date, timeZone: string = DEFAULT_TIMEZONE): numbe
 export type RouteDeps = {
   readonly auth: IntervalsAuth
   readonly store: ConfigStore
+  /** From the athlete's intervals.icu profile; Berlin where it is unknown. */
+  readonly timezone?: string
 }
+
+/** "Today" is the athlete's day, not the server's. */
+const todayFor = (deps: RouteDeps): string => localToday(new Date(), deps.timezone)
 
 /**
  * Resolves per-request dependencies: fixed under Node, derived from the signed
@@ -141,8 +157,8 @@ const referenceResult = async (
   activityId: string,
   date: string | null,
   execution: Execution,
+  today: string,
 ): Promise<BenchmarkResult | null> => {
-  const today = localToday()
   const [activities, events] = await Promise.all([
     fetchActivities(auth, addDays(today, -PROGRESSION_DAYS), today),
     fetchEvents(auth, addDays(today, -PROGRESSION_DAYS), today),
@@ -177,7 +193,7 @@ const referenceResult = async (
  * calendar ahead, because nothing here is about today.
  */
 const buildProgressView = async (deps: RouteDeps, span: ProgressSpan): Promise<Progress> => {
-  const today = localToday()
+  const today = todayFor(deps)
   const config = await deps.store.load()
   const [activities, events] = await Promise.all([
     // Levels and benchmarks judge the same history as the plan, whatever span is shown.
@@ -204,7 +220,7 @@ const buildProgressView = async (deps: RouteDeps, span: ProgressSpan): Promise<P
 }
 
 const buildPlan = async (deps: RouteDeps, days: number, intent?: Intent): Promise<Plan> => {
-  const today = localToday()
+  const today = todayFor(deps)
   const config = await deps.store.load()
   const [activities, wellness, events, settings, destinations] = await Promise.all([
     fetchActivities(deps.auth, addDays(today, -ACTIVITY_HISTORY_DAYS), today),
@@ -404,12 +420,15 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
     }
     const date = context.req.query('date')
 
-    const { auth, store } = await resolve(context)
+    const deps = await resolve(context)
+    const { auth, store } = deps
     const config = await store.load()
     const day = isIsoDate(date) ? date : null
     const { execution } = await loadExecution(auth, config.profile, activityId, template, day)
     const benchmark = isReference(template)
-      ? await referenceResult(auth, config, template.sport, activityId, day, execution).catch(() => null)
+      ? await referenceResult(auth, config, template.sport, activityId, day, execution, todayFor(deps)).catch(
+          () => null,
+        )
       : null
     return context.json({ ...execution, benchmark })
   })
@@ -510,19 +529,20 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
       return context.json({ error: `days muss zwischen 1 und ${MAX_BREAK_DAYS} liegen` }, 400)
     }
 
-    const today = localToday()
-    const { store } = await resolve(context)
-    const config = await store.load()
+    const deps = await resolve(context)
+    const today = todayFor(deps)
+    const config = await deps.store.load()
     // A new break replaces one already running; two at once would only conflict.
     const kept = config.breaks.filter((entry) => entry.until < today)
     const entry = { id: `${kind}-${today}`, kind, from: today, until: addDays(today, days - 1) }
-    return context.json(await store.save(validateConfig({ ...config, breaks: [...kept, entry] })))
+    return context.json(await deps.store.save(validateConfig({ ...config, breaks: [...kept, entry] })))
   })
 
   /** Ends the running break from today, for an athlete who recovered early. */
   app.post('/api/break/end', async (context) => {
-    const today = localToday()
-    const { store } = await resolve(context)
+    const deps = await resolve(context)
+    const { store } = deps
+    const today = todayFor(deps)
     const config = await store.load()
     const running = activeBreak(config.breaks, today)
     if (!running) return context.json({ error: 'Keine Pause eingetragen' }, 400)

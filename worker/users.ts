@@ -13,6 +13,8 @@ export type User = {
   /** When explicit consent to processing health data was given — Art. 7 (1) GDPR. */
   readonly consentAt: string
   readonly lastSeenAt: string
+  /** IANA zone from the intervals.icu profile at sign-in; missing for accounts from before. */
+  readonly timezone?: string
 }
 
 /**
