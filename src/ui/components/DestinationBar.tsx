@@ -70,9 +70,10 @@ export const DestinationBar = ({ config, destinations, onSaved }: Props) => {
                   type="button"
                   disabled={busy}
                   className={chosen.includes(state.destination) ? 'destinations__on' : ''}
+                  aria-pressed={chosen.includes(state.destination)}
                   onClick={() => void toggle(sport, state.destination)}
                 >
-                  {chosen.includes(state.destination) ? '✓ ' : ''}
+                  {chosen.includes(state.destination) && <span aria-hidden="true">✓ </span>}
                   {state.label}
                 </button>
               ))}
@@ -89,7 +90,7 @@ export const DestinationBar = ({ config, destinations, onSaved }: Props) => {
         intervals.icu leitet je Konto weiter, nicht je Einheit. Die App stellt die Schalter deshalb
         kurz vor jedem Senden auf die Sportart um.
       </details>
-      {error && <p className="error">{error}</p>}
+      {error && <p className="error" role="alert">{error}</p>}
     </section>
   )
 }

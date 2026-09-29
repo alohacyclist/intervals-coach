@@ -54,7 +54,7 @@ export const BreakBar = ({ config, today, onChanged }: Props) => {
           </button>
         </div>
         <p className="pause__note">{limit.reason}</p>
-        {error && <p className="error">{error}</p>}
+        {error && <p className="error" role="alert">{error}</p>}
       </section>
     )
   }
@@ -104,7 +104,7 @@ export const BreakBar = ({ config, today, onChanged }: Props) => {
           verpasst. Danach kommt die Intensität schrittweise zurück, nicht auf einen Schlag.
         </p>
       )}
-      {error && <p className="error">{error}</p>}
+      {error && <p className="error" role="alert">{error}</p>}
     </section>
   )
 }

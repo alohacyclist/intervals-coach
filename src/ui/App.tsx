@@ -98,8 +98,8 @@ export const App = () => {
   if (path === '/datenschutz') return <Shell><Privacy /></Shell>
   if (path === '/impressum') return <Shell><Imprint /></Shell>
 
-  if (error) return <Shell><p className="error error--block">{error}</p></Shell>
-  if (!me) return <Shell><p className="loading">Einen Moment…</p></Shell>
+  if (error) return <Shell><p className="error error--block" role="alert">{error}</p></Shell>
+  if (!me) return <Shell><p className="loading" role="status">Einen Moment…</p></Shell>
 
   if (!me.authenticated) {
     return (
