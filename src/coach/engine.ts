@@ -16,7 +16,8 @@ import type {
   TrainingState,
   WorkoutTemplate,
 } from './types.ts'
-import { ALL_SPORTS } from './types.ts'
+import { ALL_SPORTS, STIMULUS_LABELS } from './types.ts'
+import { formNote } from './wording.ts'
 import { addDays, diffDays, startOfWeek, weekdayDe } from './dates.ts'
 import { projectFitness } from './fitness.ts'
 import { PHASE_LABELS, goalForSport, phaseForSport, primaryGoal, weeklyHardBudget } from './phase.ts'
@@ -477,7 +478,7 @@ const reasonFor = (
   const ageText =
     age >= STALE_STIMULUS_DAYS
       ? 'dieser Reiz fehlt seit über vier Wochen'
-      : `letzter ${template.stimulus}-Reiz vor ${age} Tagen`
+      : `${STIMULUS_LABELS[template.stimulus]} zuletzt vor ${age} Tagen`
   if (dayType === 'KEY') return `${PHASE_LABELS[phase]}, Qualitätstag — ${ageText}${levelNote(template, ceilings)}`
   if (dayType === 'EASY') return `Lockerer Tag zwischen zwei harten Einheiten (${PHASE_LABELS[phase]})`
   return `Regeneration hat Vorrang (${PHASE_LABELS[phase]})`
@@ -521,7 +522,7 @@ const notesFor = (
   if (dayIndex === 0 && state.readiness.reasons[0] !== 'Keine Warnsignale') {
     notes.push(...state.readiness.reasons)
   }
-  notes.push(`Form ${simulation.fitness.tsb} · Fitness ${simulation.fitness.ctl} · Ermüdung ${simulation.fitness.atl}`)
+  notes.push(formNote(simulation.fitness))
   if (state.daysSinceAnySession >= LAYOFF_DAYS && state.daysSinceAnySession < 99) {
     notes.push(
       `${state.daysSinceAnySession} Tage ohne Training — Wiedereinstieg über die Schwelle, VO₂max erst danach`,

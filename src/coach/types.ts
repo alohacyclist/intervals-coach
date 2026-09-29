@@ -46,6 +46,18 @@ export type Stimulus =
   | 'LONG'
   | 'RECOVERY'
 
+/** How a stimulus is named to the athlete; the enum names are for the code only. */
+export const STIMULUS_LABELS: Readonly<Record<Stimulus, string>> = {
+  VO2: 'VO2max',
+  THRESHOLD: 'Schwelle',
+  SWEETSPOT: 'Sweetspot',
+  TEMPO: 'Tempo',
+  NEURO: 'Antritte',
+  ENDURANCE: 'Grundlage',
+  LONG: 'Lange Einheit',
+  RECOVERY: 'Regeneration',
+}
+
 export type IntensityClass = 'hard' | 'moderate' | 'easy'
 
 /**
