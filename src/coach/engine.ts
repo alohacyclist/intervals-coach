@@ -660,7 +660,8 @@ export const planDays = (
       const phases = Object.fromEntries(
         sports.map((sport) => [sport, phaseForSport(config, sport, date)]),
       ) as Record<Sport, Phase>
-      const primarySport = primaryGoal(config.goals, date)?.sport ?? 'Ride'
+      // Without a goal the first sport sets the phase; 'Ride' alone left a runner with no budget at all.
+      const primarySport = primaryGoal(config.goals, date)?.sport ?? sports[0] ?? 'Ride'
       const phase = phases[primarySport]
       const budget = weeklyHardBudget(phase, config.profile)
       const around = racesAround(config, sports, date)

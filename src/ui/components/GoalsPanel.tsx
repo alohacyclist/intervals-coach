@@ -28,6 +28,12 @@ type Props = {
 export const GoalsPanel = ({ goals, feasibility }: Props) => (
   <section className="goals">
     <h2>Ziele</h2>
+    {goals.length === 0 && (
+      <p className="goal__message">
+        Kein konkretes Ziel – fit bleiben. Der Plan wechselt Grundlage und Aufbau in
+        Vier-Wochen-Blöcken; ein Ziel legst du in den Einstellungen an.
+      </p>
+    )}
     {goals.map((goal) => {
       const assessment = feasibility.find((entry) => entry.goalId === goal.id)
       return (
