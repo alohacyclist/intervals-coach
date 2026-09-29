@@ -68,8 +68,8 @@ describe('config validation', () => {
     ])
   })
 
-  it('rejects a configuration without goals', () => {
-    expect(() => validateConfig({ ...DEFAULT_CONFIG, goals: [] })).toThrow(/Mindestens ein Ziel/)
+  it('accepts a configuration without goals', () => {
+    expect(validateConfig({ ...DEFAULT_CONFIG, goals: [] }).goals).toEqual([])
   })
 
   it('saves a swim goal, which onboarding offers', () => {
