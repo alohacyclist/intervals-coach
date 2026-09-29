@@ -83,6 +83,19 @@ export const upstreamMessage = (kind: IntervalsAuth['kind'], status: number): st
 
 const UNREACHABLE = 599
 
+/**
+ * intervals.icu reports its allowance as "<15 minutes>,<day>" in
+ * X-RateLimit-Limit and X-RateLimit-Remaining. True once a tenth of the day's
+ * allowance is left — the moment the operator should hear of it, before
+ * athletes see 429s.
+ */
+export const allowanceLow = (limit: string | null, remaining: string | null): boolean => {
+  const daily = (header: string | null): number => Number(header?.split(',')[1] ?? Number.NaN)
+  const total = daily(limit)
+  const left = daily(remaining)
+  return Number.isFinite(total) && Number.isFinite(left) && total > 0 && left < total / 10
+}
+
 // btoa exists in both Node and workerd, unlike Buffer.
 const authHeader = (auth: IntervalsAuth): string =>
   auth.kind === 'bearer' ? `Bearer ${auth.accessToken}` : `Basic ${btoa(`API_KEY:${auth.apiKey}`)}`
@@ -116,6 +129,11 @@ const request = async <T>(
     // RFC 6750: 401 is a dead token, 403 a scope the grant lacks — only the first ends the session.
     if (auth.kind === 'bearer' && response.status === 401) throw new ReauthRequiredError()
     throw new IntervalsError(upstreamMessage(auth.kind, response.status), response.status)
+  }
+
+  const remaining = response.headers.get('X-RateLimit-Remaining')
+  if (allowanceLow(response.headers.get('X-RateLimit-Limit'), remaining)) {
+    console.warn('intervals.icu daily allowance running low', remaining)
   }
 
   const value = response.status === 204 ? null : ((await response.json()) as T)
