@@ -78,7 +78,7 @@ export const ThresholdCard = ({ suggestions, date, onAdopted }: Props) => {
           </div>
         )
       })}
-      {error && <p className="error">{error}</p>}
+      {error && <p className="error" role="alert">{error}</p>}
     </aside>
   )
 }

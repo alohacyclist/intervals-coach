@@ -41,7 +41,7 @@
   border: 1px solid var(--rule-loud);
   padding: 2px 7px;
   font-family: var(--mono);
-  font-size: 9.5px;
+  font-size: 12px;
   font-weight: 500;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -73,8 +73,6 @@
   color: var(--good);
   border-color: var(--good);
 }
-.badge--recovery,
-.badge--rest,
 .badge--ambitious {
   color: var(--warn);
   border-color: var(--warn);
@@ -95,7 +93,7 @@
 .day__why > summary {
   padding: 4px 14px 10px;
   font-family: var(--mono);
-  font-size: 10.5px;
+  font-size: 12px;
   letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--faint);
@@ -126,7 +124,7 @@
   margin: 0;
   padding: 11px 14px;
   border-bottom: 1px solid var(--rule);
-  border-left: 3px solid var(--warn);
+  border-left: 3px solid var(--rule-loud);
   font-size: 13px;
   color: var(--dim);
 }
@@ -135,7 +133,7 @@
   max-width: 78ch;
 }
 .rest-hint strong {
-  color: var(--warn);
+  color: var(--ink);
   font-weight: 600;
 }
 
@@ -201,6 +199,12 @@
 .day__options--optional:hover .session {
   opacity: 1;
 }
+/* Without hover the dimming could never be lifted, so a touch screen shows them plainly. */
+@media (hover: none) {
+  .day__options--optional .session:not(.session--done) {
+    opacity: 1;
+  }
+}
 
 /* ------------------------------------------------------------------ session */
 
@@ -224,7 +228,7 @@
 .session__meta {
   margin-left: auto;
   font-family: var(--mono);
-  font-size: 10.5px;
+  font-size: 12px;
   color: var(--faint);
   font-variant-numeric: tabular-nums;
 }
@@ -249,7 +253,7 @@
   border: 0;
   border-right: 1px solid var(--rule-loud);
   padding: 6px 4px;
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 0.06em;
   color: var(--faint);
   font-variant-numeric: tabular-nums;
@@ -259,7 +263,7 @@
 }
 .variants__pick span {
   display: block;
-  font-size: 9px;
+  font-size: 12px;
   letter-spacing: 0.11em;
   opacity: 0.85;
 }
@@ -287,7 +291,7 @@
   padding: 4px 0;
   border-bottom: 1px solid var(--rule-soft);
   font-family: var(--mono);
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--text);
   font-variant-numeric: tabular-nums;
 }
@@ -301,7 +305,7 @@
 }
 
 .session__duration {
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 0.06em;
   color: var(--faint);
 }
@@ -315,7 +319,7 @@
 .strength__meta {
   margin-left: auto;
   font-family: var(--mono);
-  font-size: 10.5px;
+  font-size: 12px;
   color: var(--faint);
 }
 .strength__table {
@@ -334,7 +338,7 @@
   white-space: nowrap;
   padding-left: 10px;
   font-family: var(--mono);
-  font-size: 11.5px;
+  font-size: 12px;
   font-variant-numeric: tabular-nums;
 }
 .strength__table td:nth-child(3) {
@@ -370,7 +374,7 @@
 .day--folded > summary {
   padding: 11px 14px;
   font-family: var(--mono);
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--text);
   font-variant-numeric: tabular-nums;
 }
@@ -426,7 +430,7 @@
   justify-content: space-between;
   gap: 10px;
   margin: 0;
-  font-size: 10px;
+  font-size: 12px;
   letter-spacing: 0.08em;
   color: var(--faint);
 }
@@ -445,7 +449,7 @@
 .session__steps > summary,
 .session__why > summary {
   font-family: var(--mono);
-  font-size: 9.5px;
+  font-size: 12px;
   font-weight: 500;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -523,7 +527,7 @@
 }
 .exec__kpis dt {
   font-family: var(--mono);
-  font-size: 9px;
+  font-size: 12px;
   letter-spacing: 0.11em;
   text-transform: uppercase;
   color: var(--faint);
@@ -604,7 +608,7 @@
   gap: 4px 14px;
   margin: 4px 0 0;
   font-family: var(--mono);
-  font-size: 9.5px;
+  font-size: 12px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--faint);
@@ -635,7 +639,7 @@
 .exec__more > summary {
   padding: 6px 0;
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 12px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--text);
@@ -668,7 +672,7 @@
   grid-area: n;
   align-self: start;
   padding-top: 2px;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--faint);
 }
 .exec__track {
@@ -698,7 +702,7 @@
 }
 .exec__value {
   grid-area: value;
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--text);
   white-space: nowrap;
   text-align: right;
@@ -708,7 +712,7 @@
   display: flex;
   align-items: center;
   gap: 9px;
-  font-size: 10px;
+  font-size: 12px;
   color: var(--faint);
 }
 /* Gleich breiter Text, gleich lange Balken — egal ob 8:30 oder 12:00. */
@@ -740,7 +744,7 @@
   display: flex;
   justify-content: space-between;
   margin: 6px calc(180px + 12px) 0 calc(16px + 12px);
-  font-size: 9px;
+  font-size: 12px;
   color: var(--faint);
 }
 
@@ -750,7 +754,7 @@
   }
   .exec__kpis small {
     display: block;
-    font-size: 10.5px;
+    font-size: 12px;
   }
   .exec__row {
     grid-template-columns: 14px minmax(0, 1fr);
