@@ -20,6 +20,8 @@ const RESULTS: Readonly<Record<string, string>> = {
 /** Official assets from developers.strava.com/guidelines, served unmodified from public/strava. */
 const CONNECT_BUTTON = '/strava/btn_strava_connect_with_orange.svg'
 const COMPATIBLE_LOGO = '/strava/api_logo_cptblWith_strava_horiz_orange.svg'
+/** The orange logo's lettering is black and would vanish on the dark theme; Strava ships a white one for that. */
+const COMPATIBLE_LOGO_DARK = '/strava/api_logo_cptblWith_strava_horiz_white.svg'
 
 /** Set when Strava sent the athlete back; the plan opens the settings for it. */
 export const stravaResult = (): string | null => new URLSearchParams(window.location.search).get('strava')
@@ -83,7 +85,8 @@ export const StravaPanel = () => {
       )}
       {error && <p className="error" role="alert">{error}</p>}
       <p className="strava__compatible">
-        <img src={COMPATIBLE_LOGO} alt="Compatible with Strava" width={213} height={18} />
+        <img className="light-only" src={COMPATIBLE_LOGO} alt="Compatible with Strava" width={213} height={18} />
+        <img className="dark-only" src={COMPATIBLE_LOGO_DARK} alt="Compatible with Strava" width={213} height={18} />
       </p>
     </div>
   )
