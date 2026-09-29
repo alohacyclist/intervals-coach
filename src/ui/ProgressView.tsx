@@ -10,6 +10,7 @@ import { GoalsPanel } from './components/GoalsPanel.tsx'
 import { SPORT_LABELS } from '../coach/types.ts'
 import { DEFAULT_PROGRESS_SPAN, EARLY_DAYS, isProgressSpan, PROGRESS_SPANS, trackedDays } from '../coach/progress.ts'
 import type { ProgressSpan } from '../coach/progress.ts'
+import { GarminAttribution } from './components/GarminAttribution.tsx'
 
 const SPAN_KEY = 'progress-span'
 const SPAN_LABELS: Readonly<Record<ProgressSpan, string>> = {
@@ -123,6 +124,7 @@ export const ProgressView = ({ onNeedsOnboarding }: Props) => {
           ))}
         </div>
       </div>
+      <GarminAttribution attribution={progress.garmin} />
 
       {early && (
         <section className="totals early">
