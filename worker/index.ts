@@ -35,6 +35,7 @@ import { createStravaRoutes, stravaApp } from './strava-routes.ts'
 import { withdraw } from './strava.ts'
 import { deleteLink, loadLink, renewLink } from './strava-store.ts'
 import { syncStrava } from './strava-cron.ts'
+import { edgeCache, responseCache } from './response-cache.ts'
 
 const REFRESH_MARGIN_SECONDS = 120
 
@@ -328,16 +329,30 @@ app.delete('/api/account', async (context) => {
   if (link) await withdraw(stravaApp(env, new URL(context.req.url).origin), link.tokens)
   await deleteLink(env.COACH_CONFIG, athleteId)
   await deleteUser(env.COACH_CONFIG, athleteId)
+  await cacheFor(context, athleteId)?.clear()
   context.header('Set-Cookie', clearSessionCookie())
   return context.json({ ok: true })
 })
 
+const cacheFor = (context: Context, athleteId: string) => {
+  const cache = edgeCache()
+  return cache
+    ? responseCache(cache, new URL(context.req.url).origin, athleteId, sessionSecret(context.env as Bindings))
+    : undefined
+}
+
+/** Requests get the short-lived cache; the cron does not, it reads other windows anyway. */
+const withCache = (context: Context, deps: RouteDeps): RouteDeps => {
+  const cache = cacheFor(context, deps.auth.athleteId)
+  return cache ? { ...deps, auth: { ...deps.auth, cache } } : deps
+}
+
 const resolveDeps = async (context: Context): Promise<RouteDeps> => {
   const env = context.env as Bindings
-  if (!isMultiUser(env)) return singleUserDeps(env)
+  if (!isMultiUser(env)) return withCache(context, singleUserDeps(env))
   const athleteId = await sessionAthlete(context)
   if (!athleteId) throw new ReauthRequiredError()
-  return athleteDeps(env, athleteId, true)
+  return withCache(context, await athleteDeps(env, athleteId, true))
 }
 
 app.route(

@@ -60,11 +60,11 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
     ]),
   )
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (fresh = false) => {
     setBusy(true)
     setError(null)
     try {
-      const [nextPlan, nextConfig] = await Promise.all([getPlan(PLAN_DAYS, intent), getConfig()])
+      const [nextPlan, nextConfig] = await Promise.all([getPlan(PLAN_DAYS, intent, fresh), getConfig()])
       setPlan(nextPlan)
       setConfig(nextConfig)
     } catch (caught) {
@@ -98,7 +98,7 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
           })}
           readiness={plan.state.readiness.score}
           busy={busy}
-          onRefresh={() => void load()}
+          onRefresh={() => void load(true)}
           onSettings={() => setShowSettings((open) => !open)}
         />
       )}
