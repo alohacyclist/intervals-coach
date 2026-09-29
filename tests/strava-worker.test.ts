@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import worker, { app } from '../worker/index.ts'
 import type { Bindings, KVNamespace, KVPutOptions } from '../worker/bindings.ts'
 import { loadLink, saveLink } from '../worker/strava-store.ts'
@@ -31,8 +31,12 @@ const fakeKv = () => {
 const PASSWORD = 'ein-langes-testpasswort'
 const SUBJECT = 'einzelbetrieb'
 
+/** The app proposed the ride for that day, so the cron has a reason to look. */
+const PROPOSED = { ...DEFAULT_CONFIG, proposals: [{ date: '2026-09-24', recommended: 'bike-thr-3x12', templateIds: ['bike-thr-3x12'] }] }
+
 const setup = () => {
   const kv = fakeKv()
+  kv.store.set('athlete-config', { value: JSON.stringify(PROPOSED), options: undefined })
   const env: Bindings = {
     ASSETS: { fetch: async () => new Response('shell') },
     COACH_CONFIG: kv.namespace,
@@ -173,7 +177,16 @@ const runCron = async (env: Bindings) => {
   await Promise.all(pending)
 }
 
-afterEach(() => vi.unstubAllGlobals())
+afterEach(() => {
+  vi.unstubAllGlobals()
+  vi.useRealTimers()
+})
+
+/** Evening of the ride, in Berlin: the hour the cron is meant to find it. */
+const atEvening = () => {
+  vi.useFakeTimers({ toFake: ['Date'] })
+  vi.setSystemTime(new Date('2026-09-24T19:30:00Z'))
+}
 
 describe('connecting Strava', () => {
   it('asks Strava for read and write access to activities, guarded by a state cookie', async () => {
@@ -287,6 +300,7 @@ describe('writing a session to Strava', () => {
 })
 
 describe('the cron', () => {
+  beforeEach(atEvening)
   it('writes each recognised session once, then leaves it alone', async () => {
     const { env } = setup()
     const { writes } = platforms()
@@ -358,6 +372,7 @@ describe('the cron', () => {
 })
 
 describe('the retention promise', () => {
+  beforeEach(atEvening)
   it('lets a cron write keep the expiry the link already had, with accounts', async () => {
     const { env, kv } = setup()
     platforms()
@@ -368,8 +383,77 @@ describe('the retention promise', () => {
         auth: { kind: 'apiKey', apiKey: 'key', athleteId: 'i1' },
         store: kvConfigStore(env.COACH_CONFIG),
       }),
+      storeFor: () => kvConfigStore(env.COACH_CONFIG),
       keepExpiry: true,
     })
     expect(kv.store.get(`strava:${SUBJECT}`)?.options).toEqual({ expiration: 2_000_000_000 })
+  })
+})
+
+describe('what the cron spends on intervals.icu', () => {
+  const intervalsCalls = (calls: readonly string[]) => calls.filter((entry) => entry.includes('intervals.icu'))
+
+  it('asks nothing for an athlete the app proposed nothing to', async () => {
+    atEvening()
+    const { env, kv } = setup()
+    kv.store.set('athlete-config', { value: JSON.stringify(DEFAULT_CONFIG), options: undefined })
+    const { calls } = platforms()
+    await connected(env)
+    await runCron(env)
+    expect(calls).toEqual([])
+  })
+
+  it('asks nothing at night', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-09-24T01:30:00Z'))
+    const { env } = setup()
+    const { calls } = platforms()
+    await connected(env)
+    await runCron(env)
+    expect(calls).toEqual([])
+  })
+
+  it('waits longer after a look that found nothing', async () => {
+    atEvening()
+    const { env } = setup()
+    const { calls } = platforms({ rides: [] })
+    await connected(env)
+    await runCron(env)
+    expect(intervalsCalls(calls)).toHaveLength(2)
+
+    for (const quiet of ['2026-09-24T20:00:00Z', '2026-09-24T20:30:00Z', '2026-09-24T21:00:00Z']) {
+      vi.setSystemTime(new Date(quiet))
+      await runCron(env)
+    }
+    expect(intervalsCalls(calls)).toHaveLength(2)
+
+    vi.setSystemTime(new Date('2026-09-24T21:30:00Z'))
+    await runCron(env)
+    expect(intervalsCalls(calls)).toHaveLength(4)
+  })
+
+  it('writes nothing to KV for a look that found nothing', async () => {
+    atEvening()
+    const { env, kv } = setup()
+    const { calls } = platforms({ rides: [] })
+    await connected(env)
+    const before = [...kv.store.entries()]
+    await runCron(env)
+    expect(intervalsCalls(calls)).toHaveLength(2)
+    expect([...kv.store.entries()]).toEqual(before)
+  })
+
+  it('keeps looking after the first session of a day, for a second one', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-09-24T07:30:00Z'))
+    const { env } = setup()
+    platforms({ rides: [MORNING] })
+    await connected(env)
+    await runCron(env)
+
+    vi.setSystemTime(new Date('2026-09-24T19:00:00Z'))
+    const { writes } = platforms({ rides: [MORNING, EVENING] })
+    await runCron(env)
+    expect(writes.map((write) => write.id)).toEqual([String(EVENING.stravaId)])
   })
 })

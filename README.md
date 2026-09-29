@@ -330,8 +330,16 @@ zweiter Lauf ersetzt nur den eigenen Absatz. Bilder nimmt die öffentliche Strav
 daher der Verlauf als Zeile aus Blockzeichen. Puls steht bewusst nicht darin: Strava lässt ihn
 pro Aktivität verbergen, eine Beschreibung würde ihn trotzdem zeigen.
 
-Geschrieben wird automatisch per Cron (alle 20 Minuten, erkannte Einheiten der letzten zwei
-Tage) und auf Knopfdruck unter jeder Einheit. Einrichtung:
+Geschrieben wird automatisch per Cron und auf Knopfdruck unter jeder Einheit. Der Cron läuft
+alle 30 Minuten, fragt intervals.icu aber nur für Tage, für die die App eine Einheit
+vorgeschlagen hat, und nur ab 6 Uhr Ortszeit (gestern bis mittags). Eine geschriebene
+Auswertung schließt den Tag nicht ab, denn auf das Schwimmen am Morgen kann abends ein Lauf
+folgen. Je länger nichts geschrieben wird, desto seltener schaut er: nach 30, 60, dann alle
+120 Minuten, gezählt ab 6 Uhr oder ab der zuletzt geschriebenen Auswertung
+(`worker/strava-schedule.ts`). Gespeichert wird dafür nichts, denn ein KV-Schreibzugriff pro
+Blick würde das Tageskontingent des Gratis-Plans (1.000) schon bei wenigen Dutzend
+Strava-Nutzern aufbrauchen. So kostet ein Strava-Nutzer rund 20–30 statt 144
+intervals.icu-Anfragen am Tag. Einrichtung:
 
 1. Strava-Abo (seit Juni 2026 Voraussetzung für API-Zugang) und unter
    <https://www.strava.com/settings/api> eine App anlegen. *Authorization Callback Domain* =
