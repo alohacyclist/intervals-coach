@@ -1,6 +1,8 @@
 const AUTHORIZE_URL = 'https://intervals.icu/oauth/authorize'
 // Outside /api/v1, unlike every other call: /api/v1/oauth/token answers 404.
 const TOKEN_URL = 'https://intervals.icu/api/oauth/token'
+// What intervals.icu's OAuth guide asks apps to call when an athlete deletes their data.
+const DISCONNECT_URL = 'https://intervals.icu/api/v1/disconnect-app'
 
 /**
  * Read training and wellness data, write planned workouts, read and (on the
@@ -99,4 +101,13 @@ export const fetchAthlete = async (
   const athlete = (await response.json()) as AthleteResponse
   if (athlete.id === undefined) throw new OAuthError('Athletenprofil ohne id')
   return { id: String(athlete.id), name: athlete.name ?? 'Athlet', timezone: athlete.timezone }
+}
+
+/** Withdraws this app's access to the athlete on intervals.icu, which also ends its webhooks. */
+export const disconnectApp = async (accessToken: string): Promise<void> => {
+  const response = await fetch(DISCONNECT_URL, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${accessToken}` },
+  })
+  if (!response.ok) throw new OAuthError(`intervals.icu refused the disconnect (${response.status})`, response.status)
 }
