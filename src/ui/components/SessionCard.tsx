@@ -3,6 +3,7 @@ import type { PlannedSession, RaceDetails, SessionTier } from '../../coach/types
 import { SPORT_LABELS, TIER_LABELS } from '../../coach/types.ts'
 import { pushWorkout } from '../api.ts'
 import { WorkoutProfile } from './WorkoutProfile.tsx'
+import { Term } from './Term.tsx'
 
 type Props = {
   readonly session: PlannedSession
@@ -101,7 +102,9 @@ export const SessionCard = ({
         </span>
         {recommended && <span className="badge badge--pick">Empfehlung</span>}
         {done && <span className="badge badge--done">✓ Erledigt</span>}
-        <span className="session__meta">{active?.load ?? session.template.load} TSS</span>
+        <span className="session__meta">
+          <Term term="tss">{active?.load ?? session.template.load} TSS</Term>
+        </span>
       </div>
 
       <h3>{session.template.name}</h3>
