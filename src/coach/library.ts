@@ -699,6 +699,27 @@ const BENCHMARKS: readonly WorkoutTemplate[] = [
     ],
   },
   {
+    id: 'test-swim-css',
+    sport: 'Swim',
+    stimulus: 'THRESHOLD',
+    name: 'Standortbestimmung CSS 400/200',
+    minutes: 40,
+    load: 50,
+    benchmark: true,
+    measures: 'threshold',
+    phases: ['BASE', 'BUILD', 'SPECIFIC', 'TAPER', 'RECOVERY'],
+    coachNote:
+      'Zwei maximale Strecken: erst 400 m, dann nach lockerem Schwimmen 200 m, beide gleichmäßig und so schnell wie möglich. Aus der Zeitdifferenz ergibt sich deine CSS: (Zeit 400 − Zeit 200) ÷ 2 pro 100 m.',
+    blocks: [
+      warmupSwim('400mtr'),
+      repeat(4, [step('50mtr', '90-100% Pace', { label: 'Steigern' }), step('20s', '50% Pace')]),
+      step('400mtr', '103-110% Pace', { label: 'Maximal, gleichmäßig' }),
+      step('200mtr', '58-66% Pace', { label: 'Locker' }),
+      step('200mtr', '106-114% Pace', { label: 'Maximal, gleichmäßig' }),
+      cooldownSwim('200mtr', '60% Pace'),
+    ],
+  },
+  {
     id: 'bench-bike-4x4',
     sport: 'Ride',
     stimulus: 'VO2',

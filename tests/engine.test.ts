@@ -856,6 +856,12 @@ describe('choosing which threshold to measure', () => {
     expect(measuring.map((option) => option.sport).sort()).toEqual(['Ride', 'Run'])
   })
 
+  it('offers the CSS test to a triathlete who never measured it', () => {
+    const [today] = planDays(stateFrom(rested), triConfig, 1, [])
+    const measuring = (today?.options ?? []).filter((option) => option.template.measures === 'threshold')
+    expect(measuring.map((option) => option.template.id)).toContain('test-swim-css')
+  })
+
   it('still allows only one test inside a week', () => {
     const days = planDays(stateFrom(rested), config, 7, [])
     const measuring = days.filter((day) =>
