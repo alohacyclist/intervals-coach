@@ -207,11 +207,27 @@ const validateProfile = (raw: unknown, issues: string[]): AthleteProfile => {
   }
 }
 
+/**
+ * Race goals were once saved without a distance and read as 10 km everywhere.
+ * Only running goals could be saved then, so those keep meaning what the athlete
+ * was shown; every new race goal has to say how far.
+ */
+const LEGACY_RACE_DISTANCE_KM = 10
+
+const legacyDistance = (goal: Record<string, unknown>): Record<string, unknown> =>
+  goal['kind'] === 'raceTime' && goal['sport'] === 'Run' && goal['distanceKm'] === undefined
+    ? { ...goal, distanceKm: LEGACY_RACE_DISTANCE_KM }
+    : goal
+
 const validateGoal = (raw: unknown, index: number, issues: string[]): Goal => {
-  const goal = (raw ?? {}) as Record<string, unknown>
+  const goal = legacyDistance((raw ?? {}) as Record<string, unknown>)
   const where = `goals[${index}]`
-  if (goal['sport'] !== 'Ride' && goal['sport'] !== 'Run') issues.push(`${where}.sport muss Ride oder Run sein`)
+  if (!isSport(goal['sport'])) issues.push(`${where}.sport muss Ride, Run oder Swim sein`)
   if (goal['kind'] !== 'ftp' && goal['kind'] !== 'raceTime') issues.push(`${where}.kind muss ftp oder raceTime sein`)
+  if (goal['kind'] === 'ftp' && goal['sport'] !== 'Ride') issues.push(`${where}: ein FTP-Ziel gibt es nur fürs Rad`)
+  if (goal['kind'] === 'raceTime' && !positive(goal['distanceKm'])) {
+    issues.push(`${where}.distanceKm muss > 0 sein`)
+  }
   if (!positive(goal['targetValue'])) issues.push(`${where}.targetValue muss > 0 sein`)
   if (!positive(goal['currentValue'])) issues.push(`${where}.currentValue muss > 0 sein`)
   if (goal['targetDate'] !== undefined && !isIsoDate(goal['targetDate'])) {
