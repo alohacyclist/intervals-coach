@@ -1,5 +1,5 @@
 import type { AthleteProfile, Feasibility, Goal, Sport } from './types.ts'
-import { diffDays, formatSeconds } from './dates.ts'
+import { diffDays, formatClock, formatSeconds } from './dates.ts'
 import { racePaceSecPer100m, racePaceSecPerKm } from './format.ts'
 import { ftpOf, thresholdFor } from './thresholds.ts'
 
@@ -100,7 +100,7 @@ const raceFeasibility = (goal: Goal, profile: AthleteProfile, today: string): Fe
       perHundred ? racePaceSecPer100m(seconds, distanceKm) : racePaceSecPerKm(seconds, distanceKm),
     )
   const source = projected === null ? 'eingetragen' : 'aus deiner Schwellenpace hochgerechnet'
-  const times = `Jetzt ${formatSeconds(current)} → ${formatSeconds(goal.targetValue)} auf ${distanceKm} km (${pace(current)}${unit} → ${pace(goal.targetValue)}${unit}, ${source})`
+  const times = `Jetzt ${formatClock(current)} → ${formatClock(goal.targetValue)} auf ${distanceKm} km (${pace(current)}${unit} → ${pace(goal.targetValue)}${unit}, ${source})`
 
   const volumeShortfall =
     goal.sport === 'Run' &&

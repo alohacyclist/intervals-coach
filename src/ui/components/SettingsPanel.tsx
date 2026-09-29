@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import type { CoachConfig, Equipment, Goal } from '../../coach/types.ts'
 import { EQUIPMENT_LABELS } from '../../coach/types.ts'
-import { formatSeconds } from '../../coach/dates.ts'
 import { putConfig, syncSettings } from '../api.ts'
-import { parseMmSs } from '../format-input.ts'
+import { formatClock, parseTime, timeError } from '../format-input.ts'
 import { ftpOf } from '../../coach/thresholds.ts'
 import { SportPicker } from './SportPicker.tsx'
+import { TimeField } from './TimeField.tsx'
 
 const MINUTE_LABELS = {
   min: 'Min. — schaffe ich immer',
@@ -31,6 +31,27 @@ export const SettingsPanel = ({ config, onSaved, onClose, canDelete }: Props) =>
 
   const patchProfile = (patch: Partial<CoachConfig['profile']>) =>
     setDraft((current) => ({ ...current, profile: { ...current.profile, ...patch } }))
+
+  const [times, setTimes] = useState<Readonly<Record<string, string>>>(() =>
+    Object.fromEntries(
+      config.goals
+        .filter((goal) => goal.kind === 'raceTime')
+        .flatMap((goal) => [
+          [`${goal.id}:currentValue`, formatClock(goal.currentValue)],
+          [`${goal.id}:targetValue`, formatClock(goal.targetValue)],
+        ]),
+    ),
+  )
+  const timeErrors = Object.fromEntries(
+    Object.entries(times).map(([key, value]) => [key, timeError(value, true)]),
+  )
+  const hasTimeErrors = Object.values(timeErrors).some((message) => message !== null)
+
+  const setTime = (goal: Goal, field: 'currentValue' | 'targetValue', value: string) => {
+    setTimes((current) => ({ ...current, [`${goal.id}:${field}`]: value }))
+    const seconds = parseTime(value)
+    if (seconds !== null) patchGoal(goal.id, { [field]: seconds })
+  }
 
   const patchGoal = (id: string, patch: Partial<Goal>) =>
     setDraft((current) => ({
@@ -156,32 +177,40 @@ export const SettingsPanel = ({ config, onSaved, onClose, canDelete }: Props) =>
               Aktuell (W)
               <input type="text" value={String(ftp)} readOnly title="Folgt der FTP bei den Sportarten" />
             </label>
-          ) : (
+          ) : goal.kind === 'ftp' ? (
             <label>
-              {goal.kind === 'ftp' ? 'Aktuell (W)' : 'Aktuell (mm:ss)'}
+              Aktuell (W)
               <input
                 type="text"
-                defaultValue={goal.kind === 'ftp' ? String(goal.currentValue) : formatSeconds(goal.currentValue)}
-                onBlur={(event) =>
-                  patchGoal(goal.id, {
-                    currentValue: goal.kind === 'ftp' ? Number(event.target.value) : parseMmSs(event.target.value),
-                  })
-                }
+                defaultValue={String(goal.currentValue)}
+                onBlur={(event) => patchGoal(goal.id, { currentValue: Number(event.target.value) })}
               />
             </label>
-          )}
-          <label>
-            {goal.kind === 'ftp' ? 'Ziel (W)' : 'Ziel (mm:ss)'}
-            <input
-              type="text"
-              defaultValue={goal.kind === 'ftp' ? String(goal.targetValue) : formatSeconds(goal.targetValue)}
-              onBlur={(event) =>
-                patchGoal(goal.id, {
-                  targetValue: goal.kind === 'ftp' ? Number(event.target.value) : parseMmSs(event.target.value),
-                })
-              }
+          ) : (
+            <TimeField
+              label="Aktuell"
+              value={times[`${goal.id}:currentValue`] ?? ''}
+              onChange={(value) => setTime(goal, 'currentValue', value)}
+              error={timeErrors[`${goal.id}:currentValue`] ?? null}
             />
-          </label>
+          )}
+          {goal.kind === 'ftp' ? (
+            <label>
+              Ziel (W)
+              <input
+                type="text"
+                defaultValue={String(goal.targetValue)}
+                onBlur={(event) => patchGoal(goal.id, { targetValue: Number(event.target.value) })}
+              />
+            </label>
+          ) : (
+            <TimeField
+              label="Ziel"
+              value={times[`${goal.id}:targetValue`] ?? ''}
+              onChange={(value) => setTime(goal, 'targetValue', value)}
+              error={timeErrors[`${goal.id}:targetValue`] ?? null}
+            />
+          )}
           <label>
             Zieldatum
             <input
@@ -198,7 +227,7 @@ export const SettingsPanel = ({ config, onSaved, onClose, canDelete }: Props) =>
       {error && <p className="error">{error}</p>}
 
       <div className="settings__actions">
-        <button type="button" disabled={busy} onClick={() => run(() => putConfig(draft))}>
+        <button type="button" disabled={busy || hasTimeErrors} onClick={() => run(() => putConfig(draft))}>
           Speichern
         </button>
         <button
