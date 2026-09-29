@@ -175,6 +175,7 @@ const mapActivity = (raw: RawActivity): Activity => ({
   compliance: nullableNum(raw['compliance']),
   averageHr: nullableNum(raw['average_heartrate']),
   zoneSeconds: mapZoneTimes(raw['icu_zone_times'] ?? raw['icu_hr_zone_times']),
+  device: typeof raw['device_name'] === 'string' && raw['device_name'].length > 0 ? raw['device_name'] : null,
 })
 
 const mapEvent = (raw: Record<string, unknown>): PlannedEvent => ({
