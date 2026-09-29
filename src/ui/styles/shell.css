@@ -82,30 +82,20 @@
   flex-wrap: wrap;
 }
 
-.chip {
-  align-self: flex-start;
+/* The one sentence that answers "how am I" before today's session answers "what now".
+   The edge carries readiness at a glance; the words carry it for everyone. */
+.header__summary {
   margin: 0;
-  padding: 3px 9px;
-  font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  padding: 12px 14px;
+  border-left: 3px solid var(--good);
+  font-size: 16px;
+  color: var(--ink);
 }
-.chip--green {
-  background: var(--good);
-  color: var(--on-good);
+.header__summary--amber {
+  border-left-color: var(--warn);
 }
-.chip--amber {
-  background: var(--warn);
-  color: var(--on-data);
-}
-.chip--red {
-  background: var(--bad);
-  color: var(--on-data);
-}
-.header .chip {
-  margin: 12px 14px 0;
+.header__summary--red {
+  border-left-color: var(--bad);
 }
 
 /* Six data fields divided by hairlines, not six tiles. The lines are the grid's
@@ -138,29 +128,28 @@
   color: var(--data);
   font-variant-numeric: tabular-nums;
 }
-.metrics--key {
-  grid-template-columns: repeat(3, 1fr);
+.kpis {
+  border: 1px solid var(--rule);
+  background: var(--bg);
 }
-.metrics--key dd {
-  font-size: 28px;
-}
-.header__more {
-  border-top: 1px solid var(--rule);
-}
-.header__more > summary {
-  padding: 10px 14px;
+.kpis > summary {
+  padding: 12px 14px;
+  min-height: 44px;
   font-family: var(--mono);
-  font-size: 10.5px;
-  letter-spacing: 0.07em;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--faint);
 }
-.header__more .metrics {
+.kpis .metrics {
   margin: 0;
 }
-.header__more .metrics dd {
-  font-size: 17px;
-  color: var(--text);
+@media (min-width: 861px) {
+  /* Six to nine readouts: four across keeps the rows full more often than six. */
+  .kpis .metrics {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }
 
 .datasource {
@@ -411,9 +400,6 @@
 @media (max-width: 560px) {
   .metrics {
     grid-template-columns: repeat(2, 1fr);
-  }
-  .metrics--key {
-    grid-template-columns: repeat(3, 1fr);
   }
   .intent__label {
     display: none;

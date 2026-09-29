@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formNote, signed } from '../src/coach/wording.ts'
+import { formNote, signed, todaySummary } from '../src/coach/wording.ts'
 import { planDays } from '../src/coach/engine.ts'
 import { buildState } from '../src/coach/state.ts'
 import { activity, baselineWellness, config, TODAY, wellness } from './fixtures.ts'
@@ -33,6 +33,52 @@ describe('formNote', () => {
     [-31, 'Du bist überlastet'],
   ])('describes form %i as "%s"', (tsb, words) => {
     expect(formNote({ tsb, ctl: 40, atl: 40 }).startsWith(words)).toBe(true)
+  })
+})
+
+describe('todaySummary', () => {
+  const base = { readiness: 'green', tsb: 8, dayType: 'KEY', trained: false } as const
+
+  it('lets a rested athlete go hard', () => {
+    expect(todaySummary(base)).toBe('Du bist erholt – heute darf es hart sein.')
+  })
+
+  it('does not call a slightly tired athlete rested on a quality day', () => {
+    expect(todaySummary({ ...base, tsb: -5 })).toBe('Du bist bereit – heute darf es hart sein.')
+  })
+
+  it('warns on a hard day chosen against amber or red readiness', () => {
+    expect(todaySummary({ ...base, readiness: 'amber' })).toContain('Warnsignale')
+    expect(todaySummary({ ...base, readiness: 'red' })).toContain('schwach')
+  })
+
+  it('names tiredness on an easy day only when the form says so', () => {
+    expect(todaySummary({ ...base, dayType: 'EASY', tsb: -20 })).toBe('Du bist müde vom Training – heute locker.')
+    expect(todaySummary({ ...base, dayType: 'EASY', tsb: 0 })).toContain('Heute locker')
+    expect(todaySummary({ ...base, dayType: 'EASY', readiness: 'amber' })).toContain('Erholungswerte')
+  })
+
+  it('explains recovery and rest days', () => {
+    expect(todaySummary({ ...base, dayType: 'RECOVERY', tsb: -35 })).toContain('stark ermüdet')
+    expect(todaySummary({ ...base, dayType: 'RECOVERY' })).toContain('Regeneration hat Vorrang')
+    expect(todaySummary({ ...base, dayType: 'REST' })).toBe('Heute ist Pause – Erholung gehört zum Training.')
+    expect(todaySummary({ ...base, dayType: 'REST', readiness: 'red' })).toContain('braucht Erholung')
+  })
+
+  it('says a trained day is done whatever the plan was', () => {
+    expect(todaySummary({ ...base, trained: true })).toContain('schon trainiert')
+  })
+
+  it('is one sentence for every combination', () => {
+    for (const readiness of ['green', 'amber', 'red'] as const) {
+      for (const dayType of ['KEY', 'EASY', 'RECOVERY', 'REST'] as const) {
+        for (const tsb of [20, 0, -20, -40]) {
+          const sentence = todaySummary({ readiness, tsb, dayType, trained: false })
+          expect(sentence.endsWith('.')).toBe(true)
+          expect(sentence.split('. ')).toHaveLength(1)
+        }
+      }
+    }
   })
 })
 
