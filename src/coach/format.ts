@@ -1,4 +1,4 @@
-import type { Block, Step, SportThreshold, WorkoutTemplate } from './types.ts'
+import type { Block, Sport, Step, SportThreshold, WorkoutTemplate } from './types.ts'
 import { formatSeconds } from './dates.ts'
 
 const stepLine = (step: Step): string =>
@@ -98,6 +98,12 @@ export const describeBlocks = (
 
 export const describeWorkout = (template: WorkoutTemplate, reason: string): string =>
   describeBlocks(template.blocks, template.coachNote, reason)
+
+/** Swimmers count in metres; everyone else in kilometres once there is one. */
+export const formatDistance = (sport: Sport, distanceKm: number): string =>
+  sport === 'Swim' || distanceKm < 1
+    ? `${Math.round(distanceKm * 1000)} m`
+    : `${distanceKm.toLocaleString('de-DE', { maximumFractionDigits: 3 })} km`
 
 /** Race pace per km for a target time over a distance. */
 export const racePaceSecPerKm = (targetTimeSec: number, distanceKm: number): number =>

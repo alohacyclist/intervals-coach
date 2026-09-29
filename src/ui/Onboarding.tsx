@@ -1,27 +1,30 @@
 import { useEffect, useState } from 'react'
-import type { CoachConfig, Equipment, Goal, Sport, SportSetting } from '../coach/types.ts'
-import { EQUIPMENT_LABELS, SPORT_LABELS } from '../coach/types.ts'
-import { ftpOf } from '../coach/thresholds.ts'
+import type { CoachConfig, Equipment, SportSetting } from '../coach/types.ts'
+import { EQUIPMENT_LABELS } from '../coach/types.ts'
+import { localIsoDate } from '../coach/dates.ts'
 import type { SportSettings } from './api.ts'
 import { getSportSettings, putConfig } from './api.ts'
-import { parseTime, timeError } from './format-input.ts'
 import { SportPicker } from './components/SportPicker.tsx'
-import { TimeField } from './components/TimeField.tsx'
+import { GoalEditor } from './components/GoalEditor.tsx'
+import type { GoalDraft } from './goal-draft.ts'
+import { emptyGoalDraft, goalErrors, goalFromDraft, hasErrors } from './goal-draft.ts'
 import type { ThresholdSources } from './threshold-input.ts'
 import { prefillSports, prefilledThreshold } from './threshold-input.ts'
+
+type GoalChoice = 'ftp' | 'raceTime'
+
+const GOAL_CHOICES: readonly { readonly value: GoalChoice; readonly label: string }[] = [
+  { value: 'raceTime', label: 'Wettkampf – eine Zielzeit' },
+  { value: 'ftp', label: 'FTP steigern' },
+]
 
 type Draft = {
   sports: readonly SportSetting[]
   sources: ThresholdSources
   equipment: Equipment
   weightKg: string
-  ftpTarget: string
-  ftpDate: string
-  raceSport: Sport
-  raceDistanceKm: string
-  raceCurrent: string
-  raceTarget: string
-  raceDate: string
+  goalChoice: GoalChoice
+  goals: Readonly<Record<GoalChoice, GoalDraft>>
   sessionsMin: string
   sessionsMax: string
   minMinutes: string
@@ -37,51 +40,13 @@ const EMPTY: Draft = {
   sources: {},
   equipment: 'dumbbells',
   weightKg: '75',
-  ftpTarget: '',
-  ftpDate: '',
-  raceSport: 'Run',
-  raceDistanceKm: '10',
-  raceCurrent: '',
-  raceTarget: '',
-  raceDate: '',
+  goalChoice: 'raceTime',
+  goals: { ftp: emptyGoalDraft('ftp', 'ftp', 'Ride'), raceTime: emptyGoalDraft('race', 'raceTime', 'Run') },
   sessionsMin: '2',
   sessionsMax: '4',
   minMinutes: '45',
   normalMinutes: '60',
   maxMinutes: '90',
-}
-
-const buildGoals = (draft: Draft, ftp: number | null): readonly Goal[] => {
-  const goals: Goal[] = []
-  if (ftp && Number(draft.ftpTarget) > 0) {
-    goals.push({
-      id: 'ftp',
-      sport: 'Ride',
-      kind: 'ftp',
-      label: `FTP ${draft.ftpTarget}W`,
-      currentValue: ftp,
-      targetValue: Number(draft.ftpTarget),
-      priority: 'A',
-      ...(draft.ftpDate ? { targetDate: draft.ftpDate } : {}),
-    })
-  }
-  const current = parseTime(draft.raceCurrent)
-  const target = parseTime(draft.raceTarget)
-  if (current !== null && target !== null) {
-    const distance = Number(draft.raceDistanceKm)
-    goals.push({
-      id: 'race',
-      sport: draft.raceSport,
-      kind: 'raceTime',
-      label: `${distance} km ${SPORT_LABELS[draft.raceSport]} in ${draft.raceTarget}`,
-      currentValue: current,
-      targetValue: target,
-      distanceKm: distance,
-      priority: 'A',
-      ...(draft.raceDate ? { targetDate: draft.raceDate } : {}),
-    })
-  }
-  return goals
 }
 
 export const Onboarding = ({ onDone }: { readonly onDone: () => void }) => {
@@ -90,6 +55,7 @@ export const Onboarding = ({ onDone }: { readonly onDone: () => void }) => {
   const [busy, setBusy] = useState(false)
   const [thresholdsValid, setThresholdsValid] = useState(true)
   const [intervals, setIntervals] = useState<SportSettings | null>(null)
+  const [attempted, setAttempted] = useState(false)
 
   useEffect(() => {
     // Prefill from the athlete's own intervals.icu settings so the numbers match;
@@ -120,34 +86,40 @@ export const Onboarding = ({ onDone }: { readonly onDone: () => void }) => {
     },
   }
   const ridesBike = draft.sports.some((setting) => setting.sport === 'Ride')
+  const today = localIsoDate()
+  const choices = GOAL_CHOICES.filter((choice) => choice.value !== 'ftp' || ridesBike)
+  const choice = choices.some((entry) => entry.value === draft.goalChoice) ? draft.goalChoice : 'raceTime'
+  const goalDraft = draft.goals[choice]
+  // A race in a sport no longer trained falls back to the first one that is.
+  const raceSport = draft.sports.some((setting) => setting.sport === goalDraft.sport)
+    ? goalDraft.sport
+    : (draft.sports[0]?.sport ?? goalDraft.sport)
+  const activeDraft = goalDraft.kind === 'raceTime' ? { ...goalDraft, sport: raceSport } : goalDraft
+  const errors = goalErrors(activeDraft, profile, today)
 
-  const raceErrors = {
-    current: timeError(draft.raceCurrent, draft.raceTarget.trim() !== ''),
-    target: timeError(draft.raceTarget, draft.raceCurrent.trim() !== ''),
-  }
+  const setGoal = (next: GoalDraft) =>
+    setDraft((current) => ({ ...current, goals: { ...current.goals, [choice]: next } }))
 
   const submit = async () => {
-    if (!thresholdsValid || raceErrors.current !== null || raceErrors.target !== null) {
+    setAttempted(true)
+    const goal = goalFromDraft(activeDraft, profile, today)
+    if (!thresholdsValid || hasErrors(errors) || goal === null) {
       setError('Bitte die markierten Felder prüfen.')
       return
     }
     const config: CoachConfig = {
       profile,
-      goals: buildGoals(draft, ftpOf(profile)),
+      goals: [goal],
       strengthLog: [],
       breaks: [],
       proposals: [],
       zrlRaces: [],
       zrl: { enabled: false, taper: true },
       destinations: {},
-      planStart: new Date().toISOString().slice(0, 10),
+      planStart: today,
     }
     if (config.profile.sports.length === 0) {
       setError('Wähl mindestens eine Sportart.')
-      return
-    }
-    if (config.goals.length === 0) {
-      setError('Setz mindestens ein Ziel — FTP oder eine Wettkampfzeit.')
       return
     }
     setBusy(true)
@@ -200,53 +172,26 @@ export const Onboarding = ({ onDone }: { readonly onDone: () => void }) => {
 
       <fieldset>
         <legend>Was willst du erreichen</legend>
-        <p className="hint">Mindestens eines von beiden. Zieldatum ist optional.</p>
-        {ridesBike && (
-          <div className="grid">
-            <label>
-              FTP-Ziel (W)
-              <input type="number" placeholder="z. B. 300" value={draft.ftpTarget} onChange={set('ftpTarget')} />
+        <div className="choices" role="radiogroup" aria-label="Ziel">
+          {choices.map((entry) => (
+            <label key={entry.value} className="sports__toggle">
+              <input
+                type="radio"
+                name="goal-choice"
+                checked={choice === entry.value}
+                onChange={() => setDraft((current) => ({ ...current, goalChoice: entry.value }))}
+              />
+              {entry.label}
             </label>
-            <label>
-              bis wann
-              <input type="date" value={draft.ftpDate} onChange={set('ftpDate')} />
-            </label>
-          </div>
-        )}
-        <div className="grid">
-          <label>
-            Wettkampf-Sportart
-            <select value={draft.raceSport} onChange={set('raceSport')}>
-              {draft.sports.map((setting) => (
-                <option key={setting.sport} value={setting.sport}>
-                  {SPORT_LABELS[setting.sport]}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Distanz (km)
-            <input type="number" step="0.1" value={draft.raceDistanceKm} onChange={set('raceDistanceKm')} />
-          </label>
-          <TimeField
-            label="aktuelle Zeit"
-            placeholder="38:00 oder 1:45:00"
-            value={draft.raceCurrent}
-            onChange={(value) => setDraft((current) => ({ ...current, raceCurrent: value }))}
-            error={raceErrors.current}
-          />
-          <TimeField
-            label="Zielzeit"
-            placeholder="36:00 oder 1:39:00"
-            value={draft.raceTarget}
-            onChange={(value) => setDraft((current) => ({ ...current, raceTarget: value }))}
-            error={raceErrors.target}
-          />
-          <label>
-            bis wann
-            <input type="date" value={draft.raceDate} onChange={set('raceDate')} />
-          </label>
+          ))}
         </div>
+        <GoalEditor
+          draft={activeDraft}
+          onChange={setGoal}
+          errors={errors}
+          showMissing={attempted}
+          profile={profile}
+        />
       </fieldset>
 
       <fieldset>
