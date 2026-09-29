@@ -31,9 +31,17 @@ export type Fetcher = {
   fetch(request: Request): Promise<Response>
 }
 
+/** Filled in by Cloudflare through the `version_metadata` binding; absent under tests and `wrangler dev`. */
+export type VersionMetadata = {
+  readonly id: string
+  readonly tag?: string
+  readonly timestamp?: string
+}
+
 export type Bindings = {
   readonly ASSETS: Fetcher
   readonly COACH_CONFIG: KVNamespace
+  readonly CF_VERSION_METADATA?: VersionMetadata
 
   /** Multi user mode: set all three to enable "sign in with intervals.icu". */
   readonly INTERVALS_CLIENT_ID?: string
