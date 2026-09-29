@@ -19,7 +19,7 @@ const stubUpstream = (upstream: Upstream = {}) => {
   vi.stubGlobal('fetch', async (input: string, init?: RequestInit) => {
     const url = new URL(input)
     calls.push(`${init?.method ?? 'GET'} ${url.pathname}`)
-    if (url.pathname === '/api/v1/oauth/token') {
+    if (url.pathname === '/api/oauth/token') {
       return upstream.token?.() ?? json({ access_token: 'fresh-access', refresh_token: 'fresh-refresh', expires_in: 3600 })
     }
     const path = url.pathname.replace('/api/v1', '')
@@ -131,7 +131,7 @@ describe('refreshing an access token', () => {
       ['/api/plan', '/api/progress', '/api/sport-settings'].map((path) => call(path, { headers: { Cookie: cookie } }, env)),
     )
     expect(responses.map((response) => response.status)).toEqual([200, 200, 200])
-    expect(calls.filter((entry) => entry === 'POST /api/v1/oauth/token')).toHaveLength(1)
+    expect(calls.filter((entry) => entry === 'POST /api/oauth/token')).toHaveLength(1)
   })
 
   it('uses the token another request already stored when its own rotated refresh token is refused', async () => {

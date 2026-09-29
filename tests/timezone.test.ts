@@ -35,7 +35,7 @@ describe('the timezone from the intervals.icu profile', () => {
   const signIn = async (timezone: unknown) => {
     const env = multiUserEnv()
     vi.stubGlobal('fetch', async (input: string) =>
-      new URL(input).pathname === '/api/v1/oauth/token'
+      new URL(input).pathname === '/api/oauth/token'
         ? json({ access_token: 'a', refresh_token: 'r', expires_in: 3600 })
         : json({ id: 'i7', name: 'Sam', timezone }),
     )
