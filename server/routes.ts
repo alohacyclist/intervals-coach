@@ -49,6 +49,7 @@ import { matchedCompletions, mergeCompletions } from '../src/coach/matching.ts'
 import { withProposal } from '../src/coach/proposals.ts'
 import type { BenchmarkResult, CoachConfig, DayProposal, Execution, PlannedDay, Sport, WorkoutTemplate } from '../src/coach/types.ts'
 import { readThresholdTests } from './threshold-tests.ts'
+import { garminAttribution } from '../src/coach/attribution.ts'
 import { ZWIFT_ROUTES, findRoute } from './zwift-routes.ts'
 import { isZrlRace } from '../src/coach/zrl.ts'
 import { ALL_BREAK_KINDS } from '../src/coach/types.ts'
@@ -211,12 +212,13 @@ const buildProgressView = async (deps: RouteDeps, span: ProgressSpan): Promise<P
   const readings = await readWorkMany(deps.auth, config.profile, references, activities).catch(
     () => new Map<string, WorkReading>(),
   )
-  return buildProgress(activities, completions, today, span, weeksFor(span), {
+  const progress = buildProgress(activities, completions, today, span, weeksFor(span), {
     benchmark: benchmarkStatus(config, completions, activities, today, readings),
     feasibility: assessGoals(config.goals, config.profile, today),
     sports: config.profile.sports.map((setting) => setting.sport),
     season: seasonBand(config, today),
   })
+  return { ...progress, garmin: garminAttribution(activities) }
 }
 
 const buildPlan = async (deps: RouteDeps, days: number, intent?: Intent): Promise<Plan> => {
@@ -299,6 +301,7 @@ const buildPlan = async (deps: RouteDeps, days: number, intent?: Intent): Promis
     days: planned,
     scheduled: scheduledFrom(events).filter((entry) => entry.date >= today),
     week: weekOutlook(state, config),
+    garmin: garminAttribution(activities, wellness, destinations),
   }
 }
 

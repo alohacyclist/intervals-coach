@@ -69,6 +69,8 @@ export const summaryOf = (execution: Execution, appUrl: string | null): string =
     headline,
     sparkline(execution),
     figures.join(' · '),
+    // Garmin's terms follow its data wherever it is shown, this text included.
+    execution.garmin ? `Daten: ${execution.garmin}` : null,
     `— ${SIGNATURE}${appUrl ? ` · ${appUrl}` : ''}`,
   ]
     .filter((line): line is string => line !== null)
