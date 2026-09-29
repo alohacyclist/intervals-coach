@@ -81,15 +81,17 @@ export const exchangeCode = (app: OAuthApp, code: string): Promise<TokenSet> =>
 export const refreshTokens = (app: OAuthApp, refreshToken: string): Promise<TokenSet> =>
   postToken(app, { grant_type: 'refresh_token', refresh_token: refreshToken })
 
-type AthleteResponse = { id?: string | number; name?: string }
+type AthleteResponse = { id?: string | number; name?: string; timezone?: unknown }
 
 /** Athlete id 0 resolves to the authenticated user when using bearer tokens. */
-export const fetchAthlete = async (accessToken: string): Promise<{ id: string; name: string }> => {
+export const fetchAthlete = async (
+  accessToken: string,
+): Promise<{ id: string; name: string; timezone: unknown }> => {
   const response = await fetch('https://intervals.icu/api/v1/athlete/0', {
     headers: { Authorization: `Bearer ${accessToken}` },
   })
   if (!response.ok) throw new OAuthError(`Athletenprofil nicht lesbar (${response.status})`, response.status)
   const athlete = (await response.json()) as AthleteResponse
   if (athlete.id === undefined) throw new OAuthError('Athletenprofil ohne id')
-  return { id: String(athlete.id), name: athlete.name ?? 'Athlet' }
+  return { id: String(athlete.id), name: athlete.name ?? 'Athlet', timezone: athlete.timezone }
 }

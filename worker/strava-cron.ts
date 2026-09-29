@@ -18,6 +18,8 @@ export type CronSetup = {
   readonly depsFor: (subject: string) => Promise<RouteDeps>
   /** The stored configuration alone: deciding whether to look must not touch intervals.icu. */
   readonly storeFor: (subject: string) => ConfigStore
+  /** The athlete's own clock decides what "today" and "at night" mean. */
+  readonly timezoneFor?: (subject: string) => Promise<string>
   /**
    * With accounts, the retention runs from the last visit: the cron keeps each
    * link's expiry. The single user runs the app for themselves and keeps theirs alive.
@@ -44,11 +46,12 @@ const syncOne = async (env: Bindings, setup: CronSetup, { subject, expiration }:
   const config = await setup.storeFor(subject).load().catch(() => null)
   if (!config) return
 
-  const today = localToday(now)
-  const hour = localHour(now)
+  const timeZone = (await setup.timezoneFor?.(subject)) ?? DEFAULT_TIMEZONE
+  const today = localToday(now, timeZone)
+  const hour = localHour(now, timeZone)
   const pending = pendingDates(config.proposals, today, hour)
   const lastPostedAt = link.posted[0]?.at ?? null
-  if (!shouldCheck({ now, minuteOfDay: localMinuteOfDay(now), pending, lastPostedAt })) return
+  if (!shouldCheck({ now, minuteOfDay: localMinuteOfDay(now, timeZone), pending, lastPostedAt })) return
 
   const seconds = Math.floor(now.getTime() / 1000)
   const options: KVPutOptions =
