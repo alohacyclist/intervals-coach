@@ -18,9 +18,18 @@ export type TokenSet = {
 }
 
 export class OAuthError extends Error {
-  constructor(message: string) {
+  constructor(
+    message: string,
+    /** The HTTP status intervals.icu answered with, when it answered at all. */
+    readonly status: number | null = null,
+  ) {
     super(message)
     this.name = 'OAuthError'
+  }
+
+  /** The grant itself was refused (invalid_grant and friends), as opposed to the service failing. */
+  get refused(): boolean {
+    return this.status === 400 || this.status === 401
   }
 }
 
@@ -52,7 +61,7 @@ const postToken = async (app: OAuthApp, body: Record<string, string>): Promise<T
   })
 
   if (!response.ok) {
-    throw new OAuthError(`Token-Austausch fehlgeschlagen (${response.status})`)
+    throw new OAuthError(`Token-Austausch fehlgeschlagen (${response.status})`, response.status)
   }
 
   const payload = (await response.json()) as TokenResponse
@@ -79,7 +88,7 @@ export const fetchAthlete = async (accessToken: string): Promise<{ id: string; n
   const response = await fetch('https://intervals.icu/api/v1/athlete/0', {
     headers: { Authorization: `Bearer ${accessToken}` },
   })
-  if (!response.ok) throw new OAuthError(`Athletenprofil nicht lesbar (${response.status})`)
+  if (!response.ok) throw new OAuthError(`Athletenprofil nicht lesbar (${response.status})`, response.status)
   const athlete = (await response.json()) as AthleteResponse
   if (athlete.id === undefined) throw new OAuthError('Athletenprofil ohne id')
   return { id: String(athlete.id), name: athlete.name ?? 'Athlet' }

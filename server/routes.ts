@@ -12,6 +12,7 @@ import {
 import type { IntervalsAuth } from './intervals.ts'
 import {
   IntervalsError,
+  ReauthRequiredError,
   createWorkoutEvent,
   fetchActivities,
   fetchEvents,
@@ -274,6 +275,24 @@ const buildPlan = async (deps: RouteDeps, days: number, intent?: Intent): Promis
   }
 }
 
+/**
+ * One mapping from failure to answer, shared with the Worker around these
+ * routes. Only messages written for the athlete reach the browser; anything
+ * unexpected is logged and answered in general terms.
+ */
+export const apiErrorResponse = (error: Error, context: Context): Response => {
+  if (error instanceof MissingConfigError) {
+    return context.json({ error: error.message, needsOnboarding: true }, 409)
+  }
+  if (error instanceof ValidationError) return context.json({ error: error.message, issues: error.issues }, 400)
+  if (error instanceof ReauthRequiredError) return context.json({ error: error.message, needsLogin: true }, 401)
+  // Written for the athlete (a missing scope says to sign in again), unlike a gateway's own 502.
+  if (error instanceof IntervalsError) return context.json({ error: error.message, forAthlete: true }, 502)
+  if (error instanceof SyntaxError) return context.json({ error: 'Ungültige Anfrage' }, 400)
+  console.error(error)
+  return context.json({ error: 'Unerwarteter Fehler. Bitte später noch einmal versuchen.' }, 500)
+}
+
 export const createApiRoutes = (resolve: DepsResolver): Hono => {
   const app = new Hono()
 
@@ -283,16 +302,7 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
     context.header('Cache-Control', 'no-store, max-age=0')
   })
 
-  app.onError((error, context) => {
-    if (error instanceof MissingConfigError) {
-      return context.json({ error: error.message, needsOnboarding: true }, 409)
-    }
-    if (error instanceof ValidationError) return context.json({ error: error.message, issues: error.issues }, 400)
-    // Written for the athlete (a missing scope says to sign in again), unlike a gateway's own 502.
-    if (error instanceof IntervalsError) return context.json({ error: error.message, forAthlete: true }, 502)
-    console.error(error)
-    return context.json({ error: error.message ?? 'Unbekannter Fehler' }, 500)
-  })
+  app.onError(apiErrorResponse)
 
   app.get('/api/health', (context) => context.json({ ok: true, today: localToday() }))
 
