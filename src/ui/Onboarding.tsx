@@ -3,8 +3,9 @@ import type { CoachConfig, Equipment, Goal, Sport, SportSetting } from '../coach
 import { EQUIPMENT_LABELS, SPORT_LABELS } from '../coach/types.ts'
 import { ftpOf } from '../coach/thresholds.ts'
 import { getSportSettings, putConfig } from './api.ts'
-import { parseMmSs } from './format-input.ts'
+import { parseTime, timeError } from './format-input.ts'
 import { SportPicker } from './components/SportPicker.tsx'
+import { TimeField } from './components/TimeField.tsx'
 
 type Draft = {
   sports: readonly SportSetting[]
@@ -59,15 +60,17 @@ const buildGoals = (draft: Draft, ftp: number | null): readonly Goal[] => {
       ...(draft.ftpDate ? { targetDate: draft.ftpDate } : {}),
     })
   }
-  if (draft.raceTarget && draft.raceCurrent) {
+  const current = parseTime(draft.raceCurrent)
+  const target = parseTime(draft.raceTarget)
+  if (current !== null && target !== null) {
     const distance = Number(draft.raceDistanceKm)
     goals.push({
       id: 'race',
       sport: draft.raceSport,
       kind: 'raceTime',
       label: `${distance} km ${SPORT_LABELS[draft.raceSport]} in ${draft.raceTarget}`,
-      currentValue: parseMmSs(draft.raceCurrent),
-      targetValue: parseMmSs(draft.raceTarget),
+      currentValue: current,
+      targetValue: target,
       distanceKm: distance,
       priority: 'A',
       ...(draft.raceDate ? { targetDate: draft.raceDate } : {}),
@@ -122,7 +125,16 @@ export const Onboarding = ({ onDone }: { readonly onDone: () => void }) => {
   }
   const ridesBike = draft.sports.some((setting) => setting.sport === 'Ride')
 
+  const raceErrors = {
+    current: timeError(draft.raceCurrent, draft.raceTarget.trim() !== ''),
+    target: timeError(draft.raceTarget, draft.raceCurrent.trim() !== ''),
+  }
+
   const submit = async () => {
+    if (raceErrors.current !== null || raceErrors.target !== null) {
+      setError('Bitte die markierten Zeiten prüfen.')
+      return
+    }
     const config: CoachConfig = {
       profile,
       goals: buildGoals(draft, ftpOf(profile)),
@@ -214,14 +226,20 @@ export const Onboarding = ({ onDone }: { readonly onDone: () => void }) => {
             Distanz (km)
             <input type="number" step="0.1" value={draft.raceDistanceKm} onChange={set('raceDistanceKm')} />
           </label>
-          <label>
-            aktuelle Zeit (mm:ss)
-            <input type="text" placeholder="38:00" value={draft.raceCurrent} onChange={set('raceCurrent')} />
-          </label>
-          <label>
-            Zielzeit (mm:ss)
-            <input type="text" placeholder="36:00" value={draft.raceTarget} onChange={set('raceTarget')} />
-          </label>
+          <TimeField
+            label="aktuelle Zeit"
+            placeholder="38:00 oder 1:45:00"
+            value={draft.raceCurrent}
+            onChange={(value) => setDraft((current) => ({ ...current, raceCurrent: value }))}
+            error={raceErrors.current}
+          />
+          <TimeField
+            label="Zielzeit"
+            placeholder="36:00 oder 1:39:00"
+            value={draft.raceTarget}
+            onChange={(value) => setDraft((current) => ({ ...current, raceTarget: value }))}
+            error={raceErrors.target}
+          />
           <label>
             bis wann
             <input type="date" value={draft.raceDate} onChange={set('raceDate')} />
