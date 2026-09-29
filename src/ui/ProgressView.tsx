@@ -8,7 +8,7 @@ import { LevelLadder } from './components/LevelLadder.tsx'
 import { BenchmarkCard } from './components/BenchmarkCard.tsx'
 import { GoalsPanel } from './components/GoalsPanel.tsx'
 import { SPORT_LABELS } from '../coach/types.ts'
-import { DEFAULT_PROGRESS_SPAN, isProgressSpan, PROGRESS_SPANS } from '../coach/progress.ts'
+import { DEFAULT_PROGRESS_SPAN, EARLY_DAYS, isProgressSpan, PROGRESS_SPANS, trackedDays } from '../coach/progress.ts'
 import type { ProgressSpan } from '../coach/progress.ts'
 
 const SPAN_KEY = 'progress-span'
@@ -98,6 +98,8 @@ export const ProgressView = ({ onNeedsOnboarding }: Props) => {
   if (!progress) return <p className="loading" role="status">Lade Verlauf von intervals.icu…</p>
 
   const { totals } = progress
+  // A new athlete would otherwise meet zeros and empty charts, which read as broken.
+  const early = trackedDays(progress.fitness) < EARLY_DAYS
   const sports = Object.entries(totals.sessionsBySport)
     .filter(([sport]) => sport in SPORT_LABELS)
     .map(([sport, count]) => `${SPORT_LABELS[sport as keyof typeof SPORT_LABELS]} ${count}`)
@@ -122,45 +124,60 @@ export const ProgressView = ({ onNeedsOnboarding }: Props) => {
         </div>
       </div>
 
-      <section className={busy ? 'totals totals--stale' : 'totals'}>
-        <div className="totals__head">
-          <h2>Erreicht</h2>
-          <span className="totals__span readout">letzte {progress.historyDays} Tage</span>
-        </div>
-        <dl className="metrics">
-          <div>
-            <dt>Einheiten</dt>
-            <dd>{totals.sessions}</dd>
+      {early && (
+        <section className="totals early">
+          <div className="totals__head">
+            <h2>Noch am Anfang</h2>
           </div>
-          <div>
-            <dt>Stunden</dt>
-            <dd>{totals.hours}</dd>
-          </div>
-          <div>
-            <dt>Load gesamt</dt>
-            <dd>{totals.load}</dd>
-          </div>
-          <div>
-            <dt>Tage trainiert</dt>
-            <dd>{totals.days}</dd>
-          </div>
-          <div>
-            <dt>Längste Pause</dt>
-            <dd>{totals.longestBreak}</dd>
-          </div>
-          <div>
-            <dt>Ø pro Woche</dt>
-            <dd>{Math.round((totals.sessions / progress.historyDays) * 7 * 10) / 10}</dd>
-          </div>
-        </dl>
-        {sports.length > 0 && <p className="totals__split readout">{sports.join(' · ')}</p>}
-      </section>
+          <p className="early__text">
+            Nach etwa zwei Wochen Training siehst du hier, wie sich deine Fitness entwickelt, wie
+            viel du pro Woche trainierst und auf welcher Stufe du je Trainingsart stehst. Bis dahin
+            reicht der Plan: einfach die Einheit des Tages machen.
+          </p>
+        </section>
+      )}
 
-      <FitnessCurve points={progress.fitness} />
+      {(!early || totals.sessions > 0) && (
+        <section className={busy ? 'totals totals--stale' : 'totals'}>
+          <div className="totals__head">
+            <h2>Erreicht</h2>
+            <span className="totals__span readout">letzte {progress.historyDays} Tage</span>
+          </div>
+          <dl className="metrics">
+            <div>
+              <dt>Einheiten</dt>
+              <dd>{totals.sessions}</dd>
+            </div>
+            <div>
+              <dt>Stunden</dt>
+              <dd>{totals.hours}</dd>
+            </div>
+            <div>
+              <dt>Load gesamt</dt>
+              <dd>{totals.load}</dd>
+            </div>
+            <div>
+              <dt>Tage trainiert</dt>
+              <dd>{totals.days}</dd>
+            </div>
+            <div>
+              <dt>Längste Pause</dt>
+              <dd>{totals.longestBreak}</dd>
+            </div>
+            <div>
+              <dt>Ø pro Woche</dt>
+              <dd>{Math.round((totals.sessions / progress.historyDays) * 7 * 10) / 10}</dd>
+            </div>
+          </dl>
+          {sports.length > 0 && <p className="totals__split readout">{sports.join(' · ')}</p>}
+        </section>
+      )}
+
+      {!early && <FitnessCurve points={progress.fitness} />}
 
       <SeasonBand season={progress.season} />
 
-      <WeekBars weeks={progress.weeks} />
+      {!early && <WeekBars weeks={progress.weeks} />}
 
       <LevelLadder levels={progress.levels} />
 

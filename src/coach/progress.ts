@@ -3,6 +3,7 @@ import type {
   BenchmarkStatus,
   FamilyLevel,
   Feasibility,
+  FitnessPoint,
   Progress,
   SeasonWeek,
   Sport,
@@ -30,6 +31,15 @@ const EMPTY_BENCHMARK: BenchmarkStatus = {
   intervalWeeks: 0,
   sessions: [],
   results: [],
+}
+
+/** Below this, curves and weekly bars show a start-up ramp rather than a trend. */
+export const EARLY_DAYS = 14
+
+/** Days since the first load in the series: how much of the chart is the athlete's own history. */
+export const trackedDays = (points: readonly FitnessPoint[]): number => {
+  const first = points.findIndex((point) => point.ctl > 0 || point.atl > 0)
+  return first < 0 ? 0 : points.length - first
 }
 
 /** The spans the page can be read over; the middle one is what it opens with. */
