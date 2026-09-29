@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { CoachConfig, Plan } from '../coach/types.ts'
-import { ApiError, getConfig, getPlan } from './api.ts'
+import { ApiError, EXPIRED_SESSION_URL, getConfig, getPlan } from './api.ts'
 import type { Me } from './api.ts'
 import { DataIssueBanner } from './components/DataIssueBanner.tsx'
 import { HistoryStrip } from './components/HistoryStrip.tsx'
@@ -74,7 +74,7 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
         return
       }
       if (caught instanceof ApiError && caught.needsLogin) {
-        window.location.href = '/'
+        window.location.href = EXPIRED_SESSION_URL
         return
       }
       setError(caught instanceof Error ? caught.message : 'Unbekannter Fehler')
