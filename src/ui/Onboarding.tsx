@@ -2,13 +2,17 @@ import { useEffect, useState } from 'react'
 import type { CoachConfig, Equipment, Goal, Sport, SportSetting } from '../coach/types.ts'
 import { EQUIPMENT_LABELS, SPORT_LABELS } from '../coach/types.ts'
 import { ftpOf } from '../coach/thresholds.ts'
+import type { SportSettings } from './api.ts'
 import { getSportSettings, putConfig } from './api.ts'
 import { parseTime, timeError } from './format-input.ts'
 import { SportPicker } from './components/SportPicker.tsx'
 import { TimeField } from './components/TimeField.tsx'
+import type { ThresholdSources } from './threshold-input.ts'
+import { prefillSports, prefilledThreshold } from './threshold-input.ts'
 
 type Draft = {
   sports: readonly SportSetting[]
+  sources: ThresholdSources
   equipment: Equipment
   weightKg: string
   ftpTarget: string
@@ -30,6 +34,7 @@ const EMPTY: Draft = {
     { sport: 'Ride', threshold: { metric: 'power', ftp: 250 } },
     { sport: 'Run', threshold: { metric: 'pace', thresholdSecPerKm: 270 } },
   ],
+  sources: {},
   equipment: 'dumbbells',
   weightKg: '75',
   ftpTarget: '',
@@ -83,28 +88,19 @@ export const Onboarding = ({ onDone }: { readonly onDone: () => void }) => {
   const [draft, setDraft] = useState<Draft>(EMPTY)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [thresholdsValid, setThresholdsValid] = useState(true)
+  const [intervals, setIntervals] = useState<SportSettings | null>(null)
 
   useEffect(() => {
-    // Prefill from the athlete's own intervals.icu settings so the numbers match.
+    // Prefill from the athlete's own intervals.icu settings so the numbers match;
+    // whatever intervals.icu does not know stays visibly an estimate.
+    const apply = (settings: SportSettings | null) => {
+      setIntervals(settings)
+      setDraft((current) => ({ ...current, ...prefillSports(current.sports, current.sources, settings) }))
+    }
     getSportSettings()
-      .then((settings) =>
-        setDraft((current) => ({
-          ...current,
-          sports: current.sports.map((setting) => {
-            if (setting.sport === 'Ride' && settings.ftp) {
-              return { ...setting, threshold: { metric: 'power' as const, ftp: settings.ftp } }
-            }
-            if (setting.sport === 'Run' && settings.thresholdPaceSecPerKm) {
-              return {
-                ...setting,
-                threshold: { metric: 'pace' as const, thresholdSecPerKm: settings.thresholdPaceSecPerKm },
-              }
-            }
-            return setting
-          }),
-        })),
-      )
-      .catch(() => undefined)
+      .then(apply)
+      .catch(() => apply(null))
   }, [])
 
   const set = (key: keyof Draft) => (event: { target: { value: string } }) =>
@@ -131,8 +127,8 @@ export const Onboarding = ({ onDone }: { readonly onDone: () => void }) => {
   }
 
   const submit = async () => {
-    if (raceErrors.current !== null || raceErrors.target !== null) {
-      setError('Bitte die markierten Zeiten prüfen.')
+    if (!thresholdsValid || raceErrors.current !== null || raceErrors.target !== null) {
+      setError('Bitte die markierten Felder prüfen.')
       return
     }
     const config: CoachConfig = {
@@ -177,7 +173,13 @@ export const Onboarding = ({ onDone }: { readonly onDone: () => void }) => {
           Der Plan zeigt für jeden Tag zu jeder gewählten Sportart eine Einheit — du nimmst die, für
           die du Zeit hast. Die Schwellenwerte holt er, wenn möglich, aus deinen intervals.icu-Einstellungen.
         </p>
-        <SportPicker sports={draft.sports} onChange={(sports) => setDraft((c) => ({ ...c, sports }))} />
+        <SportPicker
+          sports={draft.sports}
+          sources={draft.sources}
+          onChange={(sports, sources) => setDraft((c) => ({ ...c, sports, sources }))}
+          onValidity={setThresholdsValid}
+          prefill={(sport) => prefilledThreshold(sport, intervals)}
+        />
         <div className="grid">
           <label>
             Gewicht (kg)

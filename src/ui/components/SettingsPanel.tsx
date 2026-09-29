@@ -6,6 +6,7 @@ import { formatClock, parseTime, timeError } from '../format-input.ts'
 import { ftpOf } from '../../coach/thresholds.ts'
 import { SportPicker } from './SportPicker.tsx'
 import { TimeField } from './TimeField.tsx'
+import type { ThresholdSources } from '../threshold-input.ts'
 
 const MINUTE_LABELS = {
   min: 'Min. — schaffe ich immer',
@@ -28,6 +29,8 @@ export const SettingsPanel = ({ config, onSaved, onClose, canDelete }: Props) =>
   const ftp = ftpOf(draft.profile)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [sources, setSources] = useState<ThresholdSources>({})
+  const [thresholdsValid, setThresholdsValid] = useState(true)
 
   const patchProfile = (patch: Partial<CoachConfig['profile']>) =>
     setDraft((current) => ({ ...current, profile: { ...current.profile, ...patch } }))
@@ -81,7 +84,15 @@ export const SettingsPanel = ({ config, onSaved, onClose, canDelete }: Props) =>
       </div>
 
       <h3>Sportarten</h3>
-      <SportPicker sports={draft.profile.sports} onChange={(sports) => patchProfile({ sports })} />
+      <SportPicker
+        sports={draft.profile.sports}
+        sources={sources}
+        onChange={(sports, next) => {
+          patchProfile({ sports })
+          setSources(next)
+        }}
+        onValidity={setThresholdsValid}
+      />
 
       <div className="grid">
         <label>
@@ -227,7 +238,7 @@ export const SettingsPanel = ({ config, onSaved, onClose, canDelete }: Props) =>
       {error && <p className="error">{error}</p>}
 
       <div className="settings__actions">
-        <button type="button" disabled={busy || hasTimeErrors} onClick={() => run(() => putConfig(draft))}>
+        <button type="button" disabled={busy || hasTimeErrors || !thresholdsValid} onClick={() => run(() => putConfig(draft))}>
           Speichern
         </button>
         <button
