@@ -199,26 +199,32 @@ app.get('/auth/callback', async (context) => {
   if (context.req.query('error')) return context.redirect('/?fehler=abgelehnt', 302)
   if (!code || !state || state !== expected) return context.redirect('/?fehler=state', 302)
 
-  const tokens = await exchangeCode(oauthApp(context), code)
-  const athlete = await fetchAthlete(tokens.accessToken)
   const secret = context.env.SESSION_SECRET
+  try {
+    const tokens = await exchangeCode(oauthApp(context), code)
+    const athlete = await fetchAthlete(tokens.accessToken)
 
-  const existing = await loadUser(context.env.COACH_CONFIG, secret, athlete.id)
-  const now = new Date().toISOString()
-  await saveUser(context.env.COACH_CONFIG, secret, {
-    athleteId: athlete.id,
-    name: athlete.name,
-    tokens,
-    createdAt: existing?.createdAt ?? now,
-    // Reaching this point required the consent gate above; the first pass is the record.
-    consentAt: existing?.consentAt ?? now,
-    lastSeenAt: now,
-  })
+    const existing = await loadUser(context.env.COACH_CONFIG, secret, athlete.id)
+    const now = new Date().toISOString()
+    await saveUser(context.env.COACH_CONFIG, secret, {
+      athleteId: athlete.id,
+      name: athlete.name,
+      tokens,
+      createdAt: existing?.createdAt ?? now,
+      // Reaching this point required the consent gate above; the first pass is the record.
+      consentAt: existing?.consentAt ?? now,
+      lastSeenAt: now,
+    })
 
-  context.header('Set-Cookie', await createSessionCookie(athlete.id, secret, isSecure(context)), {
-    append: true,
-  })
-  return context.redirect((await hasConfig(context.env.COACH_CONFIG, athlete.id)) ? '/app' : '/onboarding', 302)
+    context.header('Set-Cookie', await createSessionCookie(athlete.id, secret, isSecure(context)), {
+      append: true,
+    })
+    return context.redirect((await hasConfig(context.env.COACH_CONFIG, athlete.id)) ? '/app' : '/onboarding', 302)
+  } catch (error) {
+    // The landing page explains it in words; the details are for the operator.
+    console.error('intervals.icu sign-in failed', error)
+    return context.redirect('/?fehler=anmeldung', 302)
+  }
 })
 
 /**
