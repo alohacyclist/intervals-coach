@@ -15,17 +15,26 @@ type Props = {
   readonly onLogged: () => void
 }
 
+/** Runs a save and says what went wrong, instead of letting the checkbox silently snap back. */
+export const settle = async (save: () => Promise<unknown>, onSaved: () => void): Promise<string | null> => {
+  try {
+    await save()
+    onSaved()
+    return null
+  } catch (caught) {
+    return caught instanceof Error ? caught.message : 'Speichern fehlgeschlagen'
+  }
+}
+
 export const StrengthCard = ({ strength, date, done, onLogged }: Props) => {
   const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const toggle = async () => {
     setBusy(true)
-    try {
-      await logStrength(date, !done)
-      onLogged()
-    } finally {
-      setBusy(false)
-    }
+    setError(null)
+    setError(await settle(() => logStrength(date, !done), onLogged))
+    setBusy(false)
   }
 
   return (
@@ -57,6 +66,11 @@ export const StrengthCard = ({ strength, date, done, onLogged }: Props) => {
         <input type="checkbox" checked={done} disabled={busy} onChange={() => void toggle()} />
         Erledigt — zählt für die Progression
       </label>
+      {error && (
+        <p className="error" role="alert">
+          {error}
+        </p>
+      )}
     </details>
   )
 }

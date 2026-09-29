@@ -1,6 +1,7 @@
 import type { SessionTier } from '../coach/types.ts'
 import type { CoachConfig, Execution, Plan, Progress, ZrlSettings, ZwiftRoute } from '../coach/types.ts'
 import type { ZrlRaceInput } from './zrl-rows.ts'
+import { OFFLINE, humanError } from './error-message.ts'
 
 export class ApiError extends Error {
   constructor(
@@ -14,19 +15,30 @@ export class ApiError extends Error {
   }
 }
 
+const send = async (path: string, init?: RequestInit): Promise<Response> => {
+  try {
+    return await fetch(path, {
+      ...init,
+      headers: { 'Content-Type': 'application/json', ...init?.headers },
+    })
+  } catch {
+    throw new ApiError(humanError(OFFLINE), OFFLINE)
+  }
+}
+
 const request = async <T>(path: string, init?: RequestInit): Promise<T> => {
-  const response = await fetch(path, {
-    ...init,
-    headers: { 'Content-Type': 'application/json', ...init?.headers },
-  })
+  const response = await send(path, init)
   const payload = (await response.json().catch(() => ({}))) as {
     error?: string
+    forAthlete?: boolean
     needsLogin?: boolean
     needsOnboarding?: boolean
   }
   if (!response.ok) {
+    // The athlete gets a sentence; whoever debugs gets the server's own words.
+    if (response.status >= 500) console.error(`${path}: ${response.status}`, payload.error)
     throw new ApiError(
-      payload.error ?? `Fehler ${response.status}`,
+      humanError(response.status, payload.error, payload.forAthlete === true),
       response.status,
       Boolean(payload.needsLogin),
       Boolean(payload.needsOnboarding),
