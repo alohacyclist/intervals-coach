@@ -102,7 +102,8 @@ type Open = { readonly completion: Completion; readonly template: WorkoutTemplat
  * The cron: every recognised session of the last two days that is not on Strava
  * yet. Strava is asked once per run for the whole window, and intervals.icu for
  * a comparison only once a session was actually found there — a session that
- * never reaches Strava costs one list call per run, not five.
+ * never reaches Strava costs one list call per run, not five. Whether to run at
+ * all for this athlete is decided before, in strava-schedule.ts.
  */
 export const postRecent = async (context: SyncContext, today: string = localToday()): Promise<readonly PostOutcome[]> => {
   const { deps } = context

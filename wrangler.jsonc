@@ -15,9 +15,10 @@
       "id": "e86729e84e5f45f1b71dfb9dce9bdf19",
     },
   ],
-  // Writes the summary of each newly recognised session under it on Strava.
+  // Writes the summary of each newly recognised session under it on Strava. Each
+  // run only looks at athletes whose schedule is due (worker/strava-schedule.ts).
   "triggers": {
-    "crons": ["*/20 * * * *"],
+    "crons": ["*/30 * * * *"],
   },
   // Per athlete on /api/* in multi user mode; opening the plan takes about ten requests.
   "ratelimits": [
