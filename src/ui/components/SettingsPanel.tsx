@@ -200,7 +200,7 @@ export const SettingsPanel = ({ config, onSaved, onClose, canDelete }: Props) =>
         )}
       </div>
 
-      {error && <p className="error">{error}</p>}
+      {error && <p className="error" role="alert">{error}</p>}
 
       <div className="settings__actions">
         <button type="button" disabled={busy} onClick={save}>

@@ -233,7 +233,7 @@ export const Onboarding = ({ onDone }: { readonly onDone: () => void }) => {
         </div>
       </fieldset>
 
-      {error && <p className="error">{error}</p>}
+      {error && <p className="error" role="alert">{error}</p>}
 
       <button type="button" className="cta cta--button" disabled={busy} onClick={() => void submit()}>
         {busy ? 'Speichert…' : 'Plan erstellen'}
