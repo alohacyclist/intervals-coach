@@ -38,8 +38,13 @@ const WORK_FROM = 80
 const MIN_WORK_SECONDS = 30
 /** Detected surges shorter than this are traffic lights, not intervals. */
 const MIN_DETECTED_SECONDS = 20
-/** A single-value target still gets a band, or 101 % of "100 %" would read as a miss. */
-const SINGLE_TARGET_TOLERANCE = 2
+/**
+ * Points an interval may sit outside its target and still count as in it. GPS
+ * pace wanders by a percent or two: 4:02 against a 4:00 floor is a well run
+ * kilometre, not a miss. A single-value target is drawn as this band, or 101 %
+ * of "100 %" would read as a miss.
+ */
+const TARGET_TOLERANCE = 2
 /** Less than this share of the planned duration is an interval cut short. */
 const CUT_SHORT_BELOW = 0.85
 
@@ -52,14 +57,16 @@ const NO_BLOCKS_TO_COMPARE: readonly Stimulus[] = ['ENDURANCE', 'RECOVERY', 'LON
 export const comparesBlocks = (template: WorkoutTemplate): boolean =>
   !NO_BLOCKS_TO_COMPARE.includes(template.stimulus)
 
-const rangeOf = (target: string): { readonly low: number; readonly high: number } | null => {
+type Band = { readonly low: number; readonly high: number }
+
+/** The band a target is drawn as, and the wider one an interval is judged against. */
+const bandsOf = (target: string): { readonly drawn: Band; readonly judged: Band } | null => {
   const values = percentages(target)
   if (values.length === 0) return null
   const low = Math.min(...values)
   const high = Math.max(...values)
-  return low === high
-    ? { low: low - SINGLE_TARGET_TOLERANCE, high: high + SINGLE_TARGET_TOLERANCE }
-    : { low, high }
+  const judged = { low: low - TARGET_TOLERANCE, high: high + TARGET_TOLERANCE }
+  return { drawn: low === high ? judged : { low, high }, judged }
 }
 
 /**
@@ -103,14 +110,16 @@ type Plan = {
   readonly seconds: number
   readonly percent: number
   readonly label: string | null
-  readonly range: { readonly low: number; readonly high: number } | null
+  readonly range: Band | null
+  readonly judged: Band | null
   readonly work: boolean
 }
 
 const planOf = (blocks: readonly Block[], threshold: SportThreshold, compareBlocks: boolean): readonly Plan[] =>
   flattenBlocks(blocks)
     .map((step) => {
-      const range = rangeOf(step.target)
+      const bands = bandsOf(step.target)
+      const range = bands?.drawn ?? null
       const seconds = estimateSeconds(step.duration, threshold)
       const percent = range ? Math.round((range.low + range.high) / 2) : 60
       const label = step.label ?? null
@@ -120,7 +129,7 @@ const planOf = (blocks: readonly Block[], threshold: SportThreshold, compareBloc
         percent >= WORK_FROM &&
         seconds >= MIN_WORK_SECONDS &&
         !(label !== null && WARM_OR_COOL.test(label))
-      return { seconds, percent, label, range, work }
+      return { seconds, percent, label, range, judged: bands?.judged ?? null, work }
     })
     .filter((step) => step.seconds > 0)
 
@@ -336,6 +345,7 @@ export const compareExecution = (input: ExecutionInput): Execution => {
     const percent = actual ? percentOfThreshold(actual, threshold) : null
     const rounded = percent === null ? null : Math.round(percent)
     const range = step.range ?? { low: step.percent, high: step.percent }
+    const judged = step.judged ?? range
     return {
       index: index + 1,
       plannedSeconds: step.seconds,
@@ -345,7 +355,7 @@ export const compareExecution = (input: ExecutionInput): Execution => {
       actualPercent: rounded,
       actualValue: actual ? valueText(actual, threshold) : null,
       verdict:
-        rounded === null ? null : rounded > range.high ? 'over' : rounded < range.low ? 'under' : 'on',
+        rounded === null ? null : rounded > judged.high ? 'over' : rounded < judged.low ? 'under' : 'on',
       cutShort: actual !== undefined && actual.seconds < step.seconds * CUT_SHORT_BELOW,
       pieces: pieces.length,
       span:
