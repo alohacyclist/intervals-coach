@@ -1,3 +1,4 @@
+import { SPORT_DONE } from '../coach/types.ts'
 import type { Execution, ExecutionTrace } from '../coach/types.ts'
 import {
   areaPath,
@@ -82,11 +83,12 @@ const drawHeader = (context: CanvasRenderingContext2D, execution: Execution, met
   const size = fittedTitle(context, execution.templateName, 66)
   text(context, execution.templateName, MARGIN, 172, `600 ${size}px ${SANS}`, INK)
 
-  const { hit, planned } = hitCount(execution)
+  const { done, hit, planned } = hitCount(execution)
+  // Done and in the target apart: "1/5" alone reads as one of five run.
   const figures = isCompared(execution)
     ? [
-        ['IM ZIEL', clock(execution.inTargetSeconds), `/ ${clock(execution.workPlannedSeconds)}`],
-        ['INTERVALLE', `${hit}/${planned}`, '✓'],
+        [SPORT_DONE[execution.sport].toUpperCase(), `${done}/${planned}`, ''],
+        ['IM ZIEL', `${hit}/${planned}`, ''],
         ['BELASTUNG', String(execution.load.actual), 'TSS'],
       ]
     : [
