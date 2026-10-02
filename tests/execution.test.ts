@@ -132,6 +132,36 @@ describe('planned against done', () => {
     expect(result.steps[0]?.actualValue).toBe('3:50 /km')
   })
 
+  /** 5x1km from 2 Oct 2026: every kilometre run, four within seconds of the floor, the last flat out. */
+  it('lets a kilometre a few seconds off the target band count as in it', () => {
+    const run = findTemplate('run-thr-5x1k') as WorkoutTemplate
+    const pace: SportThreshold = { metric: 'pace', thresholdSecPerKm: 240 }
+    const at = (seconds: number, metres: number): ActualInterval => ({
+      ...work(seconds, null),
+      averageSpeedMps: metres / seconds,
+    })
+    const session = [
+      at(323, 1040),
+      at(305, 980),
+      at(107, 368),
+      at(242, 999),
+      at(114, 333),
+      at(238, 1002),
+      at(119, 309),
+      at(244, 1000),
+      at(111, 320),
+      at(244, 1000),
+      at(106, 303),
+      at(231, 1026),
+      at(124, 322),
+      at(333, 1001),
+    ]
+    const result = compare(session, run, pace)
+    expect(result.steps.map((step) => step.actualPercent)).toEqual([99, 101, 98, 98, 107])
+    expect(result.steps.map((step) => step.verdict)).toEqual(['on', 'on', 'on', 'on', 'over'])
+    expect(result.steps[0]).toMatchObject({ low: 100, high: 104 })
+  })
+
   it('compares nothing block by block in a session whose point is its length', () => {
     const long = findTemplate('bike-long-90') as WorkoutTemplate
     const result = compare([work(5400, 180)], long)
