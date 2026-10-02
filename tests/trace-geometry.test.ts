@@ -6,12 +6,13 @@ import {
   corridorLabel,
   heartRange,
   heightOf,
+  hitCount,
   linePath,
   timeTicks,
   valueText,
 } from '../src/ui/trace-geometry.ts'
 import type { Corridor } from '../src/ui/trace-geometry.ts'
-import type { ExecutedStep, ExecutionTrace } from '../src/coach/types.ts'
+import type { ExecutedStep, Execution, ExecutionTrace } from '../src/coach/types.ts'
 
 const step = (overrides: Partial<ExecutedStep> = {}): ExecutedStep => ({
   index: 1,
@@ -103,5 +104,16 @@ describe('the line and the ground under it', () => {
     expect(areaPath(points, 100, 10)).toBe(
       'M0.0,10 L0.0,5.0 L50.0,5.0 L50.0,10 Z M80.0,10 L80.0,0.0 L100.0,7.5 L100.0,10 Z',
     )
+  })
+})
+
+describe('the headline of a shared session', () => {
+  it('counts the intervals done apart from those in the target', () => {
+    const steps = [
+      step(),
+      step({ index: 2, verdict: 'under', actualPercent: 93 }),
+      step({ index: 3, verdict: null, actualSeconds: null, actualPercent: null }),
+    ]
+    expect(hitCount({ steps } as unknown as Execution)).toEqual({ done: 2, hit: 1, planned: 3 })
   })
 })
