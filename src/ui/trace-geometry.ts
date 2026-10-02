@@ -162,8 +162,11 @@ export const drawableTrace = (execution: Execution): ExecutionTrace | null =>
     ? execution.trace
     : null
 
-/** In the target, and of the target: what the headline of a shared session says. */
-export const hitCount = (execution: Execution): { readonly hit: number; readonly planned: number } => ({
+/** Done, in the target, and of the target: what the headline of a shared session says. */
+export const hitCount = (
+  execution: Execution,
+): { readonly done: number; readonly hit: number; readonly planned: number } => ({
+  done: execution.steps.filter((step) => step.actualSeconds !== null).length,
   hit: execution.steps.filter((step) => step.verdict === 'on').length,
   planned: execution.steps.length,
 })
