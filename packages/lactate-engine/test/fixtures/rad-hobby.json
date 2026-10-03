@@ -1,0 +1,57 @@
+{
+  "id": "rad-hobby",
+  "beschreibung": "Freizeitradlerin. Ergometer, Start 50 W, +50 W alle 3 min.",
+  "protokoll": {
+    "sportart": "rad",
+    "ruhelaktat": 1.2,
+    "stufen": [
+      {
+        "intensitaet": 50,
+        "laktat": 1.4,
+        "hf": 98,
+        "dauerSek": 180
+      },
+      {
+        "intensitaet": 100,
+        "laktat": 1.3,
+        "hf": 112,
+        "dauerSek": 180
+      },
+      {
+        "intensitaet": 150,
+        "laktat": 1.6,
+        "hf": 128,
+        "dauerSek": 180
+      },
+      {
+        "intensitaet": 200,
+        "laktat": 2.5,
+        "hf": 147,
+        "dauerSek": 180
+      },
+      {
+        "intensitaet": 250,
+        "laktat": 4.3,
+        "hf": 165,
+        "dauerSek": 180
+      },
+      {
+        "intensitaet": 300,
+        "laktat": 7.6,
+        "hf": 181,
+        "dauerSek": 180
+      }
+    ]
+  },
+  "referenz": {
+    "quelle": null,
+    "kurve": "polynom3",
+    "hinweis": "Werte aus WinLactat/Ergonizer hier eintragen; leer = kein Vergleich.",
+    "toleranz": {
+      "wert": 3,
+      "hf": 2,
+      "laktat": 0.1
+    },
+    "werte": {}
+  }
+}

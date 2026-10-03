@@ -1,0 +1,31 @@
+# Typecheck, Lint und Tests der Laktat-Engine, nur wenn sich das Paket ändert.
+name: Laktat-Engine
+
+on:
+  push:
+    branches: [main]
+    paths: ['packages/lactate-engine/**', '.github/workflows/lactate-engine.yml']
+  pull_request:
+    paths: ['packages/lactate-engine/**', '.github/workflows/lactate-engine.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Typecheck, Lint, Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/lactate-engine
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: packages/lactate-engine/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test

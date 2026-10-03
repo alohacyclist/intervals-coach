@@ -1,0 +1,57 @@
+{
+  "id": "lauf-hobby",
+  "beschreibung": "Freizeitläufer. Laufband, Start 7 km/h, +1,5 km/h alle 3 min.",
+  "protokoll": {
+    "sportart": "lauf",
+    "ruhelaktat": 1.3,
+    "stufen": [
+      {
+        "intensitaet": 7,
+        "laktat": 1.6,
+        "hf": 128,
+        "dauerSek": 180
+      },
+      {
+        "intensitaet": 8.5,
+        "laktat": 1.5,
+        "hf": 139,
+        "dauerSek": 180
+      },
+      {
+        "intensitaet": 10,
+        "laktat": 1.9,
+        "hf": 151,
+        "dauerSek": 180
+      },
+      {
+        "intensitaet": 11.5,
+        "laktat": 2.9,
+        "hf": 164,
+        "dauerSek": 180
+      },
+      {
+        "intensitaet": 13,
+        "laktat": 4.6,
+        "hf": 177,
+        "dauerSek": 180
+      },
+      {
+        "intensitaet": 14.5,
+        "laktat": 7.5,
+        "hf": 189,
+        "dauerSek": 180
+      }
+    ]
+  },
+  "referenz": {
+    "quelle": null,
+    "kurve": "polynom3",
+    "hinweis": "Werte aus WinLactat/Ergonizer hier eintragen; leer = kein Vergleich.",
+    "toleranz": {
+      "wert": 0.1,
+      "hf": 2,
+      "laktat": 0.1
+    },
+    "werte": {}
+  }
+}

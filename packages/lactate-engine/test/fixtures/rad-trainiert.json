@@ -1,0 +1,69 @@
+{
+  "id": "rad-trainiert",
+  "beschreibung": "Radsportler, gut trainiert. Ergometer, Start 100 W, +40 W alle 4 min, letzte Stufe abgebrochen.",
+  "protokoll": {
+    "sportart": "rad",
+    "ruhelaktat": 0.9,
+    "stufen": [
+      {
+        "intensitaet": 100,
+        "laktat": 1.1,
+        "hf": 112,
+        "dauerSek": 240
+      },
+      {
+        "intensitaet": 140,
+        "laktat": 1.0,
+        "hf": 121,
+        "dauerSek": 240
+      },
+      {
+        "intensitaet": 180,
+        "laktat": 1.1,
+        "hf": 131,
+        "dauerSek": 240
+      },
+      {
+        "intensitaet": 220,
+        "laktat": 1.4,
+        "hf": 141,
+        "dauerSek": 240
+      },
+      {
+        "intensitaet": 260,
+        "laktat": 2.1,
+        "hf": 152,
+        "dauerSek": 240
+      },
+      {
+        "intensitaet": 300,
+        "laktat": 3.4,
+        "hf": 163,
+        "dauerSek": 240
+      },
+      {
+        "intensitaet": 340,
+        "laktat": 5.6,
+        "hf": 173,
+        "dauerSek": 240
+      },
+      {
+        "intensitaet": 380,
+        "laktat": 8.9,
+        "hf": 182,
+        "dauerSek": 150
+      }
+    ]
+  },
+  "referenz": {
+    "quelle": null,
+    "kurve": "polynom3",
+    "hinweis": "Werte aus WinLactat/Ergonizer hier eintragen; leer = kein Vergleich.",
+    "toleranz": {
+      "wert": 3,
+      "hf": 2,
+      "laktat": 0.1
+    },
+    "werte": {}
+  }
+}
