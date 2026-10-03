@@ -1,0 +1,69 @@
+{
+  "id": "lauf-trainiert",
+  "beschreibung": "Läufer, gut trainiert. Laufband 1 % Steigung, Start 9 km/h, +1 km/h alle 4 min.",
+  "protokoll": {
+    "sportart": "lauf",
+    "ruhelaktat": 1.0,
+    "stufen": [
+      {
+        "intensitaet": 9,
+        "laktat": 1.2,
+        "hf": 135,
+        "dauerSek": 240
+      },
+      {
+        "intensitaet": 10,
+        "laktat": 1.1,
+        "hf": 141,
+        "dauerSek": 240
+      },
+      {
+        "intensitaet": 11,
+        "laktat": 1.2,
+        "hf": 148,
+        "dauerSek": 240
+      },
+      {
+        "intensitaet": 12,
+        "laktat": 1.4,
+        "hf": 155,
+        "dauerSek": 240
+      },
+      {
+        "intensitaet": 13,
+        "laktat": 1.8,
+        "hf": 162,
+        "dauerSek": 240
+      },
+      {
+        "intensitaet": 14,
+        "laktat": 2.6,
+        "hf": 170,
+        "dauerSek": 240
+      },
+      {
+        "intensitaet": 15,
+        "laktat": 3.9,
+        "hf": 177,
+        "dauerSek": 240
+      },
+      {
+        "intensitaet": 16,
+        "laktat": 6.1,
+        "hf": 184,
+        "dauerSek": 240
+      }
+    ]
+  },
+  "referenz": {
+    "quelle": null,
+    "kurve": "polynom3",
+    "hinweis": "Werte aus WinLactat/Ergonizer hier eintragen; leer = kein Vergleich.",
+    "toleranz": {
+      "wert": 0.1,
+      "hf": 2,
+      "laktat": 0.1
+    },
+    "werte": {}
+  }
+}

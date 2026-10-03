@@ -1,0 +1,197 @@
+{
+  "fixture": "rad-hobby",
+  "hinweis": "Erzeugt mit `npm run golden:update`. Nicht von Hand ändern – Referenzwerte gehören in die Fixture.",
+  "kurven": {
+    "polynom3": {
+      "kurvenVersion": 1,
+      "r2": 0.9998,
+      "warnungen": [],
+      "schwellen": {
+        "fest-2": {
+          "modellVersion": 1,
+          "wert": 179.481,
+          "hf": 139.2028,
+          "laktat": 2,
+          "warnungen": []
+        },
+        "fest-4": {
+          "modellVersion": 1,
+          "wert": 242.7895,
+          "hf": 162.4042,
+          "laktat": 4,
+          "warnungen": []
+        },
+        "basislinie-plus": {
+          "modellVersion": 1,
+          "wert": 193.5157,
+          "hf": 144.536,
+          "laktat": 2.3,
+          "warnungen": []
+        },
+        "le-minimum": {
+          "modellVersion": 1,
+          "wert": 151.7902,
+          "hf": 128.6803,
+          "laktat": 1.5978,
+          "warnungen": []
+        },
+        "dickhuth-ias": {
+          "modellVersion": 1,
+          "wert": 220.5906,
+          "hf": 154.4126,
+          "laktat": 3.0978,
+          "warnungen": []
+        },
+        "dmax": {
+          "modellVersion": 1,
+          "wert": 195.7075,
+          "hf": 145.3689,
+          "laktat": 2.3534,
+          "warnungen": []
+        },
+        "mod-dmax": {
+          "modellVersion": 1,
+          "wert": 230.4943,
+          "hf": 157.978,
+          "laktat": 3.4705,
+          "warnungen": []
+        },
+        "log-log": {
+          "modellVersion": 1,
+          "wert": 167.7752,
+          "hf": 134.7546,
+          "laktat": 1.5155,
+          "warnungen": []
+        }
+      }
+    },
+    "exponential": {
+      "kurvenVersion": 1,
+      "r2": 0.9972,
+      "warnungen": [],
+      "schwellen": {
+        "fest-2": {
+          "modellVersion": 1,
+          "wert": 170.0276,
+          "hf": 135.6105,
+          "laktat": 2,
+          "warnungen": []
+        },
+        "fest-4": {
+          "modellVersion": 1,
+          "wert": 246.1732,
+          "hf": 163.6224,
+          "laktat": 4,
+          "warnungen": []
+        },
+        "basislinie-plus": {
+          "modellVersion": 1,
+          "wert": 188.5068,
+          "hf": 142.6326,
+          "laktat": 2.3,
+          "warnungen": []
+        },
+        "le-minimum": {
+          "modellVersion": 1,
+          "wert": 157.4246,
+          "hf": 130.8214,
+          "laktat": 1.8381,
+          "warnungen": []
+        },
+        "dickhuth-ias": {
+          "modellVersion": 1,
+          "wert": 229.1263,
+          "hf": 157.4855,
+          "laktat": 3.3381,
+          "warnungen": []
+        },
+        "dmax": {
+          "modellVersion": 1,
+          "wert": 207.8312,
+          "hf": 149.8192,
+          "laktat": 2.7162,
+          "warnungen": []
+        },
+        "mod-dmax": {
+          "modellVersion": 1,
+          "wert": 239.818,
+          "hf": 161.3345,
+          "laktat": 3.7333,
+          "warnungen": []
+        },
+        "log-log": {
+          "modellVersion": 1,
+          "wert": 167.7752,
+          "hf": 134.7546,
+          "laktat": 1.5155,
+          "warnungen": []
+        }
+      }
+    },
+    "monotoner-spline": {
+      "kurvenVersion": 1,
+      "r2": 0.9998,
+      "warnungen": [
+        "SPLINE_GEGLAETTET"
+      ],
+      "schwellen": {
+        "fest-2": {
+          "modellVersion": 1,
+          "wert": 178.0776,
+          "hf": 138.6695,
+          "laktat": 2,
+          "warnungen": []
+        },
+        "fest-4": {
+          "modellVersion": 1,
+          "wert": 243.8136,
+          "hf": 162.7729,
+          "laktat": 4,
+          "warnungen": []
+        },
+        "basislinie-plus": {
+          "modellVersion": 1,
+          "wert": 192.1424,
+          "hf": 144.0141,
+          "laktat": 2.3,
+          "warnungen": []
+        },
+        "le-minimum": {
+          "modellVersion": 1,
+          "wert": 152.339,
+          "hf": 128.8888,
+          "laktat": 1.6242,
+          "warnungen": []
+        },
+        "dickhuth-ias": {
+          "modellVersion": 1,
+          "wert": 221.2588,
+          "hf": 154.6532,
+          "laktat": 3.1242,
+          "warnungen": []
+        },
+        "dmax": {
+          "modellVersion": 1,
+          "wert": 194.4061,
+          "hf": 144.8743,
+          "laktat": 2.3552,
+          "warnungen": []
+        },
+        "mod-dmax": {
+          "modellVersion": 1,
+          "wert": 234.9679,
+          "hf": 159.5885,
+          "laktat": 3.6201,
+          "warnungen": []
+        },
+        "log-log": {
+          "modellVersion": 1,
+          "wert": 167.7752,
+          "hf": 134.7546,
+          "laktat": 1.5155,
+          "warnungen": []
+        }
+      }
+    }
+  }
+}

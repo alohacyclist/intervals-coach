@@ -1,0 +1,45 @@
+{
+  "id": "rad-ohne-4mmol",
+  "beschreibung": "Radsportler, Test vor Erreichen von 4 mmol/L beendet. Ohne Herzfrequenz.",
+  "protokoll": {
+    "sportart": "rad",
+    "stufen": [
+      {
+        "intensitaet": 100,
+        "laktat": 1.0,
+        "dauerSek": 180
+      },
+      {
+        "intensitaet": 140,
+        "laktat": 1.1,
+        "dauerSek": 180
+      },
+      {
+        "intensitaet": 180,
+        "laktat": 1.3,
+        "dauerSek": 180
+      },
+      {
+        "intensitaet": 220,
+        "laktat": 1.8,
+        "dauerSek": 180
+      },
+      {
+        "intensitaet": 260,
+        "laktat": 2.9,
+        "dauerSek": 180
+      }
+    ]
+  },
+  "referenz": {
+    "quelle": null,
+    "kurve": "polynom3",
+    "hinweis": "Werte aus WinLactat/Ergonizer hier eintragen; leer = kein Vergleich.",
+    "toleranz": {
+      "wert": 3,
+      "hf": 2,
+      "laktat": 0.1
+    },
+    "werte": {}
+  }
+}
