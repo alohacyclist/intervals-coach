@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="de" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="supported-color-schemes" content="light dark">
+<title>Bitte bestätige deine Anmeldung</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+Condensed:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; padding: 0; width: 100% !important; -webkit-text-size-adjust: 100%; }
+  table { border-collapse: collapse; }
+  img { border: 0; display: block; }
+  a { text-decoration: none; }
+  @media (max-width: 620px) {
+    .shell { width: 100% !important; }
+    .pad { padding-left: 24px !important; padding-right: 24px !important; }
+    .h1 { font-size: 32px !important; }
+  }
+  @media (prefers-color-scheme: dark) {
+    .page { background: #070909 !important; }
+    .card { background: #111617 !important; border-color: #253032 !important; }
+    .lift { background: #172021 !important; border-color: #253032 !important; }
+    .ink { color: #f2f5f5 !important; }
+    .text { color: #dae0e0 !important; }
+    .dim { color: #a6b0b0 !important; }
+    .data { color: #ffa62b !important; }
+    .rule { border-color: #253032 !important; }
+    .btn { background: #ffa62b !important; border-color: #ffa62b !important; }
+    .btn a { color: #0a0d0e !important; }
+    .run { color: #5fc9d8 !important; border-color: #5fc9d8 !important; }
+    .ride { color: #ffa62b !important; border-color: #ffa62b !important; }
+  }
+</style>
+</head>
+<body class="page" style="margin:0; padding:0; background:#e3e1db;">
+
+<!-- Preheader: shown next to the subject in the inbox, hidden in the mail. -->
+<div style="display:none; max-height:0; overflow:hidden; mso-hide:all;">
+  Ein Klick, dann sagen wir dir Bescheid, sobald Formkurve offen ist.&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;
+</div>
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="page" style="background:#e3e1db;">
+  <tr>
+    <td align="center" style="padding:32px 12px;">
+
+      <table role="presentation" width="600" cellpadding="0" cellspacing="0" class="shell card" style="width:600px; max-width:600px; background:#f6f5f1; border:1px solid #d5d2c9;">
+
+        <!-- Accent line in the data colour, as on the landing page -->
+        <tr><td class="btn" style="height:4px; line-height:4px; font-size:0; background:#a85a00;">&nbsp;</td></tr>
+
+        <!-- Logo + wordmark -->
+        <tr>
+          <td class="pad" style="padding:32px 48px 0 48px;">
+            <table role="presentation" cellpadding="0" cellspacing="0">
+              <tr>
+                <td style="padding-right:12px;">
+                  <img src="https://formkurve.org/logo.png" width="36" height="36" alt="" style="width:36px; height:36px; border-radius:8px;">
+                </td>
+                <td class="data" style="font-family:'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size:12px; font-weight:500; letter-spacing:0.24em; text-transform:uppercase; color:#a85a00;">
+                  Formkurve
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- Headline -->
+        <tr>
+          <td class="pad" style="padding:36px 48px 0 48px;">
+            <h1 class="h1 ink" style="margin:0; font-family:'IBM Plex Sans Condensed', 'Helvetica Neue', Arial, sans-serif; font-size:40px; line-height:1.05; font-weight:600; letter-spacing:-0.02em; color:#141819;">
+              Ein Klick noch&nbsp;– dann bist du dabei.
+            </h1>
+          </td>
+        </tr>
+        <tr>
+          <td class="pad dim" style="padding:16px 48px 0 48px; font-family:'IBM Plex Sans Condensed', 'Helvetica Neue', Arial, sans-serif; font-size:17px; line-height:1.5; color:#4d5657;">
+            Du hast dich auf formkurve.org für die Warteliste eingetragen. Bestätige das kurz, erst dann
+            stehst du auf der Liste.
+          </td>
+        </tr>
+
+        <!-- Button -->
+        <tr>
+          <td class="pad" style="padding:28px 48px 0 48px;">
+            <table role="presentation" cellpadding="0" cellspacing="0">
+              <tr>
+                <td class="btn" bgcolor="#a85a00" style="background:#a85a00; border:1px solid #a85a00;">
+                  <a href="{{ doubleoptin }}" target="_blank" style="display:inline-block; padding:15px 28px; font-family:'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size:13px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:#fbfcfb; text-decoration:none;">
+                    Ja, eintragen&nbsp;&rarr;
+                  </a>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <tr>
+          <td class="pad dim" style="padding:14px 48px 0 48px; font-family:'IBM Plex Sans Condensed', 'Helvetica Neue', Arial, sans-serif; font-size:13px; line-height:1.5; color:#596263;">
+            Button geht nicht? <a href="{{ doubleoptin }}" target="_blank" class="data" style="color:#a85a00; text-decoration:underline;">Hier bestätigen</a>.
+          </td>
+        </tr>
+
+        <!-- What's coming: the example day from the landing page -->
+        <tr>
+          <td class="pad" style="padding:40px 48px 0 48px;">
+            <p class="data" style="margin:0 0 12px 0; font-family:'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size:11px; font-weight:500; letter-spacing:0.2em; text-transform:uppercase; color:#a85a00;">
+              Was dich erwartet
+            </p>
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="lift" style="background:#eeece6; border:1px solid #d5d2c9;">
+              <tr>
+                <td style="padding:16px 20px 4px 20px;">
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td class="dim" style="font-family:'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:#4d5657;">Heute · Beispiel</td>
+                      <td align="right" class="data" style="font-family:'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size:11px; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; color:#a85a00;">Qualitätstag</td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              <tr>
+                <td class="ink" style="padding:6px 20px 10px 20px; font-family:'IBM Plex Sans Condensed', 'Helvetica Neue', Arial, sans-serif; font-size:16px; color:#141819;">
+                  Du bist erholt – heute darf es hart sein.
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:0 20px;">
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td class="rule ink" width="52" style="padding:10px 0; border-top:1px solid #d5d2c9; font-family:'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size:16px; font-weight:600; color:#141819;">60′</td>
+                      <td class="rule" width="72" style="padding:10px 0; border-top:1px solid #d5d2c9;"><span class="ride" style="font-family:'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size:10px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:#a85a00; border:1px solid #a85a00; padding:2px 6px;">Rad</span></td>
+                      <td class="rule text" style="padding:10px 0; border-top:1px solid #d5d2c9; font-family:'IBM Plex Sans Condensed', 'Helvetica Neue', Arial, sans-serif; font-size:15px; color:#2a3032;">Sweetspot 3 × 12′</td>
+                    </tr>
+                    <tr>
+                      <td class="rule ink" style="padding:10px 0; border-top:1px solid #d5d2c9; font-family:'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size:16px; font-weight:600; color:#141819;">45′</td>
+                      <td class="rule" style="padding:10px 0; border-top:1px solid #d5d2c9;"><span class="run" style="font-family:'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size:10px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:#0d6f80; border:1px solid #0d6f80; padding:2px 6px;">Laufen</span></td>
+                      <td class="rule text" style="padding:10px 0; border-top:1px solid #d5d2c9; font-family:'IBM Plex Sans Condensed', 'Helvetica Neue', Arial, sans-serif; font-size:15px; color:#2a3032;">Schwelle 4 × 6′</td>
+                    </tr>
+                    <tr>
+                      <td class="rule ink" style="padding:10px 0; border-top:1px solid #d5d2c9; font-family:'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size:16px; font-weight:600; color:#141819;">30′</td>
+                      <td class="rule" style="padding:10px 0; border-top:1px solid #d5d2c9;"><span class="ride" style="font-family:'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size:10px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:#a85a00; border:1px solid #a85a00; padding:2px 6px;">Rad</span></td>
+                      <td class="rule text" style="padding:10px 0; border-top:1px solid #d5d2c9; font-family:'IBM Plex Sans Condensed', 'Helvetica Neue', Arial, sans-serif; font-size:15px; color:#2a3032;">Sweetspot 2 × 10′ · Kurzfassung</td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              <tr>
+                <td class="dim" style="padding:6px 20px 16px 20px; font-family:'IBM Plex Sans Condensed', 'Helvetica Neue', Arial, sans-serif; font-size:14px; font-style:italic; color:#4d5657;">
+                  Derselbe Reiz, egal welche du nimmst.
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <tr>
+          <td class="pad text" style="padding:24px 48px 0 48px; font-family:'IBM Plex Sans Condensed', 'Helvetica Neue', Arial, sans-serif; font-size:16px; line-height:1.55; color:#2a3032;">
+            Formkurve liest deine Einheiten und Erholungswerte aus intervals.icu und schlägt dir jeden
+            Morgen eine Einheit für jede deiner Sportarten vor – komplett oder als Kurzfassung.
+            Verpasst du einen Tag, verschiebt sich der Plan, statt zu brechen.
+          </td>
+        </tr>
+
+        <!-- Promise -->
+        <tr>
+          <td class="pad" style="padding:32px 48px 0 48px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td class="rule dim" style="padding-top:20px; border-top:1px solid #d5d2c9; font-family:'IBM Plex Sans Condensed', 'Helvetica Neue', Arial, sans-serif; font-size:14px; line-height:1.55; color:#4d5657;">
+                  <strong class="ink" style="color:#141819;">Eine Mail zum Start, sonst nichts.</strong>
+                  Wir schreiben dir einmal, sobald Formkurve für alle offen ist – mit Link zum Abmelden,
+                  falls du es dir anders überlegst.
+                </td>
+              </tr>
+              <tr>
+                <td class="dim" style="padding-top:12px; font-family:'IBM Plex Sans Condensed', 'Helvetica Neue', Arial, sans-serif; font-size:14px; line-height:1.55; color:#4d5657;">
+                  Du hast dich nicht eingetragen? Dann ignoriere diese Mail einfach. Ohne deinen Klick
+                  speichern wir nichts.
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+          <td class="pad dim" style="padding:36px 48px 36px 48px; font-family:'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size:11px; line-height:1.7; letter-spacing:0.04em; color:#596263;">
+            Formkurve · Christian Müller<br>
+            <a href="https://formkurve.org" class="dim" style="color:#596263; text-decoration:underline;">formkurve.org</a>
+            &nbsp;·&nbsp;
+            <a href="https://formkurve.org/impressum" class="dim" style="color:#596263; text-decoration:underline;">Impressum</a>
+            &nbsp;·&nbsp;
+            <a href="https://formkurve.org/datenschutz" class="dim" style="color:#596263; text-decoration:underline;">Datenschutz</a>
+          </td>
+        </tr>
+
+      </table>
+
+    </td>
+  </tr>
+</table>
+
+</body>
+</html>
