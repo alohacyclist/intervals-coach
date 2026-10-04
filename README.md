@@ -281,6 +281,9 @@ npx wrangler secret put BREVO_LIST_ID           # Zahl, Kontakte → Listen
 npx wrangler secret put BREVO_DOI_TEMPLATE_ID   # Zahl, Vorlage mit Double-Opt-In-Link
 ```
 
+Alternativ als gleichnamige Secrets im GitHub-Repository: der Deploy-Workflow gibt gesetzte
+`BREVO_*`-Secrets mit jedem Deployment an den Worker weiter.
+
 Die Bilder der Landingpage (`public/landing/`) sind aus synthetischen Daten erzeugt, nie aus
 einem echten Konto.
 
