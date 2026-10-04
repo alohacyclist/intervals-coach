@@ -11,6 +11,7 @@ import { describeBlocks, describeWorkout, toHumanSteps } from './format.ts'
 import { defaultThreshold, thresholdFor } from './thresholds.ts'
 import { profileOf } from './profile.ts'
 import { MIN_SAVING_MINUTES, shorten, totalSeconds } from './variant.ts'
+import { goalForSport } from './phase.ts'
 
 const SHORT_NOTE =
   'Gekürzte Fassung: gleiche Intervalllänge, gleiche Zielwerte, weniger Volumen. Der Reiz bleibt, die Zeit nicht.'
@@ -87,11 +88,32 @@ const buildVariants = (
   })
 }
 
+/** Where a note names the athlete's own goal: the FTP they are working towards. */
+const FTP_GOAL = '{ftp-ziel}'
+
+/**
+ * A note in the athlete's terms. "Brot-und-Butter für FTP 300" is right for the
+ * athlete aiming at 300 W and wrong for everyone else, so the library leaves
+ * the goal open and it is filled here — with the threshold itself where no
+ * watt goal is set.
+ */
+export const personalNote = (note: string, config: CoachConfig, date: string): string => {
+  if (!note.includes(FTP_GOAL)) return note
+  const goal = goalForSport(
+    config.goals.filter((entry) => entry.kind === 'ftp'),
+    'Ride',
+    date,
+  )
+  return note.replaceAll(FTP_GOAL, goal ? `FTP ${Math.round(goal.targetValue)}` : 'die Schwelle')
+}
+
 export const buildSession = (
-  template: WorkoutTemplate,
+  generic: WorkoutTemplate,
   config: CoachConfig,
   reason: string,
+  date: string,
 ): PlannedSession => {
+  const template = { ...generic, coachNote: personalNote(generic.coachNote, config, date) }
   const threshold = thresholdFor(config.profile, template.sport) ?? defaultThreshold(template.sport)
   return {
     sport: template.sport,

@@ -100,7 +100,7 @@ const BIKE: readonly WorkoutTemplate[] = [
     minutes: 74,
     load: 88,
     phases: ['BASE', 'BUILD', 'SPECIFIC'],
-    coachNote: 'Brot-und-Butter für FTP 300. Zielbereich exakt halten, nicht überziehen.',
+    coachNote: 'Brot-und-Butter für {ftp-ziel}. Zielbereich exakt halten, nicht überziehen.',
     blocks: [
       warmupBike('15m'),
       repeat(3, [step('12m', '97-102%', { cadence: '85-95rpm' }), step('5m', '50%')]),
