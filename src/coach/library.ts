@@ -185,7 +185,7 @@ const BIKE: readonly WorkoutTemplate[] = [
     minutes: 49,
     load: 62,
     phases: ['BASE', 'BUILD', 'SPECIFIC', 'TAPER'],
-    coachNote: 'Wenn nur 50 Minuten drin sind: kürzer, dafür einen Tick über FTP.',
+    coachNote: 'Der Einstieg in die Schwelle: drei kurze Blöcke an der FTP. Sauber durchgezogen, gibt sie 3x12 frei.',
     blocks: [
       warmupBike('10m'),
       repeat(3, [step('8m', '98-103%'), step('3m', '50%')]),
