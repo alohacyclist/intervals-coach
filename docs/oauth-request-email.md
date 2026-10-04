@@ -81,7 +81,9 @@ https://formkurve.org/datenschutz
     grant this, I'll point athletes to your settings page instead and ask for
     `SETTINGS:READ` only.
 
-No write access to activities or wellness, and the app never deletes anything.
+No write access to activities or wellness, and the app never deletes training data. Its only
+DELETE is `/api/v1/disconnect-app`, called when an athlete deletes their Formkurve account, as
+your guide asks.
 
 **Scale and business model**
 It starts as a free beta: my training partners first, then an open beta announced in the
