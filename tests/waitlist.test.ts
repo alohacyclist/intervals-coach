@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { app } from '../worker/index.ts'
 import type { Bindings, KVNamespace } from '../worker/bindings.ts'
+import { humanError } from '../src/ui/error-message.ts'
 import { MAX_SIGNUPS, brevoConfig, isEmail, requestDoubleOptIn } from '../worker/waitlist.ts'
 
 const fakeKv = (): KVNamespace => {
@@ -55,9 +56,13 @@ describe('the confirmation request', () => {
     expect(await requestDoubleOptIn(config, 'a@b.de', send as unknown as typeof fetch)).toBe('sent')
   })
 
-  it('reports any other refusal as a failure', async () => {
-    const send = async () => new Response(JSON.stringify({ code: 'unauthorized' }), { status: 401 })
+  it('reports any other refusal as a failure and logs why, without the address', async () => {
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const send = async () =>
+      new Response(JSON.stringify({ code: 'unauthorized', message: 'unrecognised IP address' }), { status: 401 })
     expect(await requestDoubleOptIn(config, 'a@b.de', send as unknown as typeof fetch)).toBe('failed')
+    expect(log.mock.calls[0]).toEqual(['Brevo refused the double opt-in', 401, 'unauthorized', 'unrecognised IP address'])
+    expect(JSON.stringify(log.mock.calls)).not.toContain('a@b.de')
   })
 })
 
@@ -76,6 +81,15 @@ describe('the waitlist route', () => {
     expect(ids('7', '3')).toMatchObject({ listId: 7, templateId: 3 })
     expect(ids('#', '3')).toBeNull()
     expect(ids('', '3')).toBeNull()
+  })
+
+  it('says in its own words that the sign-up failed, not that intervals.icu is down', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('{}', { status: 401 }))
+    const response = await signUp(env(), { email: 'a@b.de' })
+    expect(response.status).toBe(502)
+    const body = (await response.json()) as { error: string; forAthlete: boolean }
+    expect(humanError(response.status, body.error, body.forAthlete)).toContain('Eintragen')
   })
 
   it('says so while Brevo is not set up', async () => {

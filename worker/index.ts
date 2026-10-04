@@ -297,7 +297,7 @@ app.get('/api/me', async (context) => {
 app.post('/api/waitlist', async (context) => {
   const env = context.env as Bindings
   const config = brevoConfig(env, new URL(context.req.url).origin)
-  if (!config) return context.json({ error: 'Die Warteliste ist noch nicht eingerichtet.' }, 503)
+  if (!config) return context.json({ error: 'Die Warteliste ist noch nicht eingerichtet.', forAthlete: true }, 503)
 
   const body = (await context.req.json().catch(() => ({}))) as { email?: unknown; website?: unknown }
   if (typeof body.website === 'string' && body.website.length > 0) return context.json({ ok: true })
@@ -310,7 +310,7 @@ app.post('/api/waitlist', async (context) => {
   }
   return (await requestDoubleOptIn(config, email)) === 'sent'
     ? context.json({ ok: true })
-    : context.json({ error: 'Das Eintragen hat nicht geklappt. Bitte später noch einmal versuchen.' }, 502)
+    : context.json({ error: 'Das Eintragen hat gerade nicht geklappt. Bitte versuch es später noch einmal.', forAthlete: true }, 502)
 })
 
 // ------------------------------------------------------------- access control
