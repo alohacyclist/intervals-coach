@@ -78,7 +78,7 @@ export const DestinationBar = ({ config, destinations, onSaved }: Props) => {
                 </button>
               ))}
               {chosen.length === 0 && (
-                <span className="destinations__meta">nur der intervals.icu-Kalender</span>
+                <span className="destinations__meta">nur der Kalender</span>
               )}
             </div>
           </div>
