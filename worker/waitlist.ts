@@ -56,11 +56,17 @@ export const requestDoubleOptIn = async (
       templateId: config.templateId,
       redirectionUrl: config.redirectionUrl,
     }),
-  }).catch(() => null)
+  }).catch((error: unknown) => {
+    console.error('Brevo not reachable', error)
+    return null
+  })
   if (!response) return 'failed'
   if (response.ok) return 'sent'
-  const body = (await response.json().catch(() => ({}))) as { code?: unknown }
-  return body.code === 'duplicate_parameter' ? 'sent' : 'failed'
+  const body = (await response.json().catch(() => ({}))) as { code?: unknown; message?: unknown }
+  if (body.code === 'duplicate_parameter') return 'sent'
+  // Brevo's reason, without the address: an unknown IP, a template without the optin tag, …
+  console.error('Brevo refused the double opt-in', response.status, body.code, body.message)
+  return 'failed'
 }
 
 /** Enough for someone who mistyped twice, too few to use the form to mail strangers. */
