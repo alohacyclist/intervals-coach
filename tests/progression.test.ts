@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { completionsFrom, levelCeilings, levelFor, scheduledFrom } from '../src/coach/progression.ts'
+import { completionsFrom, levelCeilings, levelFor, scheduledFrom, toJudge, withHeld } from '../src/coach/progression.ts'
 import type { Completion } from '../src/coach/progression.ts'
 import { LIBRARY } from '../src/coach/library.ts'
 import { activity, plannedEvent } from './fixtures.ts'
@@ -107,5 +107,49 @@ describe('what is already on the calendar', () => {
       { date: '2026-09-02', templateId: 'bike-thr-short-3x8', minutes: 30 },
       { date: '2026-09-02', templateId: 'bike-thr-short-3x8', minutes: 49 },
     ])
+  })
+})
+
+describe('the intervals decide the level', () => {
+  const session = (overrides: Partial<Completion> = {}): Completion => ({
+    templateId: 'bike-thr-short-3x8',
+    date: '2026-09-20',
+    compliance: 60,
+    activityId: 'a',
+    variant: 'full',
+    evidence: 'calendar',
+    ...overrides,
+  })
+
+  it('opens the next level when every interval was held, whatever the compliance', () => {
+    // Too hard, or a long ride home after it, drags the compliance down; the intervals were done.
+    expect(levelFor('bike-threshold', [session({ held: true })])).toBe(2)
+  })
+
+  it('holds the level when an interval was missed, even with a good compliance', () => {
+    expect(levelFor('bike-threshold', [session({ compliance: 90, held: false })])).toBe(1)
+  })
+
+  it('counts a shortened version that still had every interval', () => {
+    expect(levelFor('bike-threshold', [session({ variant: 'short', held: true })])).toBe(2)
+  })
+
+  it('falls back to the compliance where the intervals could not be read', () => {
+    expect(levelFor('bike-threshold', [session({ compliance: 80 })])).toBe(2)
+    expect(levelFor('bike-threshold', [session({ compliance: 80, held: null })])).toBe(2)
+  })
+
+  it('reads only the newest two sessions of a level, and nothing merely similar', () => {
+    const many = ['2026-09-01', '2026-09-08', '2026-09-15'].map((date, index) =>
+      session({ date, activityId: `a${index}` }),
+    )
+    const similar = session({ date: '2026-09-22', activityId: 's', evidence: 'similar' })
+    const unranked = session({ templateId: 'bike-sst-3x12', activityId: 'u' })
+    expect(toJudge([...many, similar, unranked]).map((entry) => entry.activityId)).toEqual(['a2', 'a1'])
+  })
+
+  it('lays the verdicts onto the sessions they were read for', () => {
+    const judged = withHeld([session({ activityId: 'a' }), session({ activityId: 'b' })], new Map([['a', true]]))
+    expect(judged.map((entry) => entry.held)).toEqual([true, undefined])
   })
 })

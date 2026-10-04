@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { alignIntervals, compareExecution, plannedBlocks } from '../src/coach/execution.ts'
+import { alignIntervals, compareExecution, heldEveryInterval, plannedBlocks } from '../src/coach/execution.ts'
 import type { ActualInterval } from '../src/coach/execution.ts'
 import { findTemplate } from '../src/coach/library.ts'
 import { totalSeconds } from '../src/coach/variant.ts'
@@ -343,5 +343,26 @@ describe('where each interval lay in the activity', () => {
   it('knows no span for an interval that was not done or not placed', () => {
     const result = compare([work(720, 290)])
     expect(result.steps.every((step) => step.span === null && step.heartRate === null)).toBe(true)
+  })
+})
+
+describe('holding every interval, for the next level', () => {
+  const rounds = (watts: readonly number[], seconds = 720) =>
+    [easy(1080), ...watts.flatMap((value) => [work(seconds, value), easy(300)])]
+
+  it('counts intervals in and over their band alike', () => {
+    expect(heldEveryInterval(compare(rounds([280, 280, 280])))).toBe(true)
+    // 3x12 at 110 % instead of 97–102 %: too hard is the threshold's business, not the level's.
+    expect(heldEveryInterval(compare(rounds([308, 308, 308])))).toBe(true)
+  })
+
+  it('does not count one interval under its band, cut short, or missing', () => {
+    expect(heldEveryInterval(compare(rounds([280, 280, 255])))).toBe(false)
+    expect(heldEveryInterval(compare(uneven))).toBe(false)
+    expect(heldEveryInterval(compare(rounds([280, 280])))).toBe(false)
+  })
+
+  it('leaves the decision to the coarser rule without power', () => {
+    expect(heldEveryInterval(compare(rounds([0, 0, 0]).map((step) => ({ ...step, averageWatts: null }))))).toBeNull()
   })
 })
