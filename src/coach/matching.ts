@@ -1,6 +1,6 @@
 import type { Activity, AthleteProfile, DayProposal, Stimulus, WorkoutTemplate } from './types.ts'
 import type { Completion } from './progression.ts'
-import { findTemplate, flattenBlocks, intensityClass } from './library.ts'
+import { LIBRARY, findTemplate, flattenBlocks, intensityClass } from './library.ts'
 import { deliveredStimuli, inferStimulus } from './fitness.ts'
 import { defaultThreshold, thresholdFor } from './thresholds.ts'
 import { estimateSeconds } from './variant.ts'
@@ -88,6 +88,21 @@ const fit = (
   return hardWanted === isHard(activity) ? { template, evidence: 'similar', share } : null
 }
 
+/**
+ * The next rung of the families on offer — what an athlete may ride instead of
+ * the one offered. Only the next: time in zone cannot tell a 3x12 from a 2x20,
+ * the intervals can, and they are read afterwards.
+ */
+const higherLevelsOf = (offered: readonly WorkoutTemplate[]): readonly WorkoutTemplate[] =>
+  LIBRARY.filter((candidate) =>
+    offered.some(
+      (template) =>
+        template.family !== undefined &&
+        candidate.family === template.family &&
+        (candidate.level ?? 1) === (template.level ?? 1) + 1,
+    ),
+  )
+
 const RANK = { exact: 0, similar: 1 } as const
 
 const best = (candidates: readonly Candidate[]): Candidate | null =>
@@ -113,11 +128,14 @@ export const matchedCompletions = (
     const templates = (proposal?.templateIds ?? [])
       .map(findTemplate)
       .filter((template): template is WorkoutTemplate => template !== undefined)
-    const match = best(
-      templates
-        .map((template) => fit(template, activity, profile))
-        .filter((candidate): candidate is Candidate => candidate !== null),
-    )
+    const fitting = (list: readonly WorkoutTemplate[]) =>
+      best(
+        list
+          .map((template) => fit(template, activity, profile))
+          .filter((candidate): candidate is Candidate => candidate !== null),
+      )
+    // Only when nothing offered fits: a full 3x12 is too long to pass for the 3x8 of its day.
+    const match = fitting(templates) ?? fitting(higherLevelsOf(templates))
     return match
       ? [
           {

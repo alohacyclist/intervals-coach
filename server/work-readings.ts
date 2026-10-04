@@ -1,7 +1,17 @@
 import type { IntervalsAuth } from './intervals.ts'
 import { fetchIntervals } from './intervals.ts'
-import type { Completion } from '../src/coach/progression.ts'
-import type { Activity, AthleteProfile, CoachConfig, Execution, Sport, ThresholdSuggestion } from '../src/coach/types.ts'
+import type { Completion, IntervalVerdict } from '../src/coach/progression.ts'
+import { judgeIntervals } from '../src/coach/progression.ts'
+import type {
+  Activity,
+  AthleteProfile,
+  CoachConfig,
+  Execution,
+  Sport,
+  ThresholdSuggestion,
+  WorkoutTemplate,
+} from '../src/coach/types.ts'
+import type { ActualInterval } from '../src/coach/execution.ts'
 import { compareExecution, comparesBlocks, heldEveryInterval, plannedBlocks } from '../src/coach/execution.ts'
 import type { WorkReading } from '../src/coach/efficiency.ts'
 import { workReading } from '../src/coach/efficiency.ts'
@@ -19,19 +29,16 @@ const EXECUTION_DRIFT_DAYS = 28
  * fulfilled. One call to intervals.icu — the intervals only, no streams: the
  * drawing is for the card, the reading needs none of it.
  */
-const readExecution = async (
-  auth: IntervalsAuth,
+const executionAgainst = (
+  template: WorkoutTemplate,
   profile: AthleteProfile,
-  completion: Completion,
+  activityId: string,
+  intervals: readonly ActualInterval[],
   activity: Activity | undefined,
-): Promise<Execution | null> => {
-  const template = findTemplate(completion.templateId)
-  if (!template || template.occasion !== undefined) return null
+): Execution => {
   const threshold = thresholdFor(profile, template.sport) ?? defaultThreshold(template.sport)
-  const intervals = await fetchIntervals(auth, completion.activityId).catch(() => null)
-  if (!intervals) return null
   return compareExecution({
-    activityId: completion.activityId,
+    activityId,
     sport: template.sport,
     template,
     // A shortened version keeps its intervals and loses repetitions; pairing by order handles the rest.
@@ -43,6 +50,19 @@ const readExecution = async (
     compliance: activity?.compliance ?? null,
     trace: null,
   })
+}
+
+const readExecution = async (
+  auth: IntervalsAuth,
+  profile: AthleteProfile,
+  completion: Completion,
+  activity: Activity | undefined,
+): Promise<Execution | null> => {
+  const template = findTemplate(completion.templateId)
+  if (!template || template.occasion !== undefined) return null
+  const intervals = await fetchIntervals(auth, completion.activityId).catch(() => null)
+  if (!intervals) return null
+  return executionAgainst(template, profile, completion.activityId, intervals, activity)
 }
 
 /** The work intervals of one recognised session, reduced to how far they sat from their targets. */
@@ -57,23 +77,31 @@ export const readWork = async (
 }
 
 /**
- * Whether each session held every interval, by activity id, for the levels. The
- * ones that could not be read are left out and keep the coarser rule.
+ * Whether each session held every interval, by activity id, for the levels, and
+ * the highest rung of its family it held. One call to intervals.icu per session;
+ * the rungs above are judged on the same intervals. The ones that could not be
+ * read are left out and keep the coarser rule.
  */
 export const readHeld = async (
   auth: IntervalsAuth,
   profile: AthleteProfile,
   completions: readonly Completion[],
   activities: readonly Activity[],
-): Promise<ReadonlyMap<string, boolean>> => {
+): Promise<ReadonlyMap<string, IntervalVerdict>> => {
   const read = await Promise.all(
     completions.map(async (completion) => {
+      const template = findTemplate(completion.templateId)
+      if (!template || template.occasion !== undefined) return [completion.activityId, null] as const
+      const intervals = await fetchIntervals(auth, completion.activityId).catch(() => null)
+      if (!intervals) return [completion.activityId, null] as const
       const activity = activities.find((entry) => entry.id === completion.activityId)
-      const execution = await readExecution(auth, profile, completion, activity).catch(() => null)
-      return [completion.activityId, execution ? heldEveryInterval(execution) : null] as const
+      const verdict = judgeIntervals(template, (candidate) =>
+        heldEveryInterval(executionAgainst(candidate, profile, completion.activityId, intervals, activity)),
+      )
+      return [completion.activityId, verdict] as const
     }),
   )
-  return new Map(read.filter((entry): entry is readonly [string, boolean] => entry[1] !== null))
+  return new Map(read.filter((entry): entry is readonly [string, IntervalVerdict] => entry[1] !== null))
 }
 
 /** Readings for several sessions at once, by activity id; the ones that could not be read are left out. */

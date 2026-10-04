@@ -31,6 +31,7 @@ import { weekOutlook } from '../src/coach/week.ts'
 import { seasonBand } from '../src/coach/phase.ts'
 import { buildHistory } from '../src/coach/adherence.ts'
 import { completionsFrom, scheduledFrom, toJudge, withHeld } from '../src/coach/progression.ts'
+import type { IntervalVerdict } from '../src/coach/progression.ts'
 import { benchmarkCompletions, benchmarkStatus, compareBenchmarks } from '../src/coach/benchmark.ts'
 import type { WorkReading } from '../src/coach/efficiency.ts'
 import { workReading } from '../src/coach/efficiency.ts'
@@ -207,7 +208,7 @@ const buildProgressView = async (deps: RouteDeps, span: ProgressSpan): Promise<P
   )
   // The ladder judges the intervals, as the plan does.
   const held = await readHeld(deps.auth, config.profile, toJudge(recognised), activities).catch(
-    () => new Map<string, boolean>(),
+    () => new Map<string, IntervalVerdict>(),
   )
   const completions = withHeld(recognised, held)
   // The last two reference sessions per sport, read over their work intervals.
@@ -259,7 +260,7 @@ const buildPlan = async (deps: RouteDeps, days: number, intent?: Intent): Promis
     config.profile,
     toJudge(mergeCompletions(calendar, matchedCompletions(config.proposals, activities, config.profile))),
     activities,
-  ).catch(() => new Map<string, boolean>())
+  ).catch(() => new Map<string, IntervalVerdict>())
   const recognised = (proposals: readonly DayProposal[]) =>
     withHeld(mergeCompletions(calendar, matchedCompletions(proposals, activities, config.profile)), held)
 

@@ -1,4 +1,4 @@
-import type { Activity, PlannedEvent, ScheduledWorkout } from './types.ts'
+import type { Activity, PlannedEvent, ScheduledWorkout, WorkoutTemplate } from './types.ts'
 import { LIBRARY, findTemplate } from './library.ts'
 
 /** Without readable intervals: below this the session was not executed closely enough to earn the next level. */
@@ -142,14 +142,42 @@ export const toJudge = (completions: readonly Completion[]): readonly Completion
   })
 }
 
+/** What the intervals of one session showed: whether they held, and as which session of the family. */
+export type IntervalVerdict = { readonly held: boolean; readonly templateId: string }
+
+/**
+ * Judges a session by its intervals, and keeps climbing its family while they
+ * hold: a 3x12 ridden on a day that offered the 3x8 counts as the 3x12. Each rung
+ * has to hold in turn, so a level is never skipped. Null when the intervals
+ * could not be read at all.
+ */
+export const judgeIntervals = (
+  template: WorkoutTemplate,
+  holds: (candidate: WorkoutTemplate) => boolean | null,
+): IntervalVerdict | null => {
+  const own = holds(template)
+  if (own === null) return null
+  if (!own || template.family === undefined) return { held: own, templateId: template.id }
+  const higher = LIBRARY.filter(
+    (candidate) => candidate.family === template.family && (candidate.level ?? 1) > (template.level ?? 1),
+  ).sort((left, right) => (left.level ?? 1) - (right.level ?? 1))
+  let reached = template
+  for (const candidate of higher) {
+    if (holds(candidate) !== true) break
+    reached = candidate
+  }
+  return { held: true, templateId: reached.id }
+}
+
 /** The interval verdicts, by activity id, laid onto the sessions they belong to. */
 export const withHeld = (
   completions: readonly Completion[],
-  held: ReadonlyMap<string, boolean>,
+  verdicts: ReadonlyMap<string, IntervalVerdict>,
 ): readonly Completion[] =>
-  completions.map((completion) =>
-    held.has(completion.activityId) ? { ...completion, held: held.get(completion.activityId) } : completion,
-  )
+  completions.map((completion) => {
+    const verdict = verdicts.get(completion.activityId)
+    return verdict ? { ...completion, held: verdict.held, templateId: verdict.templateId } : completion
+  })
 
 /** Level ceilings per family, so the engine can filter candidates in one pass. */
 export const levelCeilings = (completions: readonly Completion[]): Readonly<Record<string, number>> => {

@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { completionsFrom, levelCeilings, levelFor, scheduledFrom, toJudge, withHeld } from '../src/coach/progression.ts'
+import { completionsFrom, judgeIntervals, levelCeilings, levelFor, scheduledFrom, toJudge, withHeld } from '../src/coach/progression.ts'
+import { findTemplate } from '../src/coach/library.ts'
+import type { WorkoutTemplate } from '../src/coach/types.ts'
 import type { Completion } from '../src/coach/progression.ts'
 import { LIBRARY } from '../src/coach/library.ts'
 import { activity, plannedEvent } from './fixtures.ts'
@@ -155,7 +157,29 @@ describe('the intervals decide the level', () => {
   })
 
   it('lays the verdicts onto the sessions they were read for', () => {
-    const judged = withHeld([session({ activityId: 'a' }), session({ activityId: 'b' })], new Map([['a', true]]))
-    expect(judged.map((entry) => entry.held)).toEqual([true, undefined])
+    const judged = withHeld(
+      [session({ activityId: 'a' }), session({ activityId: 'b' })],
+      new Map([['a', { held: true, templateId: 'bike-thr-3x12' }]]),
+    )
+    expect(judged.map((entry) => [entry.held, entry.templateId])).toEqual([
+      [true, 'bike-thr-3x12'],
+      [undefined, 'bike-thr-short-3x8'],
+    ])
+  })
+
+  it('credits the highest rung whose intervals held, one rung after the other', () => {
+    const template = findTemplate('bike-thr-short-3x8') as WorkoutTemplate
+    const holding = (ids: readonly string[]) => (candidate: WorkoutTemplate) => ids.includes(candidate.id)
+    // A 3x12 ridden on a 3x8 day.
+    expect(judgeIntervals(template, holding(['bike-thr-short-3x8', 'bike-thr-3x12']))).toEqual({
+      held: true,
+      templateId: 'bike-thr-3x12',
+    })
+    // 2x20 holding without 3x12 would skip a rung; it stops at the first one that does not hold.
+    expect(judgeIntervals(template, holding(['bike-thr-short-3x8', 'bike-thr-2x20']))?.templateId).toBe(
+      'bike-thr-short-3x8',
+    )
+    expect(judgeIntervals(template, holding([]))).toEqual({ held: false, templateId: 'bike-thr-short-3x8' })
+    expect(judgeIntervals(template, () => null)).toBeNull()
   })
 })
