@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { app } from '../worker/index.ts'
 import type { Bindings, KVNamespace } from '../worker/bindings.ts'
-import { MAX_SIGNUPS, isEmail, requestDoubleOptIn } from '../worker/waitlist.ts'
+import { MAX_SIGNUPS, brevoConfig, isEmail, requestDoubleOptIn } from '../worker/waitlist.ts'
 
 const fakeKv = (): KVNamespace => {
   const store = new Map<string, string>()
@@ -67,6 +67,15 @@ describe('the waitlist route', () => {
     const response = await signUp(env(), { email: ' laeufer@example.de ' })
     expect(response.status).toBe(200)
     expect(JSON.parse(String(brevo.mock.calls[0]?.[1]?.body)).email).toBe('laeufer@example.de')
+  })
+
+  it('takes the ids as Brevo shows them, with or without the hash', () => {
+    const ids = (list: string, template: string) =>
+      brevoConfig({ ...env(), BREVO_LIST_ID: list, BREVO_DOI_TEMPLATE_ID: template }, 'https://formkurve.test')
+    expect(ids('#7', ' #3 ')).toMatchObject({ listId: 7, templateId: 3 })
+    expect(ids('7', '3')).toMatchObject({ listId: 7, templateId: 3 })
+    expect(ids('#', '3')).toBeNull()
+    expect(ids('', '3')).toBeNull()
   })
 
   it('says so while Brevo is not set up', async () => {

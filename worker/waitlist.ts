@@ -19,9 +19,12 @@ export type BrevoConfig = {
 /** Where a confirmed address is sent back to; the page thanks them. */
 export const CONFIRMED_PATH = '/warteliste/bestaetigt'
 
+/** Brevo shows its ids as "#7"; taken as copied from there or as the bare number. */
+const brevoId = (value: string | undefined): number => Number(value?.trim().replace(/^#/, '') || Number.NaN)
+
 export const brevoConfig = (env: Bindings, origin: string): BrevoConfig | null => {
-  const listId = Number(env.BREVO_LIST_ID)
-  const templateId = Number(env.BREVO_DOI_TEMPLATE_ID)
+  const listId = brevoId(env.BREVO_LIST_ID)
+  const templateId = brevoId(env.BREVO_DOI_TEMPLATE_ID)
   if (!env.BREVO_API_KEY || !Number.isInteger(listId) || listId <= 0 || !Number.isInteger(templateId) || templateId <= 0) {
     return null
   }
