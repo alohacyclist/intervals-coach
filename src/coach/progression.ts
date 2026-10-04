@@ -125,15 +125,15 @@ export const levelFor = (family: string, completions: readonly Completion[]): nu
 
 /**
  * The sessions worth reading interval by interval for the levels: the newest few
- * of every family and level. "Similar" only matched the hardness, not this
- * template's intervals, so there is nothing to hold them against.
+ * of every family and level. "Similar" ones too — they only matched the hardness,
+ * and held against the template's intervals they either prove the session or not.
  */
 export const toJudge = (completions: readonly Completion[]): readonly Completion[] => {
   const newestFirst = [...completions].sort((left, right) => right.date.localeCompare(left.date))
   const taken = new Map<string, number>()
   return newestFirst.filter((completion) => {
     const template = LIBRARY.find((entry) => entry.id === completion.templateId)
-    if (template?.family === undefined || completion.evidence === 'similar') return false
+    if (template?.family === undefined) return false
     const key = `${template.family}:${template.level ?? 1}`
     const count = taken.get(key) ?? 0
     if (count >= READS_PER_LEVEL) return false
