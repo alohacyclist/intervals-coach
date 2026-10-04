@@ -173,7 +173,7 @@ export const SessionCard = ({
             ? 'Sende…'
             : destinations.length > 0
               ? `→ Kalender + ${destinations.join(', ')}`
-              : '→ intervals.icu Kalender'}
+              : '→ Kalender'}
         </button>
       )}
       {push.status === 'error' && <p className="error" role="alert">{push.message}</p>}
