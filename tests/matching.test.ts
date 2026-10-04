@@ -42,6 +42,21 @@ describe('recognising a proposal without the calendar', () => {
     ])
   })
 
+  it('credits a full 3x12 ridden on a 3x8 day as the 3x12', () => {
+    const ride = thresholdRide(2, { load: 88, movingTimeSec: 76 * 60, zoneSeconds: { Z1: 1200, Z2: 1200, Z4: 36 * 60 } })
+    const [match] = matchedCompletions([proposal(2, ['bike-thr-short-3x8'])], [ride], config.profile)
+    expect(match).toMatchObject({ templateId: 'bike-thr-3x12', evidence: 'exact', variant: 'full' })
+  })
+
+  it('keeps a 3x8 with a longer cool-down as the 3x8 it was', () => {
+    const [match] = matchedCompletions(
+      [proposal(2, ['bike-thr-short-3x8'])],
+      [thresholdRide(2, { movingTimeSec: 60 * 60 })],
+      config.profile,
+    )
+    expect(match?.templateId).toBe('bike-thr-short-3x8')
+  })
+
   it('files a clearly shorter session as the short version', () => {
     const [match] = matchedCompletions(
       [proposal(2, ['bike-thr-short-3x8'])],
