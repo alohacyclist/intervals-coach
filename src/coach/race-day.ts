@@ -94,7 +94,7 @@ export const raceSession = (
   const estimate = estimateRace(race, state.raceHistory, config.zrlRaces)
   const reason = `${raceLabel(race)} · geschätzt ${estimate.minutes} min mit Aufwärmen, ${estimate.load} TSS${dayType === 'KEY' ? '' : ' · freiwillig'}`
   return {
-    ...buildSession(raceTemplate(race, estimate), config, reason),
+    ...buildSession(raceTemplate(race, estimate), config, reason, race.date),
     race: raceDetails(race, estimate),
   }
 }

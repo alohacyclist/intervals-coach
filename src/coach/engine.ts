@@ -729,7 +729,7 @@ export const planDays = (
           : null
         if (test) {
           const template = findTemplate(test.templateId)
-          if (template) return buildSession(template, config, test.reason)
+          if (template) return buildSession(template, config, test.reason, date)
         }
         // Setting the numbers comes first; comparing against the last time comes after.
         const reference = testable
@@ -737,9 +737,9 @@ export const planDays = (
           : null
         if (reference) {
           const template = findTemplate(reference.templateId)
-          if (template) return buildSession(template, config, reference.reason)
+          if (template) return buildSession(template, config, reference.reason, date)
         }
-        if (openers && sport === 'Ride') return buildSession(openers, config, decision.reason)
+        if (openers && sport === 'Ride') return buildSession(openers, config, decision.reason, date)
         const goalKind = goalForSport(config.goals, sport, date)?.kind
         const candidates = candidatesFor(
           sport,
@@ -757,7 +757,7 @@ export const planDays = (
             scoreTemplate(left, simulation, view, sportPhase, budgetMinutes, returning, goalKind),
         )[0]
         if (!best) return null
-        return buildSession(best, config, reasonFor(best, dayType, sportPhase, simulation, ceilings))
+        return buildSession(best, config, reasonFor(best, dayType, sportPhase, simulation, ceilings), date)
       }).filter((session): session is PlannedSession => session !== null)
       const options = withRace(
         regular,
