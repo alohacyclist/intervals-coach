@@ -437,6 +437,12 @@ describe('levels in the plan', () => {
     const [today] = planDays(stateFrom(rested), config, 1, measured)
     expect(today?.options.some((option) => option.reason.includes('Stufe'))).toBe(true)
   })
+
+  it('says on the top offered level what opens the next one', () => {
+    const [today] = planDays(stateFrom(rested), config, 1, measured)
+    const first = today?.options.find((option) => option.template.level === 1 && option.template.family !== undefined)
+    expect(first?.reason).toContain(`Stufe 2 kommt, sobald jedes Intervall voll und mindestens im Zielbereich gefahren ist`)
+  })
 })
 
 describe('strength progression', () => {

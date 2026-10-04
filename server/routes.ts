@@ -30,11 +30,11 @@ import { assessGoals } from '../src/coach/feasibility.ts'
 import { weekOutlook } from '../src/coach/week.ts'
 import { seasonBand } from '../src/coach/phase.ts'
 import { buildHistory } from '../src/coach/adherence.ts'
-import { completionsFrom, scheduledFrom } from '../src/coach/progression.ts'
+import { completionsFrom, scheduledFrom, toJudge, withHeld } from '../src/coach/progression.ts'
 import { benchmarkCompletions, benchmarkStatus, compareBenchmarks } from '../src/coach/benchmark.ts'
 import type { WorkReading } from '../src/coach/efficiency.ts'
 import { workReading } from '../src/coach/efficiency.ts'
-import { executionSuggestions, readWork, readWorkMany } from './work-readings.ts'
+import { executionSuggestions, readHeld, readWork, readWorkMany } from './work-readings.ts'
 import {
   buildProgress,
   DEFAULT_PROGRESS_SPAN,
@@ -201,10 +201,15 @@ const buildProgressView = async (deps: RouteDeps, span: ProgressSpan): Promise<P
     fetchActivities(deps.auth, addDays(today, -Math.max(ACTIVITY_HISTORY_DAYS, span + FITNESS_WARMUP_DAYS)), today),
     fetchEvents(deps.auth, addDays(today, -PROGRESSION_DAYS), today),
   ])
-  const completions = mergeCompletions(
+  const recognised = mergeCompletions(
     completionsFrom(events, activities),
     matchedCompletions(config.proposals, activities, config.profile),
   )
+  // The ladder judges the intervals, as the plan does.
+  const held = await readHeld(deps.auth, config.profile, toJudge(recognised), activities).catch(
+    () => new Map<string, boolean>(),
+  )
+  const completions = withHeld(recognised, held)
   // The last two reference sessions per sport, read over their work intervals.
   const references = config.profile.sports.flatMap((setting) =>
     benchmarkCompletions(setting.sport, completions).slice(-2),
@@ -248,8 +253,15 @@ const buildPlan = async (deps: RouteDeps, days: number, intent?: Intent): Promis
   const raceActivities = [...olderRaces, ...activities]
   const state = buildState(activities, wellness, today, raceActivities)
   const calendar = completionsFrom(events, activities)
+  // Levels are earned by the intervals: read once, for the newest sessions of every family and level.
+  const held = await readHeld(
+    deps.auth,
+    config.profile,
+    toJudge(mergeCompletions(calendar, matchedCompletions(config.proposals, activities, config.profile))),
+    activities,
+  ).catch(() => new Map<string, boolean>())
   const recognised = (proposals: readonly DayProposal[]) =>
-    mergeCompletions(calendar, matchedCompletions(proposals, activities, config.profile))
+    withHeld(mergeCompletions(calendar, matchedCompletions(proposals, activities, config.profile)), held)
 
   // Today has to be on record before training done today can be recognised against it.
   const [morning] = planFromMorning(

@@ -159,7 +159,7 @@ export const SessionCard = ({
         {trimmed && (
           <p className="session__note">
             {active?.cuts.join(' · ')}. Intervalllänge und Zielwerte bleiben unverändert — nur das
-            Volumen sinkt. Zählt nicht für die Progression zur nächsten Stufe.
+            Volumen sinkt. Fehlen dabei Intervalle, zählt sie nicht für die nächste Stufe.
           </p>
         )}
         <p className="session__note">{session.template.coachNote}</p>

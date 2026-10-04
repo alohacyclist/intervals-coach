@@ -461,10 +461,18 @@ const candidatesFor = (
   )
 }
 
+/** Where the session sits on its ladder, and on the top offered rung what opens the next one. */
 const levelNote = (template: WorkoutTemplate, ceilings: Readonly<Record<string, number>>): string => {
   if (template.family === undefined) return ''
+  const own = template.level ?? 1
   const level = ceilings[template.family] ?? 1
-  return ` · Stufe ${template.level ?? 1}${(template.level ?? 1) < level ? ` von ${level} verfügbar` : ''}`
+  if (own < level) return ` · Stufe ${own} von ${level} verfügbar`
+  const next = templatesFor(template.sport).some(
+    (candidate) => candidate.family === template.family && (candidate.level ?? 1) === own + 1,
+  )
+  return next
+    ? ` · Stufe ${own} — Stufe ${own + 1} kommt, sobald jedes Intervall voll und mindestens im Zielbereich gefahren ist`
+    : ` · Stufe ${own}`
 }
 
 const reasonFor = (

@@ -62,8 +62,9 @@ export const LevelLadder = ({ levels }: Props) => {
 
       {/* The rule once for all rungs, instead of once in every one. */}
       <p className="ladder__rule">
-        Die nächste Stufe wird frei, wenn die angebotene Einheit sauber und vollständig absolviert
-        ist. Auf der obersten steigern sich die Einheiten über die Schwellenwerte.
+        Die nächste Stufe wird frei, sobald du in einer Einheit jedes Intervall voll und mindestens im
+        Zielbereich fährst. Zu hart gefahren hebt die Schwelle, nicht die Stufe. Auf der obersten
+        steigern sich die Einheiten über die Schwellenwerte.
       </p>
     </section>
   )

@@ -290,6 +290,19 @@ const combine = (pieces: readonly ActualInterval[]): ActualInterval => {
  */
 const SHORT_INTERVAL_SECONDS = 90
 
+/**
+ * Every work interval there, to length, and at least in its band — what earns the
+ * next level. Over the band counts: that is the threshold's business, not the
+ * level's. Null when the intervals could not be read or one has no value.
+ */
+export const heldEveryInterval = (execution: Execution): boolean | null => {
+  if (execution.unavailable !== null || execution.steps.length === 0) return null
+  if (execution.steps.some((step) => step.actualSeconds !== null && step.verdict === null)) return null
+  return execution.steps.every(
+    (step) => step.actualSeconds !== null && !step.cutShort && step.verdict !== 'under',
+  )
+}
+
 export const compareExecution = (input: ExecutionInput): Execution => {
   const { template, blocks, threshold } = input
   const compareBlocks = comparesBlocks(template)
