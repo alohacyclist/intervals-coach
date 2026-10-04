@@ -139,13 +139,19 @@ describe('the intervals decide the level', () => {
     expect(levelFor('bike-threshold', [session({ compliance: 80, held: null })])).toBe(2)
   })
 
-  it('reads only the newest two sessions of a level, and nothing merely similar', () => {
+  it('reads only the newest two sessions of a level', () => {
     const many = ['2026-09-01', '2026-09-08', '2026-09-15'].map((date, index) =>
       session({ date, activityId: `a${index}` }),
     )
-    const similar = session({ date: '2026-09-22', activityId: 's', evidence: 'similar' })
     const unranked = session({ templateId: 'bike-sst-3x12', activityId: 'u' })
-    expect(toJudge([...many, similar, unranked]).map((entry) => entry.activityId)).toEqual(['a2', 'a1'])
+    expect(toJudge([...many, unranked]).map((entry) => entry.activityId)).toEqual(['a2', 'a1'])
+  })
+
+  it('lets the intervals prove a session that was only recognised as similar', () => {
+    const similar = session({ compliance: null, evidence: 'similar', activityId: 's' })
+    expect(toJudge([similar]).map((entry) => entry.activityId)).toEqual(['s'])
+    expect(levelFor('bike-threshold', [similar])).toBe(1)
+    expect(levelFor('bike-threshold', [{ ...similar, held: true }])).toBe(2)
   })
 
   it('lays the verdicts onto the sessions they were read for', () => {
