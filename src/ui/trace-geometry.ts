@@ -127,6 +127,26 @@ export const heartLine = (trace: ExecutionTrace, range: { readonly low: number; 
     y: point.heartRate === null ? null : (point.heartRate - range.low) / (range.high - range.low),
   }))
 
+/**
+ * The heart line split in two: what was measured, drawn as usual, and what was
+ * estimated where the recording failed, drawn dashed. The estimate reaches one
+ * point into the measured line on either side, so the two meet.
+ */
+export const heartLines = (trace: ExecutionTrace, range: { readonly low: number; readonly high: number }) => {
+  const line = heartLine(trace, range)
+  const estimated = (index: number): boolean => trace.points[index]?.heartEstimated === true
+  return {
+    measured: line.map((point, index) => (estimated(index) ? { ...point, y: null } : point)),
+    estimated: line.map((point, index) =>
+      estimated(index) || estimated(index - 1) || estimated(index + 1) ? point : { ...point, y: null },
+    ),
+  }
+}
+
+/** "♥152", or "♥~152" when the recording failed there and the value is estimated. */
+export const beatLabel = (step: ExecutedStep): string =>
+  `♥${step.heartEstimated ? '~' : ''}${step.heartRate}`
+
 export const clock = (seconds: number): string => {
   const rounded = Math.round(seconds)
   const hours = Math.floor(rounded / 3600)

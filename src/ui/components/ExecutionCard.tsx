@@ -271,6 +271,7 @@ export const ExecutionView = ({ execution }: { readonly execution: Execution }) 
       )}
 
       {execution.unavailable && <p className="exec__note">{execution.unavailable}</p>}
+      {execution.heart && <p className="exec__note exec__note--heart">{execution.heart.message}</p>}
       {execution.benchmark && (
         <p className="exec__benchmark">
           <strong
@@ -300,8 +301,11 @@ export const ExecutionView = ({ execution }: { readonly execution: Execution }) 
             <i className="exec__key exec__key--line" /> {intensityWord(execution.metric)},{' '}
             {trace.smoothing}-s-Mittel
           </span>
-          {trace.points.some((point) => point.heartRate !== null) && (
+          {trace.points.some((point) => point.heartRate !== null && !point.heartEstimated) && (
             <span><i className="exec__key exec__key--pulse" /> Puls</span>
+          )}
+          {trace.points.some((point) => point.heartEstimated) && (
+            <span><i className="exec__key exec__key--estimated" /> Puls geschätzt</span>
           )}
         </p>
       )}
