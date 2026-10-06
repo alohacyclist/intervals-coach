@@ -677,3 +677,43 @@ export const withHeartCheck = (execution: Execution, check: HeartCheck | null): 
     heart: noteFor(check, execution.sport),
   }
 }
+
+/* ------------------------------------------------------------- written back */
+
+/**
+ * The heart rate stream as it should have been recorded, sample for sample: the
+ * clean samples untouched, the faulty ones replaced by the estimate. Same length
+ * and order as the recorded one, so intervals.icu can take it in its place.
+ * Null when there is nothing to write: a clean recording, or one too broken to
+ * estimate — hiding a heart rate on the card is fine, deleting it upstream is not.
+ */
+export const correctedHeartRate = (
+  streams: ActivityStreams,
+  check: HeartCheck | null,
+): readonly (number | null)[] | null => {
+  if (!check || check.faulty.length === 0 || !check.canEstimate || !streams.heartRate) return null
+  const { step } = check
+  // Slots hold the mean of their stretch; between two centres the estimate runs in a straight line.
+  const at = (slot: number): number | null => check.heart[Math.min(check.heart.length - 1, Math.max(0, slot))] ?? null
+  return streams.heartRate.map((recorded, index) => {
+    const time = streams.time[index]
+    if (!isNumber(time)) return recorded
+    const slot = Math.floor(time / step)
+    if (!check.estimated[slot]) return recorded
+    const position = time / step - 0.5
+    const before = Math.floor(position)
+    const share = position - before
+    const from = at(before) ?? at(slot)
+    const to = at(before + 1) ?? at(slot)
+    if (from === null || to === null) return recorded
+    return Math.round(from + (to - from) * share)
+  })
+}
+
+/** The note left under the activity on intervals.icu, so the edit is never mistaken for the recording. */
+export const correctionNote = (note: HeartNote): string =>
+  `Puls von Formkurve korrigiert: ${minute(note.faultySeconds)} min (${where(note.spans)}) passten nicht zur Arbeit ` +
+  `und sind aus der sauberen Messung geschätzt.` +
+  (note.measuredAverage !== null && note.correctedAverage !== null
+    ? ` Ø aufgezeichnet ${note.measuredAverage} bpm, korrigiert ${note.correctedAverage} bpm.`
+    : '')

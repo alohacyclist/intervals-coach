@@ -3,12 +3,17 @@ import { compareExecution, plannedBlocks } from '../src/coach/execution.ts'
 import { scheduledFrom } from '../src/coach/progression.ts'
 import { defaultThreshold, thresholdFor } from '../src/coach/thresholds.ts'
 import { buildTrace } from '../src/coach/trace.ts'
-import { checkHeart, withHeartCheck } from '../src/coach/heart-check.ts'
+import { checkHeart, correctedHeartRate, withHeartCheck } from '../src/coach/heart-check.ts'
 import { garminDevice } from '../src/coach/attribution.ts'
 import type { IntervalsAuth } from './intervals.ts'
 import { fetchActivity, fetchEvents, fetchIntervals, fetchStreams } from './intervals.ts'
 
-export type LoadedExecution = { readonly execution: Execution; readonly activity: Activity }
+export type LoadedExecution = {
+  readonly execution: Execution
+  readonly activity: Activity
+  /** The heart rate with its faulty stretches estimated, sample for sample; null when there is nothing to correct. */
+  readonly correctedHeartRate: readonly (number | null)[] | null
+}
 
 /**
  * One completed session set against the template it fulfilled. The card asks for
@@ -47,8 +52,17 @@ export const loadExecution = async (
     garmin: garminDevice(activity),
   }
 
+  const heart = streams ? checkHeart(streams, threshold, profile.maxHr) : null
+  const corrected = streams ? correctedHeartRate(streams, heart) : null
+  const checked = withHeartCheck(execution, heart)
+
   return {
     activity,
-    execution: streams ? withHeartCheck(execution, checkHeart(streams, threshold, profile.maxHr)) : execution,
+    // A personal API key may write activities; the OAuth grant deliberately does not ask to.
+    execution:
+      checked.heart && corrected && auth.kind === 'apiKey'
+        ? { ...checked, heart: { ...checked.heart, writable: true } }
+        : checked,
+    correctedHeartRate: corrected,
   }
 }

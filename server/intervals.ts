@@ -470,6 +470,30 @@ export const fetchStreams = async (
 }
 
 /**
+ * Replaces the heart rate of one activity with the given samples, one per row of
+ * its streams. Only the streams sent are touched: power, pace and the rest stay
+ * as recorded. Destructive — the caller asks the athlete first.
+ */
+export const replaceHeartRate = async (
+  auth: IntervalsAuth,
+  activityId: string,
+  heartRate: readonly (number | null)[],
+): Promise<void> => {
+  await request(auth, `/activity/${activityId}/streams`, {
+    method: 'PUT',
+    body: JSON.stringify([{ type: 'heartrate', data: heartRate }]),
+  })
+}
+
+/** A note under the activity on intervals.icu, where the athlete and a coach read it. */
+export const addActivityNote = async (auth: IntervalsAuth, activityId: string, content: string): Promise<void> => {
+  await request(auth, `/activity/${activityId}/messages`, {
+    method: 'POST',
+    body: JSON.stringify({ content }),
+  })
+}
+
+/**
  * The work intervals of one activity. Fetched for a completed threshold test:
  * the app prescribed a maximal block, so it should read what the block actually
  * produced instead of waiting for someone else's estimate to move.
