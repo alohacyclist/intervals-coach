@@ -354,6 +354,26 @@ Worker dampft die Streams auf höchstens 720 Punkte ein (Rad 10-s-, Lauf 30-s-Mi
 Streams — Becken, keine Leistungsmessung, Intervalle ohne Position — bleibt der Blockstreifen.
 „Bild teilen“ zeichnet dieselbe Ansicht als 1080 × 1080-PNG fürs Teilen-Menü des Handys.
 
+**Pulsaufzeichnung prüfen.** Eine Uhr am Handgelenk zeichnet nicht immer den Puls auf: sie zählt
+die Schritte statt der Herzschläge, sitzt zu locker und misst viel zu wenig, oder verliert minutenlang
+den Kontakt. Die Karte prüft deshalb den Puls gegen die Arbeit (`src/coach/heart-check.ts`). Der
+Puls folgt Leistung bzw. Tempo verzögert (15 bis 90 Sekunden, nach harter Arbeit fällt er
+langsamer, als er steigt), steigt über der Schwelle minutenlang weiter und driftet über die Einheit
+nach oben. Dieser Zusammenhang wird an der Einheit selbst angepasst — nur an den drei Fünfteln, die
+am besten passen, damit eine lange Störung ihn nicht zu sich herüberzieht. Wo die Messung länger als
+anderthalb Minuten in eine Richtung um mehr als 10 Schläge (bzw. das Dreifache des eigenen Rauschens)
+danebenliegt, war es nicht das Herz. Beim Laufen wird das Tempo vorher um die Steigung bereinigt
+(Energiekosten nach Minetti), sonst sähe jeder Anstieg wie ein Messfehler aus; dafür liest die App
+bei Läufen zusätzlich Höhe und Strecke.
+
+Ab zwei Minuten Störung steht unter der Einheit ein Vermerk: wo, wie lange, in welche Richtung. Sind
+mindestens zehn Minuten und zwei Fünftel der Einheit sauber, schätzt die App den Puls der gestörten
+Abschnitte aus dem angepassten Zusammenhang, an den Rändern an die echte Messung angeschlossen.
+Geschätztes ist in der Kurve gestrichelt und an den Zahlen mit „~“ markiert, und der Vermerk nennt
+den bereinigten Schnitt neben dem aufgezeichneten. Reicht die saubere Messung nicht, wird der Puls
+dort ausgeblendet statt falsch gezeigt. Die Formkontrolle auf der Karte rechnet mit dem bereinigten
+Puls. Zurück nach intervals.icu geschrieben wird nichts — die Aufzeichnung bleibt, wie sie ist.
+
 **Strava** ist optional und in beiden Modi möglich. Das Gerät lädt weiter selbst zu Strava hoch;
 die App schreibt nur die Auswertung als Absatz in die Beschreibung der passenden Aktivität
 (gleiche Sportart, Start höchstens zehn Minuten auseinander). Eigener Text bleibt stehen, ein
@@ -404,6 +424,7 @@ src/coach/     reine Trainingslogik, ohne IO — hier liegt die gesamte Fachlich
   progression.ts  Stufen je Workout-Familie, aus tatsächlich absolvierten Einheiten
   adherence.ts absolviert, getauscht, ausgefallen — die letzten sieben Tage
   benchmark.ts Referenzeinheit alle acht Wochen
+  heart-check.ts  Pulsaufzeichnung gegen die Arbeit prüfen, Störungen schätzen
   threshold-drift.ts  Abgleich der Schwellenwerte mit intervals.icu
   config-schema.ts    Validierung und Migration der gespeicherten Konfiguration
   feasibility.ts  Realismus-Check der Ziele

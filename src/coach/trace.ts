@@ -13,6 +13,9 @@ export type ActivityStreams = {
   /** Metres per second. */
   readonly speed: readonly (number | null)[] | null
   readonly heartRate: readonly (number | null)[] | null
+  /** Metres, for a run only: pace alone reads a climb as an easy stretch. */
+  readonly altitude?: readonly (number | null)[] | null
+  readonly distance?: readonly (number | null)[] | null
 }
 
 /** Enough points for a phone-wide line and a share image, few enough for the payload. */
@@ -24,10 +27,10 @@ const SMOOTHING_SECONDS = { power: 10, pace: 30 } as const
 const isNumber = (value: number | null | undefined): value is number =>
   typeof value === 'number' && Number.isFinite(value)
 
-type Drawable = Exclude<SportThreshold, { readonly metric: 'swimPace' }>
+export type Drawable = Exclude<SportThreshold, { readonly metric: 'swimPace' }>
 
 /** Faster is higher for pace, as for watts: threshold pace over actual pace. */
-const percentOf = (value: number, threshold: Drawable): number =>
+export const percentOf = (value: number, threshold: Drawable): number =>
   threshold.metric === 'power' ? (value / threshold.ftp) * 100 : (threshold.thresholdSecPerKm * value) / 10
 
 /**
