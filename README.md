@@ -372,7 +372,23 @@ Abschnitte aus dem angepassten Zusammenhang, an den Rändern an die echte Messun
 Geschätztes ist in der Kurve gestrichelt und an den Zahlen mit „~“ markiert, und der Vermerk nennt
 den bereinigten Schnitt neben dem aufgezeichneten. Reicht die saubere Messung nicht, wird der Puls
 dort ausgeblendet statt falsch gezeigt. Die Formkontrolle auf der Karte rechnet mit dem bereinigten
-Puls. Zurück nach intervals.icu geschrieben wird nichts — die Aufzeichnung bleibt, wie sie ist.
+Puls.
+
+**Zurückschreiben.** Unter dem Vermerk steht „In intervals.icu korrigieren“. Der erste Tipp sagt,
+was sich ändert (wie viele Minuten, der Schnitt vorher und nachher) und dass die App es nicht
+rückgängig machen kann; erst „Überschreiben“ schreibt. Der Server schätzt dafür neu, statt die Werte
+des Browsers zu nehmen, und schreibt nur, wenn die Schätzung noch die bestätigte ist — sonst 409.
+Geschrieben wird per `PUT /activity/{id}/streams` nur der Stream `heartrate`, Probe für Probe gleich
+lang wie die Aufzeichnung: saubere Proben unverändert, gestörte durch die Schätzung ersetzt. Leistung,
+Tempo und alles andere bleiben unangetastet. Dazu kommt ein Vermerk an der Aktivität
+(`POST /activity/{id}/messages`), damit die Änderung nie für die Aufzeichnung gehalten wird. Danach
+liest sich die Aufzeichnung sauber, und der Knopf verschwindet.
+
+Nur im Einzelbetrieb: der persönliche API-Key darf Aktivitäten schreiben, der OAuth-Zugriff fragt
+bewusst nicht nach `ACTIVITY:WRITE`, weil dieser Scope auch das Löschen von Aktivitäten erlaubt.
+Ist der Puls zu kaputt für eine Schätzung, wird nichts geschrieben — auf der Karte ausblenden ist
+in Ordnung, upstream löschen nicht. Streams hochladen dürfen bei intervals.icu laut Forum nur
+Supporter; lehnt intervals.icu ab, sagt die Karte das.
 
 **Strava** ist optional und in beiden Modi möglich. Das Gerät lädt weiter selbst zu Strava hoch;
 die App schreibt nur die Auswertung als Absatz in die Beschreibung der passenden Aktivität

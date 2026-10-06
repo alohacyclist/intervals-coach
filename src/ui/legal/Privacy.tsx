@@ -106,7 +106,10 @@ export const Privacy = () => (
       Quelle ist ausschließlich dein eigenes intervals.icu-Konto, dessen Freigabe du im
       OAuth-Dialog erteilst. In dieselbe Richtung zurück schreibt die App nur, wenn du es auslöst:
       geplante Einheiten in deinen intervals.icu-Kalender und, wenn du einen Schwellenwert
-      übernimmst, den neuen Wert in deine dortigen Sport-Einstellungen. Für dein Verhältnis zu
+      übernimmst, den neuen Wert in deine dortigen Sport-Einstellungen. Mit einem persönlichen
+      API-Key kommt eine dritte Möglichkeit hinzu: war eine Pulsaufzeichnung gestört und bestätigst
+      du die Korrektur, ersetzt die App den Puls der gestörten Abschnitte dieser Aktivität durch die
+      Schätzung und hinterlässt dazu einen Vermerk an der Aktivität. Für dein Verhältnis zu
       intervals.icu gilt deren eigene Datenschutzerklärung.
     </p>
     <p>

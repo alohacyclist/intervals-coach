@@ -7,6 +7,7 @@ import { ExecutionTrace } from './ExecutionTrace.tsx'
 import { ExecutionActions } from './ExecutionActions.tsx'
 import { drawableTrace, intensityWord, isCompared } from '../trace-geometry.ts'
 import { GarminDevice } from './GarminAttribution.tsx'
+import { HeartCorrection } from './HeartCorrection.tsx'
 
 /**
  * Planned against done. The strip answers "did it sit" in a glance; the rows
@@ -200,6 +201,9 @@ export const ExecutionCard = ({ activityId, templateId, date }: Props) => {
   return (
     <>
       <ExecutionView execution={execution} />
+      {execution.heart && (
+        <HeartCorrection heart={execution.heart} activityId={activityId} templateId={templateId} date={date} />
+      )}
       <ExecutionActions execution={execution} activityId={activityId} templateId={templateId} date={date} />
     </>
   )

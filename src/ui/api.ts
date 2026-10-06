@@ -85,6 +85,20 @@ export const getExecution = (activityId: string, templateId: string, date: strin
     `/api/execution/${encodeURIComponent(activityId)}?template=${encodeURIComponent(templateId)}&date=${date}`,
   )
 
+export type HeartCorrection = { readonly status: 'written'; readonly noted: boolean }
+
+/** Writes the estimated heart rate to intervals.icu — only what the athlete confirmed, or nothing. */
+export const correctHeart = (
+  activityId: string,
+  templateId: string,
+  date: string,
+  expected: { readonly faultySeconds: number; readonly correctedAverage: number | null },
+): Promise<HeartCorrection> =>
+  request<HeartCorrection>(`/api/execution/${encodeURIComponent(activityId)}/heart`, {
+    method: 'POST',
+    body: JSON.stringify({ templateId, date, expected }),
+  })
+
 /** `fresh` skips the server's few minutes of memory — for the refresh button, not for reloads after a change. */
 export const getPlan = (days: number, intent?: string, fresh = false): Promise<Plan> =>
   request<Plan>(`/api/plan?days=${days}${intent ? `&intent=${intent}` : ''}${fresh ? '&frisch=1' : ''}`)
