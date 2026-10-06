@@ -639,6 +639,8 @@ export type ExecutedStep = {
   /** Where the paired pieces lie in the activity, in elapsed seconds; null when unknown. */
   readonly span: { readonly from: number; readonly to: number } | null
   readonly heartRate: number | null
+  /** The heart rate above is partly estimated, because the recording failed there. */
+  readonly heartEstimated?: boolean
 }
 
 /** One slice of the session as drawn: elapsed time, share of threshold, heart rate. */
@@ -648,6 +650,27 @@ export type TracePoint = {
   /** Watts, or metres per second for pace — what the readout names. */
   readonly value: number | null
   readonly heartRate: number | null
+  /** Estimated from the intensity, because the recording failed here. */
+  readonly heartEstimated?: boolean
+}
+
+/**
+ * A heart rate recording that does not fit what was ridden or run: a watch that
+ * counted steps, lost contact or sat too loose. Named under the session, so the
+ * number on the card is not taken for a measurement.
+ */
+export type HeartNote = {
+  /** Seconds whose heart rate was dropped as faulty. */
+  readonly faultySeconds: number
+  readonly recordedSeconds: number
+  /** The faulty stretches, in elapsed seconds. */
+  readonly spans: readonly { readonly from: number; readonly to: number }[]
+  /** Whether the faulty stretches were filled in from the clean ones, or left out. */
+  readonly estimated: boolean
+  /** Average over the session as recorded, and with the faulty stretches replaced or left out. */
+  readonly measuredAverage: number | null
+  readonly correctedAverage: number | null
+  readonly message: string
 }
 
 /** The session over time, already reduced to what a card can draw. */
@@ -689,6 +712,8 @@ export type Execution = {
   readonly trace: ExecutionTrace | null
   /** "Garmin <device>" when the session was recorded on a Garmin; the card and the picture name it. */
   readonly garmin?: string | null
+  /** Set when the heart rate recording failed somewhere; the card names it under the session. */
+  readonly heart?: HeartNote | null
 }
 
 export type SeasonWeek = {

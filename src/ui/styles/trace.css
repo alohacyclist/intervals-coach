@@ -84,6 +84,9 @@
   stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
 }
+.trace__pulse--estimated {
+  stroke-dasharray: 4 3;
+}
 
 .trace__tick {
   position: absolute;
@@ -164,6 +167,10 @@
 .exec__key--pulse {
   height: 2px;
   background: var(--dim);
+}
+.exec__key--estimated {
+  height: 2px;
+  background: repeating-linear-gradient(90deg, var(--dim) 0 3px, transparent 3px 5px);
 }
 
 /* What can be done with a finished session: share its picture, write it to Strava. */
