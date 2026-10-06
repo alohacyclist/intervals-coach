@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { ExecutionView } from '../src/ui/components/ExecutionCard.tsx'
-import { checkHeart, withHeartCheck } from '../src/coach/heart-check.ts'
+import { checkHeart, correctedHeartRate, withHeartCheck } from '../src/coach/heart-check.ts'
+import { HeartCorrection } from '../src/ui/components/HeartCorrection.tsx'
 import type { HeartCheck } from '../src/coach/heart-check.ts'
 import { buildTrace } from '../src/coach/trace.ts'
 import type { ActivityStreams } from '../src/coach/trace.ts'
@@ -251,5 +252,52 @@ describe('the checked heart rate on the card', () => {
     const execution = executionOf(streams)
     expect(withHeartCheck(execution, checkHeart(streams, FTP, 190))).toBe(execution)
     expect(withHeartCheck(execution, null)).toBe(execution)
+  })
+})
+
+describe('the heart rate as written back', () => {
+  it('replaces only the faulty samples, one for one', () => {
+    const truth = heartFor(THRESHOLD_RIDE)
+    const lost = truth.map((beat, second) => (second >= 2000 && second < 2400 ? null : beat))
+    const streams = ride(THRESHOLD_RIDE, lost)
+    const written = correctedHeartRate(streams, checkHeart(streams, FTP, 190))!
+    expect(written).toHaveLength(lost.length)
+    expect(written.slice(0, 1900)).toEqual(lost.slice(0, 1900))
+    expect(written.slice(2050, 2350).every((beat) => beat !== null && Number.isInteger(beat))).toBe(true)
+    expect(Math.abs(mean(written.slice(2050, 2350)) - mean(truth.slice(2050, 2350)))).toBeLessThan(5)
+  })
+
+  it('writes nothing over a clean recording, nor over one too broken to estimate', () => {
+    const clean = ride(THRESHOLD_RIDE, heartFor(THRESHOLD_RIDE))
+    expect(correctedHeartRate(clean, checkHeart(clean, FTP, 190))).toBeNull()
+    const random = noise(4)
+    const stuck = ride(
+      THRESHOLD_RIDE,
+      heartFor(THRESHOLD_RIDE).map((beat, second) => (second >= 300 && second < 3800 ? 172 + random() * 3 : beat)),
+    )
+    expect(correctedHeartRate(stuck, checkHeart(stuck, FTP, 190))).toBeNull()
+  })
+
+  it('is offered on the card only where it may be written', () => {
+    const note = {
+      faultySeconds: 720,
+      recordedSeconds: 4260,
+      spans: [{ from: 120, to: 840 }],
+      estimated: true,
+      measuredAverage: 168,
+      correctedAverage: 165,
+      message: 'Pulsaufzeichnung gestört',
+    }
+    const offered = (writable: boolean) =>
+      renderToStaticMarkup(
+        createElement(HeartCorrection, {
+          heart: { ...note, writable },
+          activityId: 'i1',
+          templateId: 'bike-thr-3x12',
+          date: '2026-10-06',
+        }),
+      )
+    expect(offered(true)).toContain('In intervals.icu korrigieren')
+    expect(offered(false)).toBe('')
   })
 })

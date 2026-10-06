@@ -671,6 +671,8 @@ export type HeartNote = {
   readonly measuredAverage: number | null
   readonly correctedAverage: number | null
   readonly message: string
+  /** The estimate may replace the recording on intervals.icu: only with an API key, whose access covers it. */
+  readonly writable?: boolean
 }
 
 /** The session over time, already reduced to what a card can draw. */

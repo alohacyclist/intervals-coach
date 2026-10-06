@@ -13,6 +13,7 @@ import type { IntervalsAuth } from './intervals.ts'
 import {
   IntervalsError,
   ReauthRequiredError,
+  addActivityNote,
   bypassingReads,
   createWorkoutEvent,
   fetchActivities,
@@ -21,8 +22,10 @@ import {
   fetchSportSettings,
   fetchWellness,
   applyDestinations,
+  replaceHeartRate,
   updateSportThreshold,
 } from './intervals.ts'
+import { correctionNote } from '../src/coach/heart-check.ts'
 import { addDays } from '../src/coach/dates.ts'
 import { buildState } from '../src/coach/state.ts'
 import { planFromMorning } from '../src/coach/today.ts'
@@ -447,6 +450,66 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
         )
       : null
     return context.json({ ...execution, benchmark })
+  })
+
+  /**
+   * Writes the estimated heart rate over the faulty stretches back to
+   * intervals.icu, after the athlete confirmed it on the card. The estimate is
+   * made again here rather than taken from the browser, and written only if it
+   * is still the one the athlete saw: the recording may have changed meanwhile.
+   */
+  app.post('/api/execution/:activityId/heart', async (context) => {
+    const activityId = context.req.param('activityId')
+    if (!/^[A-Za-z0-9_-]{1,40}$/.test(activityId)) {
+      return context.json({ error: 'Ungültige Aktivität' }, 400)
+    }
+    const body = (await context.req.json()) as {
+      readonly templateId?: unknown
+      readonly date?: unknown
+      readonly expected?: { readonly faultySeconds?: unknown; readonly correctedAverage?: unknown }
+    }
+    const template = findTemplate(typeof body.templateId === 'string' ? body.templateId : '')
+    if (!template || template.occasion !== undefined) {
+      return context.json({ error: 'Zu dieser Einheit gibt es keinen Plan zum Vergleichen' }, 404)
+    }
+    const { auth, store } = await resolve(context)
+    if (auth.kind !== 'apiKey') {
+      return context.json({ error: 'Zurückschreiben geht nur mit einem API-Key von intervals.icu.', forAthlete: true }, 403)
+    }
+    const config = await store.load()
+    const day = isIsoDate(body.date) ? body.date : null
+    const loaded = await loadExecution(auth, config.profile, activityId, template, day)
+    const heart = loaded.execution.heart
+    if (!heart?.writable || !loaded.correctedHeartRate) {
+      return context.json({ error: 'An dieser Aufzeichnung gibt es nichts mehr zu korrigieren.', forAthlete: true }, 409)
+    }
+    if (
+      body.expected?.faultySeconds !== heart.faultySeconds ||
+      body.expected?.correctedAverage !== heart.correctedAverage
+    ) {
+      return context.json({ error: 'Die Aufzeichnung hat sich geändert. Bitte neu laden und noch einmal prüfen.', forAthlete: true }, 409)
+    }
+
+    try {
+      await replaceHeartRate(auth, activityId, loaded.correctedHeartRate)
+    } catch (error) {
+      if (error instanceof IntervalsError && error.status === 403) {
+        return context.json(
+          {
+            error: 'intervals.icu hat das Überschreiben abgelehnt. Streams ändern dürfen dort nur Supporter.',
+            forAthlete: true,
+          },
+          403,
+        )
+      }
+      throw error
+    }
+    // The note is the record of the edit; a lost note must not report the edit as failed.
+    const noted = await addActivityNote(auth, activityId, correctionNote(heart)).then(
+      () => true,
+      () => false,
+    )
+    return context.json({ status: 'written', noted })
   })
 
   /** Raw sport settings, used to prefill onboarding before any config exists. */
