@@ -184,6 +184,19 @@
 .history .exec__actions {
   padding: 0 14px 12px;
 }
+/* Asked before the heart rate on intervals.icu is overwritten; padded like the actions in the history list. */
+.exec__heartfix {
+  margin-top: 10px;
+}
+.exec__heartfix .exec__actions {
+  margin-top: 6px;
+}
+.history .exec__heartfix {
+  padding: 0 14px;
+}
+.history .exec__heartfix .exec__actions {
+  padding: 0;
+}
 .exec__sent {
   font-size: 12px;
   color: var(--faint);
