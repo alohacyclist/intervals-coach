@@ -31,7 +31,8 @@ export const Privacy = () => (
         der letzten 180 Tage (Datum, Sportart, Dauer, Trainingsbelastung, Intensität, Herzfrequenz,
         Zeit in den Trainingszonen) und Erholungswerte der letzten 60 Tage
         (Herzratenvariabilität, Ruhepuls, Schlafdauer, subjektives Befinden), für eine absolvierte
-        Einheit zusätzlich ihr Verlauf von Leistung, Tempo und Herzfrequenz. Diese Daten werden von
+        Einheit zusätzlich ihr Verlauf von Leistung, Tempo und Herzfrequenz, bei einem Lauf auch
+        von Höhe und zurückgelegter Strecke (ohne Standort). Diese Daten werden von
         intervals.icu abgerufen, im Arbeitsspeicher ausgewertet und{' '}
         <strong>nicht dauerhaft gespeichert</strong>. Damit Aufrufe kurz hintereinander intervals.icu
         nicht jedes Mal neu abfragen, hält die Anwendung die Antworten höchstens fünf Minuten

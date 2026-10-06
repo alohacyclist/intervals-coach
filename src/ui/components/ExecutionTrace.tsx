@@ -7,7 +7,8 @@ import {
   clock,
   corridorLabel,
   corridorsOf,
-  heartLine,
+  beatLabel,
+  heartLines,
   heartRange,
   heightOf,
   intensityLine,
@@ -44,6 +45,7 @@ export const ExecutionTrace = ({ execution, trace, compared }: Props) => {
   const y = (percent: number): number => H - heightOf(percent, ceiling) * H
   const corridors = compared ? corridorsOf(execution.steps, trace) : []
   const hearts = heartRange(trace)
+  const beats = hearts ? heartLines(trace, hearts) : null
   const intensity = intensityLine(trace, ceiling)
   const line = linePath(intensity, W, H)
   const hit = corridors.filter((corridor) => corridor.step.verdict === 'on').length
@@ -60,7 +62,7 @@ export const ExecutionTrace = ({ execution, trace, compared }: Props) => {
         clock(point.seconds),
         valueText(point.value, execution.metric),
         point.percent === null ? null : `${point.percent} %`,
-        point.heartRate === null ? null : `♥ ${point.heartRate}`,
+        point.heartRate === null ? null : `♥ ${point.heartEstimated ? '~' : ''}${point.heartRate}`,
       ]
         .filter(Boolean)
         .join(' · ')
@@ -134,7 +136,7 @@ export const ExecutionTrace = ({ execution, trace, compared }: Props) => {
         {point && <span className="trace__cursor" style={{ left: percentAt(point.seconds, total) }} />}
       </div>
 
-      {hearts && (
+      {hearts && beats && (
         <div className="trace__heart">
           <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" aria-hidden="true">
             {corridors.map((corridor) => (
@@ -147,7 +149,8 @@ export const ExecutionTrace = ({ execution, trace, compared }: Props) => {
                 className="trace__shade"
               />
             ))}
-            <path d={linePath(heartLine(trace, hearts), W, H)} className="trace__pulse" />
+            <path d={linePath(beats.measured, W, H)} className="trace__pulse" />
+            <path d={linePath(beats.estimated, W, H)} className="trace__pulse trace__pulse--estimated" />
           </svg>
           <span className="trace__tick trace__tick--top readout">{hearts.high}</span>
           <span className="trace__tick trace__tick--bottom readout">{hearts.low}</span>
@@ -159,7 +162,7 @@ export const ExecutionTrace = ({ execution, trace, compared }: Props) => {
                 className="trace__beat readout"
                 style={{ left: percentAt((corridor.from + corridor.to) / 2, total) }}
               >
-                ♥{corridor.step.heartRate}
+                {beatLabel(corridor.step)}
               </span>
             ))}
           {point && <span className="trace__cursor" style={{ left: percentAt(point.seconds, total) }} />}

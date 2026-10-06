@@ -440,15 +440,23 @@ export const fetchIntervals = async (
 }
 
 const STREAM_TYPES = ['time', 'watts', 'velocity_smooth', 'heartrate'] as const
+/** Only a run needs the hills: power already carries them, pace does not. */
+const HILL_TYPES = ['altitude', 'distance'] as const
 
 /**
- * The recorded streams of one activity, for drawing the session over time. Only
- * what the drawing needs is asked for; an hour is still 3600 samples of each.
+ * The recorded streams of one activity, for drawing the session over time and
+ * checking its heart rate. Only what those need is asked for; an hour is still
+ * 3600 samples of each.
  */
-export const fetchStreams = async (auth: IntervalsAuth, activityId: string): Promise<ActivityStreams> => {
-  const raw = await request<unknown>(auth, `/activity/${activityId}/streams.json?types=${STREAM_TYPES.join(',')}`)
+export const fetchStreams = async (
+  auth: IntervalsAuth,
+  activityId: string,
+  sport: Sport | null = null,
+): Promise<ActivityStreams> => {
+  const types = sport === 'Run' ? [...STREAM_TYPES, ...HILL_TYPES] : STREAM_TYPES
+  const raw = await request<unknown>(auth, `/activity/${activityId}/streams.json?types=${types.join(',')}`)
   const list = Array.isArray(raw) ? raw.map((entry) => entry as Record<string, unknown>) : []
-  const stream = (type: (typeof STREAM_TYPES)[number]): readonly (number | null)[] | null => {
+  const stream = (type: (typeof types)[number]): readonly (number | null)[] | null => {
     const data = list.find((entry) => entry['type'] === type)?.['data']
     return Array.isArray(data) ? data.map(nullableNum) : null
   }
@@ -457,6 +465,7 @@ export const fetchStreams = async (auth: IntervalsAuth, activityId: string): Pro
     watts: stream('watts'),
     speed: stream('velocity_smooth'),
     heartRate: stream('heartrate'),
+    ...(sport === 'Run' ? { altitude: stream('altitude'), distance: stream('distance') } : {}),
   }
 }
 

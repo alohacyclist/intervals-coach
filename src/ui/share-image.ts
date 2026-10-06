@@ -6,7 +6,8 @@ import {
   clock,
   corridorLabel,
   corridorsOf,
-  heartLine,
+  beatLabel,
+  heartLines,
   heartRange,
   heightOf,
   hitCount,
@@ -161,12 +162,16 @@ const drawTrace = (context: CanvasRenderingContext2D, execution: Execution, trac
     context.strokeStyle = DIM
     context.lineWidth = 3
     context.lineJoin = 'round'
-    context.stroke(new Path2D(linePath(heartLine(trace, hearts), HEART.width, HEART.height)))
+    const beats = heartLines(trace, hearts)
+    context.stroke(new Path2D(linePath(beats.measured, HEART.width, HEART.height)))
+    // Estimated where the recording failed: dashed, as on the card.
+    context.setLineDash([10, 8])
+    context.stroke(new Path2D(linePath(beats.estimated, HEART.width, HEART.height)))
     context.restore()
     corridors
       .filter((corridor) => corridor.step.heartRate !== null)
       .forEach((corridor) =>
-        text(context, `♥${corridor.step.heartRate}`, (x(corridor.from) + x(corridor.to)) / 2, HEART.y + HEART.height - 10, `400 22px ${MONO}`, INK, 'center'),
+        text(context, beatLabel(corridor.step), (x(corridor.from) + x(corridor.to)) / 2, HEART.y + HEART.height - 10, `400 22px ${MONO}`, INK, 'center'),
       )
   }
 

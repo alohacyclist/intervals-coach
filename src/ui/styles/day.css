@@ -597,6 +597,10 @@
   font-size: 12px;
   color: var(--dim);
 }
+/* The heart rate on the card is not what the watch wrote: said where the numbers are read. */
+.exec__note--heart {
+  color: var(--text);
+}
 .exec__benchmark {
   margin: 8px 0 0;
   font-size: 13px;
