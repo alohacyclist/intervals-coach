@@ -43,7 +43,7 @@ const summaryOf = (
   if (!pick) return { name: 'Kein Vorschlag', meta: '—' }
   const variant = usualVariant(pick)
   return {
-    name: `${SPORT_LABELS[pick.sport]} · ${pick.template.name}`,
+    name: `${SPORT_LABELS[pick.sport]} · ${variant?.name ?? pick.template.name}`,
     meta: `${variant?.minutes ?? pick.template.minutes} min · ${variant?.load ?? pick.template.load} TSS`,
   }
 }

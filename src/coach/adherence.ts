@@ -50,8 +50,12 @@ const dayFor = (
         ? findTemplate(recommended)?.name
         : undefined
   const names = [...new Set(pushed.map((event) => event.name))]
-  // A shortened push is named "<template> (45 min)", which already is the recommendation.
-  const alreadyNamed = recommendedName && names.some((name) => name.startsWith(recommendedName))
+  // A shortened push carries its own name ("VO2max 3x4x40/20", "<template> (45 min)"),
+  // but it still is the recommendation: its external id says which template it came from.
+  const alreadyNamed =
+    recommendedName &&
+    (pushed.some((event) => event.externalId?.split(':')[2] === recommended) ||
+      names.some((name) => name.startsWith(recommendedName)))
   const planned = recommendedName && !alreadyNamed ? [...names, recommendedName] : names
   const trained = activities.filter((activity) => activity.date === date && activity.load > 0)
 
