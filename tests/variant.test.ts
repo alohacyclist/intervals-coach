@@ -148,6 +148,7 @@ describe('the name of the short version', () => {
   it('gives continuous work its new length', () => {
     expect(shortName('bike-endurance-75', 40).name).toBe('Grundlage 43min')
     expect(shortName('bike-long-120', 40).name).toBe('Lange Ausfahrt 65min')
+    expect(shortName('run-progression-50', 40).name).toBe('Steigerungslauf 41min')
   })
 
   it('keeps a name whose numbers were not cut', () => {
