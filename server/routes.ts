@@ -662,7 +662,8 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
     }
     const short = chosen && chosen.minutes < template.minutes ? chosen : undefined
     const minutes = short?.minutes ?? template.minutes
-    const name = short ? `${template.name} (${minutes} min)` : template.name
+    // A renamed version already says what it is; one whose name has no counts gets its length.
+    const name = !short ? template.name : short.name !== template.name ? short.name : `${template.name} (${minutes} min)`
 
     // Each version may go on the calendar once; sending several is the athlete's way of deciding later.
     const alreadyScheduled = plan.scheduled.some(
