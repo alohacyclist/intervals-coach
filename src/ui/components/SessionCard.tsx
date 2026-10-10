@@ -107,7 +107,7 @@ export const SessionCard = ({
         </span>
       </div>
 
-      <h3>{session.template.name}</h3>
+      <h3>{active?.name ?? session.template.name}</h3>
       {/* The pick says why in one line; an alternative keeps it with the rest of the why. */}
       {recommended && <p className="session__reason">{session.reason}</p>}
       {session.race && <p className="session__race readout">{raceFacts(session.race)}</p>}

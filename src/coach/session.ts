@@ -10,7 +10,7 @@ import type {
 import { describeBlocks, describeWorkout, toHumanSteps } from './format.ts'
 import { defaultThreshold, thresholdFor } from './thresholds.ts'
 import { profileOf } from './profile.ts'
-import { MIN_SAVING_MINUTES, shorten, totalSeconds } from './variant.ts'
+import { MIN_SAVING_MINUTES, renameShortened, shorten, totalSeconds } from './variant.ts'
 import { goalForSport } from './phase.ts'
 
 const SHORT_NOTE =
@@ -34,6 +34,7 @@ const variantFor = (
   if (targetMinutes >= template.minutes) {
     return {
       tier,
+      name: template.name,
       minutes: template.minutes,
       load: template.load,
       blocks: template.blocks,
@@ -49,6 +50,7 @@ const variantFor = (
   // The authored duration stays authoritative; the trimmed one scales off it.
   return {
     tier,
+    name: renameShortened(template.name, template.blocks, blocks, threshold),
     minutes: Math.round((template.minutes * shortSec) / fullSec),
     load: Math.round((template.load * shortSec) / fullSec),
     blocks,

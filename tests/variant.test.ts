@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { estimateSeconds, shorten, totalSeconds, SHORT_TARGET_MINUTES } from '../src/coach/variant.ts'
+import {
+  estimateSeconds,
+  renameShortened,
+  shorten,
+  totalSeconds,
+  SHORT_TARGET_MINUTES,
+} from '../src/coach/variant.ts'
 import { LIBRARY, findTemplate, thresholdTestFor } from '../src/coach/library.ts'
 import { defaultThreshold } from '../src/coach/thresholds.ts'
 import { toIntervalsText } from '../src/coach/format.ts'
@@ -118,6 +124,38 @@ const state = () =>
     '2026-09-02',
   )
 
+describe('the name of the short version', () => {
+  const shortName = (id: string, minutes: number) => {
+    const template = findTemplate(id)
+    if (!template) throw new Error(`fixture template ${id} missing`)
+    const threshold = defaultThreshold(template.sport)
+    const { blocks } = shorten(template.blocks, threshold, minutes / template.minutes)
+    return { blocks, name: renameShortened(template.name, template.blocks, blocks, threshold) }
+  }
+
+  it('cuts sets that are the same set written out together', () => {
+    const { blocks } = shortName('bike-vo2-3040', 40)
+    expect(repeats(blocks).map((block) => block.times)).toEqual([4, 4, 4])
+  })
+
+  it('counts what is actually ridden', () => {
+    expect(shortName('bike-vo2-3040', 40).name).toBe('VO2max 3x4x40/20')
+    expect(shortName('bike-vo2-5x4', 40).name).toBe('VO2max 3x4min')
+    expect(shortName('bike-ou-4x9', 40).name).toBe('Over-Under 4x6min')
+    expect(shortName('run-vo2-8x800', 40).name).toBe('VO2max 6x800m')
+  })
+
+  it('gives continuous work its new length', () => {
+    expect(shortName('bike-endurance-75', 40).name).toBe('Grundlage 43min')
+    expect(shortName('bike-long-120', 40).name).toBe('Lange Ausfahrt 65min')
+  })
+
+  it('keeps a name whose numbers were not cut', () => {
+    expect(shortName('bike-thr-2x20', 40).name).toBe('Schwelle 2x20min')
+    expect(shortName('run-easy-strides', 40).name).toBe('Locker 40min + Steigerungen')
+  })
+})
+
 describe('one version per configured time budget', () => {
   const sessions = () => planDays(state(), config, 3).flatMap((day) => day.options)
 
@@ -159,6 +197,14 @@ describe('one version per configured time budget', () => {
       if (!session) continue
       expect(session.variants).toHaveLength(1)
       expect(session.variants[0]?.minutes).toBe(template.minutes)
+    }
+  })
+
+  it('names a whole version after its template', () => {
+    for (const session of sessions()) {
+      for (const variant of session.variants) {
+        if (variant.cuts.length === 0) expect(variant.name).toBe(session.template.name)
+      }
     }
   })
 

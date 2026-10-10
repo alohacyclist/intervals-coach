@@ -474,6 +474,8 @@ export type ProfileSegment = {
 
 export type SessionVariant = {
   readonly tier: SessionTier
+  /** The template's name, with the counts of this version: "VO2max 3x4x40/20". */
+  readonly name: string
   readonly minutes: number
   readonly load: number
   readonly blocks: readonly Block[]
