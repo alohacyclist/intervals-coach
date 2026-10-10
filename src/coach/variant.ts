@@ -99,6 +99,18 @@ const repSeconds = (block: Repeat, threshold: SportThreshold): number =>
   block.steps.reduce((sum, step) => sum + stepSeconds(step, threshold), 0)
 
 /**
+ * Repeat blocks that are the same set written out several times — 3x6x40/20 is
+ * three of them. They give way together, so the short version is still three
+ * equal sets rather than one gutted set next to two whole ones.
+ */
+const twinsOf = (blocks: readonly Block[]): readonly (readonly number[])[] => {
+  const keys = blocks.map((block) => (block.kind === 'repeat' ? JSON.stringify(block) : null))
+  return keys.map((key) =>
+    key === null ? [] : keys.flatMap((other, position) => (other === key ? [position] : [])),
+  )
+}
+
+/**
  * Drops one repeat from the block with the longest single repetition, so the
  * main set gives way before short accessory work like strides does. Floors come
  * from the original workout, so repeated calls cannot walk a block below half.
@@ -106,6 +118,7 @@ const repSeconds = (block: Repeat, threshold: SportThreshold): number =>
 const dropOneRepeat = (
   blocks: readonly Block[],
   floors: readonly number[],
+  twins: readonly (readonly number[])[],
   threshold: SportThreshold,
 ): readonly Block[] | null => {
   const index = blocks.reduce<number>((best, block, position) => {
@@ -118,7 +131,10 @@ const dropOneRepeat = (
   const block = blocks[index]
   if (!block || block.kind !== 'repeat') return null
   const reduced: Repeat = { ...block, times: block.times - 1 }
-  return replaceAt(blocks, index, reduced)
+  return (twins[index] ?? [index]).reduce(
+    (current, position) => replaceAt(current, position, reduced),
+    blocks,
+  )
 }
 
 /** Names the change per interval block, so "4x9min" does not read as 12 of something. */
@@ -154,12 +170,13 @@ const reduceRepeats = (
   threshold: SportThreshold,
 ): Trim => {
   const floors = blocks.map((block) => (block.kind === 'repeat' ? repeatFloor(block.times) : 0))
+  const twins = twinsOf(blocks)
   const missBy = (candidate: readonly Block[]) =>
     Math.abs(totalSeconds(candidate, threshold) - targetSec)
   // At most every repeat can be dropped once, which bounds the loop.
   const capacity = blocks.reduce((sum, block) => sum + (block.kind === 'repeat' ? block.times : 0), 0)
   const settled = Array.from({ length: capacity }).reduce<readonly Block[]>((current) => {
-    const dropped = dropOneRepeat(current, floors, threshold)
+    const dropped = dropOneRepeat(current, floors, twins, threshold)
     return dropped && missBy(dropped) < missBy(current) ? dropped : current
   }, blocks)
   return { blocks: settled, cuts: repeatCuts(blocks, settled) }
@@ -214,3 +231,94 @@ export const shorten = (
   const merged: Trim = { blocks: repeats.blocks, cuts: [...trimmed.cuts, ...repeats.cuts] }
   return shrinkContinuous(merged, targetSec, threshold)
 }
+
+const minutesLabel = (minutes: number): string =>
+  `${Number.isInteger(minutes) ? minutes : minutes.toLocaleString('de-DE', { maximumFractionDigits: 1 })}min`
+
+const escape = (text: string): string => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
+/** Replaces the first count the name gives as `<from>x`, but not the 4 of "14x". */
+const replaceCount = (name: string, from: string, to: string): string =>
+  name.replace(new RegExp(`(?<![\\d,])${escape(from)}x`), `${to}x`)
+
+/**
+ * The counts in a name follow the repeats: "3x6x40/20" with two intervals less
+ * per set is "3x4x40/20", and "Over-Under 4x9min" with two of three
+ * over-unders per set is "4x6min".
+ */
+const renameRepeats = (
+  name: string,
+  original: readonly Block[],
+  shortened: readonly Block[],
+  threshold: SportThreshold,
+): string => {
+  const twins = twinsOf(original)
+  return original.reduce((current, block, index) => {
+    const after = shortened[index]
+    const sets = twins[index] ?? []
+    // A group of sets is renamed once, from its first member.
+    if (block.kind !== 'repeat' || after?.kind !== 'repeat' || sets[0] !== index) return current
+    if (after.times === block.times) return current
+    if (sets.length === 1) return replaceCount(current, String(block.times), String(after.times))
+
+    const nested = `${sets.length}x${block.times}x`
+    if (current.includes(nested)) return current.replace(nested, `${sets.length}x${after.times}x`)
+    const rep = repSeconds(block, threshold) / 60
+    return current.replace(
+      new RegExp(`(?<![\\d,])${sets.length}x${escape(minutesLabel(block.times * rep))}`),
+      `${sets.length}x${minutesLabel(after.times * rep)}`,
+    )
+  }, name)
+}
+
+const DURATION_PATTERN = /(?<![\d,])(\d+(?:,\d+)?)(min|h)(?![a-z])/i
+
+const nameMinutes = (value: string, unit: string): number => {
+  const amount = Number(value.replace(',', '.'))
+  return unit.toLowerCase() === 'h' ? amount * 60 : amount
+}
+
+/**
+ * Continuous work names its length: "Grundlage 75min" cut to fifty minutes is
+ * "Grundlage 50min". The number may be the whole session or its main part, so
+ * both are looked for.
+ */
+const renameDuration = (
+  name: string,
+  original: readonly Block[],
+  shortened: readonly Block[],
+  threshold: SportThreshold,
+): string => {
+  const match = DURATION_PATTERN.exec(name)
+  if (!match?.[1] || !match[2]) return name
+  const named = nameMinutes(match[1], match[2])
+  const minutesOf = (blocks: readonly Block[]) => ({
+    total: totalSeconds(blocks, threshold) / 60,
+    main: blocks.filter(isMainStep).reduce((sum, step) => sum + stepSeconds(step, threshold), 0) / 60,
+  })
+  const before = minutesOf(original)
+  const after = minutesOf(shortened)
+  const now =
+    Math.round(before.total) === named
+      ? after.total
+      : Math.round(before.main) === named
+        ? after.main
+        : null
+  if (now === null || Math.round(now) === named) return name
+  return name.replace(match[0], minutesLabel(Math.round(now)))
+}
+
+/**
+ * The name of a shortened session, so the title says what is actually ridden.
+ * Counts and durations the name does not mention are left alone — a name
+ * without numbers stays the name it was.
+ */
+export const renameShortened = (
+  name: string,
+  original: readonly Block[],
+  shortened: readonly Block[],
+  threshold: SportThreshold,
+): string =>
+  original.some((block) => block.kind === 'repeat')
+    ? renameRepeats(name, original, shortened, threshold)
+    : renameDuration(name, original, shortened, threshold)

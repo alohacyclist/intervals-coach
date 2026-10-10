@@ -114,6 +114,14 @@ describe('adherence without the calendar', () => {
     expect(day?.planned).toEqual(['Schwelle kompakt 3x8min (30 min)'])
   })
 
+  it('knows a renamed short version is still the recommendation', () => {
+    const event = plannedEvent(2, 'Schwelle kompakt 2x8min', {
+      externalId: 'coach:2026-08-31:bike-thr-short-3x8:37',
+    })
+    const day = dayOn(buildHistory([event], [], TODAY, 7, [proposal], []), 2)
+    expect(day?.planned).toEqual(['Schwelle kompakt 2x8min'])
+  })
+
   it('leaves today open instead of calling it missed', () => {
     const today = { ...proposal, date: TODAY }
     expect(dayOn(buildHistory([], [], TODAY, 7, [today], []), 0)?.status).toBe('open')
