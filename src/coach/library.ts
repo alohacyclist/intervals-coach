@@ -371,7 +371,7 @@ const RUN: readonly WorkoutTemplate[] = [
     id: 'run-progression-50',
     sport: 'Run',
     stimulus: 'TEMPO',
-    name: 'Steigerungslauf 45min',
+    name: 'Steigerungslauf 48min',
     minutes: 48,
     load: 60,
     phases: ['BASE', 'BUILD'],
