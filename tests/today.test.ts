@@ -66,6 +66,17 @@ describe('a day that has already been trained', () => {
     expect(tomorrow?.dayType).not.toBe('KEY')
   })
 
+  it('keeps a quality day open after an easy session, so tomorrow is not the same hard day again', () => {
+    const before = morning(rested)
+    expect(before[0]?.dayType).toBe('KEY')
+
+    const easyRun = activity(0, 'Run', { load: 35, intensity: 65, name: 'Lauf locker' })
+    const [today, tomorrow] = planFromMorning([...rested, easyRun], wellnessEntries, [], config, TODAY, 3)
+    expect(idsOf(today)).toEqual(idsOf(before[0]))
+    expect(tomorrow?.dayType).not.toBe('KEY')
+    expect(idsOf(tomorrow)).not.toEqual(idsOf(today))
+  })
+
   it('plans exactly as before while nothing has been done today', () => {
     expect(planFromMorning(rested, wellnessEntries, [], config, TODAY, 3)).toEqual(morning(rested))
   })
