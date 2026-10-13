@@ -87,6 +87,23 @@ describe('plan engine', () => {
     expect(days.filter((day) => day.dayType === 'KEY')).toHaveLength(1)
   })
 
+  it('keeps tempo off an easy day that fatigue called for', () => {
+    // Fatigued without being exhausted, and with nothing hard for days.
+    const base = stateFrom(rested)
+    const tired = { ...base, overall: { ...base.overall, tsb: -22 } }
+    const [today] = planDays(tired, config)
+    expect(today?.notes[0]).toContain('Hohe Ermüdung')
+    expect(today?.options.map((option) => intensityClass(option.template.stimulus))).toEqual(['easy', 'easy'])
+  })
+
+  it('keeps tempo off an easy day that recovery values called for', () => {
+    const base = stateFrom(rested)
+    const amber = { ...base, readiness: { ...base.readiness, score: 'amber' as const } }
+    const [today] = planDays(amber, config)
+    expect(today?.notes[0]).toContain('Erholungswerte')
+    expect(today?.options.map((option) => intensityClass(option.template.stimulus))).toEqual(['easy', 'easy'])
+  })
+
   it('drops to recovery when readiness is red', () => {
     const sick = [wellness(0, { hrv: 30, restingHr: 62, fatigue: 4 }), ...baselineWellness()]
     const [today] = planDays(stateFrom(rested, sick), config)
