@@ -782,9 +782,15 @@ export const planDays = (
       }
 
       // What was actually trained replaces the proposal; a test only offered measured nothing.
+      // An easy session on a quality day leaves the quality session open until the day is
+      // over, so tomorrow is planned as if it still happens — otherwise the same hard
+      // session is offered today and tomorrow, and doing both is two hard days in a row.
       const actual = isToday ? trainedToday : []
-      const efforts = actual.length > 0 ? actual : chosen ? [plannedEffort(chosen)] : []
-      const tested = actual.length === 0 && options.some((option) => option.template.measures === 'threshold')
+      const planned = chosen ? [plannedEffort(chosen)] : []
+      const stillOpen = dayType === 'KEY' && !actual.some((effort) => effort.hard)
+      const efforts = actual.length === 0 ? planned : stillOpen ? [...actual, ...planned] : actual
+      const tested =
+        (actual.length === 0 || stillOpen) && options.some((option) => option.template.measures === 'threshold')
 
       return {
         simulation: advance(
