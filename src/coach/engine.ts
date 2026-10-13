@@ -126,9 +126,13 @@ type DayDecision = {
   readonly dayType: DayType
   readonly reason: string
   readonly optional: boolean
+  /** An easy day the body asked for: tempo there would contradict the reason given for it. */
+  readonly easyOnly?: boolean
 }
 
 const plan = (dayType: DayType, reason: string): DayDecision => ({ dayType, reason, optional: false })
+
+const backOff = (reason: string): DayDecision => ({ ...plan('EASY', reason), easyOnly: true })
 
 /** How far the plan is willing to follow the athlete down from what they promised. */
 const MAX_FREQUENCY_CONCESSION = 2
@@ -266,7 +270,7 @@ const decideDay = (
   // something no measurement does yet.
   const limit = breakLimit(config.breaks, date)
   if (limit) {
-    return { dayType: limit.dayType, reason: limit.reason, optional: limit.dayType !== 'REST' }
+    return { dayType: limit.dayType, reason: limit.reason, optional: limit.dayType !== 'REST', easyOnly: true }
   }
 
   if (readinessRed && dayIndex === 0) {
@@ -318,9 +322,9 @@ const decideDay = (
         )
       : plan('EASY', spent)
   }
-  if (simulation.fitness.tsb < -18) return plan('EASY', 'Hohe Ermüdung — locker halten')
+  if (simulation.fitness.tsb < -18) return backOff('Hohe Ermüdung — locker halten')
   if (readinessRed || (state.readiness.score === 'amber' && dayIndex === 0)) {
-    return plan('EASY', 'Erholungswerte unter deiner Baseline')
+    return backOff('Erholungswerte unter deiner Baseline')
   }
   return plan('KEY', 'Erholt und im Wochenbudget — heute darf es wehtun')
 }
@@ -422,7 +426,7 @@ const candidatesFor = (
   ceilings: Readonly<Record<string, number>>,
   recent: readonly RecentWorkout[],
   goalKind: GoalKind | undefined,
-  recovering: boolean,
+  easyOnly: boolean,
 ): readonly WorkoutTemplate[] => {
   const available = templatesFor(sport)
     // Benchmarks are scheduled deliberately, never offered as ordinary work; nor is anything made for a race.
@@ -440,13 +444,14 @@ const candidatesFor = (
   const fresh = (list: readonly WorkoutTemplate[]) =>
     list.filter((template) => !looksLikeRepeat(template, recent))
 
-  // An easy day that exists because yesterday was hard is a recovery day in all
-  // but name. Tempo would turn the week into one long middle, which is the most
-  // common way an amateur plan fails.
-  const classes =
-    dayType === 'EASY' && recovering ? (['easy'] as const) : ALLOWED_CLASSES[dayType]
-  const pool = byClass(classes)
-  const wider = byClass(FALLBACK_CLASSES[dayType])
+  // An easy day that exists because yesterday was hard, or because fatigue,
+  // recovery values or a break call for it, is a recovery day in all but name.
+  // Tempo would turn the week into one long middle, which is the most common way
+  // an amateur plan fails.
+  const restricted = dayType === 'EASY' && easyOnly
+  const pool = byClass(restricted ? ['easy'] : ALLOWED_CLASSES[dayType])
+  // Nor does running out of fresh easy sessions bring tempo back on such a day.
+  const wider = restricted ? pool : byClass(FALLBACK_CLASSES[dayType])
 
   return (
     [
@@ -755,7 +760,7 @@ export const planDays = (
           ceilings,
           view.recentWorkouts,
           goalKind,
-          minDaysSinceHard(simulation, sports) < HARD_SPACING_DAYS,
+          minDaysSinceHard(simulation, sports) < HARD_SPACING_DAYS || decision.easyOnly === true,
         )
         const best = [...candidates].sort(
           (left, right) =>
