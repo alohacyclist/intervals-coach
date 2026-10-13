@@ -565,10 +565,16 @@ const strengthFor = (
   return simulation.strengthThisWeek < session.perWeek ? session : null
 }
 
-const plannedEffort = (session: PlannedSession): Effort => ({
+/**
+ * The session of a quality day is that day's quality, whatever its stimulus. A
+ * recovery week has no hard templates, so its quality day offers tempo: counted
+ * as moderate, it spent neither the week's budget nor the spacing, and the same
+ * day came back the next day and the one after.
+ */
+const plannedEffort = (session: PlannedSession, dayType: DayType): Effort => ({
   sport: session.sport,
   load: session.template.load,
-  hard: intensityClass(session.template.stimulus) === 'hard',
+  hard: dayType === 'KEY' || intensityClass(session.template.stimulus) === 'hard',
   stimuli: [session.template.stimulus],
 })
 
@@ -786,7 +792,7 @@ export const planDays = (
       // over, so tomorrow is planned as if it still happens — otherwise the same hard
       // session is offered today and tomorrow, and doing both is two hard days in a row.
       const actual = isToday ? trainedToday : []
-      const planned = chosen ? [plannedEffort(chosen)] : []
+      const planned = chosen ? [plannedEffort(chosen, dayType)] : []
       const stillOpen = dayType === 'KEY' && !actual.some((effort) => effort.hard)
       const efforts = actual.length === 0 ? planned : stillOpen ? [...actual, ...planned] : actual
       const tested =
