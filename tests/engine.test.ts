@@ -77,6 +77,16 @@ describe('plan engine', () => {
     }
   })
 
+  it('spends a recovery week quality day only once, though it offers only tempo', () => {
+    // The plan started three calendar weeks ago, so this is its fourth: a recovery week.
+    const recoveryWeek = { ...config, planStart: addDays(startOfWeek(TODAY), -21) }
+    const days = planDays(stateFrom(rested), recoveryWeek, 3)
+    expect(days[0]?.phase).toBe('RECOVERY')
+    expect(days[0]?.dayType).toBe('KEY')
+    expect(days[1]?.dayType).not.toBe('KEY')
+    expect(days.filter((day) => day.dayType === 'KEY')).toHaveLength(1)
+  })
+
   it('drops to recovery when readiness is red', () => {
     const sick = [wellness(0, { hrv: 30, restingHr: 62, fatigue: 4 }), ...baselineWellness()]
     const [today] = planDays(stateFrom(rested, sick), config)
