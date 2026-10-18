@@ -173,6 +173,7 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
           onStrengthLogged={() => void load()}
           destinations={destinationLabels}
           scheduled={(plan?.scheduled ?? []).filter((entry) => entry.date === day.date)}
+          intent={intent}
         />
       ))}
 

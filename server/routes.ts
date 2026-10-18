@@ -62,8 +62,8 @@ import type { SessionTier } from '../src/coach/types.ts'
 const TIERS: readonly SessionTier[] = ['min', 'normal', 'max']
 import { activeBreak, endedBefore } from '../src/coach/breaks.ts'
 import { findTemplate } from '../src/coach/library.ts'
+import { buildSession } from '../src/coach/session.ts'
 import { loadExecution } from './execution-load.ts'
-import { describeWorkout } from '../src/coach/format.ts'
 import type { Intent, Plan, Progress } from '../src/coach/types.ts'
 
 export const DEFAULT_TIMEZONE = 'Europe/Berlin'
@@ -638,6 +638,7 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
       date?: string
       templateId?: string
       variant?: string
+      intent?: string
     }
     const template = body.templateId ? findTemplate(body.templateId) : undefined
     if (!body.date || !/^\d{4}-\d{2}-\d{2}$/.test(body.date)) {
@@ -651,12 +652,19 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
     const resolved = await resolve(context)
     // Whether this version is already on the calendar must come from the calendar as it is now.
     const deps = { ...resolved, auth: bypassingReads(resolved.auth) }
-    const plan = await buildPlan(deps, 7)
+    // The plan as the athlete saw it: today's wish changes what today offers.
+    const intent = body.intent === 'hard' || body.intent === 'easy' || body.intent === 'rest' ? body.intent : undefined
+    const plan = await buildPlan(deps, 7, intent)
+    const config = await deps.store.load()
     const planned = plan.days
       .find((day) => day.date === body.date)
       ?.options.find((option) => option.template.id === template.id)
+    // Rebuilt, the plan may no longer offer what was tapped — new data, another
+    // day. The versions follow from the template and the profile alone, so the
+    // one on screen is built here rather than refused.
+    const session = planned ?? buildSession(template, config, 'manuell ausgewählt', body.date)
 
-    const chosen = planned?.variants.find((variant) => variant.tier === body.variant)
+    const chosen = session.variants.find((variant) => variant.tier === body.variant)
     if (body.variant !== undefined && !chosen) {
       return context.json({ error: `Keine ${body.variant}-Fassung für ${template.name}` }, 400)
     }
@@ -673,7 +681,6 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
 
     // intervals.icu forwards per athlete: the switches are set to this sport's
     // destinations first, so a run does not land on the turbo trainer.
-    const config = await deps.store.load()
     const wanted = config.destinations[template.sport]
     if (wanted) await applyDestinations(deps.auth, wanted)
 
@@ -683,7 +690,7 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
       templateId: template.id,
       name,
       description:
-        short?.description ?? planned?.description ?? describeWorkout(template, 'manuell ausgewählt'),
+        short?.description ?? session.description,
       minutes,
     })
 

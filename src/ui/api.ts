@@ -138,10 +138,11 @@ export const pushWorkout = (
   date: string,
   templateId: string,
   variant: SessionTier = 'max',
+  intent?: string,
 ): Promise<{ name: string; alreadyScheduled: boolean }> =>
   request<{ name: string; alreadyScheduled: boolean }>('/api/push', {
     method: 'POST',
-    body: JSON.stringify({ date, templateId, variant }),
+    body: JSON.stringify({ date, templateId, variant, intent }),
   })
 
 export const deleteAccount = (): Promise<{ ok: boolean }> =>
