@@ -148,6 +148,28 @@ describe('the plan with the cache in the Worker', () => {
     expect(calls.slice(before)).toContain('GET /athlete/iA/events')
   })
 
+  it('sends the version on screen even when the rebuilt plan no longer offers the session', async () => {
+    const { env, cookie } = await setUp()
+    const calls = stubIntervals()
+    const plan = (await (await call('/api/plan', { headers: { Cookie: cookie } }, env)).json()) as {
+      days: { date: string; options: { template: { id: string } }[] }[]
+    }
+    const day = plan.days[0]!
+    const offered = day.options.map((option) => option.template.id)
+    const elsewhere = ['bike-thr-3x12', 'bike-vo2-3040'].find((id) => !offered.includes(id))!
+    const push = await call(
+      '/api/push',
+      {
+        method: 'POST',
+        headers: { Cookie: cookie },
+        body: JSON.stringify({ date: day.date, templateId: elsewhere, variant: 'max', intent: 'hard' }),
+      },
+      env,
+    )
+    expect(push.status).toBe(200)
+    expect(calls).toContain('POST /athlete/iA/events')
+  })
+
   it('reads the calendar again after a workout was pushed to it', async () => {
     const { env, cookie } = await setUp()
     const calls = stubIntervals()

@@ -19,6 +19,8 @@ type Props = {
   readonly onStrengthLogged: () => void
   readonly destinations: Readonly<Record<string, readonly string[]>>
   readonly scheduled: readonly ScheduledWorkout[]
+  /** Today's wish, so a push finds the plan that was on screen. */
+  readonly intent?: string
 }
 
 /** The version shown first, mirroring the preference SessionCard applies. */
@@ -55,6 +57,7 @@ export const DayCard = ({
   onStrengthLogged,
   destinations,
   scheduled,
+  intent,
 }: Props) => {
   const trained = day.completed.length > 0
   const dimmed = trained || day.recommended === 'REST'
@@ -131,6 +134,7 @@ export const DayCard = ({
               .filter((entry) => entry.templateId === session.template.id)
               .map((entry) => entry.minutes)}
             destinations={destinations[session.sport] ?? []}
+            intent={intent}
           />
         ))}
       </div>

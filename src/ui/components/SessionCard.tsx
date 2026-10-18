@@ -15,6 +15,8 @@ type Props = {
   readonly scheduledMinutes: readonly number[]
   /** Named so the button says where the workout actually ends up. */
   readonly destinations: readonly string[]
+  /** Today's wish, sent along so the push rebuilds the plan that was on screen. */
+  readonly intent?: string
 }
 
 type PushState = { readonly status: 'idle' | 'busy' | 'error'; readonly message?: string }
@@ -47,6 +49,7 @@ export const SessionCard = ({
   done,
   scheduledMinutes,
   destinations,
+  intent,
 }: Props) => {
   const [push, setPush] = useState<PushState>({ status: 'idle' })
   const [sent, setSent] = useState<readonly number[]>([])
@@ -69,7 +72,7 @@ export const SessionCard = ({
   const onPush = async () => {
     setPush({ status: 'busy' })
     try {
-      await pushWorkout(date, session.template.id, tier)
+      await pushWorkout(date, session.template.id, tier, intent)
       setSent((previous) => [...previous, minutes])
       setPush({ status: 'idle' })
     } catch (error) {
