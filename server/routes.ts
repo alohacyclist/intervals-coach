@@ -9,22 +9,8 @@ import {
   isIsoDate,
   MAX_ZRL_RACES,
 } from '../src/coach/config-schema.ts'
-import type { IntervalsAuth } from './intervals.ts'
-import {
-  IntervalsError,
-  ReauthRequiredError,
-  addActivityNote,
-  bypassingReads,
-  createWorkoutEvent,
-  fetchActivities,
-  fetchEvents,
-  fetchDestinations,
-  fetchSportSettings,
-  fetchWellness,
-  applyDestinations,
-  replaceHeartRate,
-  updateSportThreshold,
-} from './intervals.ts'
+import { IntervalsError, ReauthRequiredError } from './intervals.ts'
+import type { IntervalsSource } from './source.ts'
 import { correctionNote } from '../src/coach/heart-check.ts'
 import { addDays } from '../src/coach/dates.ts'
 import { buildState } from '../src/coach/state.ts'
@@ -97,7 +83,7 @@ export const localHour = (now: Date, timeZone: string = DEFAULT_TIMEZONE): numbe
   Number(new Intl.DateTimeFormat('en-GB', { hour: 'numeric', hourCycle: 'h23', timeZone }).format(now))
 
 export type RouteDeps = {
-  readonly auth: IntervalsAuth
+  readonly source: IntervalsSource
   readonly store: ConfigStore
   /** From the athlete's intervals.icu profile; Berlin where it is unknown. */
   readonly timezone?: string
@@ -115,7 +101,7 @@ export type DepsResolver = (context: Context) => Promise<RouteDeps>
 /** `?frisch=1` is the refresh button: whatever intervals.icu says now, not a few minutes ago. */
 const resolveFor = async (resolve: DepsResolver, context: Context): Promise<RouteDeps> => {
   const deps = await resolve(context)
-  return context.req.query('frisch') === '1' ? { ...deps, auth: bypassingReads(deps.auth) } : deps
+  return context.req.query('frisch') === '1' ? { ...deps, source: deps.source.fresh() } : deps
 }
 
 /**
@@ -156,7 +142,7 @@ const isReference = (template: WorkoutTemplate): boolean =>
  * session itself — where the athlete looks, not only on the progress page.
  */
 const referenceResult = async (
-  auth: IntervalsAuth,
+  source: IntervalsSource,
   config: CoachConfig,
   sport: Sport,
   activityId: string,
@@ -165,8 +151,8 @@ const referenceResult = async (
   today: string,
 ): Promise<BenchmarkResult | null> => {
   const [activities, events] = await Promise.all([
-    fetchActivities(auth, addDays(today, -PROGRESSION_DAYS), today),
-    fetchEvents(auth, addDays(today, -PROGRESSION_DAYS), today),
+    source.activities(addDays(today, -PROGRESSION_DAYS), today),
+    source.events(addDays(today, -PROGRESSION_DAYS), today),
   ])
   const completions = mergeCompletions(
     completionsFrom(events, activities),
@@ -185,7 +171,7 @@ const referenceResult = async (
     previous
       ? {
           date: previous.date,
-          reading: await readWork(auth, config.profile, previous, previousActivity),
+          reading: await readWork(source, config.profile, previous, previousActivity),
           averageHr: previousActivity?.averageHr ?? null,
         }
       : null,
@@ -202,15 +188,15 @@ const buildProgressView = async (deps: RouteDeps, span: ProgressSpan): Promise<P
   const config = await deps.store.load()
   const [activities, events] = await Promise.all([
     // Levels and benchmarks judge the same history as the plan, whatever span is shown.
-    fetchActivities(deps.auth, addDays(today, -Math.max(ACTIVITY_HISTORY_DAYS, span + FITNESS_WARMUP_DAYS)), today),
-    fetchEvents(deps.auth, addDays(today, -PROGRESSION_DAYS), today),
+    deps.source.activities(addDays(today, -Math.max(ACTIVITY_HISTORY_DAYS, span + FITNESS_WARMUP_DAYS)), today),
+    deps.source.events(addDays(today, -PROGRESSION_DAYS), today),
   ])
   const recognised = mergeCompletions(
     completionsFrom(events, activities),
     matchedCompletions(config.proposals, activities, config.profile),
   )
   // The ladder judges the intervals, as the plan does.
-  const held = await readHeld(deps.auth, config.profile, toJudge(recognised), activities).catch(
+  const held = await readHeld(deps.source, config.profile, toJudge(recognised), activities).catch(
     () => new Map<string, IntervalVerdict>(),
   )
   const completions = withHeld(recognised, held)
@@ -218,7 +204,7 @@ const buildProgressView = async (deps: RouteDeps, span: ProgressSpan): Promise<P
   const references = config.profile.sports.flatMap((setting) =>
     benchmarkCompletions(setting.sport, completions).slice(-2),
   )
-  const readings = await readWorkMany(deps.auth, config.profile, references, activities).catch(
+  const readings = await readWorkMany(deps.source, config.profile, references, activities).catch(
     () => new Map<string, WorkReading>(),
   )
   const progress = buildProgress(activities, completions, today, span, weeksFor(span), {
@@ -234,23 +220,19 @@ const buildPlan = async (deps: RouteDeps, days: number, intent?: Intent): Promis
   const today = todayFor(deps)
   const config = await deps.store.load()
   const [activities, wellness, events, settings, destinations] = await Promise.all([
-    fetchActivities(deps.auth, addDays(today, -ACTIVITY_HISTORY_DAYS), today),
-    fetchWellness(deps.auth, addDays(today, -WELLNESS_HISTORY_DAYS), today),
+    deps.source.activities(addDays(today, -ACTIVITY_HISTORY_DAYS), today),
+    deps.source.wellness(addDays(today, -WELLNESS_HISTORY_DAYS), today),
     // Ahead too, so the plan knows which versions are already on the calendar.
-    fetchEvents(deps.auth, addDays(today, -PROGRESSION_DAYS), addDays(today, days)),
+    deps.source.events(addDays(today, -PROGRESSION_DAYS), addDays(today, days)),
     // Optional: a missing scope must not take the whole plan down.
-    fetchSportSettings(deps.auth).catch(() => null),
-    fetchDestinations(deps.auth).catch(() => []),
+    deps.source.sportSettings().catch(() => null),
+    deps.source.destinations().catch(() => []),
   ])
   // Only an athlete with races entered pays for the extra history; without it the estimate is rougher, not wrong.
   const olderRaces =
     config.zrlRaces.length === 0
       ? []
-      : await fetchActivities(
-          deps.auth,
-          addDays(today, -RACE_HISTORY_DAYS),
-          addDays(today, -ACTIVITY_HISTORY_DAYS - 1),
-        ).then(
+      : await deps.source.activities(addDays(today, -RACE_HISTORY_DAYS), addDays(today, -ACTIVITY_HISTORY_DAYS - 1)).then(
           (older) => older.filter(isZrlRace),
           () => [],
         )
@@ -259,7 +241,7 @@ const buildPlan = async (deps: RouteDeps, days: number, intent?: Intent): Promis
   const calendar = completionsFrom(events, activities)
   // Levels are earned by the intervals: read once, for the newest sessions of every family and level.
   const held = await readHeld(
-    deps.auth,
+    deps.source,
     config.profile,
     toJudge(mergeCompletions(calendar, matchedCompletions(config.proposals, activities, config.profile))),
     activities,
@@ -280,11 +262,11 @@ const buildPlan = async (deps: RouteDeps, days: number, intent?: Intent): Promis
   )
   const proposals = morning ? withProposal(config.proposals, morning) : config.proposals
 
-  const tests = await readThresholdTests(deps.auth, config, recognised(proposals), today)
+  const tests = await readThresholdTests(deps.source, config, recognised(proposals), today)
   const completions = tests.completions
   const estimated = thresholdSuggestions(config.profile, observedThresholds(wellness, settings))
   // Optional like the other extras: a failed read must not take the plan down.
-  const executed = await executionSuggestions(deps.auth, config, completions, activities, today).catch(() => [])
+  const executed = await executionSuggestions(deps.source, config, completions, activities, today).catch(() => [])
   // A test outranks what the sessions show, and both outrank an estimate, for the same sport.
   const ranked = [tests.suggestions, executed, estimated]
   const suggestions = ranked.flatMap((level, rank) =>
@@ -386,9 +368,9 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
 
   /** Pulls FTP and threshold pace from intervals.icu into the stored profile. */
   app.post('/api/sync-settings', async (context) => {
-    const { auth, store } = await resolve(context)
+    const { source, store } = await resolve(context)
     // The athlete asked for what intervals.icu holds now.
-    const settings = await fetchSportSettings(bypassingReads(auth))
+    const settings = await source.fresh().sportSettings()
     const config = await store.load()
     // Only the sports the athlete actually trains are updated; the rest is theirs.
     const synced = config.profile.sports.map((setting) => {
@@ -440,12 +422,12 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
     const date = context.req.query('date')
 
     const deps = await resolve(context)
-    const { auth, store } = deps
+    const { source, store } = deps
     const config = await store.load()
     const day = isIsoDate(date) ? date : null
-    const { execution } = await loadExecution(auth, config.profile, activityId, template, day)
+    const { execution } = await loadExecution(source, config.profile, activityId, template, day)
     const benchmark = isReference(template)
-      ? await referenceResult(auth, config, template.sport, activityId, day, execution, todayFor(deps)).catch(
+      ? await referenceResult(source, config, template.sport, activityId, day, execution, todayFor(deps)).catch(
           () => null,
         )
       : null
@@ -472,13 +454,13 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
     if (!template || template.occasion !== undefined) {
       return context.json({ error: 'Zu dieser Einheit gibt es keinen Plan zum Vergleichen' }, 404)
     }
-    const { auth, store } = await resolve(context)
-    if (auth.kind !== 'apiKey') {
+    const { source, store } = await resolve(context)
+    if (!source.canRewriteStreams) {
       return context.json({ error: 'Zurückschreiben geht nur mit einem API-Key von intervals.icu.', forAthlete: true }, 403)
     }
     const config = await store.load()
     const day = isIsoDate(body.date) ? body.date : null
-    const loaded = await loadExecution(auth, config.profile, activityId, template, day)
+    const loaded = await loadExecution(source, config.profile, activityId, template, day)
     const heart = loaded.execution.heart
     if (!heart?.writable || !loaded.correctedHeartRate) {
       return context.json({ error: 'An dieser Aufzeichnung gibt es nichts mehr zu korrigieren.', forAthlete: true }, 409)
@@ -491,7 +473,7 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
     }
 
     try {
-      await replaceHeartRate(auth, activityId, loaded.correctedHeartRate)
+      await source.replaceHeartRate(activityId, loaded.correctedHeartRate)
     } catch (error) {
       if (error instanceof IntervalsError && error.status === 403) {
         return context.json(
@@ -505,7 +487,7 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
       throw error
     }
     // The note is the record of the edit; a lost note must not report the edit as failed.
-    const noted = await addActivityNote(auth, activityId, correctionNote(heart)).then(
+    const noted = await source.addActivityNote(activityId, correctionNote(heart)).then(
       () => true,
       () => false,
     )
@@ -514,8 +496,8 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
 
   /** Raw sport settings, used to prefill onboarding before any config exists. */
   app.get('/api/sport-settings', async (context) => {
-    const { auth } = await resolve(context)
-    return context.json(await fetchSportSettings(auth))
+    const { source } = await resolve(context)
+    return context.json(await source.sportSettings())
   })
 
   /** Adopts one drifted threshold, leaving every other sport untouched. */
@@ -527,13 +509,13 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
     if (typeof body.observed !== 'number' || body.observed <= 0) {
       return context.json({ error: 'observed muss > 0 sein' }, 400)
     }
-    const { auth, store } = await resolve(context)
+    const { source, store } = await resolve(context)
     const config = await store.load()
     const saved = await store.save(
       validateConfig({ ...config, profile: adoptThreshold(config.profile, body.sport, body.observed) }),
     )
     // Keep intervals.icu in step, but never let a failed write lose the local change.
-    const synced = await updateSportThreshold(auth, body.sport, body.observed).then(
+    const synced = await source.updateThreshold(body.sport, body.observed).then(
       () => true,
       () => false,
     )
@@ -651,7 +633,7 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
 
     const resolved = await resolve(context)
     // Whether this version is already on the calendar must come from the calendar as it is now.
-    const deps = { ...resolved, auth: bypassingReads(resolved.auth) }
+    const deps = { ...resolved, source: resolved.source.fresh() }
     // The plan as the athlete saw it: today's wish changes what today offers.
     const intent = body.intent === 'hard' || body.intent === 'easy' || body.intent === 'rest' ? body.intent : undefined
     const plan = await buildPlan(deps, 7, intent)
@@ -682,9 +664,9 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
     // intervals.icu forwards per athlete: the switches are set to this sport's
     // destinations first, so a run does not land on the turbo trainer.
     const wanted = config.destinations[template.sport]
-    if (wanted) await applyDestinations(deps.auth, wanted)
+    if (wanted) await deps.source.applyDestinations(wanted)
 
-    await createWorkoutEvent(deps.auth, {
+    await deps.source.createWorkout({
       date: body.date,
       sport: template.sport,
       templateId: template.id,

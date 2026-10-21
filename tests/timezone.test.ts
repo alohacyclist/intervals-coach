@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { DEFAULT_CONFIG } from '../src/coach/config-schema.ts'
 import { localHour, localToday, validTimeZone } from '../server/routes.ts'
+import { httpSource } from '../server/source.ts'
 import { loadUser, saveUser } from '../worker/users.ts'
 import { saveLink } from '../worker/strava-store.ts'
 import { syncStrava } from '../worker/strava-cron.ts'
@@ -101,7 +102,7 @@ describe('the timezone from the intervals.icu profile', () => {
       })
       await syncStrava(env, {
         secret: PASSWORD,
-        depsFor: async () => ({ auth: { kind: 'apiKey', apiKey: 'k', athleteId: 'i1' }, store }),
+        depsFor: async () => ({ source: httpSource({ kind: 'apiKey' as const, apiKey: 'k', athleteId: 'i1' }), store }),
         storeFor: () => store,
         timezoneFor: async () => timezone,
         keepExpiry: false,

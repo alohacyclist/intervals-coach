@@ -3,6 +3,8 @@ import type { Context } from 'hono'
 import { DEFAULT_TIMEZONE, apiErrorResponse, createApiRoutes, validTimeZone } from '../server/routes.ts'
 import type { RouteDeps } from '../server/routes.ts'
 import { IntervalsError, ReauthRequiredError, upstreamMessage } from '../server/intervals.ts'
+import type { IntervalsAuth, ResponseCache } from '../server/intervals.ts'
+import { httpSource } from '../server/source.ts'
 import { kvConfigStore } from './config-store-kv.ts'
 import {
   deleteUser,
@@ -120,12 +122,21 @@ const freshTokens = async (env: Bindings, secret: string, user: User, refreshTok
   }
 }
 
+/** What a live athlete is reached with, before the response cache and the source are put around it. */
+type Upstream = Omit<RouteDeps, 'source'> & { readonly auth: IntervalsAuth }
+
+/** intervals.icu behind the routes' source interface, with this request's cache if there is one. */
+const liveDeps = ({ auth, ...rest }: Upstream, cache?: ResponseCache): RouteDeps => ({
+  ...rest,
+  source: httpSource(cache ? { ...auth, cache } : auth),
+})
+
 /**
  * One athlete's dependencies, refreshing the access token when it is close to
  * expiry. `present` is whether the athlete is the one asking: only a visit
  * renews the retention window, never the cron acting while nobody looks.
  */
-const athleteDeps = async (env: Bindings, athleteId: string, present: boolean): Promise<RouteDeps> => {
+const athleteUpstream = async (env: Bindings, athleteId: string, present: boolean): Promise<Upstream> => {
   const secret = env.SESSION_SECRET ?? ''
   const user = await loadUser(env.COACH_CONFIG, secret, athleteId)
   if (!user) throw new ReauthRequiredError()
@@ -152,7 +163,7 @@ const athleteDeps = async (env: Bindings, athleteId: string, present: boolean): 
   }
 }
 
-const singleUserDeps = (env: Bindings): RouteDeps => {
+const singleUserUpstream = (env: Bindings): Upstream => {
   return {
     auth: {
       kind: 'apiKey',
@@ -357,7 +368,7 @@ app.use('*', async (context, next) => {
  */
 const disconnectIntervals = async (env: Bindings, athleteId: string): Promise<void> => {
   try {
-    const { auth } = await athleteDeps(env, athleteId, false)
+    const { auth } = await athleteUpstream(env, athleteId, false)
     if (auth.kind === 'bearer') await disconnectApp(auth.accessToken)
   } catch (error) {
     console.error('intervals.icu access not withdrawn', athleteId, error)
@@ -391,17 +402,15 @@ const cacheFor = (context: Context, athleteId: string) => {
 }
 
 /** Requests get the short-lived cache; the cron does not, it reads other windows anyway. */
-const withCache = (context: Context, deps: RouteDeps): RouteDeps => {
-  const cache = cacheFor(context, deps.auth.athleteId)
-  return cache ? { ...deps, auth: { ...deps.auth, cache } } : deps
-}
+const withCache = (context: Context, upstream: Upstream): RouteDeps =>
+  liveDeps(upstream, cacheFor(context, upstream.auth.athleteId))
 
 const resolveDeps = async (context: Context): Promise<RouteDeps> => {
   const env = context.env as Bindings
-  if (!isMultiUser(env)) return withCache(context, singleUserDeps(env))
+  if (!isMultiUser(env)) return withCache(context, singleUserUpstream(env))
   const athleteId = await sessionAthlete(context)
   if (!athleteId) throw new ReauthRequiredError()
-  return withCache(context, await athleteDeps(env, athleteId, true))
+  return withCache(context, await athleteUpstream(env, athleteId, true))
 }
 
 app.route(
@@ -432,7 +441,8 @@ export default {
     execution.waitUntil(
       syncStrava(env, {
         secret: sessionSecret(env),
-        depsFor: async (subject) => (isMultiUser(env) ? athleteDeps(env, subject, false) : singleUserDeps(env)),
+        depsFor: async (subject) =>
+          liveDeps(isMultiUser(env) ? await athleteUpstream(env, subject, false) : singleUserUpstream(env)),
         storeFor: (subject) =>
           isMultiUser(env) ? userConfigStore(env.COACH_CONFIG, subject) : kvConfigStore(env.COACH_CONFIG),
         timezoneFor: async (subject) =>

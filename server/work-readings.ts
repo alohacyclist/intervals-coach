@@ -1,5 +1,4 @@
-import type { IntervalsAuth } from './intervals.ts'
-import { fetchIntervals } from './intervals.ts'
+import type { IntervalsSource } from './source.ts'
 import type { Completion, IntervalVerdict } from '../src/coach/progression.ts'
 import { judgeIntervals } from '../src/coach/progression.ts'
 import type {
@@ -53,26 +52,26 @@ const executionAgainst = (
 }
 
 const readExecution = async (
-  auth: IntervalsAuth,
+  source: IntervalsSource,
   profile: AthleteProfile,
   completion: Completion,
   activity: Activity | undefined,
 ): Promise<Execution | null> => {
   const template = findTemplate(completion.templateId)
   if (!template || template.occasion !== undefined) return null
-  const intervals = await fetchIntervals(auth, completion.activityId).catch(() => null)
+  const intervals = await source.intervals(completion.activityId).catch(() => null)
   if (!intervals) return null
   return executionAgainst(template, profile, completion.activityId, intervals, activity)
 }
 
 /** The work intervals of one recognised session, reduced to how far they sat from their targets. */
 export const readWork = async (
-  auth: IntervalsAuth,
+  source: IntervalsSource,
   profile: AthleteProfile,
   completion: Completion,
   activity: Activity | undefined,
 ): Promise<WorkReading | null> => {
-  const execution = await readExecution(auth, profile, completion, activity)
+  const execution = await readExecution(source, profile, completion, activity)
   return execution ? workReading(execution) : null
 }
 
@@ -83,7 +82,7 @@ export const readWork = async (
  * read are left out and keep the coarser rule.
  */
 export const readHeld = async (
-  auth: IntervalsAuth,
+  source: IntervalsSource,
   profile: AthleteProfile,
   completions: readonly Completion[],
   activities: readonly Activity[],
@@ -92,7 +91,7 @@ export const readHeld = async (
     completions.map(async (completion) => {
       const template = findTemplate(completion.templateId)
       if (!template || template.occasion !== undefined) return [completion.activityId, null] as const
-      const intervals = await fetchIntervals(auth, completion.activityId).catch(() => null)
+      const intervals = await source.intervals(completion.activityId).catch(() => null)
       if (!intervals) return [completion.activityId, null] as const
       const activity = activities.find((entry) => entry.id === completion.activityId)
       const verdict = judgeIntervals(template, (candidate) =>
@@ -106,7 +105,7 @@ export const readHeld = async (
 
 /** Readings for several sessions at once, by activity id; the ones that could not be read are left out. */
 export const readWorkMany = async (
-  auth: IntervalsAuth,
+  source: IntervalsSource,
   profile: AthleteProfile,
   completions: readonly Completion[],
   activities: readonly Activity[],
@@ -115,7 +114,7 @@ export const readWorkMany = async (
   const read = await Promise.all(
     unique.map(async (completion) => {
       const activity = activities.find((entry) => entry.id === completion.activityId)
-      return [completion.activityId, await readWork(auth, profile, completion, activity)] as const
+      return [completion.activityId, await readWork(source, profile, completion, activity)] as const
     }),
   )
   return new Map(read.filter((entry): entry is readonly [string, WorkReading] => entry[1] !== null))
@@ -139,7 +138,7 @@ const holdsTargets = (completion: Completion): boolean => {
  * to intervals.icu at most for two sports, and only for sessions actually done.
  */
 export const executionSuggestions = async (
-  auth: IntervalsAuth,
+  source: IntervalsSource,
   config: CoachConfig,
   completions: readonly Completion[],
   activities: readonly Activity[],
@@ -155,7 +154,7 @@ export const executionSuggestions = async (
   const sports = config.profile.sports.map((setting) => setting.sport)
   const latestTwo = (sport: Sport) =>
     recent.filter((completion) => findTemplate(completion.templateId)?.sport === sport).slice(0, 2)
-  const readings = await readWorkMany(auth, config.profile, sports.flatMap(latestTwo), activities)
+  const readings = await readWorkMany(source, config.profile, sports.flatMap(latestTwo), activities)
 
   return sports.flatMap((sport) => {
     const sessions: readonly ReadSession[] = latestTwo(sport).flatMap((completion) => {
