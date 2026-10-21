@@ -64,6 +64,14 @@ export type Bindings = {
   readonly INTERVALS_ATHLETE_ID?: string
   readonly APP_PASSWORD?: string
 
+  /**
+   * Demo deployment: `"on"` serves synthetic data behind `DEMO_PASSWORD` and
+   * nothing else — see worker/demo.ts. Set as a var in the `demo` environment
+   * of wrangler.jsonc, never next to intervals.icu credentials.
+   */
+  readonly DEMO_MODE?: string
+  readonly DEMO_PASSWORD?: string
+
   /** Optional in either mode: set all three to open the waitlist on the landing page. */
   readonly BREVO_API_KEY?: string
   readonly BREVO_LIST_ID?: string

@@ -487,3 +487,17 @@
   color: var(--warn);
   border-color: var(--warn);
 }
+
+/* ------------------------------------------------------------ demo label */
+
+/* Dashed like a placeholder: the data is a stand-in, the app around it is not. */
+.demo-badge {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--dim);
+  border: 1px dashed var(--rule-loud);
+  padding: 3px 8px;
+  white-space: nowrap;
+}

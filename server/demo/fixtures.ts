@@ -133,8 +133,9 @@ export const demoConfig = (today: string): CoachConfig => ({
       id: 'demo-halbmarathon',
       sport: 'Run',
       kind: 'raceTime',
-      label: 'Halbmarathon unter 1:40',
-      targetValue: 6000,
+      // Ambitious against the 4:30 threshold pace, so the goal check has something to weigh.
+      label: 'Halbmarathon unter 1:35',
+      targetValue: 5700,
       currentValue: 6240,
       distanceKm: 21.1,
       targetDate: addDays(weekStart(today, 26), 6),
@@ -476,9 +477,10 @@ export const generateDemo = (today: string): DemoData => {
       maxHr: MAX_HR,
     },
     destinations: [
-      { destination: 'garmin', label: 'Garmin Connect', enabled: true, connected: true },
+      // Nothing linked: a linked Garmin would make the app credit Garmin for data it never sent.
+      { destination: 'garmin', label: 'Garmin Connect', enabled: false, connected: false },
       { destination: 'wahoo', label: 'Wahoo', enabled: false, connected: false },
-      { destination: 'zwift', label: 'Zwift', enabled: false, connected: true },
+      { destination: 'zwift', label: 'Zwift', enabled: false, connected: false },
       { destination: 'coros', label: 'Coros', enabled: false, connected: false },
       { destination: 'suunto', label: 'Suunto', enabled: false, connected: false },
     ],

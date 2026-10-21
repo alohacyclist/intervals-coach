@@ -40,6 +40,7 @@ import { syncStrava } from './strava-cron.ts'
 import { edgeCache, responseCache } from './response-cache.ts'
 import { withinLimit } from './api-throttle.ts'
 import { allowSignup, brevoConfig, isEmail, requestDoubleOptIn } from './waitlist.ts'
+import { demoApp, isDemo } from './demo.ts'
 
 const REFRESH_MARGIN_SECONDS = 120
 
@@ -433,11 +434,15 @@ export { app }
 
 /**
  * Requests go to the app; the cron trigger in wrangler.jsonc writes the summary
- * of every newly recognised session under it on Strava.
+ * of every newly recognised session under it on Strava. A demo deployment is
+ * a different app altogether, chosen here and nowhere else.
  */
 export default {
-  fetch: app.fetch,
+  fetch: (...args: Parameters<typeof app.fetch>): Response | Promise<Response> =>
+    isDemo(args[1] as Bindings) ? demoApp.fetch(...args) : app.fetch(...args),
   scheduled: (_event: unknown, env: Bindings, execution: ExecutionContext): void => {
+    // The demo has no athletes and no Strava; its environment declares no cron, this is the second lock.
+    if (isDemo(env)) return
     execution.waitUntil(
       syncStrava(env, {
         secret: sessionSecret(env),
