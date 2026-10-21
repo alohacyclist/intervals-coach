@@ -33,13 +33,13 @@ und braucht keinen API-Key.
 ## Einmalig einrichten
 
 ```bash
-npx wrangler kv namespace create COACH_CONFIG --env demo
-# die ausgegebene id in wrangler.jsonc unter env.demo.kv_namespaces eintragen
-# (ersetzt REPLACE_WITH_DEMO_KV_NAMESPACE_ID)
-
-npx wrangler secret put DEMO_PASSWORD --env demo    # frei wählbar
-npm run deploy:demo
+npm run deploy:demo                                  # legt Worker und KV-Namespace an
+npx wrangler secret put DEMO_PASSWORD --env demo     # frei wählbar
 ```
+
+Den KV-Namespace legt Wrangler beim ersten Deploy selbst an (automatisches Provisioning,
+deshalb steht in `wrangler.jsonc` keine id). Bis `DEMO_PASSWORD` gesetzt ist, antwortet
+die Demo mit „Nicht konfiguriert“. Das Secret wirkt sofort, ein zweiter Deploy ist nicht nötig.
 
 Danach liegt die Demo unter `https://formkurve-demo.<dein-subdomain>.workers.dev`. Für eine
 eigene Adresse (z. B. `demo.formkurve.org`) im Cloudflare-Dashboard beim Worker

@@ -46,13 +46,9 @@
       "name": "formkurve-demo",
       "workers_dev": true,
       "vars": { "DEMO_MODE": "on" },
-      "kv_namespaces": [
-        {
-          "binding": "COACH_CONFIG",
-          // `npx wrangler kv namespace create COACH_CONFIG --env demo`, then the id here.
-          "id": "REPLACE_WITH_DEMO_KV_NAMESPACE_ID",
-        },
-      ],
+      // No id on purpose: the first `npm run deploy:demo` creates the namespace
+      // (Wrangler's automatic provisioning) and later deploys keep using it.
+      "kv_namespaces": [{ "binding": "COACH_CONFIG" }],
       "triggers": { "crons": [] },
       // Per visitor on /api/*: the demo password travels in applications, so it is not much of a secret.
       "ratelimits": [{ "name": "API_LIMITER", "namespace_id": "1002", "simple": { "limit": 60, "period": 60 } }],
