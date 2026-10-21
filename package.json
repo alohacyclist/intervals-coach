@@ -16,7 +16,10 @@
     "test:watch": "vitest",
     "coverage": "vitest run --coverage",
     "deploy": "npm run build && wrangler deploy",
-    "cf": "npm run build && wrangler dev"
+    "cf": "npm run build && wrangler dev",
+    "cf:demo": "npm run build && wrangler dev --env demo",
+    "deploy:demo": "npm run build && wrangler deploy --env demo",
+    "demo:preview": "tsx scripts/demo-preview.ts"
   },
   "dependencies": {
     "@fontsource/ibm-plex-mono": "^5.3.0",

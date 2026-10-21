@@ -51,7 +51,8 @@ const request = async <T>(path: string, init?: RequestInit): Promise<T> => {
 }
 
 export type Me = {
-  readonly mode: 'single' | 'multi'
+  /** `demo`: the deployment with synthetic data, see worker/demo.ts. */
+  readonly mode: 'single' | 'multi' | 'demo'
   readonly authenticated: boolean
   readonly onboarded: boolean
   readonly name?: string
