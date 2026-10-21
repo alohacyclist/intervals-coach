@@ -11,6 +11,7 @@ import { Imprint } from './legal/Imprint.tsx'
 import { Privacy } from './legal/Privacy.tsx'
 import { ThemeSwitch } from './components/ThemeSwitch.tsx'
 import { ErrorBoundary } from './components/ErrorBoundary.tsx'
+import { DemoBadge } from './components/DemoBadge.tsx'
 
 const PLAN_PATH = '/app'
 const PROGRESS_PATH = '/verlauf'
@@ -53,15 +54,19 @@ const Shell = ({
   children,
   nav,
   resetKey,
+  demo = false,
 }: {
   readonly children: ReactNode
   readonly nav?: ReactNode
+  /** The demo deployment says so on every view. */
+  readonly demo?: boolean
   /** Switching views remounts the boundary, so one broken page is escapable. */
   readonly resetKey?: string
 }) => (
   <main className="app">
     <div className="topbar">
       {nav}
+      {demo && <DemoBadge />}
       <ThemeSwitch />
     </div>
     <ErrorBoundary key={resetKey}>{children}</ErrorBoundary>
@@ -104,6 +109,22 @@ export const App = () => {
   if (error) return <Shell><p className="error error--block" role="alert">{error}</p></Shell>
   if (!me) return <Shell><p className="loading" role="status">Einen Moment…</p></Shell>
 
+  const demo = me.mode === 'demo'
+
+  if (!me.authenticated && demo) {
+    return (
+      <Shell demo>
+        <PasswordLogin
+          demo
+          onDone={() => {
+            go(PLAN_PATH)
+            void load()
+          }}
+        />
+      </Shell>
+    )
+  }
+
   if (!me.authenticated) {
     // Until intervals.icu opens the app to everyone, visitors meet the waitlist and the
     // owner signs in at /login; afterwards the landing page carries the sign-in itself.
@@ -144,7 +165,7 @@ export const App = () => {
   const needsOnboarding = () => setMe({ ...me, onboarded: false })
 
   return (
-    <Shell nav={<ViewSwitch path={path} onGo={go} />} resetKey={path}>
+    <Shell nav={<ViewSwitch path={path} onGo={go} />} resetKey={path} demo={demo}>
       {path === PROGRESS_PATH ? (
         <ProgressView onNeedsOnboarding={needsOnboarding} />
       ) : (

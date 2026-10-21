@@ -1,0 +1,4 @@
+# Local secrets for "npm run cf:demo" (never commit .dev.vars.demo).
+# The demo refuses to start with any intervals.icu or Strava credential, so this
+# file holds only the demo password — keep real secrets in .dev.vars.
+DEMO_PASSWORD=choose_a_demo_password
