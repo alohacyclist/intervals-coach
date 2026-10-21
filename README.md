@@ -427,6 +427,17 @@ Die Verbindung liegt verschlüsselt in KV und folgt derselben Frist wie das Kont
 des Crons verlängern sie nicht. „Strava trennen“ und das Löschen des Kontos entziehen der App auch
 auf Strava den Zugriff.
 
+## Demo
+
+Ein eigener Worker mit Beispieldaten zum Zeigen, ohne intervals.icu und ohne echte
+Daten: eine erfundene Athletin, ein Jahr Training, eine ausgefallene Einheit kurz vor heute.
+Zugang mit `DEMO_PASSWORD`, jeder Besucher in seiner eigenen Sandbox, die nach zwei Stunden
+verfällt. Einrichten, zurücksetzen, weitergeben: [docs/demo.md](docs/demo.md).
+
+```bash
+npm run deploy:demo     # Umgebung "demo" in wrangler.jsonc, nie automatisch
+```
+
 ## Struktur
 
 ```
@@ -445,6 +456,8 @@ src/coach/     reine Trainingslogik, ohne IO — hier liegt die gesamte Fachlich
   config-schema.ts    Validierung und Migration der gespeicherten Konfiguration
   feasibility.ts  Realismus-Check der Ziele
 server/        intervals.icu-Client, HTTP-Routen, Node-Entry für die Entwicklung
+  source.ts    IntervalsSource: was die Routen lesen und schreiben, ohne das Wie
+  demo/        Beispieldaten für die Demo und ihre Quelle hinter derselben Schnittstelle
 worker/        Cloudflare-Worker-Entry
   oauth.ts     intervals.icu OAuth: Authorize-URL, Code-Tausch, Refresh
   session.ts   signierte Session-Cookies, OAuth-state
@@ -452,11 +465,13 @@ worker/        Cloudflare-Worker-Entry
   crypto.ts    HMAC-Signatur und AES-GCM-Verschlüsselung (Web Crypto)
   users.ts     Nutzer- und Konfigurationsspeicher in KV, je Athlet
   strava*.ts   Strava: OAuth und API, Speicher, Abgleich, Routen, Cron
+  demo.ts      Demo-Betrieb: eigener Login, Sandbox je Besucher, keine echten Zugänge
 src/ui/        React-Oberfläche
   styles/      Designrichtung „Messgerät“, Tokens für hell und dunkel
   theme.ts     Moduswahl, gespeichert je Browser
 tests/         Vitest (npm test)
 scripts/demo.ts  Plan aus synthetischen Daten, läuft ohne API-Zugang
+scripts/demo-preview.ts  was der Demo-Zugang an einem Tag zeigt, durch die echten Routen
 ```
 
 ## Konfiguration
