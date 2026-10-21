@@ -56,6 +56,17 @@ export type IntervalsSource = {
   readonly fresh: () => IntervalsSource
 }
 
+/**
+ * A source that cannot carry out a write — the demo has no calendar to send a
+ * workout to. The message is written for the athlete.
+ */
+export class SourceReadOnlyError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'SourceReadOnlyError'
+  }
+}
+
 /** intervals.icu over HTTP — a thin seam over the functions in intervals.ts. */
 export const httpSource = (auth: IntervalsAuth): IntervalsSource => ({
   athleteId: auth.athleteId,
