@@ -5,8 +5,7 @@ import { defaultThreshold, thresholdFor } from '../src/coach/thresholds.ts'
 import { buildTrace } from '../src/coach/trace.ts'
 import { checkHeart, correctedHeartRate, withHeartCheck } from '../src/coach/heart-check.ts'
 import { garminDevice } from '../src/coach/attribution.ts'
-import type { IntervalsAuth } from './intervals.ts'
-import { fetchActivity, fetchEvents, fetchIntervals, fetchStreams } from './intervals.ts'
+import type { IntervalsSource } from './source.ts'
 
 export type LoadedExecution = {
   readonly execution: Execution
@@ -21,7 +20,7 @@ export type LoadedExecution = {
  * the same four calls to intervals.icu and the same answer.
  */
 export const loadExecution = async (
-  auth: IntervalsAuth,
+  source: IntervalsSource,
   profile: AthleteProfile,
   activityId: string,
   template: WorkoutTemplate,
@@ -29,11 +28,11 @@ export const loadExecution = async (
 ): Promise<LoadedExecution> => {
   const threshold = thresholdFor(profile, template.sport) ?? defaultThreshold(template.sport)
   const [activity, intervals, events, streams] = await Promise.all([
-    fetchActivity(auth, activityId),
-    fetchIntervals(auth, activityId),
-    date === null ? Promise.resolve([]) : fetchEvents(auth, date, date),
+    source.activity(activityId),
+    source.intervals(activityId),
+    date === null ? Promise.resolve([]) : source.events(date, date),
     // The drawing and the heart check are extra: a missing stream must not take the comparison down with it.
-    fetchStreams(auth, activityId, template.sport).catch(() => null),
+    source.streams(activityId, template.sport).catch(() => null),
   ])
   const pushed = scheduledFrom(events).find((entry) => entry.templateId === template.id)?.minutes ?? null
   const execution: Execution = {
@@ -60,7 +59,7 @@ export const loadExecution = async (
     activity,
     // A personal API key may write activities; the OAuth grant deliberately does not ask to.
     execution:
-      checked.heart && corrected && auth.kind === 'apiKey'
+      checked.heart && corrected && source.canRewriteStreams
         ? { ...checked, heart: { ...checked.heart, writable: true } }
         : checked,
     correctedHeartRate: corrected,

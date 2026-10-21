@@ -1,5 +1,4 @@
-import type { IntervalsAuth } from './intervals.ts'
-import { fetchActivityIntervals } from './intervals.ts'
+import type { IntervalsSource } from './source.ts'
 import type { Completion } from '../src/coach/progression.ts'
 import type { CoachConfig, Sport, ThresholdSuggestion } from '../src/coach/types.ts'
 import { diffDays } from '../src/coach/dates.ts'
@@ -43,13 +42,13 @@ const worthReading = (completion: Completion, today: string): boolean =>
     : diffDays(completion.date, today) < TEST_INTERVAL_WEEKS * 7
 
 const read = async (
-  auth: IntervalsAuth,
+  source: IntervalsSource,
   config: CoachConfig,
   completion: Completion,
   sport: Sport,
 ): Promise<Reading> => {
   // One extra call, only for a test that was actually done.
-  const efforts = await fetchActivityIntervals(auth, completion.activityId).catch(() => [])
+  const efforts = await source.workIntervals(completion.activityId).catch(() => [])
   const result = thresholdFromTest(sport, efforts)
   if (!result) return { completion, sport, value: null }
   const drift = measuredSuggestion(config.profile, sport, result.value)?.driftPercent ?? 0
@@ -63,7 +62,7 @@ const read = async (
  * waiting for someone else's estimate to move would defeat the point of testing.
  */
 export const readThresholdTests = async (
-  auth: IntervalsAuth,
+  source: IntervalsSource,
   config: CoachConfig,
   completions: readonly Completion[],
   today: string,
@@ -74,7 +73,7 @@ export const readThresholdTests = async (
       .filter((completion) => worthReading(completion, today))
       .flatMap((completion) => {
         const sport = findTemplate(completion.templateId)?.sport
-        return sport ? [read(auth, config, completion, sport)] : []
+        return sport ? [read(source, config, completion, sport)] : []
       }),
   )
 
