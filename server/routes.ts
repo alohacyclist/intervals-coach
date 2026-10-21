@@ -11,6 +11,7 @@ import {
 } from '../src/coach/config-schema.ts'
 import { IntervalsError, ReauthRequiredError } from './intervals.ts'
 import type { IntervalsSource } from './source.ts'
+import { SourceReadOnlyError } from './source.ts'
 import { correctionNote } from '../src/coach/heart-check.ts'
 import { addDays } from '../src/coach/dates.ts'
 import { buildState } from '../src/coach/state.ts'
@@ -316,6 +317,7 @@ export const apiErrorResponse = (error: Error, context: Context): Response => {
   if (error instanceof ReauthRequiredError) return context.json({ error: error.message, needsLogin: true }, 401)
   // Written for the athlete (a missing scope says to sign in again), unlike a gateway's own 502.
   if (error instanceof IntervalsError) return context.json({ error: error.message, forAthlete: true }, 502)
+  if (error instanceof SourceReadOnlyError) return context.json({ error: error.message, forAthlete: true }, 403)
   if (error instanceof SyntaxError) return context.json({ error: 'Ungültige Anfrage' }, 400)
   console.error(error)
   return context.json({ error: 'Unerwarteter Fehler. Bitte später noch einmal versuchen.' }, 500)
