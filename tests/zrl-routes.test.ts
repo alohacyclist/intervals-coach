@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { createApiRoutes } from '../server/routes.ts'
+import { httpSource } from '../server/source.ts'
 import type { ConfigStore } from '../src/coach/config-schema.ts'
 import type { CoachConfig } from '../src/coach/types.ts'
 import { ZWIFT_ROUTES } from '../server/zwift-routes.ts'
@@ -19,7 +20,7 @@ const memoryStore = (initial: CoachConfig): ConfigStore & { current: () => Coach
 
 const appWith = (store: ConfigStore) =>
   createApiRoutes(async () => ({
-    auth: { kind: 'apiKey' as const, apiKey: 'unused', athleteId: 'i0' },
+    source: httpSource({ kind: 'apiKey' as const, apiKey: 'unused', athleteId: 'i0' }),
     store,
   }))
 

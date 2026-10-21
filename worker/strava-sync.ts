@@ -1,7 +1,6 @@
 import type { RouteDeps } from '../server/routes.ts'
 import { localToday } from '../server/routes.ts'
 import { loadExecution } from '../server/execution-load.ts'
-import { fetchActivities, fetchEvents } from '../server/intervals.ts'
 import { addDays } from '../src/coach/dates.ts'
 import { findTemplate } from '../src/coach/library.ts'
 import { matchedCompletions, mergeCompletions } from '../src/coach/matching.ts'
@@ -74,7 +73,7 @@ export const postSession = async (context: SyncContext, session: SessionRef): Pr
   const link = await withFreshToken(context)
   const config = await context.deps.store.load()
   const { activity, execution } = await loadExecution(
-    context.deps.auth,
+    context.deps.source,
     config.profile,
     session.activityId,
     template,
@@ -110,8 +109,8 @@ export const postRecent = async (context: SyncContext, today: string = localToda
   const config = await deps.store.load()
   const oldest = addDays(today, -LOOKBACK_DAYS)
   const [activities, events] = await Promise.all([
-    fetchActivities(deps.auth, oldest, today),
-    fetchEvents(deps.auth, oldest, today),
+    deps.source.activities(oldest, today),
+    deps.source.events(oldest, today),
   ])
   const posted = new Set(context.link.posted.map((entry) => entry.activityId))
   const open = mergeCompletions(completionsFrom(events, activities), matchedCompletions(config.proposals, activities, config.profile))
@@ -140,7 +139,7 @@ export const postRecent = async (context: SyncContext, today: string = localToda
       const match = findStravaMatch(candidates, activity.startedAt!, template.sport)
       if (!match) return { ...run, outcomes: [...run.outcomes, { status: 'not-found', activityId: activity.id }] }
       try {
-        const { execution } = await loadExecution(deps.auth, config.profile, activity.id, template, completion.date)
+        const { execution } = await loadExecution(deps.source, config.profile, activity.id, template, completion.date)
         await writeSummary(run.link, execution, match.id)
         return {
           ...run,

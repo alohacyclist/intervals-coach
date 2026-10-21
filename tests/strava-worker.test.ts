@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import worker, { app } from '../worker/index.ts'
+import { httpSource } from '../server/source.ts'
 import type { Bindings, KVNamespace, KVPutOptions } from '../worker/bindings.ts'
 import { loadLink, saveLink } from '../worker/strava-store.ts'
 import { syncStrava } from '../worker/strava-cron.ts'
@@ -380,7 +381,7 @@ describe('the retention promise', () => {
     await syncStrava(env, {
       secret: PASSWORD,
       depsFor: async () => ({
-        auth: { kind: 'apiKey', apiKey: 'key', athleteId: 'i1' },
+        source: httpSource({ kind: 'apiKey' as const, apiKey: 'key', athleteId: 'i1' }),
         store: kvConfigStore(env.COACH_CONFIG),
       }),
       storeFor: () => kvConfigStore(env.COACH_CONFIG),

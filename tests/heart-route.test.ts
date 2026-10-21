@@ -1,16 +1,17 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createApiRoutes } from '../server/routes.ts'
+import { httpSource } from '../server/source.ts'
 import type { ConfigStore } from '../src/coach/config-schema.ts'
 import type { Execution } from '../src/coach/types.ts'
 import { config } from './fixtures.ts'
 
 const store: ConfigStore = { load: async () => config, save: async (next) => next }
 const withKey = createApiRoutes(async () => ({
-  auth: { kind: 'apiKey' as const, apiKey: 'unused', athleteId: 'i0' },
+  source: httpSource({ kind: 'apiKey' as const, apiKey: 'unused', athleteId: 'i0' }),
   store,
 }))
 const withToken = createApiRoutes(async () => ({
-  auth: { kind: 'bearer' as const, accessToken: 'unused', athleteId: 'i0' },
+  source: httpSource({ kind: 'bearer' as const, accessToken: 'unused', athleteId: 'i0' }),
   store,
 }))
 

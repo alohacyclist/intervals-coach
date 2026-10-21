@@ -3,14 +3,13 @@ import { serveStatic } from '@hono/node-server/serve-static'
 import { readEnv } from './env.ts'
 import { createApiRoutes } from './routes.ts'
 import { fileConfigStore } from './config-store-file.ts'
+import { httpSource } from './source.ts'
 
 const start = (): void => {
   const env = readEnv()
   const store = fileConfigStore()
-  const app = createApiRoutes(async () => ({
-    auth: { kind: 'apiKey' as const, apiKey: env.apiKey, athleteId: env.athleteId },
-    store,
-  }))
+  const source = httpSource({ kind: 'apiKey', apiKey: env.apiKey, athleteId: env.athleteId })
+  const app = createApiRoutes(async () => ({ source, store }))
 
   if (env.production) {
     app.use('/*', serveStatic({ root: './dist' }))
