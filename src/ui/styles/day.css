@@ -719,11 +719,6 @@
   font-size: 12px;
   color: var(--faint);
 }
-/* Gleich breiter Text, gleich lange Balken — egal ob 8:30 oder 12:00. */
-.exec__time .readout {
-  min-width: 13ch;
-  text-align: right;
-}
 .exec__meter {
   flex: 1;
   height: 4px;

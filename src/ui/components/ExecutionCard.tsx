@@ -148,15 +148,12 @@ const Rows = ({ steps, done }: { readonly steps: readonly ExecutedStep[]; readon
               <span className="exec__value readout">
                 {step.actualPercent === null
                   ? `nicht ${done}`
-                  : `${step.actualValue ?? ''} · ${step.actualPercent} %`}
+                  : `${step.actualSeconds === null ? '–' : clock(step.actualSeconds)} / ${clock(step.plannedSeconds)} · ${step.actualPercent} %`}
                 {verdict && <b> {SYMBOL[verdict]}</b>}
               </span>
               <span className="exec__time">
                 <span className="exec__meter">
                   <span style={{ width: `${Math.min(100, ((step.actualSeconds ?? 0) / step.plannedSeconds) * 100)}%` }} />
-                </span>
-                <span className="readout">
-                  {step.actualSeconds === null ? '–' : clock(step.actualSeconds)} / {clock(step.plannedSeconds)}
                 </span>
               </span>
               <span className="exec__word">
