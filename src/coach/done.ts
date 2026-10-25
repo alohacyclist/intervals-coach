@@ -27,14 +27,17 @@ export const completedFrom = (
   activities: readonly Activity[],
   completions: readonly Completion[],
 ): readonly CompletedSession[] =>
-  trained(activities).map((activity) => ({
-    activityId: activity.id,
-    name: activity.name,
-    sport: activity.sport,
-    load: Math.round(activity.load),
-    minutes: Math.round(activity.movingTimeSec / 60),
-    compliance: activity.compliance === null ? null : Math.round(activity.compliance),
-    templateId: isZrlRace(activity)
-      ? ZRL_TEMPLATE_ID
-      : (completions.find((completion) => completion.activityId === activity.id)?.templateId ?? null),
-  }))
+  trained(activities).map((activity) => {
+    const completion = completions.find((entry) => entry.activityId === activity.id)
+    // A recognised session carries the compliance that belongs to it, which a wrong pairing does not.
+    const compliance = completion && !isZrlRace(activity) ? completion.compliance : activity.compliance
+    return {
+      activityId: activity.id,
+      name: activity.name,
+      sport: activity.sport,
+      load: Math.round(activity.load),
+      minutes: Math.round(activity.movingTimeSec / 60),
+      compliance: compliance === null ? null : Math.round(compliance),
+      templateId: isZrlRace(activity) ? ZRL_TEMPLATE_ID : (completion?.templateId ?? null),
+    }
+  })
