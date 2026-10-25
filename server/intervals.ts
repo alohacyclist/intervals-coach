@@ -174,7 +174,7 @@ const mapActivity = (raw: RawActivity): Activity => ({
   pairedEventId: raw['paired_event_id'] == null ? null : String(raw['paired_event_id']),
   compliance: nullableNum(raw['compliance']),
   averageHr: nullableNum(raw['average_heartrate']),
-  zoneSeconds: mapZoneTimes(raw['icu_zone_times'] ?? raw['icu_hr_zone_times']),
+  zoneSeconds: zoneSecondsOf(raw),
   device: typeof raw['device_name'] === 'string' && raw['device_name'].length > 0 ? raw['device_name'] : null,
 })
 
@@ -202,6 +202,59 @@ export const mapZoneTimes = (raw: unknown): Record<string, number> => {
         .map((entry) => entry as Record<string, unknown>)
         .map((entry) => [String(entry['id'] ?? ''), num(entry['secs'])] as const)
   return Object.fromEntries(pairs.filter(([id, secs]) => id.length > 0 && secs > 0))
+}
+
+/** intervals.icu writes the top of the open highest zone as this. */
+const OPEN_TOP = 999
+/** intervals.icu's default run pace zones: the top of each, in percent of threshold pace. */
+const DEFAULT_PACE_ZONES = [77.5, 87.7, 94.3, 100, 103.4, 111.5, OPEN_TOP]
+/** The open top zone ends nowhere; this far above its start stands for it. */
+const OPEN_ZONE_SPAN = 5
+/**
+ * Where the coach's zones begin for a run, in percent of threshold pace. They
+ * follow the targets of the run library: easy and long below 86, tempo up to 96,
+ * threshold up to 106 and VO2max beyond. Pace in percent is not power in
+ * percent — an easy run at 78 % would be tempo on the bike.
+ */
+const RUN_ZONES = [
+  { from: 106, zone: 'Z5' },
+  { from: 96, zone: 'Z4' },
+  { from: 86, zone: 'Z3' },
+  { from: 0, zone: 'Z2' },
+] as const
+
+/**
+ * Time in pace zones, put into the coach's zones. intervals.icu counts it in the
+ * athlete's own pace zones, so each one goes where its middle lies; the lowest
+ * by its top, because it starts at a standstill.
+ */
+export const mapPaceZoneTimes = (raw: unknown, tops: unknown): Record<string, number> => {
+  if (!Array.isArray(raw) || !raw.every((entry) => typeof entry === 'number')) return {}
+  const ownTops = Array.isArray(tops) && tops.length === raw.length && tops.every((top) => typeof top === 'number')
+  const bounds: readonly number[] = ownTops ? tops : DEFAULT_PACE_ZONES
+  if (bounds.length !== raw.length) return {}
+  return raw.reduce<Record<string, number>>((zones, secs, index) => {
+    const top = bounds[index] ?? 0
+    const bottom = index === 0 ? 0 : (bounds[index - 1] ?? 0)
+    const middle = index === 0 ? top : top >= OPEN_TOP ? bottom + OPEN_ZONE_SPAN : (bottom + top) / 2
+    const zone = RUN_ZONES.find((band) => middle >= band.from)?.zone ?? 'Z2'
+    const seconds = num(secs)
+    return seconds > 0 ? { ...zones, [zone]: (zones[zone] ?? 0) + seconds } : zones
+  }, {})
+}
+
+/**
+ * A run is read by its pace, a ride by its power: the work itself, not the heart
+ * rate that lags it and that a loose wrist sensor gets wrong. Heart rate only
+ * stands in where neither was recorded — a ride without a meter, a treadmill run
+ * without a foot pod, a swim. Graded pace first, so a hill counts as the effort it was.
+ */
+const zoneSecondsOf = (raw: RawActivity): Record<string, number> => {
+  if (toSport(raw['type']) === 'Run') {
+    const pace = mapPaceZoneTimes(raw['gap_zone_times'] ?? raw['pace_zone_times'], raw['pace_zones'])
+    if (Object.keys(pace).length > 0) return pace
+  }
+  return mapZoneTimes(raw['icu_zone_times'] ?? raw['icu_hr_zone_times'])
 }
 
 const mapEftp = (raw: unknown): Partial<Record<Sport, number>> => {
