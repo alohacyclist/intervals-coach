@@ -74,6 +74,7 @@ const dayFor = (
     null
 
   const completed = paired ?? trained.find(isZrlRace) ?? heaviest(trained)
+  const completion = completions.find((entry) => entry.activityId === completed?.id)
 
   return {
     date,
@@ -82,14 +83,15 @@ const dayFor = (
     planned,
     completed: completed?.name || (completed ? 'Einheit ohne Namen' : null),
     completedSport: completed?.sport ?? null,
-    compliance: paired?.compliance ?? null,
+    // Against the session recognised, which is not the paired one when intervals.icu paired wrongly.
+    compliance: paired ? (completion ? completion.compliance : paired.compliance) : null,
     load: Math.round(trained.reduce((sum, activity) => sum + activity.load, 0)),
     activityId: completed?.id ?? null,
     templateId: !completed
       ? null
       : isZrlRace(completed)
         ? ZRL_TEMPLATE_ID
-        : (completions.find((completion) => completion.activityId === completed.id)?.templateId ?? null),
+        : (completion?.templateId ?? null),
   }
 }
 

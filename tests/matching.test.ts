@@ -166,8 +166,42 @@ describe('recognising a proposal without the calendar', () => {
     const merged = mergeCompletions(
       completionsFrom([event], [ride]),
       matchedCompletions([proposal(2, ['bike-thr-short-3x8'])], [ride], config.profile),
+      [ride],
+      config.profile,
     )
     expect(merged).toHaveLength(1)
     expect(merged[0]).toMatchObject({ evidence: 'calendar', compliance: 88 })
+  })
+
+  describe('with an easy and a hard session on the calendar', () => {
+    const date = addDays(TODAY, -2)
+    const easyEvent = plannedEvent(2, 'Grundlage 75min', { externalId: `coach:${date}:bike-endurance-75:75` })
+    const hardEvent = plannedEvent(2, 'Schwelle kompakt 3x8min', { externalId: `coach:${date}:bike-thr-short-3x8:49` })
+    const offered = [proposal(2, ['bike-endurance-75', 'bike-thr-short-3x8'])]
+
+    const merge = (ride: Activity) =>
+      mergeCompletions(
+        completionsFrom([easyEvent, hardEvent], [ride]),
+        matchedCompletions(offered, [ride], config.profile),
+        [ride],
+        config.profile,
+      )
+
+    it('credits the hard session ridden, though intervals.icu paired the ride with the easy one', () => {
+      const merged = merge(thresholdRide(2, { pairedEventId: easyEvent.id, compliance: 41 }))
+      expect(merged).toHaveLength(1)
+      expect(merged[0]).toMatchObject({ templateId: 'bike-thr-short-3x8', evidence: 'exact', compliance: null })
+    })
+
+    it('credits the easy session ridden, though intervals.icu paired the ride with the hard one', () => {
+      const ride = activity(2, 'Ride', { load: 50, zoneSeconds: easy, pairedEventId: hardEvent.id, compliance: 30 })
+      const [merged] = merge(ride)
+      expect(merged).toMatchObject({ templateId: 'bike-endurance-75', compliance: null })
+    })
+
+    it('keeps the pairing when the ride was the paired session', () => {
+      const [merged] = merge(thresholdRide(2, { pairedEventId: hardEvent.id, compliance: 92 }))
+      expect(merged).toMatchObject({ templateId: 'bike-thr-short-3x8', evidence: 'calendar', compliance: 92 })
+    })
   })
 })

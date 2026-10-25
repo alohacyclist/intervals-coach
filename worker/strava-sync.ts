@@ -113,7 +113,12 @@ export const postRecent = async (context: SyncContext, today: string = localToda
     deps.source.events(oldest, today),
   ])
   const posted = new Set(context.link.posted.map((entry) => entry.activityId))
-  const open = mergeCompletions(completionsFrom(events, activities), matchedCompletions(config.proposals, activities, config.profile))
+  const open = mergeCompletions(
+    completionsFrom(events, activities),
+    matchedCompletions(config.proposals, activities, config.profile),
+    activities,
+    config.profile,
+  )
     .filter((completion) => !posted.has(completion.activityId))
     .flatMap((completion): readonly Open[] => {
       const template = comparableTemplate(completion.templateId)

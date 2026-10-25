@@ -158,6 +158,8 @@ const referenceResult = async (
   const completions = mergeCompletions(
     completionsFrom(events, activities),
     matchedCompletions(config.proposals, activities, config.profile),
+    activities,
+    config.profile,
   )
   const current = activities.find((activity) => activity.id === activityId)
   const on = date ?? current?.date ?? today
@@ -195,6 +197,8 @@ const buildProgressView = async (deps: RouteDeps, span: ProgressSpan): Promise<P
   const recognised = mergeCompletions(
     completionsFrom(events, activities),
     matchedCompletions(config.proposals, activities, config.profile),
+    activities,
+    config.profile,
   )
   // The ladder judges the intervals, as the plan does.
   const held = await readHeld(deps.source, config.profile, toJudge(recognised), activities).catch(
@@ -244,11 +248,16 @@ const buildPlan = async (deps: RouteDeps, days: number, intent?: Intent): Promis
   const held = await readHeld(
     deps.source,
     config.profile,
-    toJudge(mergeCompletions(calendar, matchedCompletions(config.proposals, activities, config.profile))),
+    toJudge(
+      mergeCompletions(calendar, matchedCompletions(config.proposals, activities, config.profile), activities, config.profile),
+    ),
     activities,
   ).catch(() => new Map<string, IntervalVerdict>())
   const recognised = (proposals: readonly DayProposal[]) =>
-    withHeld(mergeCompletions(calendar, matchedCompletions(proposals, activities, config.profile)), held)
+    withHeld(
+      mergeCompletions(calendar, matchedCompletions(proposals, activities, config.profile), activities, config.profile),
+      held,
+    )
 
   // Today has to be on record before training done today can be recognised against it.
   const [morning] = planFromMorning(

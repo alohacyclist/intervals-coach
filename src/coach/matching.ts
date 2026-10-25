@@ -150,11 +150,45 @@ export const matchedCompletions = (
       : []
   })
 
-/** A calendar pairing is the more direct evidence, so it wins for the same activity. */
+/**
+ * intervals.icu pairs an activity with a workout of its day and sport, not with
+ * the one ridden: with an easy and a hard session on the calendar, the hard ride
+ * may land on the easy one. Such a pairing says nothing when the ride is not even
+ * close to its session and its hardness is that of another one offered.
+ */
+const pairedWrongly = (
+  known: Completion,
+  recognised: Completion,
+  activities: readonly Activity[],
+  profile: AthleteProfile,
+): boolean => {
+  const paired = findTemplate(known.templateId)
+  const other = findTemplate(recognised.templateId)
+  const activity = activities.find((entry) => entry.id === known.activityId)
+  return (
+    paired !== undefined &&
+    other !== undefined &&
+    activity !== undefined &&
+    fit(paired, activity, profile) === null &&
+    (intensityClass(paired.stimulus) === 'hard') !== (intensityClass(other.stimulus) === 'hard')
+  )
+}
+
+/**
+ * A calendar pairing is the more direct evidence, so it wins for the same
+ * activity — unless it paired the activity with a session it plainly was not.
+ */
 export const mergeCompletions = (
   calendar: readonly Completion[],
   matched: readonly Completion[],
-): readonly Completion[] => [
-  ...calendar,
-  ...matched.filter((entry) => !calendar.some((known) => known.activityId === entry.activityId)),
-]
+  activities: readonly Activity[],
+  profile: AthleteProfile,
+): readonly Completion[] => {
+  const kept = calendar.flatMap((known) => {
+    const recognised = matched.find((entry) => entry.activityId === known.activityId)
+    if (!recognised || !pairedWrongly(known, recognised, activities, profile)) return [known]
+    // Its compliance was measured against the session it was paired with.
+    return [{ ...recognised, compliance: null }]
+  })
+  return [...kept, ...matched.filter((entry) => !kept.some((known) => known.activityId === entry.activityId))]
+}
