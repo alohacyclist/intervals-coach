@@ -150,11 +150,15 @@ export const matchedCompletions = (
       : []
   })
 
+const isHardTemplate = (template: WorkoutTemplate): boolean => intensityClass(template.stimulus) === 'hard'
+
 /**
  * intervals.icu pairs an activity with a workout of its day and sport, not with
  * the one ridden: with an easy and a hard session on the calendar, the hard ride
  * may land on the easy one. Such a pairing says nothing when the ride is not even
- * close to its session and its hardness is that of another one offered.
+ * close to its session and its hardness is that of another one offered. Nor when
+ * it held the work of a hard one: a 3x1km leaves under ten minutes in Z4, so the
+ * run around it still reads as easy, and an easy session holds no such work.
  */
 const pairedWrongly = (
   known: Completion,
@@ -165,13 +169,9 @@ const pairedWrongly = (
   const paired = findTemplate(known.templateId)
   const other = findTemplate(recognised.templateId)
   const activity = activities.find((entry) => entry.id === known.activityId)
-  return (
-    paired !== undefined &&
-    other !== undefined &&
-    activity !== undefined &&
-    fit(paired, activity, profile) === null &&
-    (intensityClass(paired.stimulus) === 'hard') !== (intensityClass(other.stimulus) === 'hard')
-  )
+  if (paired === undefined || other === undefined || activity === undefined) return false
+  if (isHardTemplate(paired) === isHardTemplate(other)) return false
+  return fit(paired, activity, profile) === null || (recognised.evidence === 'exact' && isHardTemplate(other))
 }
 
 /**
