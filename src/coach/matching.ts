@@ -1,4 +1,4 @@
-import type { Activity, AthleteProfile, DayProposal, Stimulus, WorkoutTemplate } from './types.ts'
+import type { Activity, AthleteProfile, DayProposal, ScheduledWorkout, Stimulus, WorkoutTemplate } from './types.ts'
 import type { Completion } from './progression.ts'
 import { LIBRARY, findTemplate, flattenBlocks, intensityClass } from './library.ts'
 import { deliveredStimuli, inferStimulus } from './fitness.ts'
@@ -111,6 +111,27 @@ const best = (candidates: readonly Candidate[]): Candidate | null =>
       RANK[left.evidence] - RANK[right.evidence] ||
       Math.abs(1 - left.share) - Math.abs(1 - right.share),
   )[0] ?? null
+
+/**
+ * What the athlete sent to the calendar was on offer too. A rest day records no
+ * options, and a session sent on a wish for a harder day may not be among the
+ * ones stored — yet it is the one the athlete set out to train.
+ */
+export const withScheduled = (
+  proposals: readonly DayProposal[],
+  scheduled: readonly ScheduledWorkout[],
+): readonly DayProposal[] => {
+  const dates = [...new Set([...proposals.map((entry) => entry.date), ...scheduled.map((entry) => entry.date)])]
+  return dates.map((date) => {
+    const proposal = proposals.find((entry) => entry.date === date)
+    const sent = scheduled.filter((entry) => entry.date === date).map((entry) => entry.templateId)
+    return {
+      date,
+      recommended: proposal?.recommended ?? null,
+      templateIds: [...new Set([...(proposal?.templateIds ?? []), ...sent])],
+    }
+  })
+}
 
 /**
  * The session an activity fulfilled, read from the data instead of from a
