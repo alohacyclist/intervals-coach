@@ -519,6 +519,8 @@
   border-bottom: 1px solid var(--rule-soft);
 }
 .exec__kpis div {
+  display: flex;
+  flex-direction: column;
   padding: 10px 12px 10px 0;
 }
 .exec__kpis div + div {
@@ -532,6 +534,10 @@
   text-transform: uppercase;
   color: var(--faint);
   margin-bottom: 3px;
+  /* A label never runs into the next column, whatever its length. */
+  overflow-wrap: anywhere;
+  /* A label over two lines must not lift its value above the others. */
+  flex-grow: 1;
 }
 .exec__kpis dd {
   margin: 0;
@@ -753,6 +759,9 @@
 }
 
 @media (max-width: 560px) {
+  .exec__kpis dt {
+    letter-spacing: 0.04em;
+  }
   .exec__kpis dd {
     font-size: 16px;
   }
@@ -775,5 +784,13 @@
   .exec__scale {
     margin-right: 0;
     margin-left: calc(14px + 12px);
+  }
+}
+
+/* The smallest phones: a third of the width holds "Zielbereich" only this tight. */
+@media (max-width: 380px) {
+  .exec__kpis dt {
+    font-size: 11px;
+    letter-spacing: 0;
   }
 }

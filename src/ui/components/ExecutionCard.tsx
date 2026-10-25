@@ -238,7 +238,8 @@ export const ExecutionView = ({ execution }: { readonly execution: Execution }) 
               </dd>
             </div>
             <div>
-              <dt>Intervallzeit</dt>
+              {/* A soft hyphen: one word this long does not fit a third of a phone. */}
+              <dt>Inter&shy;vall&shy;zeit</dt>
               <dd>
                 {clock(execution.workDoneSeconds)}
                 <small> von {clock(execution.workPlannedSeconds)}</small>
