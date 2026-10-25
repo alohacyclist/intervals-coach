@@ -36,7 +36,7 @@ import {
 import type { ProgressSpan } from '../src/coach/progress.ts'
 import { adoptThreshold, thresholdSuggestions } from '../src/coach/threshold-drift.ts'
 import type { ObservedThresholds } from '../src/coach/threshold-drift.ts'
-import { matchedCompletions, mergeCompletions } from '../src/coach/matching.ts'
+import { matchedCompletions, mergeCompletions, withScheduled } from '../src/coach/matching.ts'
 import { withProposal } from '../src/coach/proposals.ts'
 import type { BenchmarkResult, CoachConfig, DayProposal, Execution, PlannedDay, Sport, WorkoutTemplate } from '../src/coach/types.ts'
 import { readThresholdTests } from './threshold-tests.ts'
@@ -157,7 +157,7 @@ const referenceResult = async (
   ])
   const completions = mergeCompletions(
     completionsFrom(events, activities),
-    matchedCompletions(config.proposals, activities, config.profile),
+    matchedCompletions(withScheduled(config.proposals, scheduledFrom(events)), activities, config.profile),
     activities,
     config.profile,
   )
@@ -196,7 +196,7 @@ const buildProgressView = async (deps: RouteDeps, span: ProgressSpan): Promise<P
   ])
   const recognised = mergeCompletions(
     completionsFrom(events, activities),
-    matchedCompletions(config.proposals, activities, config.profile),
+    matchedCompletions(withScheduled(config.proposals, scheduledFrom(events)), activities, config.profile),
     activities,
     config.profile,
   )
@@ -244,18 +244,29 @@ const buildPlan = async (deps: RouteDeps, days: number, intent?: Intent): Promis
   const raceActivities = [...olderRaces, ...activities]
   const state = buildState(activities, wellness, today, raceActivities)
   const calendar = completionsFrom(events, activities)
+  const scheduled = scheduledFrom(events)
   // Levels are earned by the intervals: read once, for the newest sessions of every family and level.
   const held = await readHeld(
     deps.source,
     config.profile,
     toJudge(
-      mergeCompletions(calendar, matchedCompletions(config.proposals, activities, config.profile), activities, config.profile),
+      mergeCompletions(
+        calendar,
+        matchedCompletions(withScheduled(config.proposals, scheduled), activities, config.profile),
+        activities,
+        config.profile,
+      ),
     ),
     activities,
   ).catch(() => new Map<string, IntervalVerdict>())
   const recognised = (proposals: readonly DayProposal[]) =>
     withHeld(
-      mergeCompletions(calendar, matchedCompletions(proposals, activities, config.profile), activities, config.profile),
+      mergeCompletions(
+        calendar,
+        matchedCompletions(withScheduled(proposals, scheduled), activities, config.profile),
+        activities,
+        config.profile,
+      ),
       held,
     )
 
@@ -307,7 +318,7 @@ const buildPlan = async (deps: RouteDeps, days: number, intent?: Intent): Promis
     thresholdSuggestions: suggestions,
     destinations,
     days: planned,
-    scheduled: scheduledFrom(events).filter((entry) => entry.date >= today),
+    scheduled: scheduled.filter((entry) => entry.date >= today),
     week: weekOutlook(state, config),
     garmin: garminAttribution(activities, wellness, destinations),
   }

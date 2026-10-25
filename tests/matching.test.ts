@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { matchedCompletions, mergeCompletions } from '../src/coach/matching.ts'
-import { completionsFrom } from '../src/coach/progression.ts'
+import { matchedCompletions, mergeCompletions, withScheduled } from '../src/coach/matching.ts'
+import { completionsFrom, scheduledFrom } from '../src/coach/progression.ts'
 import { addDays } from '../src/coach/dates.ts'
 import type { Activity, DayProposal } from '../src/coach/types.ts'
 import { activity, config, plannedEvent, TODAY } from './fixtures.ts'
@@ -218,6 +218,32 @@ describe('recognising a proposal without the calendar', () => {
         config.profile,
       )
       expect(merged).toMatchObject({ templateId: 'run-thr-short-3x1k', evidence: 'exact', compliance: null })
+    })
+
+    it('credits the hard session sent to the calendar on a rest day that offered nothing', () => {
+      const runEasy = plannedEvent(2, 'Locker 40min + Steigerungen', {
+        sport: 'Run',
+        externalId: `coach:${date}:run-easy-strides:46`,
+      })
+      const runHard = plannedEvent(2, 'Schwelle kompakt 3x1km', {
+        sport: 'Run',
+        externalId: `coach:${date}:run-thr-short-3x1k:33`,
+      })
+      const run = activity(2, 'Run', {
+        load: 43,
+        movingTimeSec: 33 * 60,
+        zoneSeconds: { Z2: 1200, Z3: 80, Z4: 720 },
+        pairedEventId: runEasy.id,
+        compliance: 91,
+      })
+      const events = [runEasy, runHard]
+      const [merged] = mergeCompletions(
+        completionsFrom(events, [run]),
+        matchedCompletions(withScheduled([proposal(2, [])], scheduledFrom(events)), [run], config.profile),
+        [run],
+        config.profile,
+      )
+      expect(merged).toMatchObject({ templateId: 'run-thr-short-3x1k', compliance: null })
     })
 
     it('keeps the pairing when the ride was the paired session', () => {

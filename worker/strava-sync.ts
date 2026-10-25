@@ -3,8 +3,8 @@ import { localToday } from '../server/routes.ts'
 import { loadExecution } from '../server/execution-load.ts'
 import { addDays } from '../src/coach/dates.ts'
 import { findTemplate } from '../src/coach/library.ts'
-import { matchedCompletions, mergeCompletions } from '../src/coach/matching.ts'
-import { completionsFrom } from '../src/coach/progression.ts'
+import { matchedCompletions, mergeCompletions, withScheduled } from '../src/coach/matching.ts'
+import { completionsFrom, scheduledFrom } from '../src/coach/progression.ts'
 import type { Completion } from '../src/coach/progression.ts'
 import type { StravaCandidate } from '../src/coach/strava-summary.ts'
 import { findStravaMatch, summaryOf, withSummary } from '../src/coach/strava-summary.ts'
@@ -115,7 +115,7 @@ export const postRecent = async (context: SyncContext, today: string = localToda
   const posted = new Set(context.link.posted.map((entry) => entry.activityId))
   const open = mergeCompletions(
     completionsFrom(events, activities),
-    matchedCompletions(config.proposals, activities, config.profile),
+    matchedCompletions(withScheduled(config.proposals, scheduledFrom(events)), activities, config.profile),
     activities,
     config.profile,
   )
