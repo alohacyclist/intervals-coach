@@ -3,6 +3,7 @@ import type { Completion } from './progression.ts'
 import { addDays, weekdayDe } from './dates.ts'
 import { LIBRARY, findTemplate } from './library.ts'
 import { ZRL_TEMPLATE_ID, isZrlRace } from './zrl.ts'
+import { sessionName } from './done.ts'
 
 const EXTERNAL_ID_PREFIX = 'coach:'
 
@@ -75,23 +76,24 @@ const dayFor = (
 
   const completed = paired ?? trained.find(isZrlRace) ?? heaviest(trained)
   const completion = completions.find((entry) => entry.activityId === completed?.id)
+  const templateId = !completed
+    ? null
+    : isZrlRace(completed)
+      ? ZRL_TEMPLATE_ID
+      : (completion?.templateId ?? null)
 
   return {
     date,
     weekday: weekdayDe(date),
     status: classify(planned, trained, paired, date === today),
     planned,
-    completed: completed?.name || (completed ? 'Einheit ohne Namen' : null),
+    completed: completed ? sessionName(completed.name, templateId) || 'Einheit ohne Namen' : null,
     completedSport: completed?.sport ?? null,
     // Against the session recognised, which is not the paired one when intervals.icu paired wrongly.
     compliance: paired ? (completion ? completion.compliance : paired.compliance) : null,
     load: Math.round(trained.reduce((sum, activity) => sum + activity.load, 0)),
     activityId: completed?.id ?? null,
-    templateId: !completed
-      ? null
-      : isZrlRace(completed)
-        ? ZRL_TEMPLATE_ID
-        : (completion?.templateId ?? null),
+    templateId,
   }
 }
 
