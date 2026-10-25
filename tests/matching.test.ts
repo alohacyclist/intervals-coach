@@ -199,6 +199,27 @@ describe('recognising a proposal without the calendar', () => {
       expect(merged).toMatchObject({ templateId: 'bike-endurance-75', compliance: null })
     })
 
+    it('credits a short threshold run whose few minutes in Z4 leave the rest of it easy', () => {
+      const runEvent = plannedEvent(2, 'Locker 40min + Steigerungen', {
+        sport: 'Run',
+        externalId: `coach:${date}:run-easy-strides:46`,
+      })
+      const run = activity(2, 'Run', {
+        load: 50,
+        movingTimeSec: 40 * 60,
+        zoneSeconds: { Z1: 600, Z2: 1200, Z3: 300, Z4: 480, Z5: 120 },
+        pairedEventId: runEvent.id,
+        compliance: 40,
+      })
+      const [merged] = mergeCompletions(
+        completionsFrom([runEvent], [run]),
+        matchedCompletions([proposal(2, ['run-easy-strides', 'run-thr-short-3x1k'])], [run], config.profile),
+        [run],
+        config.profile,
+      )
+      expect(merged).toMatchObject({ templateId: 'run-thr-short-3x1k', evidence: 'exact', compliance: null })
+    })
+
     it('keeps the pairing when the ride was the paired session', () => {
       const [merged] = merge(thresholdRide(2, { pairedEventId: hardEvent.id, compliance: 92 }))
       expect(merged).toMatchObject({ templateId: 'bike-thr-short-3x8', evidence: 'calendar', compliance: 92 })
