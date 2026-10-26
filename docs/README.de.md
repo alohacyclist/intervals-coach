@@ -303,8 +303,8 @@ intervals.icu verlangt für Apps mit mehreren Nutzern ausdrücklich OAuth. Der C
 Athlet, dem die App gehören soll) — mit App-Name, Beschreibung, Website-URL, quadratischem
 Logo (≥128 px), Datenschutz-URL und den Redirect-URIs. Bis zur Freigabe steht die App auf
 „Pending“ und der OAuth-Flow funktioniert noch nicht; Client-ID und Secret gibt es aber
-sofort unter „Manage App“ in `/settings/apps`. Text für den Antrag:
-[docs/oauth-request-email.md](oauth-request-email.md).
+sofort unter „Manage App“ in `/settings/apps`. Werte für das Formular:
+[docs/oauth-application.md](oauth-application.md).
 
 Angefragte Scopes, kommagetrennt wie intervals.icu sie erwartet:
 `ACTIVITY:READ,WELLNESS:READ,CALENDAR:WRITE,SETTINGS:WRITE` — lesen, Einheiten planen und

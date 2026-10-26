@@ -1,110 +1,89 @@
-# OAuth client request — email to david@intervals.icu
+# OAuth client application — intervals.icu form
 
-Since 2026-08-28 David's OAuth guide asks for the application form at
-`https://intervals.icu/oauth/apply` (logged in as the athlete who will own the app)
-instead of an email; the app stays "Pending" until approved, but client id and secret
-are available right away. Use the text below as the form's content, and send it as an
-email only if the form has no room for it
+The client is requested through the form at `https://intervals.icu/oauth/apply`, logged in
+as the athlete who will own the app. It stays "Pending" until approved, but client id and
+secret are available right away under "Manage App" in `/settings/apps`
 ([guide, post 1](https://forum.intervals.icu/t/intervals-icu-oauth-support/2759)).
+Once the integration is tested, a short mail with a link to the management page asks for
+the listing in the public app directory.
 
-Before sending: open `https://formkurve.org/logo.png` (must load, square, ≥128 px — the
-source is 512 × 512) and `https://formkurve.org/datenschutz` (must carry real contact
-details, not the draft placeholders). Attach two or three screenshots made from demo
-data, never from a real account: the site sits behind a password until the OAuth client
-exists, so they are the only way David can see the app.
+Before submitting: open `https://formkurve.org/logo.png` and `https://formkurve.org/datenschutz`
+in a browser — the logo must load (square, ≥128 px; the source is 512 × 512), the privacy
+page must show the real operator details from `src/ui/legal/operator.ts`.
 
----
-
-**To:** david@intervals.icu
-**Subject:** OAuth application request — Formkurve
-
-Hi David,
-
-I'd like to request an OAuth client for a small app built on the intervals.icu API. The
-details from the API guide are below; a few screenshots made with demo data are
-attached, since the site is behind a password until OAuth is in place.
+## Form fields
 
 **App name**
+
+```
 Formkurve
+```
 
 **Description**
-A training planner for athletes whose time is short and unpredictable. Each morning it
-reads recent activities and wellness from intervals.icu and proposes the next three days:
-one session per sport the athlete trains (cycling, running, swimming), each also as a
-shorter version, so they can take whichever fits the day without losing the stimulus.
-Sessions come from a fixed workout library and are chosen from fitness, fatigue and form
-per sport, time since the last hard session, HRV and resting heart rate against the
-athlete's own 30-day baseline, and the training phase derived from their goal date.
 
-After a session, the app compares what was planned with what was done, interval by
-interval: it reads the activity's detected intervals and its power, pace and heart rate
-streams to show time spent in each target band. It also schedules a threshold test every
-few weeks and reads the result from the test's intervals.
-
-Selected workouts can be written to the intervals.icu calendar as structured workouts,
-and the pairing between a planned workout and the activity that fulfilled it is read back,
-so progression follows what was actually completed.
+```
+Formkurve is a training planner for athletes with short, unpredictable time. Each morning it reads recent activities and wellness from intervals.icu and proposes the next three days for cycling, running and swimming, each session also in a shorter version. After a session it compares planned and completed work interval by interval. A chosen workout is written to the intervals.icu calendar only when the athlete clicks to send it; the app never deletes training data.
+```
 
 **Website URL**
-https://formkurve.org
 
-**Logo image URL**
-https://formkurve.org/logo.png
+```
+https://formkurve.org
+```
+
+**Logo** — upload `public/logo.png`.
 
 **Privacy policy URL**
+
+```
 https://formkurve.org/datenschutz
+```
 
-**Redirect URIs**
-- https://formkurve.org/auth/callback
-- http://localhost:8787/auth/callback
+**Redirect URIs** — `www.` requests are redirected to the bare host by the Worker, so the
+callback only ever runs on these two origins:
 
-**Scopes**
-`ACTIVITY:READ,WELLNESS:READ,CALENDAR:WRITE,SETTINGS:WRITE`
+```
+https://formkurve.org/auth/callback
+http://localhost:8787/auth/callback
+```
 
-- `ACTIVITY:READ` — fitness, fatigue and form per sport; the last hard session; planned
-  vs. completed pairing; intervals and streams of a single activity for the comparison
-- `WELLNESS:READ` — HRV, resting heart rate and sleep against the athlete's baseline, and
-  the eFTP estimate
-- `CALENDAR:WRITE` — read planned workouts and write the chosen workout to the athlete's
-  calendar
-- `SETTINGS:WRITE` — the athlete record and sport settings, each write only on an explicit
-  click by the athlete, never in the background:
-  - `GET /athlete/0` — name and timezone at sign-in, so the plan's days are the athlete's
-    days
+**Scopes** — must match `SCOPES` in `worker/oauth.ts`:
+
+```
+ACTIVITY:READ,WELLNESS:READ,CALENDAR:WRITE,SETTINGS:WRITE
+```
+
+## If David asks about the scopes
+
+- `ACTIVITY:READ` — fitness, fatigue and form per sport; the last hard session; planned vs.
+  completed pairing; intervals and streams of a single activity for the comparison.
+- `WELLNESS:READ` — HRV, resting heart rate and sleep against the athlete's 30-day
+  baseline, and the eFTP estimate.
+- `CALENDAR:WRITE` — read planned workouts and write the chosen workout to the calendar.
+- `SETTINGS:WRITE` — each write only on an explicit click, never in the background:
+  - `GET /athlete/0` — name and timezone at sign-in, so the plan's days are the athlete's days
   - `GET /athlete/{id}/sport-settings` — prefill FTP, threshold pace and CSS at sign-up
-  - `PUT /athlete/{id}/sport-settings/{type}` — keep FTP and threshold pace in step when
-    the athlete adopts a new value in the app (for example after a test), since
-    intervals.icu computes load and compliance from its own numbers
-  - `GET /athlete/{id}` and `PUT /athlete/{id}` — show which devices are linked and set
-    the `*_upload_workouts` flags, so a session reaches the right watch, head unit or
-    trainer. Only the single flag is sent, never the whole record. If you'd rather not
-    grant this, I'll point athletes to your settings page instead and ask for
-    `SETTINGS:READ` only.
+  - `PUT /athlete/{id}/sport-settings/{type}` — keep FTP and threshold pace in step when the
+    athlete adopts a new value in the app, since intervals.icu computes load and compliance
+    from its own numbers
+  - `GET /athlete/{id}` and `PUT /athlete/{id}` — show linked devices and set a single
+    `*_upload_workouts` flag, never the whole record
 
-No write access to activities or wellness, and the app never deletes training data. Its only
-DELETE is `/api/v1/disconnect-app`, called when an athlete deletes their Formkurve account, as
-your guide asks.
+  Fallback if `SETTINGS:WRITE` is not granted: `SETTINGS:READ`, and athletes are pointed to
+  the intervals.icu settings page for thresholds and device uploads.
 
-**Scale and business model**
-It starts as a free beta: my training partners first, then an open beta announced in the
-forum. I expect a few dozen athletes in the first months and at most a few hundred in the
-first year — well below the 500 users of the default allowance; if it ever gets close, I'll
-write before, not after. Free during the beta. A paid tier may follow later to cover
-running costs; before introducing one I'd talk it through with you first, and I'm happy
-to align it with your terms and your supporters. No data resale, no advertising, ever.
+No write access to activities or wellness. The only DELETE is `/api/v1/disconnect-app`,
+called when an athlete deletes their Formkurve account.
 
-**Data and API usage**
-Training and wellness data are fetched when the athlete opens the app and not stored;
-answers are kept for at most five minutes, encrypted, so a reload does not ask the API
-again, and every write clears them. Only the OAuth tokens (AES-GCM encrypted) and each
-athlete's goal settings are persisted. Athletes give explicit consent for health data
-(GDPR Art. 9) before connecting. A plan takes five to six requests; an optional Strava
-feature looks for new sessions only on days with a proposed workout, backing off to once
-every two hours — around 10–25 requests per connected athlete and day. Requests are
-throttled per athlete, and the logs warn when the daily allowance runs low. Data from
-Garmin devices is attributed as Garmin's API brand guidelines require.
+## If David asks about data and scale
 
-Thanks for building intervals.icu and keeping the API open.
-
-Best regards,
-Christian Müller
+- Training and wellness data are fetched when the athlete opens the app and not stored;
+  responses are cached for at most five minutes, encrypted, and every write clears them.
+  Only OAuth tokens (AES-GCM) and each athlete's goal settings are persisted.
+- Explicit consent for health data (GDPR Art. 9) before connecting.
+- Five to six requests per plan; with the optional Strava feature around 10–25 requests per
+  athlete and day, throttled per athlete.
+- Garmin data is attributed as Garmin's brand guidelines require.
+- Free beta: training partners first, then an open beta announced in the forum. A paid tier
+  may follow to cover running costs; it will be discussed with David before it is
+  introduced. No data resale, no advertising.
