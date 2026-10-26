@@ -29,7 +29,7 @@ export const DeleteAccount = () => {
         <>
           <p className="hint">
             Gelöscht werden dein Zugangs-Token, deine Ziele und Einstellungen sowie das Protokoll
-            deiner Krafteinheiten, und Formkurve gibt die Freigabe bei intervals.icu zurück. Deine
+            deiner Krafteinheiten, und Pacio gibt die Freigabe bei intervals.icu zurück. Deine
             Daten bei intervals.icu bleiben unberührt — auch bereits in den Kalender geschriebene
             Einheiten. Das lässt sich nicht rückgängig machen.
           </p>

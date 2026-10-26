@@ -25,7 +25,7 @@ const EXAMPLE: readonly { readonly sport: string; readonly css: string; readonly
 ]
 
 const ExampleDay = () => (
-  <figure className="example" aria-label="Beispiel: so sieht ein Tag in Formkurve aus">
+  <figure className="example" aria-label="Beispiel: so sieht ein Tag in Pacio aus">
     <figcaption className="example__head">
       <span>Heute · Beispiel</span>
       <span className="badge badge--key">Qualitätstag</span>
@@ -120,7 +120,7 @@ const Waitlist = () => {
   return (
     <form className="waitlist" onSubmit={(event) => void submit(event)}>
       <label className="waitlist__field">
-        <span>Sag mir Bescheid, wenn Formkurve offen ist</span>
+        <span>Sag mir Bescheid, wenn Pacio offen ist</span>
         <div className="waitlist__row">
           <input
             type="email"
@@ -193,10 +193,10 @@ const SignUp = ({ error }: { readonly error: string | null }) => {
 export const Landing = ({ mode, error, confirmed = false }: Props) => (
   <div className="landing">
     <header className="landing__hero">
-      <p className="landing__eyebrow">Formkurve</p>
+      <p className="landing__eyebrow">Pacio</p>
       <h1>Wahl statt Plan: Du entscheidest spontan, der Trainingsreiz stimmt trotzdem.</h1>
       <p className="landing__lead">
-        Formkurve liest deine Einheiten und Erholungswerte aus intervals.icu und schlägt jeden
+        Pacio liest deine Einheiten und Erholungswerte aus intervals.icu und schlägt jeden
         Tag eine Einheit für <em>jede</em> deiner Sportarten vor – Rad, Laufen, Schwimmen –,
         jeweils komplett und als Kurzfassung. Verpasst du einen Tag, verschiebt sich der Plan,
         statt zu brechen.
@@ -206,7 +206,7 @@ export const Landing = ({ mode, error, confirmed = false }: Props) => (
 
       {confirmed && (
         <p className="waitlist__done" role="status">
-          <strong>Bestätigt.</strong> Du stehst auf der Liste und hörst von uns, sobald Formkurve
+          <strong>Bestätigt.</strong> Du stehst auf der Liste und hörst von uns, sobald Pacio
           offen ist.
         </p>
       )}
@@ -231,7 +231,7 @@ export const Landing = ({ mode, error, confirmed = false }: Props) => (
         Weil Zeit der eigentliche Engpass ist. Mal passt die Rolle, mal sind die Laufschuhe
         schneller angezogen, mal bleiben nur 30 Minuten. Alle Vorschläge eines Tages setzen
         denselben Trainingsreiz – welche Sportart und welche Länge du wählst, ändert den Plan
-        nicht, nur den Weg dahin. Und fällt ein Tag aus, rechnet Formkurve am nächsten Morgen
+        nicht, nur den Weg dahin. Und fällt ein Tag aus, rechnet Pacio am nächsten Morgen
         einfach mit dem, was wirklich passiert ist.
       </p>
     </section>
@@ -271,11 +271,11 @@ export const Landing = ({ mode, error, confirmed = false }: Props) => (
     <section className="landing__section landing__section--muted">
       <h2>Deine Daten</h2>
       <p>
-        Die Anmeldung läuft über intervals.icu. Formkurve fragt vier Berechtigungen an:
+        Die Anmeldung läuft über intervals.icu. Pacio fragt vier Berechtigungen an:
         Aktivitäten lesen, Erholungswerte lesen, geplante Einheiten in deinen Kalender schreiben
-        und Einstellungen ändern. Über die Einstellungen liest Formkurve deine Schwellenwerte und
+        und Einstellungen ändern. Über die Einstellungen liest Pacio deine Schwellenwerte und
         verbundenen Geräte; ändern tut es sie nur, wenn du es anklickst. Kein Zugriff auf dein
-        Passwort, und Formkurve löscht nichts. Du kannst die Freigabe jederzeit in deinen
+        Passwort, und Pacio löscht nichts. Du kannst die Freigabe jederzeit in deinen
         intervals.icu-Einstellungen widerrufen.
       </p>
       <p className="landing__legal">

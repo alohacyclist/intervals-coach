@@ -1,6 +1,6 @@
-# Formkurve
+# Pacio
 
-Repository und Worker heißen weiterhin `intervals-coach`; die App selbst heißt Formkurve.
+Repository und Worker heißen weiterhin `intervals-coach`; die App selbst heißt Pacio.
 
 Browser-App, die auf Basis der letzten Trainingseinheiten aus intervals.icu die nächsten
 drei Tage plant. Jeder Tag zeigt **jede gewählte Sportart** (Rad, Lauf, Schwimmen) als

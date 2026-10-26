@@ -16,13 +16,13 @@ page must show the real operator details from `src/ui/legal/operator.ts`.
 **App name**
 
 ```
-Formkurve
+Pacio
 ```
 
 **Description**
 
 ```
-Formkurve is a training planner for athletes with short, unpredictable time. Each morning it reads recent activities and wellness from intervals.icu and proposes the next three days for cycling, running and swimming, each session also in a shorter version. After a session it compares planned and completed work interval by interval. A chosen workout is written to the intervals.icu calendar only when the athlete clicks to send it; the app never deletes training data.
+Pacio is a training planner for athletes with short, unpredictable time. Each morning it reads recent activities and wellness from intervals.icu and proposes the next three days for cycling, running and swimming, each session also in a shorter version. After a session it compares planned and completed work interval by interval. A chosen workout is written to the intervals.icu calendar only when the athlete clicks to send it; the app never deletes training data.
 ```
 
 **Website URL**
@@ -73,7 +73,7 @@ ACTIVITY:READ,WELLNESS:READ,CALENDAR:WRITE,SETTINGS:WRITE
   the intervals.icu settings page for thresholds and device uploads.
 
 No write access to activities or wellness. The only DELETE is `/api/v1/disconnect-app`,
-called when an athlete deletes their Formkurve account.
+called when an athlete deletes their Pacio account.
 
 ## If David asks about data and scale
 

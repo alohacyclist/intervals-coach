@@ -1,4 +1,4 @@
-# Formkurve
+# Pacio
 
 A training planner for endurance athletes. It reads the last months of training and
 wellness data from [intervals.icu](https://intervals.icu) and plans the next three days

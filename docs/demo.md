@@ -1,6 +1,6 @@
 # Demo-Zugang
 
-Formkurve mit Beispieldaten, zum Zeigen in Bewerbungen und Gesprächen. Eine erfundene
+Pacio mit Beispieldaten, zum Zeigen in Bewerbungen und Gesprächen. Eine erfundene
 Athletin (Rad, Lauf, Schwimmen) mit einem Jahr Training: ruhige Grundlage, danach zwölf
 strukturierte Wochen im 3:1-Rhythmus mit Schwellentests, Formkontrolle, einer Erkältung
 als eingetragener Pause und einer ausgefallenen Qualitätseinheit kurz vor heute. Am
@@ -56,7 +56,7 @@ Passwortwechsel beendet sie nicht mehr.
 
 Adresse und Demo-Passwort, zum Beispiel im Anschreiben:
 
-> Formkurve lässt sich mit Beispieldaten ausprobieren: demo.formkurve.org, Passwort `…`
+> Pacio lässt sich mit Beispieldaten ausprobieren: demo.formkurve.org, Passwort `…`
 
 Jeder, der sich anmeldet, landet in seiner eigenen Sandbox. Ein Passwort für alle reicht
 also. Pro Bewerbungsrunde ein eigenes Passwort zu nehmen, schadet aber nicht.

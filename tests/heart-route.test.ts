@@ -106,7 +106,7 @@ describe('writing the estimated heart rate back to intervals.icu', () => {
 
     const note = calls.find((call) => call.method === 'POST')!
     expect(note.path).toBe('/activity/i7/messages')
-    expect((note.body as { content: string }).content).toMatch(/^Puls von Formkurve korrigiert: \d+ min/)
+    expect((note.body as { content: string }).content).toMatch(/^Puls von Pacio korrigiert: \d+ min/)
   })
 
   it('writes nothing when the recording is no longer the one the athlete confirmed', async () => {

@@ -37,8 +37,8 @@ describe('index.html', () => {
 })
 
 describe('web app manifest', () => {
-  it('installs as Formkurve in its own window', () => {
-    expect(manifest.name).toBe('Formkurve')
+  it('installs as Pacio in its own window', () => {
+    expect(manifest.name).toBe('Pacio')
     expect(manifest.display).toBe('standalone')
     expect(manifest.start_url).toBe('/app')
   })

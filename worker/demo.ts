@@ -1,5 +1,5 @@
 /**
- * The demo deployment: Formkurve on synthetic data, for showing it to people.
+ * The demo deployment: Pacio on synthetic data, for showing it to people.
  *
  * It is its own Hono app, picked once in the Worker entry when `DEMO_MODE` is
  * on, and it reaches nothing a real athlete has: it does not import the user

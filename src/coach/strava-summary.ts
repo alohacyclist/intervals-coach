@@ -7,9 +7,9 @@ import type { Execution, Sport } from './types.ts'
  */
 
 /** Marks the paragraph as this app's, so a second run replaces it instead of adding another. */
-export const SIGNATURE = 'geplant und ausgewertet mit Formkurve'
-/** Written before the app was named Formkurve; still this app's paragraph to replace. */
-const EARLIER_SIGNATURES = ['geplant und ausgewertet mit intervals-coach']
+export const SIGNATURE = 'geplant und ausgewertet mit Pacio'
+/** Written under the app's earlier names; still this app's paragraph to replace. */
+const EARLIER_SIGNATURES = ['geplant und ausgewertet mit Formkurve', 'geplant und ausgewertet mit intervals-coach']
 const isOurs = (paragraph: string): boolean =>
   [SIGNATURE, ...EARLIER_SIGNATURES].some((signature) => paragraph.includes(signature))
 

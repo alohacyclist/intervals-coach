@@ -13,7 +13,7 @@ type Props = {
 export const StateHeader = ({ summary, readiness, onRefresh, onSettings, busy }: Props) => (
   <header className="header">
     <div className="header__top">
-      <h1>Formkurve</h1>
+      <h1>Pacio</h1>
       <div className="header__actions">
         <button type="button" onClick={onSettings}>
           Einstellungen

@@ -28,7 +28,7 @@ export const PasswordLogin = ({ onDone, demo = false }: { readonly onDone: () =>
 
   return (
     <form className="login" onSubmit={(event) => void submit(event)}>
-      <h1>Formkurve</h1>
+      <h1>Pacio</h1>
       {demo ? (
         <p className="login__lead">
           Ein Trainingsplaner, der die nächsten drei Tage aus dem plant, was wirklich trainiert
