@@ -178,6 +178,21 @@ const singleUserUpstream = (env: Bindings): Upstream => {
 const singleUserConfigured = (env: Bindings): boolean =>
   Boolean(env.APP_PASSWORD && env.INTERVALS_API_KEY && env.INTERVALS_ATHLETE_ID)
 
+// ---------------------------------------------------------------- canonical host
+
+/**
+ * The OAuth redirect URI is built from the request's origin, and intervals.icu only
+ * accepts the URIs registered for the app. A sign-in started on `www.` would come back
+ * to a URI it doesn't know, so every `www.` request moves to the bare host first —
+ * before a session cookie is set there that the bare host would never see.
+ */
+app.use('*', async (context, next) => {
+  const url = new URL(context.req.url)
+  if (!url.hostname.startsWith('www.')) return next()
+  url.hostname = url.hostname.slice('www.'.length)
+  return context.redirect(url.toString(), 301)
+})
+
 // ------------------------------------------------------------------ health
 
 /**
