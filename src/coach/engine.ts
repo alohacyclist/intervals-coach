@@ -36,6 +36,13 @@ import { aroundRace, raceSession, racesAround, withRace } from './race-day.ts'
 /** Minimum days between two hard sessions, regardless of sport. */
 const HARD_SPACING_DAYS = 2
 /**
+ * Minimum days between two hard runs. Heart and metabolism are ready again after
+ * 48 hours, which is what the general spacing guards; tendons and bones take the
+ * impact of every stride and need longer. A ride costs them next to nothing, so
+ * in between the quality goes to the bike and the run stays light.
+ */
+const RUN_HARD_SPACING_DAYS = 3
+/**
  * The smallest load this app itself ever proposes as a hard session. A hard effort
  * below it — fifteen minutes of racing at 30, say — still blocks the next hard day,
  * but it has not earned a whole rest day: the stimulus was real and small. Anything
@@ -112,6 +119,13 @@ const stimulusAge = (simulation: Simulation, sport: Sport, stimulus: Stimulus): 
 
 const minDaysSinceHard = (simulation: Simulation, sports: readonly Sport[]): number =>
   Math.min(...sports.map((sport) => simulation.daysSinceHard[sport]))
+
+/** Whether the legs are still carrying the last hard run, whatever else has recovered. */
+const legsRecovering = (simulation: Simulation, sport: Sport): boolean =>
+  sport === 'Run' && simulation.daysSinceHard.Run < RUN_HARD_SPACING_DAYS
+
+const legsNote = (simulation: Simulation): string =>
+  `Harter Lauf vor ${simulation.daysSinceHard.Run} Tagen — Sehnen und Knochen brauchen 72h, Kreislauf ist bereit`
 
 /** The load of the session that is holding the next hard day back. */
 const blockingHardLoad = (simulation: Simulation, sports: readonly Sport[]): number => {
@@ -238,9 +252,13 @@ const applyIntent = (
 
   const spacing = minDaysSinceHard(simulation, sports)
   const warning =
-    intent === 'hard' && spacing < HARD_SPACING_DAYS
-      ? ` Achtung: erst ${spacing === 0 ? 'heute' : `vor ${spacing} Tag${spacing === 1 ? '' : 'en'}`} eine harte Einheit — zwei harte Tage hintereinander kosten mehr, als sie bringen.`
-      : ''
+    intent !== 'hard'
+      ? ''
+      : spacing < HARD_SPACING_DAYS
+        ? ` Achtung: erst ${spacing === 0 ? 'heute' : `vor ${spacing} Tag${spacing === 1 ? '' : 'en'}`} eine harte Einheit — zwei harte Tage hintereinander kosten mehr, als sie bringen.`
+        : sports.every((sport) => legsRecovering(simulation, sport))
+          ? ` Achtung: ${legsNote(simulation)}.`
+          : ''
 
   return {
     dayType: wanted,
@@ -305,6 +323,10 @@ const decideDay = (
       )
     }
     return plan('EASY', 'Keine 48h seit der letzten harten Einheit, aber die Woche läuft aus — locker statt Pause')
+  }
+  // Only a runner gets here: anyone with a second sport takes the quality day there.
+  if (sports.every((sport) => legsRecovering(simulation, sport))) {
+    return plan('EASY', `${legsNote(simulation)} — heute locker`)
   }
   if (simulation.hardThisWeek >= budget) {
     const spent = `Wochenbudget harter Einheiten erreicht (${simulation.hardThisWeek}/${budget})`
@@ -514,11 +536,16 @@ const chooseRecommended = (
   )
 
   if (dayType === 'KEY') {
+    // Legs still carrying a hard run hand the quality to another sport, unless
+    // there is none — then the athlete asked for it.
+    const ready = mostRested.filter((sport) => !legsRecovering(simulation, sport))
+    const candidates = ready.length > 0 ? ready : mostRested
+    const preferred = candidates.includes(primarySport) ? primarySport : (candidates[0] ?? primarySport)
     // A sport with no quality work this week comes first; among several, the
     // one that has waited longest.
-    const neglected = mostRested.filter((sport) => simulation.hardThisWeekBySport[sport] === 0)
-    if (neglected.length > 0 && !neglected.includes(primarySport)) return neglected[0] ?? primarySport
-    return primarySport
+    const neglected = candidates.filter((sport) => simulation.hardThisWeekBySport[sport] === 0)
+    if (neglected.length > 0 && !neglected.includes(preferred)) return neglected[0] ?? preferred
+    return preferred
   }
   return mostRested[0] ?? primarySport
 }
@@ -724,9 +751,17 @@ export const planDays = (
       const testable =
         dayType === 'KEY' && !simulation.testedThisWeek && !around.race && !around.raceTomorrow
 
+      // While the legs recover, a quality day's run is a light one — unless running
+      // is all there is, which on a quality day means the athlete asked for it.
+      const held = (sport: Sport): boolean =>
+        dayType === 'KEY' &&
+        legsRecovering(simulation, sport) &&
+        sports.some((other) => !legsRecovering(simulation, other))
+
       const regular = sports.map((sport) => {
         const sportPhase = phases[sport]
-        const test = testable
+        const sportDayType = held(sport) ? 'EASY' : dayType
+        const test = testable && !held(sport)
           ? thresholdTestDue(
               sport,
               known,
@@ -743,7 +778,7 @@ export const planDays = (
           if (template) return buildSession(template, config, test.reason, date)
         }
         // Setting the numbers comes first; comparing against the last time comes after.
-        const reference = testable
+        const reference = testable && !held(sport)
           ? benchmarkDue(sport, known, date, config.planStart, sportPhase, returning, budgetMinutes)
           : null
         if (reference) {
@@ -754,7 +789,7 @@ export const planDays = (
         const goalKind = goalForSport(config.goals, sport, date)?.kind
         const candidates = candidatesFor(
           sport,
-          dayType,
+          sportDayType,
           sportPhase,
           budgetMinutes,
           ceilings,
@@ -768,7 +803,10 @@ export const planDays = (
             scoreTemplate(left, simulation, view, sportPhase, budgetMinutes, returning, goalKind),
         )[0]
         if (!best) return null
-        return buildSession(best, config, reasonFor(best, dayType, sportPhase, simulation, ceilings), date)
+        const reason = held(sport)
+          ? `${legsNote(simulation)} — die Qualität heute in der anderen Sportart, der Lauf bleibt leicht`
+          : reasonFor(best, dayType, sportPhase, simulation, ceilings)
+        return buildSession(best, config, reason, date)
       }).filter((session): session is PlannedSession => session !== null)
       const options = withRace(
         regular,
