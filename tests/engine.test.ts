@@ -534,9 +534,9 @@ describe('what the athlete wants today', () => {
     expect(planned?.dayType).toBe('EASY')
     const [wanted] = planDays(stateFrom(spentBudget), config, 1, [], 'hard')
     expect(wanted?.dayType).toBe('KEY')
-    expect(
-      wanted?.options.every((option) => intensityClass(option.template.stimulus) === 'hard'),
-    ).toBe(true)
+    const ride = wanted?.options.find((option) => option.sport === 'Ride')
+    expect(ride && intensityClass(ride.template.stimulus)).toBe('hard')
+    expect(wanted?.recommended).toBe('Ride')
   })
 
   it('says what it overrode', () => {
@@ -712,6 +712,58 @@ describe('recognising a workout that was already done', () => {
     const runs = days.flatMap((day) => day.options).filter((option) => option.sport === 'Run')
     expect(runs.length).toBeGreaterThan(0)
     expect(runs.map((option) => option.template.name)).not.toContain('Schwelle kompakt 3x1km')
+  })
+
+  describe('legs after a hard run', () => {
+    // Named by the watch, so nothing in the name says which session it was.
+    const hardRun = (daysAgo: number) => [
+      activity(daysAgo, 'Run', {
+        load: 50,
+        intensity: 88,
+        name: 'Köln Laufen',
+        zoneSeconds: { Z1: 787, Z2: 80, Z3: 160, Z4: 293, Z5: 308, Z6: 103 },
+      }),
+      activity(9, 'Ride', { load: 60, intensity: 70 }),
+    ]
+    const runner: typeof config = {
+      ...config,
+      profile: { ...config.profile, sports: config.profile.sports.filter((entry) => entry.sport === 'Run') },
+      goals: config.goals.filter((goal) => goal.sport === 'Run'),
+    }
+
+    it('gives the quality day to the bike and keeps the run light two days later', () => {
+      const [today] = planDays(stateFrom(hardRun(2)), config, 1, measured)
+      const run = today?.options.find((option) => option.sport === 'Run')
+
+      expect(today?.dayType).toBe('KEY')
+      expect(today?.recommended).toBe('Ride')
+      expect(run && intensityClass(run.template.stimulus)).not.toBe('hard')
+      expect(run?.reason).toContain('72h')
+    })
+
+    it('offers a hard run again after three days', () => {
+      const [today] = planDays(stateFrom(hardRun(3)), config, 1, measured)
+      const run = today?.options.find((option) => option.sport === 'Run')
+
+      expect(today?.dayType).toBe('KEY')
+      expect(run && intensityClass(run.template.stimulus)).toBe('hard')
+    })
+
+    it('makes a runner with no other sport take an easy day', () => {
+      const [today] = planDays(stateFrom(hardRun(2)), runner, 1, measured)
+
+      expect(today?.dayType).toBe('EASY')
+      expect(today?.notes.join(' ')).toContain('72h')
+    })
+
+    it("lets a runner who asks for it run hard, and says what it costs", () => {
+      const [today] = planDays(stateFrom(hardRun(2)), runner, 1, measured, 'hard')
+      const run = today?.options.find((option) => option.sport === 'Run')
+
+      expect(today?.dayType).toBe('KEY')
+      expect(run && intensityClass(run.template.stimulus)).toBe('hard')
+      expect(today?.notes.join(' ')).toContain('Achtung: Harter Lauf vor 2 Tagen')
+    })
   })
 
   /**
