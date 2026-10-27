@@ -767,7 +767,7 @@ export const planDays = (
       const isToday = dayIndex === 0
       const known = isToday ? morningCompletions : completions
       const view = isToday ? state : laterState
-      const ceilings = levelCeilings(known)
+      const earned = levelCeilings(known)
       const phases = Object.fromEntries(
         sports.map((sport) => [sport, phaseForSport(config, sport, date)]),
       ) as Record<Sport, Phase>
@@ -775,6 +775,10 @@ export const planDays = (
       const primarySport = primaryGoal(config.goals, date)?.sport ?? sports[0] ?? 'Ride'
       const phase = phases[primarySport]
       const back = comingBack(state, simulation, date)
+      // Back from a gap, the last level mastered again before the next one.
+      const ceilings = back
+        ? Object.fromEntries(Object.entries(earned).map(([family, level]) => [family, Math.max(1, level - 1)]))
+        : earned
       const budget = back ? Math.min(1, weeklyHardBudget(phase, config.profile)) : weeklyHardBudget(phase, config.profile)
       const around = racesAround(config, sports, date)
       const exhausted =

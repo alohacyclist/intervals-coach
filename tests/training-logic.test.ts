@@ -87,6 +87,22 @@ describe('coming back after three weeks without training', () => {
     expect(days[0]?.notes.join(' ')).toContain('Wiedereinstieg nach 21 Tagen')
   })
 
+  it('offers the last level mastered again, not the next one', () => {
+    const cleared = ['bike-thr-short-3x8'].flatMap((templateId, index) => {
+      const event = plannedEvent(30 + index, templateId, { externalId: `coach:2026-08-01:${templateId}` })
+      return completionsFrom([event], [activity(30 + index, 'Ride', { load: 80, pairedEventId: event.id, compliance: 95 })])
+    })
+    const levelOf = (days: ReturnType<typeof planDays>) =>
+      Math.max(
+        ...days
+          .flatMap((day) => day.options)
+          .filter((option) => option.template.family === 'bike-threshold')
+          .map((option) => option.template.level ?? 1),
+      )
+    expect(levelOf(planDays(stateFrom(trainingUntil(1)), config, 7, [...measured, ...cleared]))).toBe(2)
+    expect(levelOf(planDays(stateFrom(afterGap), config, 7, [...measured, ...cleared]))).toBe(1)
+  })
+
   it('trains normally again once the way back is over', () => {
     const backLongAgo = [
       ...Array.from({ length: 30 }, (_unused, index) => index + 1)

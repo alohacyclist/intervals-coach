@@ -1,6 +1,6 @@
 import type { Activity, AthleteProfile, DayProposal, ScheduledWorkout, Stimulus, WorkoutTemplate } from './types.ts'
 import type { Completion } from './progression.ts'
-import { LIBRARY, findTemplate, flattenBlocks, intensityClass } from './library.ts'
+import { LIBRARY, findTemplate, flattenBlocks, intensityClass, templatesFor } from './library.ts'
 import { deliveredStimuli, inferStimulus } from './fitness.ts'
 import { defaultThreshold, thresholdFor } from './thresholds.ts'
 import { estimateSeconds } from './variant.ts'
@@ -113,6 +113,33 @@ const best = (candidates: readonly Candidate[]): Candidate | null =>
   )[0] ?? null
 
 /**
+ * Training the plan did not offer counts as well: progress is whatever was
+ * trained, not whatever was obeyed. Matched against the whole ladder of its
+ * sport, but only where it held a session's own work — anything less is just
+ * training, which the plan already reads from load and zones. Never a test or
+ * a reference session, whose numbers only compare when they were scheduled.
+ *
+ * Filed as the lowest rung it fits and held: its intervals are read afterwards
+ * and climb the ladder from there as far as they hold. A session too long to
+ * pass for the lower rungs has shown more than they ask.
+ */
+const unplanned = (activity: Activity, profile: AthleteProfile): Candidate | null => {
+  if (activity.sport === 'Other') return null
+  const exact = templatesFor(activity.sport)
+    .filter((template) => template.family !== undefined && template.benchmark !== true)
+    .filter((template) => template.measures === undefined && template.occasion === undefined)
+    .map((template) => fit(template, activity, profile))
+    .filter((candidate): candidate is Candidate => candidate?.evidence === 'exact')
+  const closest = best(exact)
+  if (!closest) return null
+  return (
+    [...exact]
+      .filter((candidate) => candidate.template.family === closest.template.family)
+      .sort((left, right) => (left.template.level ?? 1) - (right.template.level ?? 1))[0] ?? closest
+  )
+}
+
+/**
  * What the athlete sent to the calendar was on offer too. A rest day records no
  * options, and a session sent on a wish for a harder day may not be among the
  * ones stored — yet it is the one the athlete set out to train.
@@ -136,7 +163,7 @@ export const withScheduled = (
 /**
  * The session an activity fulfilled, read from the data instead of from a
  * calendar entry — the athlete decides spontaneously and should not have to
- * send anything first for training to count.
+ * send anything first for training to count, nor train what was offered.
  */
 export const matchedCompletions = (
   proposals: readonly DayProposal[],
@@ -156,7 +183,7 @@ export const matchedCompletions = (
           .filter((candidate): candidate is Candidate => candidate !== null),
       )
     // Only when nothing offered fits: a full 3x12 is too long to pass for the 3x8 of its day.
-    const match = fitting(templates) ?? fitting(higherLevelsOf(templates))
+    const match = fitting(templates) ?? fitting(higherLevelsOf(templates)) ?? unplanned(activity, profile)
     return match
       ? [
           {

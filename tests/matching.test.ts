@@ -85,15 +85,26 @@ describe('recognising a proposal without the calendar', () => {
 
   it('stays within the sport', () => {
     const run = activity(2, 'Run', { load: 70, zoneSeconds: { Z4: 24 * 60 } })
-    expect(
-      matchedCompletions([proposal(2, ['bike-thr-short-3x8'])], [run], config.profile),
-    ).toEqual([])
+    const [match] = matchedCompletions([proposal(2, ['bike-thr-short-3x8'])], [run], config.profile)
+    expect(match?.templateId).toMatch(/^run-/)
   })
 
-  it('needs a proposal on that very day', () => {
+  it('credits training the plan did not offer, as the lowest rung it fits and held', () => {
     expect(
       matchedCompletions([proposal(3, ['bike-thr-short-3x8'])], [thresholdRide(2)], config.profile),
-    ).toEqual([])
+    ).toEqual([expect.objectContaining({ templateId: 'bike-thr-short-3x8', evidence: 'exact' })])
+    const longer = thresholdRide(2, { load: 88, movingTimeSec: 76 * 60, zoneSeconds: { Z1: 1200, Z2: 1200, Z4: 36 * 60 } })
+    // Too long to pass for the 3x8: the lowest rung it fits is the 3x12.
+    const [match] = matchedCompletions([], [longer], config.profile)
+    expect(match).toMatchObject({ templateId: 'bike-thr-3x12', evidence: 'exact' })
+  })
+
+  it('takes nothing unoffered that did not hold the work, and never a test or reference session', () => {
+    const surges = activity(2, 'Ride', { load: 60, movingTimeSec: 50 * 60, zoneSeconds: { Z2: 1800, Z4: 6 * 60, Z5: 7 * 60 } })
+    expect(matchedCompletions([], [surges], config.profile)).toEqual([])
+    const fourByFour = activity(2, 'Ride', { load: 80, movingTimeSec: 55 * 60, zoneSeconds: { Z2: 1800, Z5: 16 * 60 } })
+    const [match] = matchedCompletions([], [fourByFour], config.profile)
+    expect(match?.templateId).not.toMatch(/^(bench|test)-/)
   })
 
   it('takes nothing for a test that did not deliver its stimulus', () => {
@@ -102,9 +113,9 @@ describe('recognising a proposal without the calendar', () => {
       movingTimeSec: 50 * 60,
       zoneSeconds: { Z5: 600, Z2: 1800 },
     })
-    expect(matchedCompletions([proposal(2, ['test-bike-ftp20'])], [vo2], config.profile)).toEqual(
-      [],
-    )
+    const [match] = matchedCompletions([proposal(2, ['test-bike-ftp20'])], [vo2], config.profile)
+    // Its VO2max work still counts as the VO2max session it was.
+    expect(match?.templateId).not.toBe('test-bike-ftp20')
   })
 
   it('does not take a few hard minutes for the whole session', () => {

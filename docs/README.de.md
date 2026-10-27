@@ -120,7 +120,8 @@ Der Wunsch gilt nur für heute; was er kostet, rechnen die Folgetage mit ein.
 **Wiedereinstieg aus den Daten.** Zehn Tage oder mehr ohne Training erkennt der Plan
 selbst, auch ohne eingetragene Pause. Der Weg zurück dauert etwa so lange wie die Lücke,
 höchstens vier Wochen: erst zwei lockere Einheiten, danach eine Qualitätseinheit pro Woche,
-Schwelle vor VO₂max, kein Schwellentest. Die Begründungen stehen in
+Schwelle vor VO₂max, kein Schwellentest, und in jeder Familie wieder die zuletzt gemeisterte
+Stufe statt der nächsten. Die Begründungen stehen in
 [Trainingslogik](trainingslogik.md).
 
 **Längere Pausen** — Krankheit, Impfung, Verletzung oder schlicht keine Zeit — werden
@@ -165,6 +166,12 @@ für Progression. Tests und Referenzeinheiten brauchen immer den genauen Reiz; e
 Test zählt nur, wenn ein durchgehaltener Block darin steckt und das Ergebnis nicht mehr als
 3 % unter dem eingestellten Wert liegt — sonst war es eine normale Schwelleneinheit. Ein
 gepaarter Kalendereintrag bleibt der direktere Beleg und gewinnt.
+
+**Auch ohne Vorschlag.** Passt nichts Angebotenes, wird die Aktivität gegen alle
+Stufen-Einheiten ihrer Sportart gelegt — aber nur *genau*: Die Arbeit der Einheit muss in
+den Zonen stecken. Eingeordnet wird sie als niedrigste Stufe, zu der ihre Dauer passt; das
+Auslesen der Intervalle klettert von dort weiter. Tests und Formkontrollen werden so nie
+erkannt. Fortschritt ist, was trainiert wurde, nicht was befolgt wurde.
 
 **Heute bleibt heute.** Der Vorschlag für heute wird aus dem Stand vor der ersten Einheit
 des Tages berechnet und springt nicht um, sobald sie synchronisiert ist. Die Einheit wird

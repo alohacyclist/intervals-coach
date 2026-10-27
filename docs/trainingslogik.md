@@ -66,7 +66,8 @@ Pause. Der Weg zurück dauert etwa so lange wie die Lücke, höchstens 4 Wochen:
 
 1. die ersten **2 Einheiten locker**,
 2. danach höchstens **1 harte Einheit pro Woche**,
-3. **Schwelle vor VO₂max**, kein Schwellentest.
+3. **Schwelle vor VO₂max**, kein Schwellentest,
+4. in jeder Workout-Familie die **zuletzt gemeisterte Stufe** statt der nächsten.
 
 - **Belegt:** Nach 2–4 Wochen ohne Training sinken Blutvolumen und VO₂max messbar.
   Mujika & Padilla 2000.
@@ -79,7 +80,22 @@ Pause. Der Weg zurück dauert etwa so lange wie die Lücke, höchstens 4 Wochen:
 Eingetragene Pausen (Krankheit, Impfung, Verletzung) haben zusätzlich eigene Regeln, siehe
 README.
 
-## 5. Erholungswerte
+## 5. Was als Fortschritt zählt
+
+Alles, was tatsächlich trainiert wurde — nicht nur, was der Plan vorgeschlagen hat.
+
+- Form, Fitness, Abstände, Wochenbudget und welcher Reiz als Nächstes dran ist, kommen
+  direkt aus den Aktivitäten. Wer anders trainiert als vorgeschlagen, bekommt am nächsten
+  Tag einen Plan, der darauf aufbaut.
+- Stufen (Progression): Eine Einheit zählt, wenn sie die Arbeit einer Stufe nachweislich
+  gehalten hat — die Zeit in den Zielzonen und danach jedes Intervall gegen die Vorgabe.
+  Das gilt jetzt auch für Einheiten, die nicht vorgeschlagen waren, etwa ein eigenes
+  Zwift-Workout an einem Ruhetag.
+- Tests und Formkontrollen zählen nur, wenn sie geplant waren: nur dann sind die Ergebnisse
+  miteinander vergleichbar.
+- **Geändert:** Bisher wurde eine Einheit nur erkannt, wenn sie an diesem Tag angeboten war.
+
+## 6. Erholungswerte
 
 HRV, Ruhepuls, Schlaf, subjektive Müdigkeit und Form (TSB) werden mit der eigenen
 30-Tage-Baseline verglichen. Mehr als eine Standardabweichung schlechter → heute locker,
@@ -90,7 +106,7 @@ deutlich schlechter oder zwei Warnzeichen → Regeneration oder Pause.
 - **Belegt (Modell):** CTL/ATL/TSB nach dem Fitness-Ermüdungs-Modell von Banister et al. 1975.
   Als Modell nützlich, als Vorhersage für Einzelne ungenau.
 
-## 6. Phasen
+## 7. Phasen
 
 Mehr als 10 Wochen bis zum Ziel: Grundlage; 10–5: Aufbau; 4–2: spezifisch; letzte Woche:
 Tapering. Jede vierte Woche ist Erholungswoche. Die Phase gewichtet, welche Reize gewählt
@@ -112,6 +128,8 @@ Bewusst noch nicht geändert, aber fachlich fraglich:
 - **Rampenrate** (CTL-Anstieg pro Woche) erzeugt nur einen Hinweis, bremst den Plan aber
   nicht.
 - **Ruhetag statt lockerer Tag** nach harten Einheiten: siehe Abschnitt 2.
+- **Stufen verfallen nicht mit der Zeit.** Nur nach einer Lücke von 10 Tagen oder mehr geht
+  es eine Stufe zurück; eine lange Phase mit wenig Qualität ohne echte Lücke senkt sie nicht.
 
 ## Quellen
 
