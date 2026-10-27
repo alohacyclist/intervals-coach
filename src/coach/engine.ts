@@ -20,8 +20,9 @@ import { ALL_SPORTS, STIMULUS_LABELS } from './types.ts'
 import { formNote } from './wording.ts'
 import { addDays, diffDays, startOfWeek, weekdayDe } from './dates.ts'
 import { projectFitness } from './fitness.ts'
-import { PHASE_LABELS, goalForSport, phaseForSport, primaryGoal, weeklyHardBudget } from './phase.ts'
+import { PHASE_LABELS, basePhaseForSport, goalForSport, phaseForSport, primaryGoal, weeklyHardBudget } from './phase.ts'
 import { selectedSports } from './thresholds.ts'
+import { returnDays } from './state.ts'
 import { breakLimit, returnWindow } from './breaks.ts'
 import { thresholdTestDue } from './threshold-test.ts'
 import { benchmarkDue } from './benchmark.ts'
@@ -50,8 +51,8 @@ const RUN_HARD_SPACING_DAYS = 3
  */
 const FULL_HARD_LOAD = 48
 const STALE_STIMULUS_DAYS = 28
-/** A gap this long means the body has detrained; VO2max is the wrong way back in. */
-const LAYOFF_DAYS = 10
+/** Back from a gap, this many easy sessions come before the first hard one. */
+const RETURN_EASY_SESSIONS = 2
 /** Beyond this, rest stops being recovery and starts being detraining. */
 const MAX_CONSECUTIVE_REST = 2
 
@@ -69,6 +70,8 @@ type Simulation = {
   readonly testedThisWeek: boolean
   readonly consecutiveRest: number
   readonly weekStart: string
+  /** Sessions since the last long gap, while the way back from it is under way. */
+  readonly sessionsSinceLayoff: number
 }
 
 const ALLOWED_CLASSES: Readonly<Record<DayType, readonly IntensityClass[]>> = {
@@ -112,7 +115,30 @@ const initSimulation = (state: TrainingState, config: CoachConfig): Simulation =
   testedThisWeek: false,
   consecutiveRest: state.consecutiveRestDays,
   weekStart: startOfWeek(state.today),
+  sessionsSinceLayoff: state.layoff?.sessionsSince ?? 0,
 })
+
+type ComingBack = {
+  readonly gapDays: number
+  /** The first day training is normal again. */
+  readonly until: string
+  /** Still within the first easy sessions, before any hard one. */
+  readonly easing: boolean
+}
+
+/**
+ * The way back from a gap: a few easy sessions first, then one quality session a
+ * week, threshold before VO2max, until about as long as the gap has passed. The
+ * heart is back within days; what limits a return are tendons, bones and the
+ * blood volume the gap took, and they come back with regular volume first.
+ */
+const comingBack = (state: TrainingState, simulation: Simulation, date: string): ComingBack | null => {
+  const { layoff } = state
+  if (!layoff) return null
+  const until = addDays(layoff.since, returnDays(layoff))
+  if (date >= until) return null
+  return { gapDays: layoff.gapDays, until, easing: simulation.sessionsSinceLayoff < RETURN_EASY_SESSIONS }
+}
 
 const stimulusAge = (simulation: Simulation, sport: Sport, stimulus: Stimulus): number =>
   simulation.stimulusAge[`${sport}:${stimulus}`] ?? STALE_STIMULUS_DAYS
@@ -278,6 +304,7 @@ const decideDay = (
   dayIndex: number,
   date: string,
   sports: readonly Sport[],
+  back: ComingBack | null,
 ): DayDecision => {
   const { max } = config.profile.weeklySessions
   const min = effectiveWeeklyMin(config, state)
@@ -298,6 +325,11 @@ const decideDay = (
   }
   if (simulation.fitness.tsb < -30) {
     return plan('RECOVERY', 'Form deutlich im Minus — nur Regeneration')
+  }
+  if (back?.easing) {
+    return backOff(
+      `${back.gapDays} Tage ohne Training — die ersten ${RETURN_EASY_SESSIONS} Einheiten locker, danach wieder Qualität`,
+    )
   }
   if (minDaysSinceHard(simulation, sports) < HARD_SPACING_DAYS) {
     const blocking = blockingHardLoad(simulation, sports)
@@ -324,8 +356,10 @@ const decideDay = (
     }
     return plan('EASY', 'Keine 48h seit der letzten harten Einheit, aber die Woche läuft aus — locker statt Pause')
   }
-  // Only a runner gets here: anyone with a second sport takes the quality day there.
-  if (sports.every((sport) => legsRecovering(simulation, sport))) {
+  // Only a runner gets here, or a run close to its goal: anyone else takes the
+  // quality day in the other sport.
+  const close = closeGoalSport(config, date, sports)
+  if (sports.every((sport) => legsRecovering(simulation, sport)) || (close && legsRecovering(simulation, close))) {
     return plan('EASY', `${legsNote(simulation)} — heute locker`)
   }
   if (simulation.hardThisWeek >= budget) {
@@ -337,7 +371,8 @@ const decideDay = (
       simulation.consecutiveRest >= MAX_CONSECUTIVE_REST ||
       minDaysSinceHard(simulation, sports) >= 4
     const fresh = simulation.fitness.tsb > -12 && !readinessRed
-    return restedOut && fresh
+    // On the way back the one quality session a week is the point, not a floor.
+    return restedOut && fresh && !back
       ? beyondPlan(
           'KEY',
           `${spent}, aber nach ${simulation.consecutiveRest} Ruhetagen und mit Form ${simulation.fitness.tsb} ist eine weitere Qualitätseinheit vertretbar.`,
@@ -406,8 +441,7 @@ const scoreTemplate = (
   const roleBonus = isPreferredSport(template.stimulus, template.sport) ? 1 : 0
   // Coming back, the first hard session is threshold, not VO2max — whether the
   // gap was measured or declared.
-  const layoffPenalty =
-    (state.daysSinceAnySession >= LAYOFF_DAYS || returning) && template.stimulus === 'VO2' ? -4 : 0
+  const layoffPenalty = returning && template.stimulus === 'VO2' ? -4 : 0
   const alreadyOffered = simulation.usedTemplateIds.includes(template.id) ? -2.5 : 0
   // Doing the same workout again days later is a different matter from seeing it
   // twice in the three day view, and needs to lose against anything else on offer.
@@ -519,6 +553,30 @@ const reasonFor = (
   return `Regeneration hat Vorrang (${PHASE_LABELS[phase]})`
 }
 
+/**
+ * The sport of a goal in its last weeks. Then the hard sessions are all its own:
+ * one spent on another sport is one fewer for what the goal asks.
+ */
+const closeGoalSport = (config: CoachConfig, date: string, sports: readonly Sport[]): Sport | null => {
+  const sport = primaryGoal(config.goals, date)?.sport
+  if (sport === undefined || !sports.includes(sport)) return null
+  return ['SPECIFIC', 'TAPER'].includes(basePhaseForSport(config, sport, date)) ? sport : null
+}
+
+/**
+ * The sports a quality day serves first. Training transfers to what is trained
+ * — the more specific, the more it carries — so a goal's sport has the first
+ * claim on the few hard sessions a week holds. Two goals share them, unless one
+ * is close enough to be the one that counts now; without a goal, every sport
+ * takes its turn.
+ */
+const qualitySports = (config: CoachConfig, date: string, sports: readonly Sport[]): readonly Sport[] => {
+  const close = closeGoalSport(config, date, sports)
+  if (close) return [close]
+  const withGoal = sports.filter((sport) => goalForSport(config.goals, sport, date) !== undefined)
+  return withGoal.length > 0 ? withGoal : sports
+}
+
 const chooseRecommended = (
   dayType: DayType,
   simulation: Simulation,
@@ -540,10 +598,13 @@ const chooseRecommended = (
     // there is none — then the athlete asked for it.
     const ready = mostRested.filter((sport) => !legsRecovering(simulation, sport))
     const candidates = ready.length > 0 ? ready : mostRested
-    const preferred = candidates.includes(primarySport) ? primarySport : (candidates[0] ?? primarySport)
-    // A sport with no quality work this week comes first; among several, the
-    // one that has waited longest.
-    const neglected = candidates.filter((sport) => simulation.hardThisWeekBySport[sport] === 0)
+    // The goal's sport first; another one only while the goal's sport cannot take it.
+    const served = qualitySports(config, date, sports).filter((sport) => candidates.includes(sport))
+    const pool = served.length > 0 ? served : candidates
+    const preferred = pool.includes(primarySport) ? primarySport : (pool[0] ?? primarySport)
+    // Among sports with an equal claim, the one with no quality work this week comes
+    // first; among several, the one that has waited longest.
+    const neglected = pool.filter((sport) => simulation.hardThisWeekBySport[sport] === 0)
     if (neglected.length > 0 && !neglected.includes(preferred)) return neglected[0] ?? preferred
     return preferred
   }
@@ -557,15 +618,17 @@ const notesFor = (
   config: CoachConfig,
   dayIndex: number,
   date: string,
+  back: ComingBack | null,
 ): readonly string[] => {
   const notes: string[] = [decision.reason]
   if (dayIndex === 0 && state.readiness.reasons[0] !== 'Keine Warnsignale') {
     notes.push(...state.readiness.reasons)
   }
   notes.push(formNote(simulation.fitness))
-  if (state.daysSinceAnySession >= LAYOFF_DAYS && state.daysSinceAnySession < 99) {
+  if (back) {
+    const [year, month, day] = addDays(back.until, -1).split('-')
     notes.push(
-      `${state.daysSinceAnySession} Tage ohne Training — Wiedereinstieg über die Schwelle, VO₂max erst danach`,
+      `Wiedereinstieg nach ${back.gapDays} Tagen ohne Training — bis ${day}.${month}.${year} höchstens eine Qualitätseinheit pro Woche, Schwelle vor VO₂max`,
     )
   }
   const coming = returnWindow(config.breaks, date)
@@ -664,6 +727,7 @@ const advance = (
     testedThisWeek: (sameWeek && simulation.testedThisWeek) || tested,
     consecutiveRest: efforts.length > 0 ? 0 : simulation.consecutiveRest + 1,
     weekStart: sameWeek ? simulation.weekStart : startOfWeek(nextDate),
+    sessionsSinceLayoff: simulation.sessionsSinceLayoff + sessions.length,
   }
 }
 
@@ -710,14 +774,15 @@ export const planDays = (
       // Without a goal the first sport sets the phase; 'Ride' alone left a runner with no budget at all.
       const primarySport = primaryGoal(config.goals, date)?.sport ?? sports[0] ?? 'Ride'
       const phase = phases[primarySport]
-      const budget = weeklyHardBudget(phase, config.profile)
+      const back = comingBack(state, simulation, date)
+      const budget = back ? Math.min(1, weeklyHardBudget(phase, config.profile)) : weeklyHardBudget(phase, config.profile)
       const around = racesAround(config, sports, date)
       const exhausted =
         (state.readiness.score === 'red' && isToday) || simulation.fitness.tsb < -30
       const decision = applyIntent(
         aroundRace(
           applyWeeklyCapacity(
-            decideDay(simulation, state, config, budget, dayIndex, date, sports),
+            decideDay(simulation, state, config, budget, dayIndex, date, sports, back),
             simulation,
             state,
             config,
@@ -735,7 +800,7 @@ export const planDays = (
       )
       const { dayType } = decision
 
-      const returning = returnWindow(config.breaks, date) !== null
+      const returning = returnWindow(config.breaks, date) !== null || back !== null
       const openers =
         around.raceTomorrow && dayType === 'EASY' ? findTemplate('bike-zrl-openers') : undefined
       // On race day the race is the plan; the day before, the openers are.
@@ -824,7 +889,7 @@ export const planDays = (
         phase,
         recommended,
         options,
-        notes: notesFor(decision, state, simulation, config, dayIndex, date),
+        notes: notesFor(decision, state, simulation, config, dayIndex, date, back),
         optional: decision.optional,
         strength,
         completed: isToday ? completedFrom(doneToday, completions) : [],

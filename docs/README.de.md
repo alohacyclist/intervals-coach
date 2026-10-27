@@ -85,19 +85,27 @@ Einstellungen in der App.
    4–2 spezifisch, letzte Woche Tapering. Jede vierte Woche ab `planStart` ist
    Erholungswoche. Ziele ohne Datum durchlaufen 4-Wochen-Blöcke Grundlage/Aufbau.
 3. **Tagestyp** — Regeln in dieser Reihenfolge: Readiness rot → Regeneration/Ruhe;
-   Form < −30 → Regeneration; weniger als 48 h seit der letzten harten Einheit → locker;
-   Wochenbudget harter Einheiten erschöpft → locker; sonst Qualitätstag. Nach zwei vollen
+   Form < −30 → Regeneration; Wiedereinstieg nach einer Lücke → die ersten zwei Einheiten
+   locker; weniger als 48 h seit der letzten harten Einheit → locker; Wochenbudget harter
+   Einheiten erschöpft → locker; sonst Qualitätstag. Nach zwei vollen
    Ruhetagen kippt die Budgetregel: ist die Form gut, wird trotzdem eine Qualitätseinheit
    angeboten — als freiwillig markiert, nicht eingeplant. Drei Ruhetage am Stück kann der
    Plan nicht vorschlagen, das wäre Formverlust statt Erholung.
-4. **Auswahl** — pro Sportart wird aus der Workout-Bibliothek der Reiz gewählt, der am
+4. **Sportart** — den Qualitätstag bekommt die Sportart des Ziels. Zwei Ziele teilen sich
+   die harten Tage, bis eines in seinen letzten vier Wochen ist; dann gehören sie ihm allein,
+   und braucht der Lauf noch seine 72 h, bleibt der Tag locker, statt die Qualität aufs Rad
+   zu geben. Ohne Ziel kommt jede Sportart reihum dran.
+5. **Auswahl** — pro Sportart wird aus der Workout-Bibliothek der Reiz gewählt, der am
    längsten zurückliegt, zur Phase passt und ins Zeitbudget fällt. Zuletzt absolvierte
    und bereits vorgeschlagene Workouts werden abgewertet, damit sich nichts wiederholt.
-5. **Simulation** — Tag 2 und 3 werden auf Basis der für Tag 1 empfohlenen Einheit
-   gerechnet, damit nie zwei harte Tage hintereinander stehen.
+6. **Simulation** — Tag 2 und 3 werden auf Basis der für Tag 1 empfohlenen Einheit
+   gerechnet, damit nie zwei harte Tage hintereinander stehen. Ist heute schon trainiert
+   worden, zählt sofort das Trainierte: ein lockerer Lauf an einem Qualitätstag schiebt die
+   Qualität auf morgen, und kommt doch noch eine harte Einheit dazu, wird neu gerechnet.
 
-Das Wochenbudget harter Einheiten leitet sich aus `weeklySessions` ab: bei drei Einheiten
-pro Woche zwei Qualitätseinheiten plus eine lockere oder lange. Die Obergrenze bestimmt,
+Das Wochenbudget harter Einheiten leitet sich aus `weeklySessions` ab: bei bis zu fünf
+Einheiten pro Woche höchstens zwei Qualitätseinheiten, erst ab sechs drei — der Rest bleibt
+locker oder lang. Die Obergrenze bestimmt,
 was *eingeplant* wird — nicht, was der Körper verträgt: alles darüber erscheint weiter,
 nur als freiwillig markiert.
 
@@ -108,6 +116,12 @@ Zonenauswertung würden genau die Einheiten übersehen, die zählen.
 
 **Heute anders.** Über „Heute hart / locker / Pause“ lässt sich der Tagestyp überschreiben.
 Der Wunsch gilt nur für heute; was er kostet, rechnen die Folgetage mit ein.
+
+**Wiedereinstieg aus den Daten.** Zehn Tage oder mehr ohne Training erkennt der Plan
+selbst, auch ohne eingetragene Pause. Der Weg zurück dauert etwa so lange wie die Lücke,
+höchstens vier Wochen: erst zwei lockere Einheiten, danach eine Qualitätseinheit pro Woche,
+Schwelle vor VO₂max, kein Schwellentest. Die Begründungen stehen in
+[Trainingslogik](trainingslogik.md).
 
 **Längere Pausen** — Krankheit, Impfung, Verletzung oder schlicht keine Zeit — werden
 eingetragen und schlagen jede Messung: eine Impfreaktion zeigt sich in der HRV erst, wenn

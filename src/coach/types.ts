@@ -379,9 +379,25 @@ export type TrainingState = {
   readonly dataIssue: DataIssue | null
   /** Days since any session at all — a long gap changes how training resumes. */
   readonly daysSinceAnySession: number
+  /** The last long gap in training while the way back from it is still under way. */
+  readonly layoff: Layoff | null
   readonly strengthSessionsThisWeek: number
   /** Rest days immediately before today — three in a row start to cost fitness. */
   readonly consecutiveRestDays: number
+}
+
+/**
+ * Ten days or more without training. Blood volume and VO2max are the first to
+ * go, tendons and bones lose their tolerance for load more slowly than the heart
+ * regains its own — so the way back starts with volume, not intensity.
+ */
+export type Layoff = {
+  /** Days from the last session before the gap to the first one after it, or to today. */
+  readonly gapDays: number
+  /** The first day back: the first session after the gap, or today while it lasts. */
+  readonly since: string
+  /** Sessions trained since then, today's not yet among them. */
+  readonly sessionsSince: number
 }
 
 /**

@@ -2,6 +2,7 @@ import type {
   Activity,
   DataIssue,
   Fitness,
+  Layoff,
   RecentActivity,
   Sport,
   StimulusRecency,
@@ -73,6 +74,44 @@ const daysSinceAny = (activities: readonly Activity[], today: string): number =>
     .map((activity) => diffDays(activity.date, today))
     .filter((age) => age >= 0)
   return ages.length === 0 ? NEVER : Math.min(...ages)
+}
+
+/** A gap this long means the body has detrained; the way back is built, not resumed. */
+export const LAYOFF_DAYS = 10
+/** However long the gap, a month back is enough to train normally again. */
+const MAX_RETURN_DAYS = 28
+
+/** How long the way back from a gap takes: about as long as the gap itself, up to a month. */
+export const returnDays = (layoff: Layoff): number => Math.min(layoff.gapDays, MAX_RETURN_DAYS)
+
+/**
+ * The last gap of ten days or more, while its way back is still under way —
+ * whether or not a break was declared for it: three weeks of holiday cost the
+ * same fitness as three weeks of illness, only without the risk to the heart.
+ */
+export const layoffFrom = (activities: readonly Activity[], today: string): Layoff | null => {
+  const trained = activities.filter(
+    (activity) => activity.load > 0 && activity.sport !== 'Other' && diffDays(activity.date, today) > 0,
+  )
+  const dates = [...new Set(trained.map((activity) => activity.date))].sort()
+  const last = dates[dates.length - 1]
+  // No history is a new account, not a layoff.
+  if (last === undefined) return null
+  if (diffDays(last, today) >= LAYOFF_DAYS) return { gapDays: diffDays(last, today), since: today, sessionsSince: 0 }
+
+  for (let index = dates.length - 1; index > 0; index -= 1) {
+    const back = dates[index]!
+    if (diffDays(back, today) >= MAX_RETURN_DAYS) return null
+    const gapDays = diffDays(dates[index - 1]!, back)
+    if (gapDays < LAYOFF_DAYS) continue
+    const layoff = {
+      gapDays,
+      since: back,
+      sessionsSince: trained.filter((activity) => activity.date >= back).length,
+    }
+    return diffDays(back, today) < returnDays(layoff) ? layoff : null
+  }
+  return null
 }
 
 /** Most recent occurrence of each stimulus per sport, used to rotate the training focus. */
@@ -203,6 +242,7 @@ export const buildState = (
     loadedActivityCount: activities.filter((activity) => activity.load > 0).length,
     dataIssue: detectDataIssue(activities),
     daysSinceAnySession: daysSinceAny(activities, today),
+    layoff: layoffFrom(activities, today),
     consecutiveRestDays: consecutiveRestDays(activities, today),
     strengthSessionsThisWeek: thisWeek.filter((activity) => activity.isStrength).length,
   }

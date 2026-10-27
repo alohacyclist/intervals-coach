@@ -58,7 +58,7 @@ const openEndedPhase = (planStart: string, today: string): Phase => {
 }
 
 /** The phase the block is in, before the recovery week is laid over it. */
-const basePhaseForSport = (config: CoachConfig, sport: Sport, today: string): Phase => {
+export const basePhaseForSport = (config: CoachConfig, sport: Sport, today: string): Phase => {
   const goal = goalForSport(config.goals, sport, today)
   const weeksLeft = goal ? weeksToGoal(goal, today) : null
   return weeksLeft === null ? openEndedPhase(config.planStart, today) : datedPhase(weeksLeft)
@@ -112,14 +112,17 @@ const PHASE_HARD_BUDGET: Readonly<Record<Phase, number>> = {
 }
 
 /**
- * Hard sessions per week. Capped by what the athlete can actually fit in, since
- * low-volume plans need at least one easy or long session as a base.
+ * Hard sessions per week the training volume carries. Most of the time stays
+ * easy — the 80/20 that endurance athletes at every level converge on — and
+ * with few sessions a week the hard ones take a larger share, never all of them:
+ * at least one easy or long session is the base the rest stands on. Three hard
+ * sessions only from six a week; four or five carry two.
  */
-export const weeklyHardBudget = (phase: Phase, profile: AthleteProfile): number => {
-  const phaseBudget = PHASE_HARD_BUDGET[phase]
-  const volumeBudget = Math.max(1, profile.weeklySessions.max - 1)
-  return Math.min(phaseBudget, volumeBudget)
-}
+const volumeBudget = (sessions: number): number => (sessions >= 6 ? 3 : sessions >= 3 ? 2 : 1)
+
+/** Hard sessions per week: what the phase asks for, capped by what the week can carry. */
+export const weeklyHardBudget = (phase: Phase, profile: AthleteProfile): number =>
+  Math.min(PHASE_HARD_BUDGET[phase], volumeBudget(profile.weeklySessions.max))
 
 export const PHASE_LABELS: Readonly<Record<Phase, string>> = {
   BASE: 'Grundlage',

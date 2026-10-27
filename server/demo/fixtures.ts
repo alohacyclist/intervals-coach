@@ -189,9 +189,10 @@ const loadedWeek = (week: number): readonly Slot[] => {
   const index = blockWeek(week)
   const slots: readonly Slot[] = [
     { day: 1, templateId: week === BENCHMARK_WEEK ? 'bench-bike-4x4' : BIKE_KEYS[index]!, pushed: true },
+    // Two quality sessions in five, as the plan itself would lay them out: the swim stays technique.
     {
       day: 2,
-      templateId: week === BENCHMARK_WEEK ? 'bench-swim-400' : index === 1 ? 'swim-css-5x200' : 'swim-technique',
+      templateId: week === BENCHMARK_WEEK ? 'bench-swim-400' : 'swim-technique',
       pushed: week === BENCHMARK_WEEK,
     },
     { day: 3, templateId: week === BENCHMARK_WEEK ? 'bench-run-4x4' : RUN_KEYS[index]!, pushed: true },

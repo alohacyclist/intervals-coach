@@ -71,7 +71,8 @@ describe('demo fixtures', () => {
     // The week before last is the recovery week.
     expect(weekLoad(data, -2)).toBeLessThan(Math.min(weekLoad(data, -3), weekLoad(data, -1)) * 0.8)
     const hardLastMonth = data.activities.filter((activity) => activity.date >= addDays(TODAY, -28) && isHardActivity(activity))
-    expect(hardLastMonth.length).toBeGreaterThanOrEqual(5)
+    // Two quality sessions in each of three loaded weeks, two of them missed.
+    expect(hardLastMonth.length).toBeGreaterThanOrEqual(4)
   })
 
   it('show the cold as a break, in HRV and in resting pulse', () => {
