@@ -66,15 +66,25 @@ describe('a day that has already been trained', () => {
     expect(tomorrow?.dayType).not.toBe('KEY')
   })
 
-  it('keeps a quality day open after an easy session, so tomorrow is not the same hard day again', () => {
+  it('moves the quality to tomorrow at once when an easy session took its day', () => {
     const before = morning(rested)
     expect(before[0]?.dayType).toBe('KEY')
 
     const easyRun = activity(0, 'Run', { load: 35, intensity: 65, name: 'Lauf locker' })
     const [today, tomorrow] = planFromMorning([...rested, easyRun], wellnessEntries, [], config, TODAY, 3)
     expect(idsOf(today)).toEqual(idsOf(before[0]))
+    expect(tomorrow?.dayType).toBe('KEY')
+    // The session not done is the one made up, not swapped for whatever was not on offer yet.
+    expect(tomorrow?.options.find((option) => option.sport === before[0]?.recommended)?.template.id).toBe(
+      before[0]?.options.find((option) => option.sport === before[0]?.recommended)?.template.id,
+    )
+  })
+
+  it('plans anew when the quality session is added after all', () => {
+    const easyRun = activity(0, 'Run', { load: 35, intensity: 65, name: 'Lauf locker' })
+    const hardRide = activity(0, 'Ride', { load: 95, intensity: 98, name: 'VO2max' })
+    const [, tomorrow] = planFromMorning([...rested, easyRun, hardRide], wellnessEntries, [], config, TODAY, 3)
     expect(tomorrow?.dayType).not.toBe('KEY')
-    expect(idsOf(tomorrow)).not.toEqual(idsOf(today))
   })
 
   it('plans exactly as before while nothing has been done today', () => {
