@@ -295,6 +295,26 @@ describe('planned against done', () => {
     expect(totalSeconds(short, FTP)).toBeLessThan(totalSeconds(full, FTP))
     expect(plannedBlocks(threshold3x12, FTP, threshold3x12.minutes)).toBe(threshold3x12.blocks)
   })
+
+  it('names a shortened session as it was pushed, not after the full one', () => {
+    const long = findTemplate('run-long-80') as WorkoutTemplate
+    const pace: SportThreshold = { metric: 'pace', thresholdSecPerKm: 270 }
+    const execution = (blocks: WorkoutTemplate['blocks']) =>
+      compareExecution({
+        activityId: 'a1',
+        sport: 'Run',
+        template: long,
+        blocks,
+        threshold: pace,
+        intervals: [],
+        load: 51,
+        movingSeconds: 2700,
+        compliance: null,
+        trace: null,
+      })
+    expect(execution(plannedBlocks(long, pace, 40)).templateName).toBe('Langer Lauf 40min')
+    expect(execution(long.blocks).templateName).toBe('Langer Lauf 80min')
+  })
 })
 
 describe('where each interval lay in the activity', () => {

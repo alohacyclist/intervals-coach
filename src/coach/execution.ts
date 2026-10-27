@@ -11,7 +11,7 @@ import type {
 } from './types.ts'
 import { flattenBlocks } from './library.ts'
 import { percentages } from './format.ts'
-import { estimateSeconds, shorten, totalSeconds } from './variant.ts'
+import { estimateSeconds, renameShortened, shorten, totalSeconds } from './variant.ts'
 import { intensityOfPercent } from './profile.ts'
 
 /**
@@ -408,7 +408,8 @@ export const compareExecution = (input: ExecutionInput): Execution => {
 
   return {
     activityId: input.activityId,
-    templateName: template.name,
+    // Named as it was sent: a long run cut to forty minutes is not shared as the eighty.
+    templateName: renameShortened(template.name, template.blocks, blocks, threshold),
     sport: input.sport,
     metric: threshold.metric,
     steps,
