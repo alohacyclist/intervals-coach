@@ -21,10 +21,13 @@ type Props = {
   readonly scheduled: readonly ScheduledWorkout[]
   /** Today's wish, so a push finds the plan that was on screen. */
   readonly intent?: string
+  /** Today's time, for the same reason. */
+  readonly minutesToday?: number
 }
 
 /** The version shown first, mirroring the preference SessionCard applies. */
 const usualVariant = (session: PlannedSession) =>
+  session.variants.find((variant) => variant.tier === 'extra') ??
   session.variants.find((variant) => variant.tier === 'normal') ??
   session.variants[session.variants.length - 1]
 
@@ -58,6 +61,7 @@ export const DayCard = ({
   destinations,
   scheduled,
   intent,
+  minutesToday,
 }: Props) => {
   const trained = day.completed.length > 0
   const dimmed = trained || day.recommended === 'REST'
@@ -125,7 +129,8 @@ export const DayCard = ({
       <div className={`day__options ${dimmed ? 'day__options--optional' : ''}`}>
         {day.options.map((session) => (
           <SessionCard
-            key={session.template.id}
+            // A new length today brings a new choice of version, so the card starts over.
+            key={`${session.template.id}-${session.variants.map((variant) => variant.minutes).join('-')}`}
             session={session}
             date={day.date}
             recommended={session.template.id === pick}
@@ -135,6 +140,7 @@ export const DayCard = ({
               .map((entry) => entry.minutes)}
             destinations={destinations[session.sport] ?? []}
             intent={intent}
+            minutesToday={minutesToday}
           />
         ))}
       </div>

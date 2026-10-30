@@ -93,6 +93,27 @@ describe('planner on demo data', () => {
     expect(network).not.toHaveBeenCalled()
   })
 
+  it('lengthens today on a day with more time, and only today', async () => {
+    const stretchedOn = await Promise.all(
+      WEEK.map(async (date) => {
+        const plan = await routesOn(date).get('/api/plan?minutes=180')
+        vi.useRealTimers()
+        const added = (day: Record<string, any>) =>
+          day['options'].some((option: Record<string, any>) => option['variants'].some((variant: Record<string, any>) => variant['tier'] === 'extra'))
+        expect(plan['days'].slice(1).some(added)).toBe(false)
+        return added(plan['days'][0])
+      }),
+    )
+    expect(stretchedOn.some(Boolean)).toBe(true)
+  })
+
+  it('ignores a time wish that is no number of minutes', async () => {
+    const { get } = routesOn('2026-10-21')
+    const usual = await get('/api/plan')
+    const odd = await get('/api/plan?minutes=lang')
+    expect(odd['days']).toEqual(usual['days'])
+  })
+
   it('keeps a declared break in the plan, as the real app does', async () => {
     const { app, get } = routesOn('2026-10-21')
     const response = await app.request('/api/break', { method: 'POST', body: JSON.stringify({ kind: 'illness', days: 3 }) })

@@ -141,6 +141,18 @@ export const HARD_STIMULI: readonly Stimulus[] = ['VO2', 'THRESHOLD', 'SWEETSPOT
  */
 const MIN_QUALITY_LOAD = 40
 
+/**
+ * Without zones, a load this high is taken as hard whatever the average says:
+ * two hours with intervals in them average out as an easy ride.
+ */
+const UNZONED_HARD_LOAD = 90
+/**
+ * With zones, load alone only decides past every long session this app proposes
+ * (2,5 hours carry 120). Two easy hours are not a hard day — planned they never
+ * were, and ridden they must not become one.
+ */
+export const HARD_ON_LOAD_ALONE = 150
+
 const hasZones = (activity: Activity): boolean => Object.keys(activity.zoneSeconds).length > 0
 
 /**
@@ -153,7 +165,8 @@ const hasZones = (activity: Activity): boolean => Object.keys(activity.zoneSecon
  * there a minimum load has to stand in for evidence.
  */
 export const isHardActivity = (activity: Activity): boolean =>
-  activity.load >= 90 ||
+  activity.load >= HARD_ON_LOAD_ALONE ||
+  (!hasZones(activity) && activity.load >= UNZONED_HARD_LOAD) ||
   (HARD_STIMULI.includes(inferStimulus(activity)) &&
     (hasZones(activity) || activity.load >= MIN_QUALITY_LOAD))
 

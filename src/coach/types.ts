@@ -74,12 +74,14 @@ export type SessionMinutes = {
   readonly max: number
 }
 
-export type SessionTier = keyof SessionMinutes
+/** The configured budgets, and on a day with more time a version past all of them. */
+export type SessionTier = keyof SessionMinutes | 'extra'
 
 export const TIER_LABELS: Readonly<Record<SessionTier, string>> = {
   min: 'knapp',
   normal: 'normal',
   max: 'lang',
+  extra: 'mehr Zeit',
 }
 
 export type WeeklySessions = {
@@ -355,6 +357,8 @@ export type TrainingState = {
   readonly daysSinceHard: Readonly<Record<Sport, number>>
   /** Load of that most recent hard session — how much recovery it actually bought. */
   readonly lastHardLoad: Readonly<Record<Sport, number>>
+  /** Longest session per sport over the last six weeks, in minutes — how much more time can be used. */
+  readonly longestRecentMinutes: Readonly<Record<Sport, number>>
   /** Sessions per week over the last four weeks — what the athlete really manages. */
   readonly sessionsPerWeekRecent: number
   readonly hardSessionsLast7: number
@@ -485,6 +489,8 @@ export type SessionVariant = {
   readonly profile: readonly ProfileSegment[]
   /** What was removed, so the athlete can see the stimulus survived. */
   readonly cuts: readonly string[]
+  /** For the `extra` version: what was added, so the athlete can see nothing of the work grew. */
+  readonly added?: readonly string[]
 }
 
 export type PlannedSession = {

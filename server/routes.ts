@@ -46,7 +46,7 @@ import { isZrlRace } from '../src/coach/zrl.ts'
 import { ALL_BREAK_KINDS } from '../src/coach/types.ts'
 import type { SessionTier } from '../src/coach/types.ts'
 
-const TIERS: readonly SessionTier[] = ['min', 'normal', 'max']
+const TIERS: readonly SessionTier[] = ['min', 'normal', 'max', 'extra']
 import { activeBreak, endedBefore } from '../src/coach/breaks.ts'
 import { findTemplate } from '../src/coach/library.ts'
 import { buildSession } from '../src/coach/session.ts'
@@ -221,7 +221,19 @@ const buildProgressView = async (deps: RouteDeps, span: ProgressSpan): Promise<P
   return { ...progress, garmin: garminAttribution(activities) }
 }
 
-const buildPlan = async (deps: RouteDeps, days: number, intent?: Intent): Promise<Plan> => {
+/** More time today: whole minutes, within what one session can sensibly be. */
+const minutesWish = (raw: unknown): number | undefined => {
+  if (raw === undefined || raw === null || raw === '') return undefined
+  const value = Number(raw)
+  return Number.isInteger(value) && value >= 30 && value <= 360 ? value : undefined
+}
+
+const buildPlan = async (
+  deps: RouteDeps,
+  days: number,
+  intent?: Intent,
+  minutesToday?: number,
+): Promise<Plan> => {
   const today = todayFor(deps)
   const config = await deps.store.load()
   const [activities, wellness, events, settings, destinations] = await Promise.all([
@@ -280,6 +292,7 @@ const buildPlan = async (deps: RouteDeps, days: number, intent?: Intent): Promis
     1,
     intent,
     raceActivities,
+    minutesToday,
   )
   const proposals = morning ? withProposal(config.proposals, morning) : config.proposals
 
@@ -303,6 +316,7 @@ const buildPlan = async (deps: RouteDeps, days: number, intent?: Intent): Promis
     days,
     intent,
     raceActivities,
+    minutesToday,
   )
   // The days ahead are kept too: training on a day the app was not opened is still recognised.
   if (planned.reduce(withProposal, proposals) !== config.proposals) {
@@ -385,7 +399,8 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
     const days = Number.isFinite(requested) ? Math.min(Math.max(Math.trunc(requested), 1), 7) : 3
     const wish = context.req.query('intent')
     const intent = wish === 'hard' || wish === 'easy' || wish === 'rest' ? wish : undefined
-    return context.json(await buildPlan(await resolveFor(resolve, context), days, intent))
+    const minutesToday = minutesWish(context.req.query('minutes'))
+    return context.json(await buildPlan(await resolveFor(resolve, context), days, intent, minutesToday))
   })
 
   /** Pulls FTP and threshold pace from intervals.icu into the stored profile. */
@@ -643,6 +658,7 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
       templateId?: string
       variant?: string
       intent?: string
+      minutes?: number
     }
     const template = body.templateId ? findTemplate(body.templateId) : undefined
     if (!body.date || !/^\d{4}-\d{2}-\d{2}$/.test(body.date)) {
@@ -658,7 +674,7 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
     const deps = { ...resolved, source: resolved.source.fresh() }
     // The plan as the athlete saw it: today's wish changes what today offers.
     const intent = body.intent === 'hard' || body.intent === 'easy' || body.intent === 'rest' ? body.intent : undefined
-    const plan = await buildPlan(deps, 7, intent)
+    const plan = await buildPlan(deps, 7, intent, minutesWish(body.minutes))
     const config = await deps.store.load()
     const planned = plan.days
       .find((day) => day.date === body.date)
@@ -672,10 +688,11 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
     if (body.variant !== undefined && !chosen) {
       return context.json({ error: `Keine ${body.variant}-Fassung für ${template.name}` }, 400)
     }
-    const short = chosen && chosen.minutes < template.minutes ? chosen : undefined
-    const minutes = short?.minutes ?? template.minutes
+    // Shortened, or on a day with more time lengthened by base.
+    const resized = chosen && chosen.minutes !== template.minutes ? chosen : undefined
+    const minutes = resized?.minutes ?? template.minutes
     // A renamed version already says what it is; one whose name has no counts gets its length.
-    const name = !short ? template.name : short.name !== template.name ? short.name : `${template.name} (${minutes} min)`
+    const name = !resized ? template.name : resized.name !== template.name ? resized.name : `${template.name} (${minutes} min)`
 
     // Each version may go on the calendar once; sending several is the athlete's way of deciding later.
     const alreadyScheduled = plan.scheduled.some(
@@ -694,7 +711,7 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
       templateId: template.id,
       name,
       description:
-        short?.description ?? session.description,
+        resized?.description ?? session.description,
       minutes,
     })
 

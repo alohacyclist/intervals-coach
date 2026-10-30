@@ -8,7 +8,7 @@ import { isZrlRace } from './zrl.ts'
 
 /** Shorter than this is a different session, not the knapp version of this one. */
 const MIN_SHARE = 0.4
-/** Longer than this the session was something else that happened to fit. */
+/** Longer than this the session was something else that happened to fit — unless it held the session. */
 const MAX_SHARE = 1.5
 /** From here on the whole session counts, not a shortened one. */
 const FULL_SHARE = 0.85
@@ -69,20 +69,41 @@ const heldTheWork = (
   return held >= HELD_SHARE * prescribed * Math.min(share, 1)
 }
 
+/** Where the duration is the session, more of it is still that session. */
+const STRETCHES: readonly Stimulus[] = ['ENDURANCE', 'LONG']
+
+/**
+ * Sessions that survive more riding around them: the intervals with an hour of
+ * base afterwards, or the base ride that simply went on. A measurement, a race
+ * or a recovery spin turned into two hours is no longer what was proposed.
+ */
+const roomForMore = (template: WorkoutTemplate): boolean =>
+  template.benchmark !== true &&
+  template.measures === undefined &&
+  template.occasion === undefined &&
+  template.stimulus !== 'RECOVERY'
+
 const fit = (
   template: WorkoutTemplate,
   activity: Activity,
   profile: AthleteProfile,
+  /** Whether a much longer activity may still be this session; asked only once nothing closer fits. */
+  stretched = false,
 ): Candidate | null => {
   if (template.sport !== activity.sport) return null
   const share = activity.movingTimeSec / 60 / template.minutes
-  if (share < MIN_SHARE || share > MAX_SHARE) return null
+  if (share < MIN_SHARE) return null
+  const longer = share > MAX_SHARE
+  if (longer && !(stretched && roomForMore(template))) return null
 
   if (heldTheWork(template, activity, profile, share)) {
     return { template, evidence: 'exact', share }
   }
   // A measurement needs its own stimulus; anything close would measure something else.
   if (template.benchmark === true || template.measures !== undefined) return null
+  // Much longer, a structured session is only there if its work is — two hours
+  // with a few surges are not the 40/20. Base riding that went on still is base riding.
+  if (longer && !STRETCHES.includes(template.stimulus)) return null
   // Hard asks for hard. Easy and moderate are done by anything that was not hard.
   const hardWanted = intensityClass(template.stimulus) === 'hard'
   return hardWanted === isHard(activity) ? { template, evidence: 'similar', share } : null
@@ -149,14 +170,16 @@ export const matchedCompletions = (
     const templates = (proposal?.templateIds ?? [])
       .map(findTemplate)
       .filter((template): template is WorkoutTemplate => template !== undefined)
-    const fitting = (list: readonly WorkoutTemplate[]) =>
+    const fitting = (list: readonly WorkoutTemplate[], stretched = false) =>
       best(
         list
-          .map((template) => fit(template, activity, profile))
+          .map((template) => fit(template, activity, profile, stretched))
           .filter((candidate): candidate is Candidate => candidate !== null),
       )
     // Only when nothing offered fits: a full 3x12 is too long to pass for the 3x8 of its day.
-    const match = fitting(templates) ?? fitting(higherLevelsOf(templates))
+    // Last, the session with more riding around it — the 40/20 inside a two hour ride.
+    const match =
+      fitting(templates) ?? fitting(higherLevelsOf(templates)) ?? fitting(templates, true)
     return match
       ? [
           {
@@ -192,7 +215,8 @@ const pairedWrongly = (
   const activity = activities.find((entry) => entry.id === known.activityId)
   if (paired === undefined || other === undefined || activity === undefined) return false
   if (isHardTemplate(paired) === isHardTemplate(other)) return false
-  return fit(paired, activity, profile) === null || (recognised.evidence === 'exact' && isHardTemplate(other))
+  // Sent with base riding added, the paired session is as long as the ride.
+  return fit(paired, activity, profile, true) === null || (recognised.evidence === 'exact' && isHardTemplate(other))
 }
 
 /**

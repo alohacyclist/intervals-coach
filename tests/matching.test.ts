@@ -83,6 +83,36 @@ describe('recognising a proposal without the calendar', () => {
     })
   })
 
+  it('credits the 40/20 ridden inside a two hour ride', () => {
+    const ride = activity(1, 'Ride', {
+      load: 125,
+      movingTimeSec: 120 * 60,
+      zoneSeconds: { Z1: 1500, Z2: 4600, Z5: 600, Z6: 300, Z7: 200 },
+    })
+    const [match] = matchedCompletions([proposal(1, ['bike-vo2-3040', 'run-easy-strides'])], [ride], config.profile)
+    expect(match).toMatchObject({ templateId: 'bike-vo2-3040', evidence: 'exact', variant: 'full' })
+  })
+
+  it('does not take a long ride with a few surges for the 40/20', () => {
+    const ride = activity(1, 'Ride', {
+      load: 110,
+      movingTimeSec: 120 * 60,
+      zoneSeconds: { Z1: 1500, Z2: 5200, Z5: 400 },
+    })
+    expect(matchedCompletions([proposal(1, ['bike-vo2-3040'])], [ride], config.profile)).toEqual([])
+  })
+
+  it('credits base riding that went on for longer', () => {
+    const ride = activity(1, 'Ride', { load: 92, movingTimeSec: 120 * 60, zoneSeconds: { Z1: 1800, Z2: 5400 } })
+    const [match] = matchedCompletions([proposal(1, ['bike-endurance-75'])], [ride], config.profile)
+    expect(match).toMatchObject({ templateId: 'bike-endurance-75', variant: 'full' })
+  })
+
+  it('does not stretch a recovery spin into two hours', () => {
+    const ride = activity(1, 'Ride', { load: 80, movingTimeSec: 120 * 60, zoneSeconds: { Z1: 6000, Z2: 1200 } })
+    expect(matchedCompletions([proposal(1, ['bike-recovery-40'])], [ride], config.profile)).toEqual([])
+  })
+
   it('stays within the sport', () => {
     const run = activity(2, 'Run', { load: 70, zoneSeconds: { Z4: 24 * 60 } })
     expect(

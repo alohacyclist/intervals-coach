@@ -104,10 +104,38 @@ nur als freiwillig markiert.
 **Reiz-Erkennung.** Ob eine vergangene Einheit hart war, entscheidet die Zeit in den
 Zonen, nicht die Durchschnittsintensität — ein Intervalltraining hat über die ganze
 Einheit gemittelt oft nur 85 %, enthält aber 25 Minuten an der Schwelle. Ohne die
-Zonenauswertung würden genau die Einheiten übersehen, die zählen.
+Zonenauswertung würden genau die Einheiten übersehen, die zählen. Umgekehrt macht Länge
+allein keine Einheit hart: zwei lockere Stunden mit Zonendaten sind eine lange Ausfahrt,
+kein Qualitätstag — so plant der Coach sie auch. Erst ab 150 Load, mehr als jede lange
+Einheit der Bibliothek, zählt ein Tag allein wegen seiner Größe als hart. Fehlen die
+Zonen, gilt weiter die vorsichtigere Grenze von 90 Load, denn dann ist eine lange Fahrt
+mit Intervallen darin nicht von einer lockeren zu unterscheiden.
 
 **Heute anders.** Über „Heute hart / locker / Pause“ lässt sich der Tagestyp überschreiben.
 Der Wunsch gilt nur für heute; was er kostet, rechnen die Folgetage mit ein.
+
+**Heute mehr Zeit.** Über „Zeit: 1,5 h / 2 h / 2,5 h …“ sagt man, dass heute mehr Zeit ist
+als sonst. Der Tagestyp ändert sich dadurch nicht, nur die Länge — und auch die nur, wo sie
+passt:
+
+- An einem **Qualitätstag** bleibt die harte Einheit, wie sie ist: gleiche Intervalle,
+  gleiche Zielwerte. Die zusätzliche Zeit kommt als lockere Grundlage nach dem Hauptteil
+  und vor dem Ausfahren dazu. Aus 40/20 in 55 Minuten wird „40/20 + 65 min Grundlage“.
+- An einem **lockeren Tag** wird die Grundlage selbst länger, und die Bibliothek wird bis zur
+  neuen Länge durchsucht, so dass auch lange Ausfahrten in Frage kommen.
+- **Wie weit**, bestimmt das, was in den letzten sechs Wochen tatsächlich gefahren oder
+  gelaufen wurde: höchstens ein Viertel über die längste Fahrt, beim Laufen ein Zehntel über
+  den längsten Lauf (Sehnen und Knochen wachsen langsamer mit als der Kreislauf). Steigt die
+  Fitness gerade schnell (Rampe über 6/Woche), geht es nicht über die längste Einheit hinaus.
+  Schwimmen wird in Metern geplant und nicht verlängert.
+- **Gar nicht** verlängert wird an Ruhe- und Regenerationstagen, an Tagen, die die
+  Erholungswerte, die Ermüdung oder eine eingetragene Pause locker halten, rund um ein
+  Rennen, bei Tests und Referenzeinheiten und bei einem Lauf, den ein harter Lauf vor weniger
+  als 72 h zurückhält.
+
+Die verlängerte Fassung ist vorausgewählt, die üblichen bleiben daneben. Gerechnet werden
+die Folgetage mit ihrer Belastung (eine lockere Stunde ≈ 46 Load auf dem Rad, 55 beim
+Laufen). Der Wunsch gilt nur für heute.
 
 **Längere Pausen** — Krankheit, Impfung, Verletzung oder schlicht keine Zeit — werden
 eingetragen und schlagen jede Messung: eine Impfreaktion zeigt sich in der HRV erst, wenn
@@ -130,7 +158,8 @@ Wiederholungen, Dauerbelastungen werden schlicht kürzer — dort *ist* die Daue
 Auf- und Auswärmen geht zuerst.
 
 Vier Regeln halten das ehrlich: nichts verliert mehr als die Hälfte von sich; eine Einheit
-wird nie gestreckt, nur getrimmt; zwei Fassungen, die weniger als zwölf Minuten
+wird nie gestreckt, nur getrimmt — mehr Zeit an einem Tag bringt lockere Grundlage dazu,
+nie mehr Intervalle (siehe *Heute mehr Zeit*); zwei Fassungen, die weniger als zwölf Minuten
 auseinanderliegen, sind dieselbe Einheit und werden zu einer; und Referenzeinheiten
 werden gar nicht gekürzt, weil sie sonst nicht mehr mit sich selbst vergleichbar wären.
 Eine gekürzte Fassung schaltet keine Progressionsstufe frei.
@@ -145,7 +174,10 @@ geliefert hat.
 **Erkennen ohne Kalender.** Die App merkt sich, was sie an jedem Tag angeboten hat — jede
 Option, die zu sehen war, auch nach einem Wunsch nach „härter" oder „lockerer". Eine
 Aktivität gilt als diese Einheit, wenn Sportart und Tag stimmen, die Dauer zwischen 40 % und
-150 % liegt und der Reiz passt: *genau*, wenn der Reiz der Einheit in den Zonen steckt,
+150 % liegt und der Reiz passt — oder, wenn nichts Näheres passt, die Aktivität deutlich
+länger ist, aber die Arbeit der Einheit vollständig enthält: die 40/20 in einer
+Zwei-Stunden-Ausfahrt. Grundlage und lange Einheiten, die einfach länger wurden, zählen auch
+dann; Tests, Referenzeinheiten und Regeneration nicht. Der Reiz muss passen: *genau*, wenn der Reiz der Einheit in den Zonen steckt,
 *ähnlich*, wenn nur die Härte passt. Ähnlich reicht für „erledigt" und den Verlauf, nicht
 für Progression. Tests und Referenzeinheiten brauchen immer den genauen Reiz; ein erkannter
 Test zählt nur, wenn ein durchgehaltener Block darin steckt und das Ergebnis nicht mehr als

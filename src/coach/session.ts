@@ -10,7 +10,7 @@ import type {
 import { describeBlocks, describeWorkout, toHumanSteps } from './format.ts'
 import { defaultThreshold, thresholdFor } from './thresholds.ts'
 import { profileOf } from './profile.ts'
-import { MIN_SAVING_MINUTES, renameShortened, shorten, totalSeconds } from './variant.ts'
+import { MIN_SAVING_MINUTES, lengthen, renameShortened, shorten, totalSeconds } from './variant.ts'
 import { goalForSport } from './phase.ts'
 
 const SHORT_NOTE =
@@ -61,6 +61,32 @@ const variantFor = (
   }
 }
 
+const STRETCH_NOTE =
+  'Verlängerte Fassung: Intervalle und Zielwerte bleiben, wie sie sind — die zusätzliche Zeit ist lockere Grundlage, kein zweiter Reiz.'
+
+/** The longest version on a day with more time than usual, where the session allows it. */
+const stretchedFor = (
+  template: WorkoutTemplate,
+  threshold: SportThreshold,
+  reason: string,
+  targetMinutes: number,
+): SessionVariant | null => {
+  const stretch = lengthen(template, threshold, targetMinutes - template.minutes)
+  if (!stretch) return null
+  return {
+    tier: 'extra',
+    name: stretch.name,
+    minutes: stretch.minutes,
+    load: stretch.load,
+    blocks: stretch.blocks,
+    description: describeBlocks(stretch.blocks, `${template.coachNote}\n\n${STRETCH_NOTE}`, reason),
+    humanSteps: toHumanSteps(stretch.blocks, threshold),
+    profile: profileOf(stretch.blocks, threshold),
+    cuts: [],
+    added: stretch.added,
+  }
+}
+
 /**
  * One variant per configured time budget, shortest first. Two tiers that land
  * within a few minutes of each other are the same session twice, so only the
@@ -71,6 +97,7 @@ const buildVariants = (
   threshold: SportThreshold,
   reason: string,
   minutes: SessionMinutes,
+  stretchTo: number | undefined,
 ): readonly SessionVariant[] => {
   // A reference session exists to be compared with itself, and a race is as long
   // as the race. Trimmed, either would be a different session, so both come whole.
@@ -79,9 +106,16 @@ const buildVariants = (
     return whole ? [whole] : []
   }
 
-  const tiers: readonly SessionTier[] = ['min', 'normal', 'max']
-  const built = tiers
-    .map((tier) => variantFor(tier, minutes[tier], template, threshold, reason))
+  const tiers: readonly (keyof SessionMinutes)[] = ['min', 'normal', 'max']
+  // Past every configured budget, so it comes last and the full session stays on offer below it.
+  // A session picked for the longer day may already fill it, and is then offered whole.
+  const beyond = (variant: SessionVariant | null) => (variant && variant.minutes > minutes.max ? variant : null)
+  const extra =
+    stretchTo === undefined
+      ? null
+      : ((stretchTo > template.minutes ? stretchedFor(template, threshold, reason, stretchTo) : null) ??
+        beyond(variantFor('extra', stretchTo, template, threshold, reason)))
+  const built = [...tiers.map((tier) => variantFor(tier, minutes[tier], template, threshold, reason)), extra]
     .filter((variant): variant is SessionVariant => variant !== null)
 
   return built.filter((variant, index) => {
@@ -114,6 +148,8 @@ export const buildSession = (
   config: CoachConfig,
   reason: string,
   date: string,
+  /** Minutes the athlete has today beyond the usual, already capped to what they can take. */
+  stretchTo?: number,
 ): PlannedSession => {
   const template = { ...generic, coachNote: personalNote(generic.coachNote, config, date) }
   const threshold = thresholdFor(config.profile, template.sport) ?? defaultThreshold(template.sport)
@@ -123,6 +159,6 @@ export const buildSession = (
     reason,
     description: describeWorkout(template, reason),
     humanSteps: toHumanSteps(template.blocks, threshold),
-    variants: buildVariants(template, threshold, reason, config.profile.sessionMinutes),
+    variants: buildVariants(template, threshold, reason, config.profile.sessionMinutes, stretchTo),
   }
 }
