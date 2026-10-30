@@ -39,6 +39,23 @@ const lastHardLoad = (activities: readonly Activity[], today: string, sport: Spo
   return Math.max(...hard.filter((entry) => entry.age === newest).map((entry) => entry.load))
 }
 
+/** Six weeks: long enough to hold the last long session, short enough that it still counts. */
+const LONGEST_DAYS = 42
+
+/** What the athlete has recently managed in one go — the yardstick for a day with more time. */
+const longestRecent = (activities: readonly Activity[], today: string, sport: Sport): number =>
+  Math.round(
+    Math.max(
+      0,
+      ...activities
+        .filter((activity) => {
+          const age = diffDays(activity.date, today)
+          return activity.sport === sport && age >= 0 && age < LONGEST_DAYS && activity.load > 0
+        })
+        .map((activity) => activity.movingTimeSec / 60),
+    ),
+  )
+
 /** Four weeks, because a single week says more about the week than the athlete. */
 const FREQUENCY_DAYS = 28
 
@@ -177,6 +194,9 @@ export const buildState = (
     ) as Record<Sport, number>,
     lastHardLoad: Object.fromEntries(
       ALL_SPORTS.map((sport) => [sport, lastHardLoad(activities, today, sport)]),
+    ) as Record<Sport, number>,
+    longestRecentMinutes: Object.fromEntries(
+      ALL_SPORTS.map((sport) => [sport, longestRecent(activities, today, sport)]),
     ) as Record<Sport, number>,
     sessionsPerWeekRecent: sessionsPerWeek(activities, today),
     hardSessionsLast7: last7.filter(isHardActivity).length,

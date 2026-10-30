@@ -17,6 +17,8 @@ type Props = {
   readonly destinations: readonly string[]
   /** Today's wish, sent along so the push rebuilds the plan that was on screen. */
   readonly intent?: string
+  /** Today's time, sent along for the same reason. */
+  readonly minutesToday?: number
 }
 
 type PushState = { readonly status: 'idle' | 'busy' | 'error'; readonly message?: string }
@@ -35,9 +37,10 @@ const raceFacts = (race: RaceDetails): string =>
     .filter(Boolean)
     .join(' · ')
 
-/** The usual day is what the athlete sees first; the others are one tap away. */
+/** The usual day is what the athlete sees first — unless they said they have more time. */
 const preferredTier = (session: PlannedSession): SessionTier => {
   const variants = session.variants
+  if (variants.some((variant) => variant.tier === 'extra')) return 'extra'
   const normal = variants.find((variant) => variant.tier === 'normal')
   return normal?.tier ?? variants[variants.length - 1]?.tier ?? 'max'
 }
@@ -50,6 +53,7 @@ export const SessionCard = ({
   scheduledMinutes,
   destinations,
   intent,
+  minutesToday,
 }: Props) => {
   const [push, setPush] = useState<PushState>({ status: 'idle' })
   const [sent, setSent] = useState<readonly number[]>([])
@@ -72,7 +76,7 @@ export const SessionCard = ({
   const onPush = async () => {
     setPush({ status: 'busy' })
     try {
-      await pushWorkout(date, session.template.id, tier, intent)
+      await pushWorkout(date, session.template.id, tier, intent, minutesToday)
       setSent((previous) => [...previous, minutes])
       setPush({ status: 'idle' })
     } catch (error) {
@@ -159,6 +163,12 @@ export const SessionCard = ({
       <details className="disclose session__why">
         <summary>Warum diese Einheit</summary>
         {!recommended && <p className="session__note">{session.reason}</p>}
+        {active?.added && active.added.length > 0 && (
+          <p className="session__note">
+            {active.added.join(' · ')}. Intervalle und Zielwerte bleiben unverändert — die zusätzliche
+            Zeit ist lockere Grundlage, kein zweiter Reiz.
+          </p>
+        )}
         {trimmed && (
           <p className="session__note">
             {active?.cuts.join(' · ')}. Intervalllänge und Zielwerte bleiben unverändert — nur das
