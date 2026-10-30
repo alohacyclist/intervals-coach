@@ -1,4 +1,4 @@
-import type { Block, Repeat, SportThreshold, Step } from './types.ts'
+import type { Block, Repeat, Sport, SportThreshold, Step, Stimulus, WorkoutTemplate } from './types.ts'
 
 /**
  * Every session also exists as a short version, so a day with less time than
@@ -322,3 +322,81 @@ export const renameShortened = (
   original.some((block) => block.kind === 'repeat')
     ? renameRepeats(name, original, shortened, threshold)
     : renameDuration(name, original, shortened, threshold)
+
+/**
+ * The other direction, for a day with more time than usual. Nothing of the
+ * session itself grows — not the intervals, not their number, not the targets.
+ * What grows is easy base: a base ride simply goes on, and anything with work
+ * in it gets the base after the work, while the legs were still fresh for it.
+ */
+export type Stretch = {
+  readonly name: string
+  readonly minutes: number
+  readonly load: number
+  readonly blocks: readonly Block[]
+  /** What was added, in the athlete's words. */
+  readonly added: readonly string[]
+}
+
+/** Easy base in each sport, as the library's long sessions prescribe it. Swimming is counted in metres and not stretched. */
+const BASE_TARGET: Partial<Record<Sport, string>> = { Ride: '60-72%', Run: '76-84% Pace' }
+/** What an hour of that base costs — about what the library's long sessions carry per hour. */
+const BASE_LOAD_PER_HOUR: Partial<Record<Sport, number>> = { Ride: 46, Run: 55 }
+/** Where the duration is the stimulus, the session itself gets longer. */
+const CONTINUOUS: readonly Stimulus[] = ['ENDURANCE', 'LONG']
+
+/** A test, a reference, a race or a recovery spin stretched is no longer that session. */
+export const stretchable = (template: WorkoutTemplate): boolean =>
+  BASE_TARGET[template.sport] !== undefined &&
+  template.benchmark !== true &&
+  template.measures === undefined &&
+  template.occasion === undefined &&
+  template.stimulus !== 'RECOVERY'
+
+const longestMainStep = (blocks: readonly Block[], threshold: SportThreshold): number =>
+  blocks.reduce<number>((best, block, position) => {
+    if (!isMainStep(block)) return best
+    const incumbent = blocks[best]
+    return incumbent && isMainStep(incumbent) && stepSeconds(incumbent, threshold) >= stepSeconds(block, threshold)
+      ? best
+      : position
+  }, -1)
+
+export const lengthen = (
+  template: WorkoutTemplate,
+  threshold: SportThreshold,
+  extraMinutes: number,
+): Stretch | null => {
+  const target = BASE_TARGET[template.sport]
+  if (!stretchable(template) || target === undefined || extraMinutes < MIN_SAVING_MINUTES) return null
+  const extraSec = extraMinutes * 60
+  const minutes = template.minutes + extraMinutes
+  const load = template.load + Math.round((extraMinutes / 60) * (BASE_LOAD_PER_HOUR[template.sport] ?? 0))
+
+  const main = CONTINUOUS.includes(template.stimulus) ? longestMainStep(template.blocks, threshold) : -1
+  const step = template.blocks[main]
+  if (step && isMainStep(step)) {
+    const before = stepSeconds(step, threshold)
+    const blocks = replaceAt(template.blocks, main, withMinutes(step, before + extraSec))
+    const renamed = renameDuration(template.name, template.blocks, blocks, threshold)
+    return {
+      name: renamed === template.name ? `${template.name} (${minutes} min)` : renamed,
+      minutes,
+      load,
+      blocks,
+      added: [`Hauptteil ${Math.round((before + extraSec) / 60)} statt ${Math.round(before / 60)} min`],
+    }
+  }
+
+  // Before the cool-down, which stays the last thing ridden.
+  const last = template.blocks[template.blocks.length - 1]
+  const at = last?.kind === 'step' && last.label !== undefined ? template.blocks.length - 1 : template.blocks.length
+  const base: Step = { kind: 'step', duration: `${extraMinutes}m`, target, label: 'Grundlage' }
+  return {
+    name: `${template.name} + ${extraMinutes}min Grundlage`,
+    minutes,
+    load,
+    blocks: [...template.blocks.slice(0, at), base, ...template.blocks.slice(at)],
+    added: [`${extraMinutes} min lockere Grundlage nach dem Hauptteil`],
+  }
+}

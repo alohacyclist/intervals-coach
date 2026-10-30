@@ -18,6 +18,8 @@ export const planFromMorning = (
   days: number,
   intent?: Intent,
   raceActivities: readonly Activity[] = activities,
+  /** Minutes the athlete has today, when that is more than usual. */
+  minutesToday?: number,
 ): readonly PlannedDay[] => {
   const earlier = activities.filter((activity) => activity.date < today)
   const doneToday = activities.filter((activity) => activity.date === today)
@@ -29,5 +31,6 @@ export const planFromMorning = (
     completions,
     intent,
     doneToday,
+    minutesToday,
   )
 }

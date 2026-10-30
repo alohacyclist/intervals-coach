@@ -16,10 +16,10 @@ import type {
   TrainingState,
   WorkoutTemplate,
 } from './types.ts'
-import { ALL_SPORTS, STIMULUS_LABELS } from './types.ts'
+import { ALL_SPORTS, SPORT_LABELS, STIMULUS_LABELS } from './types.ts'
 import { formNote } from './wording.ts'
 import { addDays, diffDays, startOfWeek, weekdayDe } from './dates.ts'
-import { projectFitness } from './fitness.ts'
+import { HARD_ON_LOAD_ALONE, projectFitness } from './fitness.ts'
 import { PHASE_LABELS, goalForSport, phaseForSport, primaryGoal, weeklyHardBudget } from './phase.ts'
 import { selectedSports } from './thresholds.ts'
 import { breakLimit, returnWindow } from './breaks.ts'
@@ -54,6 +54,14 @@ const STALE_STIMULUS_DAYS = 28
 const LAYOFF_DAYS = 10
 /** Beyond this, rest stops being recovery and starts being detraining. */
 const MAX_CONSECUTIVE_REST = 2
+/** CTL gained per week past which the plan warns, and stops adding length on top. */
+const FAST_RAMP = 6
+/**
+ * How far past the longest session of the last six weeks a day with more time
+ * may go. A ride can grow by a quarter; a run carries every stride through
+ * tendons and bones and grows by a tenth, as the usual rule for long runs says.
+ */
+const LONGEST_GROWTH: Readonly<Record<Sport, number>> = { Ride: 1.25, Run: 1.1, Swim: 1 }
 
 type Simulation = {
   readonly fitness: Fitness
@@ -582,7 +590,7 @@ const notesFor = (
       `Vorgenommen ${promised} Einheiten/Woche, zuletzt ${state.sessionsPerWeekRecent.toLocaleString('de-DE')} — geplant wird mit ${min}`,
     )
   }
-  if (state.rampRate > 6) notes.push(`Fitness steigt schnell (+${state.rampRate}/Woche) — Verletzungsrisiko beachten`)
+  if (state.rampRate > FAST_RAMP) notes.push(`Fitness steigt schnell (+${state.rampRate}/Woche) — Verletzungsrisiko beachten`)
   return notes
 }
 
@@ -603,12 +611,16 @@ const strengthFor = (
  * as moderate, it spent neither the week's budget nor the spacing, and the same
  * day came back the next day and the one after.
  */
-const plannedEffort = (session: PlannedSession, dayType: DayType): Effort => ({
-  sport: session.sport,
-  load: session.template.load,
-  hard: dayType === 'KEY' || intensityClass(session.template.stimulus) === 'hard',
-  stimuli: [session.template.stimulus],
-})
+const plannedEffort = (session: PlannedSession, dayType: DayType): Effort => {
+  // With more time today, the longer version is the one the athlete set out to ride.
+  const load = session.variants.find((variant) => variant.tier === 'extra')?.load ?? session.template.load
+  return {
+    sport: session.sport,
+    load,
+    hard: dayType === 'KEY' || intensityClass(session.template.stimulus) === 'hard' || load >= HARD_ON_LOAD_ALONE,
+    stimuli: [session.template.stimulus],
+  }
+}
 
 const advance = (
   simulation: Simulation,
@@ -667,6 +679,76 @@ const advance = (
   }
 }
 
+/**
+ * A day with more time than usual. Whether it is used, and how far, is still
+ * the plan's call: a recovery day stays short however much time there is, and
+ * the length grows from what the athlete has recently managed, not from the clock.
+ */
+type ExtraTime = {
+  /** Minutes a sport may run to today; absent where it is not lengthened. */
+  readonly ceilings: Partial<Record<Sport, number>>
+  /** What the extra time is used for — said only where a session actually got longer. */
+  readonly lead: string | null
+  readonly notes: readonly string[]
+}
+
+const NO_EXTRA: ExtraTime = { ceilings: {}, lead: null, notes: [] }
+
+const roundDownToFive = (minutes: number): number => Math.floor(minutes / 5) * 5
+
+const extraTimeFor = (
+  wanted: number | undefined,
+  decision: DayDecision,
+  state: TrainingState,
+  config: CoachConfig,
+  sports: readonly Sport[],
+  raceAround: boolean,
+): ExtraTime => {
+  const usual = config.profile.sessionMinutes.max
+  if (wanted === undefined || wanted <= usual) return NO_EXTRA
+  const unchanged = (why: string): ExtraTime => ({ ceilings: {}, lead: null, notes: [`Mehr Zeit ändert heute nichts: ${why}`] })
+  if (raceAround) return unchanged('das Rennen bestimmt den Tag.')
+  if (decision.dayType === 'REST') return unchanged('heute ist Pause.')
+  if (decision.dayType === 'RECOVERY' || decision.easyOnly === true) {
+    return unchanged('Erholung hat Vorrang — die zusätzliche Zeit wäre Belastung, keine Grundlage.')
+  }
+
+  const fast = state.rampRate > FAST_RAMP
+  // Swimming is planned in metres and keeps its length.
+  const lengthened = sports.filter((sport) => sport !== 'Swim').map((sport) => {
+    const longest = state.longestRecentMinutes[sport]
+    const growth = fast ? 1 : LONGEST_GROWTH[sport]
+    const ceiling = Math.min(wanted, roundDownToFive(longest * growth))
+    const capped =
+      ceiling >= wanted
+        ? null
+        : longest === 0
+          ? `${SPORT_LABELS[sport]} wird nicht verlängert: in den letzten sechs Wochen keine Einheit, an der sich mehr messen ließe.`
+          : `${SPORT_LABELS[sport]} höchstens ${ceiling} min: deine längste Einheit der letzten sechs Wochen waren ${longest} min${fast ? ', und die Fitness steigt gerade schnell' : ''}.`
+    return { sport, ceiling, capped }
+  })
+  return {
+    ceilings: Object.fromEntries(lengthened.filter((entry) => entry.ceiling > 0).map((entry) => [entry.sport, entry.ceiling])),
+    lead:
+      decision.dayType === 'KEY'
+        ? 'Mehr Zeit an einem Qualitätstag: die Intervalle bleiben, wie sie sind — die zusätzliche Zeit ist lockere Grundlage danach.'
+        : 'Mehr Zeit an einem lockeren Tag: mehr Grundlage, nicht mehr Tempo.',
+    notes: lengthened.flatMap((entry) => (entry.capped ? [entry.capped] : [])),
+  }
+}
+
+/** What the day says about its extra time, once it is known which sessions took it. */
+const extraTimeNotes = (extra: ExtraTime, options: readonly PlannedSession[]): readonly string[] => {
+  if (Object.keys(extra.ceilings).length === 0) return extra.notes
+  if (options.some((option) => option.variants.some((variant) => variant.tier === 'extra'))) {
+    return extra.lead ? [extra.lead, ...extra.notes] : extra.notes
+  }
+  const measuring = options.some((option) => option.template.benchmark === true || option.template.measures !== undefined)
+  return measuring
+    ? ['Mehr Zeit ändert heute nichts: ein Test bleibt, wie er ist — verlängert misst er etwas anderes.', ...extra.notes]
+    : extra.notes
+}
+
 export const planDays = (
   state: TrainingState,
   config: CoachConfig,
@@ -675,6 +757,8 @@ export const planDays = (
   intent?: Intent,
   /** Trained on the first day: it shapes the days after, never the first day itself. */
   doneToday: readonly Activity[] = [],
+  /** Minutes the athlete has today, when that is more than usual. */
+  minutesToday?: number,
 ): readonly PlannedDay[] => {
   const budgetMinutes = config.profile.sessionMinutes.max
   const sports = selectedSports(config.profile)
@@ -734,6 +818,9 @@ export const planDays = (
         breakLimit(config.breaks, date) !== null,
       )
       const { dayType } = decision
+      const extra = isToday
+        ? extraTimeFor(minutesToday, decision, state, config, sports, around.race !== null || around.raceTomorrow !== null)
+        : NO_EXTRA
 
       const returning = returnWindow(config.breaks, date) !== null
       const openers =
@@ -787,11 +874,17 @@ export const planDays = (
         }
         if (openers && sport === 'Ride') return buildSession(openers, config, decision.reason, date)
         const goalKind = goalForSport(config.goals, sport, date)?.kind
+        // Legs held back from a hard run are not sent on a long one either.
+        const stretchTo = held(sport) ? undefined : extra.ceilings[sport]
+        // A quality day keeps the session it would have had; the time goes to base around it.
+        // An easy day may reach for a long session in the library.
+        const sportBudget =
+          stretchTo !== undefined && sportDayType !== 'KEY' ? Math.max(stretchTo, budgetMinutes) : budgetMinutes
         const candidates = candidatesFor(
           sport,
           sportDayType,
           sportPhase,
-          budgetMinutes,
+          sportBudget,
           ceilings,
           view.recentWorkouts,
           goalKind,
@@ -799,14 +892,14 @@ export const planDays = (
         )
         const best = [...candidates].sort(
           (left, right) =>
-            scoreTemplate(right, simulation, view, sportPhase, budgetMinutes, returning, goalKind) -
-            scoreTemplate(left, simulation, view, sportPhase, budgetMinutes, returning, goalKind),
+            scoreTemplate(right, simulation, view, sportPhase, sportBudget, returning, goalKind) -
+            scoreTemplate(left, simulation, view, sportPhase, sportBudget, returning, goalKind),
         )[0]
         if (!best) return null
         const reason = held(sport)
           ? `${legsNote(simulation)} — die Qualität heute in der anderen Sportart, der Lauf bleibt leicht`
           : reasonFor(best, dayType, sportPhase, simulation, ceilings)
-        return buildSession(best, config, reason, date)
+        return buildSession(best, config, reason, date, stretchTo)
       }).filter((session): session is PlannedSession => session !== null)
       const options = withRace(
         regular,
@@ -824,7 +917,7 @@ export const planDays = (
         phase,
         recommended,
         options,
-        notes: notesFor(decision, state, simulation, config, dayIndex, date),
+        notes: [...notesFor(decision, state, simulation, config, dayIndex, date), ...extraTimeNotes(extra, options)],
         optional: decision.optional,
         strength,
         completed: isToday ? completedFrom(doneToday, completions) : [],

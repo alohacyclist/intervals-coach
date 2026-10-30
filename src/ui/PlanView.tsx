@@ -32,8 +32,16 @@ const INTENTS = [
   { key: 'rest', label: 'Heute Pause' },
 ] as const
 
+/** Offered lengths for a day with more time, in minutes; only those past the usual ceiling are shown. */
+const MORE_TIME = [90, 120, 150, 180, 240] as const
+const MAX_MORE_TIME_OPTIONS = 4
+
+const hoursLabel = (minutes: number): string =>
+  `${(minutes / 60).toLocaleString('de-DE', { maximumFractionDigits: 1 })} h`
+
 export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
   const [intent, setIntent] = useState<'hard' | 'easy' | 'rest' | undefined>(undefined)
+  const [minutesToday, setMinutesToday] = useState<number | undefined>(undefined)
   const [plan, setPlan] = useState<Plan | null>(null)
   const [config, setConfig] = useState<CoachConfig | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -65,7 +73,7 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
     setBusy(true)
     setError(null)
     try {
-      const [nextPlan, nextConfig] = await Promise.all([getPlan(PLAN_DAYS, intent, fresh), getConfig()])
+      const [nextPlan, nextConfig] = await Promise.all([getPlan(PLAN_DAYS, intent, fresh, minutesToday), getConfig()])
       setPlan(nextPlan)
       setConfig(nextConfig)
     } catch (caught) {
@@ -81,7 +89,7 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
     } finally {
       setBusy(false)
     }
-  }, [onNeedsOnboarding, intent])
+  }, [onNeedsOnboarding, intent, minutesToday])
 
   useEffect(() => {
     void load()
@@ -149,6 +157,27 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
         </div>
       )}
 
+      {plan && config && (
+        <div className="intent" role="group" aria-label="Wie viel Zeit hast du heute?">
+          <span className="intent__label" aria-hidden="true">
+            Zeit
+          </span>
+          {[undefined, ...MORE_TIME.filter((minutes) => minutes > config.profile.sessionMinutes.max).slice(0, MAX_MORE_TIME_OPTIONS)].map(
+            (minutes) => (
+              <button
+                key={minutes ?? 'usual'}
+                type="button"
+                className={minutesToday === minutes ? 'intent__on' : ''}
+                aria-pressed={minutesToday === minutes}
+                onClick={() => setMinutesToday(minutes)}
+              >
+                {minutes === undefined ? 'Wie immer' : hoursLabel(minutes)}
+              </button>
+            ),
+          )}
+        </div>
+      )}
+
       {error && (
         <p className="error error--block" role="alert">
           {error}
@@ -174,6 +203,7 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
           destinations={destinationLabels}
           scheduled={(plan?.scheduled ?? []).filter((entry) => entry.date === day.date)}
           intent={intent}
+          minutesToday={minutesToday}
         />
       ))}
 

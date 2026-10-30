@@ -66,6 +66,37 @@ describe('what counts as a hard session', () => {
     expect(isHardActivity(activity(1, 'Ride', { intensity: 70, load: 95 }))).toBe(true)
   })
 
+  it('does not count two easy hours as hard when the zones say easy', () => {
+    const long = activity(1, 'Ride', {
+      intensity: 68,
+      load: 95,
+      movingTimeSec: 7200,
+      zoneSeconds: { Z1: 1800, Z2: 5100, Z3: 300 },
+    })
+    expect(inferStimulus(long)).toBe('LONG')
+    expect(isHardActivity(long)).toBe(false)
+  })
+
+  it('counts two hours with VO2max work in them as hard', () => {
+    const embedded = activity(1, 'Ride', {
+      intensity: 74,
+      load: 125,
+      movingTimeSec: 7200,
+      zoneSeconds: { Z1: 1500, Z2: 4600, Z5: 600, Z6: 300, Z7: 200 },
+    })
+    expect(isHardActivity(embedded)).toBe(true)
+  })
+
+  it('counts a day bigger than any planned long ride as hard whatever its zones', () => {
+    const epic = activity(1, 'Ride', {
+      intensity: 70,
+      load: 190,
+      movingTimeSec: 5 * 3600,
+      zoneSeconds: { Z1: 6000, Z2: 11000, Z3: 1000 },
+    })
+    expect(isHardActivity(epic)).toBe(true)
+  })
+
   it('still describes the character of a short intense effort', () => {
     // The stimulus stays sweetspot; only the weekly hard budget ignores it.
     expect(inferStimulus(activity(1, 'Run', { intensity: 86, load: 37 }))).toBe('SWEETSPOT')
