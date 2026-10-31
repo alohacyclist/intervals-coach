@@ -24,7 +24,8 @@ Worker are still called `intervals-coach`.
 - **Three time budgets instead of one limit.** Every session comes in an "always works",
   a "normal" and a "good day" version, shortened by rules that keep the training stimulus.
   A time slider adds easy base to the session on a day with more time — never more
-  intervals — up to what fitness and recent long sessions show the athlete can take.
+  intervals — for as long as the time set, saying where that goes past what fitness and
+  recent long sessions suggest. A second slider sets the minute the intervals begin.
 - **Recognises completed sessions** from time in zones, unlocks the next progression
   level, schedules a benchmark session every eight weeks and suggests threshold updates.
 - **Checks heart-rate recordings** against the work done, flags wrist-sensor artefacts

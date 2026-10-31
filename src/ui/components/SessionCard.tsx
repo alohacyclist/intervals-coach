@@ -20,6 +20,8 @@ type Props = {
   readonly intent?: string
   /** Today's time, sent along for the same reason. */
   readonly minutesToday?: number
+  /** Where today's lengthened work begins, for the same reason. */
+  readonly coreAt?: number
   /** False when the surrounding day already carries this session's name as its heading. */
   readonly titled?: boolean
   /** Lets the surrounding day show the version chosen here. */
@@ -59,6 +61,7 @@ export const SessionCard = ({
   destinations,
   intent,
   minutesToday,
+  coreAt,
   titled = true,
   onTier,
 }: Props) => {
@@ -84,7 +87,7 @@ export const SessionCard = ({
   const onPush = async () => {
     setPush({ status: 'busy' })
     try {
-      await pushWorkout(date, session.template.id, tier, intent, minutesToday)
+      await pushWorkout(date, session.template.id, tier, intent, minutesToday, coreAt)
       setSent((previous) => [...previous, minutes])
       setPush({ status: 'idle' })
     } catch (error) {

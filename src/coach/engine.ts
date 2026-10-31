@@ -690,9 +690,10 @@ const advance = (
 }
 
 /**
- * A day with more time than usual. Whether it is used, and how far, is still
- * the plan's call: a recovery day stays short however much time there is, and
- * the length grows from what the athlete has recently managed, not from the clock.
+ * A day with more time than usual. Whether it is used is still the plan's call:
+ * a recovery day stays short however much time there is. How far is the athlete's:
+ * a session runs as long as the time set, and where that is more than recent
+ * training suggests, the day says so.
  */
 type ExtraTime = {
   /** Minutes a sport may run to today; absent where it is not lengthened. */
@@ -709,7 +710,7 @@ const NO_EXTRA: ExtraTime = { ceilings: {}, lead: null, notes: [] }
 
 const roundDownToFive = (minutes: number): number => Math.floor(minutes / 5) * 5
 
-/** How long a session of this sport the athlete can take today, and in their words why not longer. */
+/** How long a session of this sport recent training suggests today, and in the athlete's words why not longer. */
 const capacityFor = (
   sport: Sport,
   state: TrainingState,
@@ -746,6 +747,7 @@ const extraTimeFor = (
   config: CoachConfig,
   sports: readonly Sport[],
   raceAround: boolean,
+  coreAt: number | undefined,
 ): ExtraTime => {
   const usual = config.profile.sessionMinutes.max
   if (wanted === undefined || wanted <= usual) return NO_EXTRA
@@ -761,28 +763,37 @@ const extraTimeFor = (
   }
 
   const fast = state.rampRate > FAST_RAMP
-  // Swimming is planned in metres and keeps its length.
+  // The time set is the time ridden: what fitness and the longest recent sessions would
+  // suggest is said, not imposed. Swimming is planned in metres and keeps its length.
   const lengthened = sports.filter((sport) => sport !== 'Swim').map((sport) => {
     const capacity = capacityFor(sport, state, fast)
-    const ceiling = Math.min(wanted, capacity.minutes)
-    const capped: TimeNote | null =
-      ceiling >= wanted
+    const label = SPORT_LABELS[sport]
+    const beyond: TimeNote | null =
+      capacity.minutes >= wanted
         ? null
-        : ceiling === 0
-          ? { short: `${SPORT_LABELS[sport]} nicht länger`, long: `${SPORT_LABELS[sport]} wird nicht verlängert: ${capacity.why}` }
-          : { short: `${SPORT_LABELS[sport]} max. ${ceiling} min`, long: `${SPORT_LABELS[sport]} bis ${ceiling} min — ${capacity.why}` }
-    return { sport, ceiling, capped }
+        : capacity.minutes === 0
+          ? { short: `${label}: lange nicht gemacht`, long: `${label} ${wanted} min wie eingestellt — Vorsicht: ${capacity.why}` }
+          : {
+              short: `${label}: mehr als empfohlen (${capacity.minutes} min)`,
+              long: `${label} ${wanted} min wie eingestellt — empfohlen wären bis ${capacity.minutes} min: ${capacity.why}`,
+            }
+    return { sport, beyond }
   })
   return {
-    ceilings: Object.fromEntries(lengthened.filter((entry) => entry.ceiling > 0).map((entry) => [entry.sport, entry.ceiling])),
+    ceilings: Object.fromEntries(lengthened.map((entry) => [entry.sport, wanted])),
     lead:
       decision.dayType === 'KEY'
-        ? {
-            short: 'Mehr Zeit: lockere Grundlage nach den Intervallen',
-            long: 'Mehr Zeit an einem Qualitätstag: die Intervalle bleiben, wie sie sind — die zusätzliche Zeit ist lockere Grundlage danach.',
-          }
+        ? coreAt === undefined
+          ? {
+              short: 'Mehr Zeit: lockere Grundlage nach den Intervallen',
+              long: 'Mehr Zeit an einem Qualitätstag: die Intervalle bleiben, wie sie sind — die zusätzliche Zeit ist lockere Grundlage danach.',
+            }
+          : {
+              short: `Mehr Zeit: Intervalle ab Minute ${coreAt}`,
+              long: `Mehr Zeit an einem Qualitätstag: die Intervalle bleiben, wie sie sind — lockere Grundlage davor, bis sie ab Minute ${coreAt} beginnen, der Rest danach.`,
+            }
         : { short: 'Mehr Zeit: längere Grundlage', long: 'Mehr Zeit an einem lockeren Tag: mehr Grundlage, nicht mehr Tempo.' },
-    notes: lengthened.flatMap((entry) => (entry.capped ? [entry.capped] : [])),
+    notes: lengthened.flatMap((entry) => (entry.beyond ? [entry.beyond] : [])),
   }
 }
 
@@ -814,6 +825,8 @@ export const planDays = (
   doneToday: readonly Activity[] = [],
   /** Minutes the athlete has today, when that is more than usual. */
   minutesToday?: number,
+  /** The minute the work of today's lengthened session should begin; right after the warm-up without it. */
+  coreAt?: number,
 ): readonly PlannedDay[] => {
   const budgetMinutes = config.profile.sessionMinutes.max
   const sports = selectedSports(config.profile)
@@ -874,7 +887,7 @@ export const planDays = (
       )
       const { dayType } = decision
       const extra = isToday
-        ? extraTimeFor(minutesToday, decision, state, config, sports, around.race !== null || around.raceTomorrow !== null)
+        ? extraTimeFor(minutesToday, decision, state, config, sports, around.race !== null || around.raceTomorrow !== null, coreAt)
         : NO_EXTRA
 
       const returning = returnWindow(config.breaks, date) !== null
@@ -954,7 +967,7 @@ export const planDays = (
         const reason = held(sport)
           ? `${legsNote(simulation)} — die Qualität heute in der anderen Sportart, der Lauf bleibt leicht`
           : reasonFor(best, dayType, sportPhase, simulation, ceilings)
-        return buildSession(best, config, reason, date, stretchTo)
+        return buildSession(best, config, reason, date, stretchTo, isToday ? coreAt : undefined)
       }).filter((session): session is PlannedSession => session !== null)
       const options = withRace(
         regular,
