@@ -296,8 +296,8 @@ Athletenprofil lehnt intervals.icu mit 403 ab.
 
 Hell, dunkel oder nach Systemeinstellung, umschaltbar in der Kopfzeile jeder Ansicht. Die
 Wahl liegt im `localStorage` und wird vor dem ersten Rendern angewendet, damit die Seite
-nie kurz im falschen Modus aufblitzt. Die Schriften (IBM Plex Mono und Sans Condensed)
-sind mit ausgeliefert und werden nicht von Google geladen — bei Gesundheitsdaten auf der
+nie kurz im falschen Modus aufblitzt. Die Schrift (Overpass)
+ist mit ausgeliefert und wird nicht von Google geladen — bei Gesundheitsdaten auf der
 Seite wäre die Übertragung der Besucher-IP an Dritte nicht vertretbar.
 
 ## Warteliste (Brevo)

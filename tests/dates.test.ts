@@ -1,7 +1,15 @@
 import { describe, expect, it } from 'vitest'
-import { addDays, diffDays, formatSeconds, localIsoDate, startOfWeek, weekdayDe, weeksBetween } from '../src/coach/dates.ts'
+import { addDays, diffDays, formatSeconds, isoWeek, localIsoDate, startOfWeek, weekdayDe, weeksBetween } from '../src/coach/dates.ts'
 
 describe('dates', () => {
+  it('numbers weeks by their Thursday, so the turn of the year lands in the right one', () => {
+    expect(isoWeek('2026-10-31')).toBe(44)
+    expect(isoWeek('2026-12-28')).toBe(53)
+    expect(isoWeek('2027-01-03')).toBe(53)
+    expect(isoWeek('2027-01-04')).toBe(1)
+    expect(isoWeek('2024-12-30')).toBe(1)
+  })
+
   it('names the date on the device’s own clock, not in UTC, around midnight too', () => {
     expect(localIsoDate(new Date(2026, 8, 29, 0, 30))).toBe('2026-09-29')
     expect(localIsoDate(new Date(2026, 8, 29, 23, 30))).toBe('2026-09-29')

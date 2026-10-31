@@ -35,4 +35,13 @@ describe('history strip', () => {
     expect(html).toContain('geplant, nicht absolviert, ')
     expect(html).toContain('<span class="sr-only">Rennen, ')
   })
+
+  it('explains every mark and the number, right under the strip', () => {
+    const history = [day('2026-09-01', 'done')]
+    const html = renderToStaticMarkup(createElement(HistoryStrip, { history }))
+    const legend = html.slice(html.indexOf('history__legend'))
+    for (const mark of Object.values(STATUS_MARK)) expect(legend).toContain(`>${mark}<`)
+    expect(legend).toContain('TSS')
+    expect(html.indexOf('Legende')).toBeLessThan(html.indexOf('Zuletzt geplant'))
+  })
 })

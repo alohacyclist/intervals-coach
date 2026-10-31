@@ -1,5 +1,5 @@
 import type { FamilyLevel } from '../../coach/types.ts'
-import { SPORT_LABELS } from '../../coach/types.ts'
+import { SportIcon } from './SportIcon.tsx'
 
 /**
  * The ladder the engine has always climbed, finally shown.
@@ -28,9 +28,7 @@ export const LevelLadder = ({ levels }: Props) => {
 
       {levels.map((entry) => (
         <div key={entry.family} className="rung">
-          <span className={`badge badge--${entry.sport.toLowerCase()}`}>
-            {SPORT_LABELS[entry.sport]}
-          </span>
+          <SportIcon sport={entry.sport} />
           <span className="rung__name">{entry.label}</span>
 
           <span

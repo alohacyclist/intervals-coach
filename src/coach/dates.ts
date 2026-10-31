@@ -30,6 +30,13 @@ export const startOfWeek = (iso: string): string => {
   return addDays(iso, -((day + 6) % 7))
 }
 
+/** ISO 8601 week number: a week belongs to the year its Thursday falls in. */
+export const isoWeek = (iso: string): number => {
+  const thursday = addDays(startOfWeek(iso), 3)
+  const newYear = `${thursday.slice(0, 4)}-01-01`
+  return Math.floor((parseIso(thursday).getTime() - parseIso(newYear).getTime()) / (7 * MS_PER_DAY)) + 1
+}
+
 /** Whole weeks elapsed between two dates, floored at 0. */
 export const weeksBetween = (from: string, to: string): number =>
   Math.max(0, Math.floor(diffDays(from, to) / 7))

@@ -9,7 +9,9 @@ import { DestinationBar } from './components/DestinationBar.tsx'
 import { StateHeader } from './components/StateHeader.tsx'
 import { MetricsPanel } from './components/MetricsPanel.tsx'
 import { todaySummary } from '../coach/wording.ts'
-import { WeekOutlookCard } from './components/WeekOutlookCard.tsx'
+import { StillOpen } from './components/StillOpen.tsx'
+import { WeekHead } from './components/WeekHead.tsx'
+import { WeekLine } from './components/WeekLine.tsx'
 import { DayCard } from './components/DayCard.tsx'
 import { SettingsPanel } from './components/SettingsPanel.tsx'
 import { stravaResult } from './components/StravaPanel.tsx'
@@ -26,17 +28,26 @@ type Props = {
   readonly onNeedsOnboarding: () => void
 }
 
+const STAND_FORMAT: Intl.DateTimeFormatOptions = {
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+}
+
 const INTENTS = [
   { key: undefined, label: 'Wie geplant' },
-  { key: 'hard', label: 'Heute hart' },
-  { key: 'easy', label: 'Heute locker' },
-  { key: 'rest', label: 'Heute Pause' },
+  { key: 'hard', label: 'Hart' },
+  { key: 'easy', label: 'Locker' },
+  { key: 'rest', label: 'Pause' },
 ] as const
 
 export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
   const [intent, setIntent] = useState<'hard' | 'easy' | 'rest' | undefined>(undefined)
   const [minutesToday, setMinutesToday] = useState<number | undefined>(undefined)
   const [plan, setPlan] = useState<Plan | null>(null)
+  const [selected, setSelected] = useState<string | null>(null)
   const [config, setConfig] = useState<CoachConfig | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -103,7 +114,9 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
           busy={busy}
           onRefresh={() => void load(true)}
           onSettings={() => setShowSettings((open) => !open)}
-        />
+        >
+          <WeekHead week={plan.week} today={plan.days[0]?.date ?? plan.state.today} />
+        </StateHeader>
       )}
       {plan && <GarminAttribution attribution={plan.garmin} />}
 
@@ -132,29 +145,6 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
         </div>
       )}
 
-      {plan && (
-        <div className="intent" role="group" aria-label="Wie soll heute werden?">
-          <span className="intent__label" aria-hidden="true">
-            Heute
-          </span>
-          {INTENTS.map((option) => (
-            <button
-              key={option.label}
-              type="button"
-              className={intent === option.key ? 'intent__on' : ''}
-              aria-pressed={intent === option.key}
-              onClick={() => setIntent(option.key)}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {plan && config && (
-        <MoreTimeSlider usual={config.profile.sessionMinutes.max} onSettled={setMinutesToday} />
-      )}
-
       {error && (
         <p className="error error--block" role="alert">
           {error}
@@ -170,19 +160,46 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
         </p>
       )}
 
-      {plan?.days.map((day, index) => (
-        <DayCard
-          key={day.date}
-          day={day}
-          index={index}
-          strengthDone={config?.strengthLog.includes(day.date) ?? false}
-          onStrengthLogged={() => void load()}
-          destinations={destinationLabels}
-          scheduled={(plan?.scheduled ?? []).filter((entry) => entry.date === day.date)}
-          intent={intent}
-          minutesToday={minutesToday}
+      {plan && (
+        <WeekLine
+          history={plan.history}
+          days={plan.days}
+          selected={plan.days.some((day) => day.date === selected) ? (selected ?? '') : (plan.days[0]?.date ?? '')}
+          onSelect={setSelected}
+          panel={(day, index) => (
+            <DayCard
+              day={day}
+              index={index}
+              strengthDone={config?.strengthLog.includes(day.date) ?? false}
+              onStrengthLogged={() => void load()}
+              destinations={destinationLabels}
+              scheduled={plan.scheduled.filter((entry) => entry.date === day.date)}
+              intent={intent}
+              minutesToday={minutesToday}
+            >
+              {index === 0 && (
+                <>
+                  <div className="intent" role="group" aria-label="Wie soll heute werden?">
+                    {INTENTS.map((option) => (
+                      <button
+                        key={option.label}
+                        type="button"
+                        aria-pressed={intent === option.key}
+                        onClick={() => setIntent(option.key)}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                  {config && (
+                    <MoreTimeSlider usual={config.profile.sessionMinutes.max} onSettled={setMinutesToday} />
+                  )}
+                </>
+              )}
+            </DayCard>
+          )}
         />
-      ))}
+      )}
 
       {/* Today leads; what needs fixing, how the week is going and the numbers behind it follow. */}
       {plan?.state.dataIssue && <DataIssueBanner issue={plan.state.dataIssue} />}
@@ -195,7 +212,7 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
         />
       )}
 
-      {plan && <WeekOutlookCard week={plan.week} />}
+      {plan && <StillOpen week={plan.week} />}
 
       {plan && <MetricsPanel state={plan.state} sports={(config?.profile.sports ?? []).map((setting) => setting.sport)} />}
 
@@ -218,15 +235,18 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
 
       {plan && (
         <footer className="footer">
-          Stand: {new Date(plan.generatedAt).toLocaleString('de-DE')} ·{' '}
-          <a href="/datenschutz">Datenschutz</a> · <a href="/impressum">Impressum</a> ·{' '}
-          <a href="/auth/logout">Abmelden</a>
-          {me.mode === 'multi' && (
+          <span>Stand: {new Date(plan.generatedAt).toLocaleString('de-DE', STAND_FORMAT)}</span>
+          {me.mode === 'multi' && <span className="footer__account">Angemeldet als {me.name}</span>}
+          {me.mode === 'multi' && me.consentAt && (
             <span className="footer__account">
-              Angemeldet als {me.name}
-              {me.consentAt && ` · Einwilligung ${new Date(me.consentAt).toLocaleDateString('de-DE')}`}
+              Einwilligung {new Date(me.consentAt).toLocaleDateString('de-DE')}
             </span>
           )}
+          <nav className="footer__links" aria-label="Rechtliches und Konto">
+            <a href="/datenschutz">Datenschutz</a>
+            <a href="/impressum">Impressum</a>
+            <a href="/auth/logout">Abmelden</a>
+          </nav>
         </footer>
       )}
     </>

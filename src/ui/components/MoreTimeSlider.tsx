@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type CSSProperties } from 'react'
 
 type Props = {
   /** The usual ceiling: the slider's resting point, meaning "as always". */
@@ -47,6 +47,7 @@ export const MoreTimeSlider = ({ usual, onSettled }: Props) => {
   const stops = moreTimeStops(usual)
   const index = minutes === undefined ? 0 : Math.max(0, stops.indexOf(minutes))
   const label = minutes === undefined ? 'wie immer' : hoursLabel(minutes)
+  const fill = { '--fill': stops.length > 1 ? index / (stops.length - 1) : 0 } as CSSProperties
 
   return (
     <div className="intent more-time">
@@ -61,6 +62,7 @@ export const MoreTimeSlider = ({ usual, onSettled }: Props) => {
         step={1}
         value={index}
         aria-valuetext={label}
+        style={fill}
         onChange={(event) => {
           const next = stops[Number(event.target.value)]
           setMinutes(next === undefined || next <= usual ? undefined : next)

@@ -6,45 +6,12 @@
   flex-direction: column;
 }
 
-.day__head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 10px;
-  flex-wrap: wrap;
-  padding: 12px 14px;
-  border-bottom: 1px solid var(--rule);
-}
-.day__head h2 {
-  font-family: var(--mono);
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-}
-.day__date {
-  color: var(--faint);
-  font-weight: 400;
-}
-/* Opened from a folded row: the row is the title, so only the badges remain. */
-.day__head--tags {
-  justify-content: flex-end;
-  padding: 9px 14px;
-}
-.day__tags {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
 .badge {
   border: 1px solid var(--rule-loud);
   padding: 2px 7px;
   font-family: var(--mono);
   font-size: 12px;
   font-weight: 500;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
   color: var(--faint);
   white-space: nowrap;
 }
@@ -81,12 +48,6 @@
   color: var(--bad);
   border-color: var(--bad);
 }
-
-.day__reason {
-  padding: 11px 14px 4px;
-  font-size: 14px;
-  color: var(--text);
-}
 .day__why {
   border-bottom: 1px solid var(--rule);
 }
@@ -94,13 +55,7 @@
   padding: 4px 14px 10px;
   font-family: var(--mono);
   font-size: 12px;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
   color: var(--faint);
-}
-.day__reason--alone {
-  padding-bottom: 11px;
-  border-bottom: 1px solid var(--rule);
 }
 /* More time today: what it is used for and where it stops, without a tap. */
 .day__more-time {
@@ -123,25 +78,6 @@
 .notes li {
   font-size: 13px;
   color: var(--dim);
-}
-
-/* The divider has to span the card, so the box keeps the full width and the
-   measure sits on the text inside it — a max-width here cut the rule short. */
-.rest-hint {
-  margin: 0;
-  padding: 11px 14px;
-  border-bottom: 1px solid var(--rule);
-  border-left: 3px solid var(--rule-loud);
-  font-size: 13px;
-  color: var(--dim);
-}
-.rest-hint > span {
-  display: block;
-  max-width: 78ch;
-}
-.rest-hint strong {
-  color: var(--ink);
-  font-weight: 600;
 }
 
 .done {
@@ -180,16 +116,6 @@
   max-width: 78ch;
 }
 
-/* One pixel of ground shows between the options, which is the divider. */
-.day__options {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1px;
-  background: var(--rule);
-}
-.day__options--optional .session:not(.session--done) {
-  opacity: 0.62;
-}
 .session__race {
   margin: 0;
   font-size: 12px;
@@ -203,15 +129,7 @@
 .session--done {
   box-shadow: inset 3px 0 0 var(--good);
 }
-.day__options--optional:hover .session {
-  opacity: 1;
-}
 /* Without hover the dimming could never be lifted, so a touch screen shows them plainly. */
-@media (hover: none) {
-  .day__options--optional .session:not(.session--done) {
-    opacity: 1;
-  }
-}
 
 /* ------------------------------------------------------------------ session */
 
@@ -261,7 +179,6 @@
   border-right: 1px solid var(--rule-loud);
   padding: 6px 4px;
   font-size: 12px;
-  letter-spacing: 0.06em;
   color: var(--faint);
   font-variant-numeric: tabular-nums;
 }
@@ -271,7 +188,6 @@
 .variants__pick span {
   display: block;
   font-size: 12px;
-  letter-spacing: 0.11em;
   opacity: 0.85;
 }
 .variants__pick--on {
@@ -313,7 +229,6 @@
 
 .session__duration {
   font-size: 12px;
-  letter-spacing: 0.06em;
   color: var(--faint);
 }
 
@@ -358,7 +273,6 @@
   margin-top: 12px;
   font-family: var(--sans);
   font-size: 13px;
-  letter-spacing: 0;
   text-transform: none;
   color: var(--text);
   cursor: pointer;
@@ -371,50 +285,6 @@
   margin-top: 10px;
   font-size: 12.5px;
   color: var(--dim);
-}
-
-/* ---------------------------------------------------------------- folded day */
-
-/* Today is the instrument; a preview day and a rest day are one line until
-   they are asked for. The row carries what a preview is actually asked for:
-   when, which sport, how big — never the intervals. */
-.day--folded > summary {
-  padding: 11px 14px;
-  font-family: var(--mono);
-  font-size: 12px;
-  color: var(--text);
-  font-variant-numeric: tabular-nums;
-}
-.day--folded[open] > summary {
-  border-bottom: 1px solid var(--rule);
-}
-.fold__date {
-  color: var(--faint);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-.fold__name {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-family: var(--sans);
-  font-size: 14px;
-  color: var(--ink);
-}
-/* A day without training should not look like a quality day. */
-.fold__name--rest {
-  color: var(--faint);
-  font-style: italic;
-}
-.fold__meta {
-  color: var(--faint);
-  white-space: nowrap;
-}
-.day--trained > summary .fold__name {
-  color: var(--good);
 }
 
 /* ------------------------------------------------------------------ profile */
@@ -438,7 +308,6 @@
   gap: 10px;
   margin: 0;
   font-size: 12px;
-  letter-spacing: 0.08em;
   color: var(--faint);
 }
 
@@ -447,19 +316,11 @@
   margin-top: 8px;
 }
 
-@media (max-width: 720px) {
-  .day__options {
-    grid-template-columns: 1fr;
-  }
-}
-
 .session__steps > summary,
 .session__why > summary {
   font-family: var(--mono);
   font-size: 12px;
   font-weight: 500;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
   color: var(--faint);
 }
 .session__steps > summary::after,
@@ -475,20 +336,6 @@
 
 /* The three fields of a folded row do not fit one phone line; the name takes
    its own, so neither the date nor the size is ever the part that is cut. */
-@media (max-width: 520px) {
-  .day--folded > summary {
-    flex-wrap: wrap;
-  }
-  .fold__meta {
-    order: 2;
-    margin-left: auto;
-  }
-  .fold__name {
-    order: 3;
-    flex-basis: 100%;
-    padding-left: 20px;
-  }
-}
 
 /*
  * Soll und Ist. Grau ist der Plan, Bernstein das Gefahrene. Getroffen heißt
@@ -537,8 +384,6 @@
 .exec__kpis dt {
   font-family: var(--mono);
   font-size: 12px;
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
   color: var(--faint);
   margin-bottom: 3px;
   /* A label never runs into the next column, whatever its length. */
@@ -626,8 +471,6 @@
   margin: 4px 0 0;
   font-family: var(--mono);
   font-size: 12px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
   color: var(--faint);
 }
 .exec__legend span {
@@ -657,8 +500,6 @@
   padding: 6px 0;
   font-family: var(--mono);
   font-size: 12px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
   color: var(--text);
 }
 .exec__more > summary .readout {
@@ -767,7 +608,6 @@
 
 @media (max-width: 560px) {
   .exec__kpis dt {
-    letter-spacing: 0.04em;
   }
   .exec__kpis dd {
     font-size: 16px;
@@ -798,6 +638,5 @@
 @media (max-width: 380px) {
   .exec__kpis dt {
     font-size: 11px;
-    letter-spacing: 0;
   }
 }

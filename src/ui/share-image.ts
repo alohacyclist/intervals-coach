@@ -35,8 +35,8 @@ const RULE = '#1e2526'
 const RULE_LOUD = '#2f3839'
 const SHADE = '#141a1b'
 const FOOTER = 'Geplant und ausgewertet mit Formkurve · formkurve.org'
-const MONO = "'IBM Plex Mono', ui-monospace, monospace"
-const SANS = "'IBM Plex Sans Condensed', 'Helvetica Neue', Arial, sans-serif"
+const MONO = "'Middot', 'Overpass', system-ui, sans-serif"
+const SANS = "'Middot', 'Overpass', system-ui, sans-serif"
 
 const PLOT = { x: MARGIN, y: 450, width: SIZE - 2 * MARGIN, height: 310 }
 const HEART = { x: MARGIN, y: 790, width: SIZE - 2 * MARGIN, height: 100 }
