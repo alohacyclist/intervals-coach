@@ -102,6 +102,17 @@
   padding-bottom: 11px;
   border-bottom: 1px solid var(--rule);
 }
+/* More time today: what it is used for and where it stops, without a tap. */
+.day__more-time {
+  list-style: none;
+  margin: 0;
+  padding: 6px 14px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--data);
+}
 .notes {
   list-style: none;
   margin: 0;

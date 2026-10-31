@@ -359,6 +359,8 @@ export type TrainingState = {
   readonly lastHardLoad: Readonly<Record<Sport, number>>
   /** Longest session per sport over the last six weeks, in minutes — how much more time can be used. */
   readonly longestRecentMinutes: Readonly<Record<Sport, number>>
+  /** The same over twelve weeks. */
+  readonly longestSeasonMinutes: Readonly<Record<Sport, number>>
   /** Sessions per week over the last four weeks — what the athlete really manages. */
   readonly sessionsPerWeekRecent: number
   readonly hardSessionsLast7: number
@@ -524,6 +526,8 @@ export type PlannedDay = {
   readonly recommended: Sport | 'REST'
   readonly options: readonly PlannedSession[]
   readonly notes: readonly string[]
+  /** On a day with more time: what it is used for and where it stops, said where it is seen. */
+  readonly moreTime: readonly string[]
   /** Beyond the athlete's stated weekly capacity — a suggestion, not a plan. */
   readonly optional: boolean
   /** Strength belongs on a hard day, never the day before one. */

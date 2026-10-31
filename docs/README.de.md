@@ -114,28 +114,33 @@ mit Intervallen darin nicht von einer lockeren zu unterscheiden.
 **Heute anders.** Über „Heute hart / locker / Pause“ lässt sich der Tagestyp überschreiben.
 Der Wunsch gilt nur für heute; was er kostet, rechnen die Folgetage mit ein.
 
-**Heute mehr Zeit.** Über „Zeit: 1,5 h / 2 h / 2,5 h …“ sagt man, dass heute mehr Zeit ist
-als sonst. Der Tagestyp ändert sich dadurch nicht, nur die Länge — und auch die nur, wo sie
-passt:
+**Heute mehr Zeit.** Mit dem Regler „Zeit“ sagt man, wie viel Zeit heute ist — von der
+üblichen Obergrenze bis fünf Stunden, in Viertelstunden. Der Plan fragt erst neu, wenn der
+Regler stillsteht. Der Tagestyp ändert sich dadurch nicht, nur die Länge — und auch die nur,
+wo sie passt:
 
 - An einem **Qualitätstag** bleibt die harte Einheit, wie sie ist: gleiche Intervalle,
   gleiche Zielwerte. Die zusätzliche Zeit kommt als lockere Grundlage nach dem Hauptteil
   und vor dem Ausfahren dazu. Aus 40/20 in 55 Minuten wird „40/20 + 65 min Grundlage“.
 - An einem **lockeren Tag** wird die Grundlage selbst länger, und die Bibliothek wird bis zur
   neuen Länge durchsucht, so dass auch lange Ausfahrten in Frage kommen.
-- **Wie weit**, bestimmt das, was in den letzten sechs Wochen tatsächlich gefahren oder
-  gelaufen wurde: höchstens ein Viertel über die längste Fahrt, beim Laufen ein Zehntel über
-  den längsten Lauf (Sehnen und Knochen wachsen langsamer mit als der Kreislauf). Steigt die
-  Fitness gerade schnell (Rampe über 6/Woche), geht es nicht über die längste Einheit hinaus.
-  Schwimmen wird in Metern geplant und nicht verlängert.
+- **Wie weit beim Rad:** lockeres Fahren kostet den Körper kaum mehr als die Belastung selbst,
+  also setzt die Fitness die Grenze. Eine Fahrt, deren Load dem Dreifachen der Fitness (CTL)
+  entspricht, ist ein langer Tag, keine Überforderung — bei CTL 40 etwa 2,5 h lockere Fahrt.
+  Ebenso in Reichweite: die längste Fahrt der letzten zwölf Wochen und ein Viertel über die
+  längste der letzten sechs. Es gilt das Großzügigste davon.
+- **Wie weit beim Laufen:** ein Zehntel über den längsten Lauf der letzten sechs Wochen,
+  mindestens zehn Minuten — Sehnen und Knochen wachsen langsamer mit als der Kreislauf.
+- Steigt die Fitness gerade schnell (Rampe über 6/Woche), geht es nirgends über die längste
+  Einheit hinaus. Schwimmen wird in Metern geplant und nicht verlängert.
 - **Gar nicht** verlängert wird an Ruhe- und Regenerationstagen, an Tagen, die die
   Erholungswerte, die Ermüdung oder eine eingetragene Pause locker halten, rund um ein
-  Rennen, bei Tests und Referenzeinheiten und bei einem Lauf, den ein harter Lauf vor weniger
-  als 72 h zurückhält.
+  Rennen und bei Tests und Referenzeinheiten.
 
-Die verlängerte Fassung ist vorausgewählt, die üblichen bleiben daneben. Gerechnet werden
-die Folgetage mit ihrer Belastung (eine lockere Stunde ≈ 46 Load auf dem Rad, 55 beim
-Laufen). Der Wunsch gilt nur für heute.
+Wofür die Zeit verwendet wird und wo sie endet, steht sichtbar unter dem Grund des Tages —
+nicht im aufklappbaren Hintergrund. Die verlängerte Fassung ist vorausgewählt, die üblichen
+bleiben daneben. Gerechnet werden die Folgetage mit ihrer Belastung (eine lockere Stunde
+≈ 46 Load auf dem Rad, 55 beim Laufen). Der Wunsch gilt nur für heute.
 
 **Längere Pausen** — Krankheit, Impfung, Verletzung oder schlicht keine Zeit — werden
 eingetragen und schlagen jede Messung: eine Impfreaktion zeigt sich in der HRV erst, wenn

@@ -31,6 +31,7 @@ import type { Effort } from './done.ts'
 import type { Completion } from './progression.ts'
 import { findTemplate, flattenBlocks, intensityClass, isPreferredSport, strengthSession, templatesFor } from './library.ts'
 import { buildSession } from './session.ts'
+import { BASE_LOAD_PER_HOUR } from './variant.ts'
 import { aroundRace, raceSession, racesAround, withRace } from './race-day.ts'
 
 /** Minimum days between two hard sessions, regardless of sport. */
@@ -57,11 +58,20 @@ const MAX_CONSECUTIVE_REST = 2
 /** CTL gained per week past which the plan warns, and stops adding length on top. */
 const FAST_RAMP = 6
 /**
- * How far past the longest session of the last six weeks a day with more time
- * may go. A ride can grow by a quarter; a run carries every stride through
- * tendons and bones and grows by a tenth, as the usual rule for long runs says.
+ * How long a ride a day with more time may become. Easy riding costs the body
+ * little beyond the load itself, so fitness sets the limit: a ride whose load is
+ * three times the fitness (CTL) is a long day, not an overreach. A ride done this
+ * season, or a quarter past the longest of the last six weeks, is in reach too.
  */
-const LONGEST_GROWTH: Readonly<Record<Sport, number>> = { Ride: 1.25, Run: 1.1, Swim: 1 }
+const LONG_RIDE_CTL_MULTIPLE = 3
+const RIDE_GROWTH = 1.25
+/**
+ * A run carries every stride through tendons and bones, which adapt slower than
+ * heart and lungs: a tenth past the longest run of the last six weeks, at least
+ * ten minutes, as the usual rule for long runs says.
+ */
+const RUN_GROWTH = 1.1
+const RUN_MIN_STEP = 10
 
 type Simulation = {
   readonly fitness: Fitness
@@ -696,6 +706,36 @@ const NO_EXTRA: ExtraTime = { ceilings: {}, lead: null, notes: [] }
 
 const roundDownToFive = (minutes: number): number => Math.floor(minutes / 5) * 5
 
+/** How long a session of this sport the athlete can take today, and in their words why not longer. */
+const capacityFor = (
+  sport: Sport,
+  state: TrainingState,
+  fast: boolean,
+): { readonly minutes: number; readonly why: string } => {
+  const recent = state.longestRecentMinutes[sport]
+  const slowly = fast ? ' Die Fitness steigt gerade schnell — deshalb nicht über deine längste Einheit hinaus.' : ''
+  if (sport === 'Run') {
+    const minutes = fast ? recent : Math.max(roundDownToFive(recent * RUN_GROWTH), recent + RUN_MIN_STEP)
+    return {
+      minutes: recent === 0 ? 0 : minutes,
+      why:
+        recent === 0
+          ? 'in den letzten sechs Wochen kein Lauf, an dem sich mehr messen ließe.'
+          : `dein längster Lauf der letzten sechs Wochen waren ${recent} min, und Laufen wächst in kleinen Schritten.${slowly}`,
+    }
+  }
+  const season = state.longestSeasonMinutes[sport]
+  const ctl = Math.round(state.overall.ctl)
+  const fromFitness = roundDownToFive(((LONG_RIDE_CTL_MULTIPLE * ctl) / (BASE_LOAD_PER_HOUR.Ride ?? 46)) * 60)
+  const minutes = fast
+    ? Math.max(recent, season)
+    : Math.max(roundDownToFive(recent * RIDE_GROWTH), season, fromFitness)
+  return {
+    minutes,
+    why: `mehr tragen deine Fitness (CTL ${ctl}) und deine längsten Fahrten (${season} min in zwölf Wochen) heute noch nicht.${slowly}`,
+  }
+}
+
 const extraTimeFor = (
   wanted: number | undefined,
   decision: DayDecision,
@@ -716,15 +756,14 @@ const extraTimeFor = (
   const fast = state.rampRate > FAST_RAMP
   // Swimming is planned in metres and keeps its length.
   const lengthened = sports.filter((sport) => sport !== 'Swim').map((sport) => {
-    const longest = state.longestRecentMinutes[sport]
-    const growth = fast ? 1 : LONGEST_GROWTH[sport]
-    const ceiling = Math.min(wanted, roundDownToFive(longest * growth))
+    const capacity = capacityFor(sport, state, fast)
+    const ceiling = Math.min(wanted, capacity.minutes)
     const capped =
       ceiling >= wanted
         ? null
-        : longest === 0
-          ? `${SPORT_LABELS[sport]} wird nicht verlängert: in den letzten sechs Wochen keine Einheit, an der sich mehr messen ließe.`
-          : `${SPORT_LABELS[sport]} höchstens ${ceiling} min: deine längste Einheit der letzten sechs Wochen waren ${longest} min${fast ? ', und die Fitness steigt gerade schnell' : ''}.`
+        : ceiling === 0
+          ? `${SPORT_LABELS[sport]} wird nicht verlängert: ${capacity.why}`
+          : `${SPORT_LABELS[sport]} bis ${ceiling} min — ${capacity.why}`
     return { sport, ceiling, capped }
   })
   return {
@@ -874,8 +913,8 @@ export const planDays = (
         }
         if (openers && sport === 'Ride') return buildSession(openers, config, decision.reason, date)
         const goalKind = goalForSport(config.goals, sport, date)?.kind
-        // Legs held back from a hard run are not sent on a long one either.
-        const stretchTo = held(sport) ? undefined : extra.ceilings[sport]
+        // Legs held back from a hard run may still run longer: what is added is easy.
+        const stretchTo = extra.ceilings[sport]
         // A quality day keeps the session it would have had; the time goes to base around it.
         // An easy day may reach for a long session in the library.
         const sportBudget =
@@ -917,7 +956,8 @@ export const planDays = (
         phase,
         recommended,
         options,
-        notes: [...notesFor(decision, state, simulation, config, dayIndex, date), ...extraTimeNotes(extra, options)],
+        notes: notesFor(decision, state, simulation, config, dayIndex, date),
+        moreTime: extraTimeNotes(extra, options),
         optional: decision.optional,
         strength,
         completed: isToday ? completedFrom(doneToday, completions) : [],

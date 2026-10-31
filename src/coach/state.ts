@@ -40,17 +40,19 @@ const lastHardLoad = (activities: readonly Activity[], today: string, sport: Spo
 }
 
 /** Six weeks: long enough to hold the last long session, short enough that it still counts. */
-const LONGEST_DAYS = 42
+const LONGEST_RECENT_DAYS = 42
+/** Twelve weeks: a ride done this season has not been forgotten by the legs. */
+const LONGEST_SEASON_DAYS = 84
 
-/** What the athlete has recently managed in one go — the yardstick for a day with more time. */
-const longestRecent = (activities: readonly Activity[], today: string, sport: Sport): number =>
+/** What the athlete has managed in one go — the yardstick for a day with more time. */
+const longestWithin = (activities: readonly Activity[], today: string, sport: Sport, days: number): number =>
   Math.round(
     Math.max(
       0,
       ...activities
         .filter((activity) => {
           const age = diffDays(activity.date, today)
-          return activity.sport === sport && age >= 0 && age < LONGEST_DAYS && activity.load > 0
+          return activity.sport === sport && age >= 0 && age < days && activity.load > 0
         })
         .map((activity) => activity.movingTimeSec / 60),
     ),
@@ -196,7 +198,10 @@ export const buildState = (
       ALL_SPORTS.map((sport) => [sport, lastHardLoad(activities, today, sport)]),
     ) as Record<Sport, number>,
     longestRecentMinutes: Object.fromEntries(
-      ALL_SPORTS.map((sport) => [sport, longestRecent(activities, today, sport)]),
+      ALL_SPORTS.map((sport) => [sport, longestWithin(activities, today, sport, LONGEST_RECENT_DAYS)]),
+    ) as Record<Sport, number>,
+    longestSeasonMinutes: Object.fromEntries(
+      ALL_SPORTS.map((sport) => [sport, longestWithin(activities, today, sport, LONGEST_SEASON_DAYS)]),
     ) as Record<Sport, number>,
     sessionsPerWeekRecent: sessionsPerWeek(activities, today),
     hardSessionsLast7: last7.filter(isHardActivity).length,

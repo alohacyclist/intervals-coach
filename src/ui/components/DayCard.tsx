@@ -102,6 +102,15 @@ export const DayCard = ({
       {day.notes.length > 0 && (
         <p className={day.notes.length > 1 ? 'day__reason' : 'day__reason day__reason--alone'}>{day.notes[0]}</p>
       )}
+      {/* Asked for on screen, answered on screen: where the time goes and where it stops. */}
+      {day.moreTime.length > 0 && (
+        <ul className="day__more-time">
+          {day.moreTime.map((note) => (
+            <li key={note}>{note}</li>
+          ))}
+        </ul>
+      )}
+
       {day.notes.length > 1 && (
         <details className="disclose day__why">
           <summary>Hintergrund</summary>
