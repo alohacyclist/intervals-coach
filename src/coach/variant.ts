@@ -341,7 +341,7 @@ export type Stretch = {
 /** Easy base in each sport, as the library's long sessions prescribe it. Swimming is counted in metres and not stretched. */
 const BASE_TARGET: Partial<Record<Sport, string>> = { Ride: '60-72%', Run: '76-84% Pace' }
 /** What an hour of that base costs — about what the library's long sessions carry per hour. */
-const BASE_LOAD_PER_HOUR: Partial<Record<Sport, number>> = { Ride: 46, Run: 55 }
+export const BASE_LOAD_PER_HOUR: Partial<Record<Sport, number>> = { Ride: 46, Run: 55 }
 /** Where the duration is the stimulus, the session itself gets longer. */
 const CONTINUOUS: readonly Stimulus[] = ['ENDURANCE', 'LONG']
 

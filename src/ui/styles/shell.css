@@ -372,6 +372,29 @@
   color: var(--on-data);
 }
 
+/* The time slider shares the switch's frame; the track takes the room. */
+.more-time {
+  flex-wrap: nowrap;
+}
+/* A label, not a span: the shared form styles would stack it in a column. */
+.more-time .intent__label {
+  flex-direction: row;
+  align-items: center;
+}
+.more-time input[type='range'] {
+  flex: 1;
+  min-width: 0;
+  margin: 0 12px;
+  accent-color: var(--data);
+}
+.more-time__value {
+  min-width: 7ch;
+  padding: 9px 12px;
+  border-left: 1px solid var(--rule);
+  text-align: right;
+  font-size: 13px;
+}
+
 /* ----------------------------------------------------------------- states */
 
 .error {
@@ -426,6 +449,10 @@
   }
   .intent__label {
     display: none;
+  }
+  /* Without its name the slider would be a line with a number next to it. */
+  .more-time .intent__label {
+    display: flex;
   }
   .intent button {
     padding: 9px 8px;
