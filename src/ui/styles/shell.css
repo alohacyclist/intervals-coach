@@ -4,8 +4,8 @@
   max-width: 1000px;
   margin: 0 auto;
   /* Notched phones in landscape put the page under the cutout without this. */
-  padding: 0 calc(16px + env(safe-area-inset-right)) calc(64px + env(safe-area-inset-bottom))
-    calc(16px + env(safe-area-inset-left));
+  padding: 0 calc(14px + env(safe-area-inset-right)) calc(64px + env(safe-area-inset-bottom))
+    calc(14px + env(safe-area-inset-left));
   display: flex;
   flex-direction: column;
   gap: 18px;
@@ -35,7 +35,6 @@
   border-right: 1px solid var(--rule);
   padding: 4px 9px;
   font-size: 12px;
-  letter-spacing: 0.13em;
   color: var(--faint);
 }
 .mode button:last-child {
@@ -50,32 +49,6 @@
   font-weight: 600;
 }
 
-/* ------------------------------------------------------------ header panel */
-
-.header {
-  border: 1px solid var(--rule);
-  display: flex;
-  flex-direction: column;
-}
-
-.header__top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  flex-wrap: wrap;
-  padding: 12px 14px;
-  border-bottom: 1px solid var(--rule);
-}
-.header__top h1 {
-  min-width: 0;
-  font-family: var(--mono);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--dim);
-}
 .header__actions {
   display: flex;
   gap: 8px;
@@ -84,18 +57,17 @@
 
 /* The one sentence that answers "how am I" before today's session answers "what now".
    The edge carries readiness at a glance; the words carry it for everyone. */
+/* The sentence says what it means; colour only makes a warning harder to miss. */
 .header__summary {
   margin: 0;
-  padding: 12px 14px;
-  border-left: 3px solid var(--good);
-  font-size: 16px;
+  font-size: 15px;
   color: var(--ink);
 }
 .header__summary--amber {
-  border-left-color: var(--warn);
+  color: var(--warn);
 }
 .header__summary--red {
-  border-left-color: var(--bad);
+  color: var(--bad);
 }
 
 /* Six data fields divided by hairlines, not six tiles. The lines are the grid's
@@ -129,7 +101,7 @@
   font-variant-numeric: tabular-nums;
 }
 .kpis {
-  border: 1px solid var(--rule);
+  border-top: 1px solid var(--rule);
   background: var(--bg);
 }
 .kpis > summary {
@@ -138,8 +110,6 @@
   font-family: var(--mono);
   font-size: 12px;
   font-weight: 500;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
   color: var(--faint);
 }
 .kpis .metrics {
@@ -176,7 +146,7 @@
 /* -------------------------------------------------------------- week strip */
 
 .history {
-  border: 1px solid var(--rule);
+  border-top: 1px solid var(--rule);
   display: flex;
   flex-direction: column;
 }
@@ -192,7 +162,6 @@
 .history__summary {
   font-family: var(--mono);
   font-size: 12px;
-  letter-spacing: 0.06em;
   color: var(--faint);
   font-variant-numeric: tabular-nums;
 }
@@ -255,8 +224,6 @@
   display: block;
   font-family: var(--mono);
   font-size: 12px;
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
   color: var(--faint);
 }
 .history__load {
@@ -295,8 +262,6 @@
   font-family: var(--mono);
   font-size: 12px;
   font-weight: 500;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
   color: var(--faint);
 }
 .history__legend {
@@ -306,8 +271,6 @@
   padding: 9px 0 2px 20px;
   font-family: var(--mono);
   font-size: 12px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
   color: var(--faint);
 }
 .history__legend span {
@@ -334,45 +297,6 @@
 
 /* ------------------------------------------------------------ intent switch */
 
-.intent {
-  display: flex;
-  align-items: center;
-  gap: 0;
-  flex-wrap: wrap;
-  border: 1px solid var(--rule);
-}
-.intent__label {
-  font-family: var(--mono);
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
-  color: var(--faint);
-  padding: 0 12px;
-  border-right: 1px solid var(--rule);
-  align-self: stretch;
-  display: flex;
-  align-items: center;
-}
-.intent button {
-  border: 0;
-  border-right: 1px solid var(--rule);
-  padding: 9px 14px;
-  flex: 1;
-}
-.intent button:last-child {
-  border-right: 0;
-}
-.intent__on {
-  background: var(--data);
-  color: var(--on-data);
-  font-weight: 600;
-}
-.intent__on:hover:not(:disabled) {
-  color: var(--on-data);
-}
-
-/* The time slider shares the switch's frame; the track takes the room. */
 .more-time {
   flex-wrap: nowrap;
 }
@@ -462,8 +386,6 @@
 .loading {
   font-family: var(--mono);
   font-size: 12px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
   color: var(--faint);
   padding: 24px 0;
 }
@@ -473,8 +395,6 @@
   border-top: 1px solid var(--rule);
   font-family: var(--mono);
   font-size: 12px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
   color: var(--faint);
   text-align: center;
   display: flex;
@@ -515,7 +435,7 @@
 
 /* A declared break sits above the day plan: it explains everything below it. */
 .pause {
-  border: 1px solid var(--rule);
+  border-top: 1px solid var(--rule);
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -544,13 +464,10 @@
   font-family: var(--mono);
   font-size: 12px;
   font-weight: 500;
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
   color: var(--faint);
 }
 .pause__left {
   font-size: 12px;
-  letter-spacing: 0.06em;
   color: var(--warn);
 }
 .pause__head button:last-child {
@@ -575,8 +492,6 @@
 .demo-badge {
   font-family: var(--mono);
   font-size: 11px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
   color: var(--dim);
   border: 1px dashed var(--rule-loud);
   padding: 3px 8px;

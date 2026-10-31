@@ -1,7 +1,7 @@
 import type { Sport, TrainingState } from '../../coach/types.ts'
-import { SPORT_LABELS } from '../../coach/types.ts'
 import { signed } from '../../coach/wording.ts'
 import { Term } from './Term.tsx'
+import { SportIcon } from './SportIcon.tsx'
 
 type Props = {
   readonly state: TrainingState
@@ -55,7 +55,7 @@ export const MetricsPanel = ({ state, sports }: Props) => (
       </div>
       {sports.map((sport) => (
         <div key={sport}>
-          <dt>{SPORT_LABELS[sport]} · letzte harte</dt>
+          <dt><SportIcon sport={sport} /> letzte harte</dt>
           <dd>{state.daysSinceHard[sport] >= NEVER ? '—' : `vor ${state.daysSinceHard[sport]} T.`}</dd>
         </div>
       ))}

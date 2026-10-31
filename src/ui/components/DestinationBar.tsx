@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { CoachConfig, DestinationState, Sport, WorkoutDestination } from '../../coach/types.ts'
 import { SPORT_LABELS } from '../../coach/types.ts'
 import { putConfig } from '../api.ts'
+import { SportIcon } from './SportIcon.tsx'
 
 type Props = {
   readonly config: CoachConfig
@@ -82,7 +83,7 @@ export const DestinationBar = ({ config, destinations, onSaved }: Props) => {
         const chosen = chosenFor(sport)
         return (
           <div key={sport} className="destinations__sport">
-            <span className={`badge badge--${sport.toLowerCase()}`}>{SPORT_LABELS[sport]}</span>
+            <SportIcon sport={sport} />
             <div className="destinations__row">
               {offered.map((state) => (
                 <button

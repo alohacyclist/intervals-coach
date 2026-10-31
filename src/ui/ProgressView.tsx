@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import type { CoachConfig, Progress } from '../coach/types.ts'
+import type { CoachConfig, Progress, Sport } from '../coach/types.ts'
 import { ApiError, EXPIRED_SESSION_URL, getConfig, getProgress } from './api.ts'
 import { FitnessCurve } from './components/FitnessCurve.tsx'
 import { WeekBars } from './components/WeekBars.tsx'
@@ -11,6 +11,7 @@ import { SPORT_LABELS } from '../coach/types.ts'
 import { DEFAULT_PROGRESS_SPAN, EARLY_DAYS, isProgressSpan, PROGRESS_SPANS, trackedDays } from '../coach/progress.ts'
 import type { ProgressSpan } from '../coach/progress.ts'
 import { GarminAttribution } from './components/GarminAttribution.tsx'
+import { SportIcon } from './components/SportIcon.tsx'
 
 const SPAN_KEY = 'progress-span'
 const SPAN_LABELS: Readonly<Record<ProgressSpan, string>> = {
@@ -103,7 +104,9 @@ export const ProgressView = ({ onNeedsOnboarding }: Props) => {
   const early = trackedDays(progress.fitness) < EARLY_DAYS
   const sports = Object.entries(totals.sessionsBySport)
     .filter(([sport]) => sport in SPORT_LABELS)
-    .map(([sport, count]) => `${SPORT_LABELS[sport as keyof typeof SPORT_LABELS]} ${count}`)
+    .map(([sport, count]) => ({ sport: sport as Sport, count }))
+    .sort((left, right) => right.count - left.count)
+  const mostSessions = sports[0]?.count ?? 1
 
   return (
     <>
@@ -171,7 +174,17 @@ export const ProgressView = ({ onNeedsOnboarding }: Props) => {
               <dd>{Math.round((totals.sessions / progress.historyDays) * 7 * 10) / 10}</dd>
             </div>
           </dl>
-          {sports.length > 0 && <p className="totals__split readout">{sports.join(' · ')}</p>}
+          {sports.length > 0 && (
+            <ul className="sport-bars">
+              {sports.map(({ sport, count }) => (
+                <li key={sport}>
+                  <SportIcon sport={sport} />
+                  <i style={{ width: `${(count / mostSessions) * 100}%` }} />
+                  <span>{count}</span>
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
       )}
 

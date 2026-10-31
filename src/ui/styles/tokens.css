@@ -1,10 +1,14 @@
+/* Overpass's own middot sits against the following letter, and the app separates facts with it. */
+@font-face {
+  font-family: 'Middot';
+  src: local('Helvetica Neue'), local('Roboto'), local('Segoe UI'), local('Arial');
+  unicode-range: U+00B7;
+}
+
 /*
- * Direction "Messgerät": the app is an instrument, not a document.
- *
- * The palette has one idea. In the dark a number *emits* — sodium amber on
- * near-black, the way a bike computer lights its display. In the light the same
- * number is *printed* — the amber becomes burnt ochre ink on cool paper. Same
- * hue, opposite role. Prose stays grey in both, so the data always leads.
+ * Direction "Wochenfahrplan": the week is a transit line. Ink on white carries the
+ * structure and colour marks one thing only, how hard a day is, so a sport never has
+ * a colour of its own.
  *
  * Light is the default palette on bare :root; dark arrives through the system
  * preference and through an explicit stamp, so both directions of the switch
@@ -12,105 +16,125 @@
  */
 
 :root {
-  /* The page is stone, the panels are paper on it: two surfaces, not one glare. */
-  --page: #e3e1db;
-  --bg: #f6f5f1;
-  --bg-lift: #eeece6;
-  --bg-sink: #efeee9;
-  --rule: #d5d2c9;
-  --rule-soft: #e5e3dc;
-  --rule-loud: #b5b1a7;
+  --page: #ffffff;
+  --bg: #ffffff;
+  --bg-lift: #f3f5f8;
+  --bg-sink: #f3f5f8;
+  --rule: #dfe4ec;
+  --rule-soft: #eceff4;
+  --rule-loud: #8d9ab0;
 
-  --ink: #141819;
-  --text: #2a3032;
-  --dim: #4d5657;
-  --faint: #596263;
+  --ink: #0b1220;
+  --text: #1a2332;
+  --dim: #4f5a6b;
+  --faint: #4f5a6b;
 
-  --data: #a85a00;
-  --on-data: #fbfcfb;
+  --data: #0b1220;
+  --on-data: #ffffff;
 
-  --ride: #a85a00;
-  --run: #0d6f80;
-  --swim: #6b4fd8;
+  --ride: #0b1220;
+  --run: #4f5a6b;
+  --swim: #8d9ab0;
 
-  --good: #1c7a4f;
-  --on-good: #f1f3f2;
+  --good: #1c6b4a;
+  --on-good: #ffffff;
   /* Its own hue, so a warning never reads as the recommendation or the bike. */
-  --warn: #806400;
-  --bad: #b3352a;
+  --warn: #a24a12;
+  --bad: #b3261e;
 
-  --mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
-  --sans: 'IBM Plex Sans Condensed', 'Helvetica Neue', Arial, sans-serif;
+  --mono: 'Middot', 'Overpass', system-ui, sans-serif;
+  --sans: 'Middot', 'Overpass', system-ui, sans-serif;
 
   /* For third-party artwork that ships one file per background, like Strava's logo. */
   --light-only: inline;
   --dark-only: none;
+
+    --easy: #cfe9dc;
+  --easy-ink: #0f2a20;
+  --key: #f5b7a2;
+  --key-ink: #2a0f06;
+  --rest: #dddaee;
+  --rest-ink: #1c1a38;
 
   color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
-    --page: #070909;
-    --bg: #111617;
-    --bg-lift: #172021;
-    --bg-sink: #0b0f10;
-    --rule: #253032;
-    --rule-soft: #1b2425;
-    --rule-loud: #354244;
+    --page: #0b1220;
+    --bg: #0b1220;
+    --bg-lift: #141d2e;
+    --bg-sink: #141d2e;
+    --rule: #243047;
+    --rule-soft: #1a2436;
+    --rule-loud: #5d6c86;
 
-    --ink: #f2f5f5;
-    --text: #dae0e0;
-    --dim: #a6b0b0;
-    --faint: #909b9b;
+    --ink: #edf1f7;
+    --text: #d9dfe9;
+    --dim: #a3afc2;
+    --faint: #a3afc2;
 
-    --data: #ffa62b;
-    --on-data: #0a0d0e;
+    --data: #edf1f7;
+    --on-data: #0b1220;
 
-    --ride: #ffa62b;
-    --run: #5fc9d8;
-    --swim: #a68cff;
+    --ride: #edf1f7;
+    --run: #a3afc2;
+    --swim: #5d6c86;
 
-    --good: #58c98a;
-    --on-good: #0a0d0e;
-    --warn: #f2c94c;
-    --bad: #ff6b5f;
+    --good: #6fd3a2;
+    --on-good: #0b1220;
+    --warn: #f0a36c;
+    --bad: #ff8a80;
 
     --light-only: none;
     --dark-only: inline;
+
+        --easy: #15392e;
+    --easy-ink: #d8f2e6;
+    --key: #5f2615;
+    --key-ink: #ffe3d9;
+    --rest: #2b2948;
+    --rest-ink: #e6e4fa;
 
     color-scheme: dark;
   }
 }
 
 :root[data-theme='dark'] {
-  --page: #070909;
-  --bg: #111617;
-  --bg-lift: #172021;
-  --bg-sink: #0b0f10;
-  --rule: #253032;
-  --rule-soft: #1b2425;
-  --rule-loud: #354244;
+  --page: #0b1220;
+  --bg: #0b1220;
+  --bg-lift: #141d2e;
+  --bg-sink: #141d2e;
+  --rule: #243047;
+  --rule-soft: #1a2436;
+  --rule-loud: #5d6c86;
 
-  --ink: #f2f5f5;
-  --text: #dae0e0;
-  --dim: #a6b0b0;
-  --faint: #909b9b;
+  --ink: #edf1f7;
+  --text: #d9dfe9;
+  --dim: #a3afc2;
+  --faint: #a3afc2;
 
-  --data: #ffa62b;
-  --on-data: #0a0d0e;
+  --data: #edf1f7;
+  --on-data: #0b1220;
 
-  --ride: #ffa62b;
-  --run: #5fc9d8;
-  --swim: #a68cff;
+  --ride: #edf1f7;
+  --run: #a3afc2;
+  --swim: #5d6c86;
 
-  --good: #58c98a;
-  --on-good: #0a0d0e;
-  --warn: #f2c94c;
-  --bad: #ff6b5f;
+  --good: #6fd3a2;
+  --on-good: #0b1220;
+  --warn: #f0a36c;
+  --bad: #ff8a80;
 
   --light-only: none;
   --dark-only: inline;
+
+    --easy: #15392e;
+  --easy-ink: #d8f2e6;
+  --key: #5f2615;
+  --key-ink: #ffe3d9;
+  --rest: #2b2948;
+  --rest-ink: #e6e4fa;
 
   color-scheme: dark;
 }
@@ -134,8 +158,6 @@ body {
   font-family: var(--mono);
   font-size: 12px;
   font-weight: 500;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
   color: var(--faint);
 }
 
@@ -152,7 +174,6 @@ h4 {
   margin: 0;
   color: var(--ink);
   font-weight: 600;
-  letter-spacing: -0.005em;
 }
 
 h1 {
@@ -185,8 +206,6 @@ button {
   padding: 7px 12px;
   font-family: var(--mono);
   font-size: 12px;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
   cursor: pointer;
 }
 button:hover:not(:disabled) {
@@ -251,8 +270,6 @@ label,
   font-family: var(--mono);
   font-size: 12px;
   font-weight: 500;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
   color: var(--faint);
 }
 
@@ -275,7 +292,6 @@ label,
 .history,
 .intent,
 .pause,
-.outlook,
 .goals,
 .settings,
 .destinations,
@@ -317,7 +333,6 @@ label,
   border: 0;
   background: none;
   font: inherit;
-  letter-spacing: inherit;
   text-transform: inherit;
   color: inherit;
   text-align: left;
@@ -334,7 +349,6 @@ label,
   border-radius: 50%;
   font-size: 12px;
   line-height: 1;
-  letter-spacing: 0;
   opacity: 0.8;
 }
 .term__pop {
@@ -347,7 +361,6 @@ label,
   font-family: var(--sans);
   font-size: 15px;
   line-height: 1.45;
-  letter-spacing: normal;
   text-transform: none;
   white-space: normal;
 }
