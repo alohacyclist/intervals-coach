@@ -228,11 +228,19 @@ const minutesWish = (raw: unknown): number | undefined => {
   return Number.isInteger(value) && value >= 30 && value <= 360 ? value : undefined
 }
 
+/** The minute the work of a lengthened session should begin: whole minutes within the day. */
+const coreWish = (raw: unknown): number | undefined => {
+  if (raw === undefined || raw === null || raw === '') return undefined
+  const value = Number(raw)
+  return Number.isInteger(value) && value >= 0 && value <= 360 ? value : undefined
+}
+
 const buildPlan = async (
   deps: RouteDeps,
   days: number,
   intent?: Intent,
   minutesToday?: number,
+  coreAt?: number,
 ): Promise<Plan> => {
   const today = todayFor(deps)
   const config = await deps.store.load()
@@ -293,6 +301,7 @@ const buildPlan = async (
     intent,
     raceActivities,
     minutesToday,
+    coreAt,
   )
   const proposals = morning ? withProposal(config.proposals, morning) : config.proposals
 
@@ -317,6 +326,7 @@ const buildPlan = async (
     intent,
     raceActivities,
     minutesToday,
+    coreAt,
   )
   // The days ahead are kept too: training on a day the app was not opened is still recognised.
   if (planned.reduce(withProposal, proposals) !== config.proposals) {
@@ -400,7 +410,8 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
     const wish = context.req.query('intent')
     const intent = wish === 'hard' || wish === 'easy' || wish === 'rest' ? wish : undefined
     const minutesToday = minutesWish(context.req.query('minutes'))
-    return context.json(await buildPlan(await resolveFor(resolve, context), days, intent, minutesToday))
+    const coreAt = coreWish(context.req.query('coreAt'))
+    return context.json(await buildPlan(await resolveFor(resolve, context), days, intent, minutesToday, coreAt))
   })
 
   /** Pulls FTP and threshold pace from intervals.icu into the stored profile. */
@@ -659,6 +670,7 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
       variant?: string
       intent?: string
       minutes?: number
+      coreAt?: number
     }
     const template = body.templateId ? findTemplate(body.templateId) : undefined
     if (!body.date || !/^\d{4}-\d{2}-\d{2}$/.test(body.date)) {
@@ -674,7 +686,7 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
     const deps = { ...resolved, source: resolved.source.fresh() }
     // The plan as the athlete saw it: today's wish changes what today offers.
     const intent = body.intent === 'hard' || body.intent === 'easy' || body.intent === 'rest' ? body.intent : undefined
-    const plan = await buildPlan(deps, 7, intent, minutesWish(body.minutes))
+    const plan = await buildPlan(deps, 7, intent, minutesWish(body.minutes), coreWish(body.coreAt))
     const config = await deps.store.load()
     const planned = plan.days
       .find((day) => day.date === body.date)

@@ -26,6 +26,8 @@ type Props = {
   readonly intent?: string
   /** Today's time, for the same reason. */
   readonly minutesToday?: number
+  /** Where today's lengthened work begins, for the same reason. */
+  readonly coreAt?: number
   /** Today's controls; another day has no wish to change. */
   readonly children?: ReactNode
 }
@@ -43,6 +45,7 @@ export const DayCard = ({
   scheduled,
   intent,
   minutesToday,
+  coreAt,
   children,
 }: Props) => {
   const trained = day.completed.length > 0
@@ -145,6 +148,7 @@ export const DayCard = ({
             destinations={destinations[session.sport] ?? []}
             intent={intent}
             minutesToday={minutesToday}
+            coreAt={coreAt}
             titled={trained}
             onTier={(tier) => setTiers((previous) => ({ ...previous, [cardKey(session)]: tier }))}
           />

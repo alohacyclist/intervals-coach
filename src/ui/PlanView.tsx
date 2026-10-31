@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { CoachConfig, Plan } from '../coach/types.ts'
+import type { CoachConfig, Plan, PlannedDay } from '../coach/types.ts'
 import { ApiError, EXPIRED_SESSION_URL, getConfig, getPlan } from './api.ts'
 import type { Me } from './api.ts'
 import { DataIssueBanner } from './components/DataIssueBanner.tsx'
@@ -19,7 +19,7 @@ import { BreakBar } from './components/BreakBar.tsx'
 import { ZrlPanel } from './components/ZrlPanel.tsx'
 import { zrlRelevant } from './zrl-relevance.ts'
 import { GarminAttribution } from './components/GarminAttribution.tsx'
-import { MoreTimeSlider } from './components/MoreTimeSlider.tsx'
+import { CoreStartSlider, MoreTimeSlider } from './components/MoreTimeSlider.tsx'
 
 const PLAN_DAYS = 3
 
@@ -36,6 +36,10 @@ const STAND_FORMAT: Intl.DateTimeFormatOptions = {
   minute: '2-digit',
 }
 
+/** The latest minute the work of a lengthened session on this day could begin; 0 where none has work to move. */
+const latestCore = (day: PlannedDay): number =>
+  Math.max(0, ...day.options.flatMap((option) => option.variants.flatMap((variant) => (variant.core ? [variant.core.latest] : []))))
+
 const INTENTS = [
   { key: undefined, label: 'Wie geplant' },
   { key: 'hard', label: 'Hart' },
@@ -46,6 +50,7 @@ const INTENTS = [
 export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
   const [intent, setIntent] = useState<'hard' | 'easy' | 'rest' | undefined>(undefined)
   const [minutesToday, setMinutesToday] = useState<number | undefined>(undefined)
+  const [coreAt, setCoreAt] = useState<number | undefined>(undefined)
   const [plan, setPlan] = useState<Plan | null>(null)
   const [selected, setSelected] = useState<string | null>(null)
   const [config, setConfig] = useState<CoachConfig | null>(null)
@@ -74,11 +79,17 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
     ]),
   )
 
+  // Where the work begins is asked of a given length; a new length asks it afresh.
+  const onMinutesToday = useCallback((minutes: number | undefined) => {
+    setMinutesToday(minutes)
+    setCoreAt(undefined)
+  }, [])
+
   const load = useCallback(async (fresh = false) => {
     setBusy(true)
     setError(null)
     try {
-      const [nextPlan, nextConfig] = await Promise.all([getPlan(PLAN_DAYS, intent, fresh, minutesToday), getConfig()])
+      const [nextPlan, nextConfig] = await Promise.all([getPlan(PLAN_DAYS, intent, fresh, minutesToday, coreAt), getConfig()])
       setPlan(nextPlan)
       setConfig(nextConfig)
     } catch (caught) {
@@ -94,7 +105,7 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
     } finally {
       setBusy(false)
     }
-  }, [onNeedsOnboarding, intent, minutesToday])
+  }, [onNeedsOnboarding, intent, minutesToday, coreAt])
 
   useEffect(() => {
     void load()
@@ -176,6 +187,7 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
               scheduled={plan.scheduled.filter((entry) => entry.date === day.date)}
               intent={intent}
               minutesToday={minutesToday}
+              coreAt={minutesToday === undefined ? undefined : coreAt}
             >
               {index === 0 && (
                 <>
@@ -191,8 +203,10 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
                       </button>
                     ))}
                   </div>
-                  {config && (
-                    <MoreTimeSlider usual={config.profile.sessionMinutes.max} onSettled={setMinutesToday} />
+                  {config && <MoreTimeSlider usual={config.profile.sessionMinutes.max} onSettled={onMinutesToday} />}
+                  {minutesToday !== undefined && latestCore(day) >= 30 && (
+                    // A new length starts the choice over: the latest start moves with it.
+                    <CoreStartSlider key={minutesToday} latest={latestCore(day)} onSettled={setCoreAt} />
                   )}
                 </>
               )}

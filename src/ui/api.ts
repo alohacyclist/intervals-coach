@@ -101,9 +101,9 @@ export const correctHeart = (
   })
 
 /** `fresh` skips the server's few minutes of memory — for the refresh button, not for reloads after a change. */
-export const getPlan = (days: number, intent?: string, fresh = false, minutes?: number): Promise<Plan> =>
+export const getPlan = (days: number, intent?: string, fresh = false, minutes?: number, coreAt?: number): Promise<Plan> =>
   request<Plan>(
-    `/api/plan?days=${days}${intent ? `&intent=${intent}` : ''}${minutes ? `&minutes=${minutes}` : ''}${fresh ? '&frisch=1' : ''}`,
+    `/api/plan?days=${days}${intent ? `&intent=${intent}` : ''}${minutes ? `&minutes=${minutes}` : ''}${minutes && coreAt !== undefined ? `&coreAt=${coreAt}` : ''}${fresh ? '&frisch=1' : ''}`,
   )
 
 export const getProgress = (days: number): Promise<Progress> =>
@@ -143,10 +143,11 @@ export const pushWorkout = (
   variant: SessionTier = 'max',
   intent?: string,
   minutes?: number,
+  coreAt?: number,
 ): Promise<{ name: string; alreadyScheduled: boolean }> =>
   request<{ name: string; alreadyScheduled: boolean }>('/api/push', {
     method: 'POST',
-    body: JSON.stringify({ date, templateId, variant, intent, minutes }),
+    body: JSON.stringify({ date, templateId, variant, intent, minutes, coreAt }),
   })
 
 export const deleteAccount = (): Promise<{ ok: boolean }> =>

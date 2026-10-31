@@ -70,8 +70,9 @@ const stretchedFor = (
   threshold: SportThreshold,
   reason: string,
   targetMinutes: number,
+  coreAt: number | undefined,
 ): SessionVariant | null => {
-  const stretch = lengthen(template, threshold, targetMinutes - template.minutes)
+  const stretch = lengthen(template, threshold, targetMinutes - template.minutes, coreAt)
   if (!stretch) return null
   return {
     tier: 'extra',
@@ -84,6 +85,7 @@ const stretchedFor = (
     profile: profileOf(stretch.blocks, threshold),
     cuts: [],
     added: stretch.added,
+    ...(stretch.core ? { core: stretch.core } : {}),
   }
 }
 
@@ -98,6 +100,7 @@ const buildVariants = (
   reason: string,
   minutes: SessionMinutes,
   stretchTo: number | undefined,
+  coreAt: number | undefined,
 ): readonly SessionVariant[] => {
   // A reference session exists to be compared with itself, and a race is as long
   // as the race. Trimmed, either would be a different session, so both come whole.
@@ -113,7 +116,7 @@ const buildVariants = (
   const extra =
     stretchTo === undefined
       ? null
-      : ((stretchTo > template.minutes ? stretchedFor(template, threshold, reason, stretchTo) : null) ??
+      : ((stretchTo > template.minutes ? stretchedFor(template, threshold, reason, stretchTo, coreAt) : null) ??
         beyond(variantFor('extra', stretchTo, template, threshold, reason)))
   const built = [...tiers.map((tier) => variantFor(tier, minutes[tier], template, threshold, reason)), extra]
     .filter((variant): variant is SessionVariant => variant !== null)
@@ -150,6 +153,8 @@ export const buildSession = (
   date: string,
   /** Minutes the athlete has today beyond the usual, already capped to what they can take. */
   stretchTo?: number,
+  /** The minute the athlete wants the work of a lengthened session to begin. */
+  coreAt?: number,
 ): PlannedSession => {
   const template = { ...generic, coachNote: personalNote(generic.coachNote, config, date) }
   const threshold = thresholdFor(config.profile, template.sport) ?? defaultThreshold(template.sport)
@@ -159,6 +164,6 @@ export const buildSession = (
     reason,
     description: describeWorkout(template, reason),
     humanSteps: toHumanSteps(template.blocks, threshold),
-    variants: buildVariants(template, threshold, reason, config.profile.sessionMinutes, stretchTo),
+    variants: buildVariants(template, threshold, reason, config.profile.sessionMinutes, stretchTo, coreAt),
   }
 }

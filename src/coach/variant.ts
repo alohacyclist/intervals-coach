@@ -336,6 +336,12 @@ export type Stretch = {
   readonly blocks: readonly Block[]
   /** What was added, in the athlete's words. */
   readonly added: readonly string[]
+  /**
+   * Where a session with work in it has its work: the minute the core begins, and the
+   * latest it could begin with all the added base in front of it. Absent for base rides,
+   * where the whole ride is the core.
+   */
+  readonly core?: { readonly from: number; readonly latest: number }
 }
 
 /** Easy base in each sport, as the library's long sessions prescribe it. Swimming is counted in metres and not stretched. */
@@ -362,10 +368,18 @@ const longestMainStep = (blocks: readonly Block[], threshold: SportThreshold): n
       : position
   }, -1)
 
+/** Minutes until the work begins: the labelled steps a session opens with are its warm-up. */
+const warmupSeconds = (blocks: readonly Block[], threshold: SportThreshold): number => {
+  const first = blocks.findIndex((block) => block.kind !== 'step' || block.label === undefined)
+  return totalSeconds(first === -1 ? blocks : blocks.slice(0, first), threshold)
+}
+
 export const lengthen = (
   template: WorkoutTemplate,
   threshold: SportThreshold,
   extraMinutes: number,
+  /** The minute the athlete wants the work to begin; without it, right after the warm-up. */
+  coreAt?: number,
 ): Stretch | null => {
   const target = BASE_TARGET[template.sport]
   if (!stretchable(template) || target === undefined || extraMinutes < MIN_SAVING_MINUTES) return null
@@ -388,15 +402,35 @@ export const lengthen = (
     }
   }
 
+  // The base goes after the work while the legs were fresh for it — unless the athlete
+  // wants the work later, then as much as that takes goes in front, after the warm-up.
+  const warmup = warmupSeconds(template.blocks, threshold)
+  const warmupMinutes = Math.round(warmup / 60)
+  const ahead = coreAt === undefined ? 0 : Math.min(extraMinutes, Math.max(0, Math.round(coreAt - warmupMinutes)))
+  const after = extraMinutes - ahead
+  const base = (length: number): Step => ({ kind: 'step', duration: `${length}m`, target, label: 'Grundlage' })
+  const opening = template.blocks.findIndex((block) => block.kind !== 'step' || block.label === undefined)
+  const start = opening === -1 ? template.blocks.length : opening
   // Before the cool-down, which stays the last thing ridden.
   const last = template.blocks[template.blocks.length - 1]
-  const at = last?.kind === 'step' && last.label !== undefined ? template.blocks.length - 1 : template.blocks.length
-  const base: Step = { kind: 'step', duration: `${extraMinutes}m`, target, label: 'Grundlage' }
+  const end = last?.kind === 'step' && last.label !== undefined && template.blocks.length - 1 >= start ? template.blocks.length - 1 : template.blocks.length
+  const blocks = [
+    ...template.blocks.slice(0, start),
+    ...(ahead > 0 ? [base(ahead)] : []),
+    ...template.blocks.slice(start, end),
+    ...(after > 0 ? [base(after)] : []),
+    ...template.blocks.slice(end),
+  ]
+  const from = warmupMinutes + ahead
   return {
     name: `${template.name} + ${extraMinutes}min Grundlage`,
     minutes,
     load,
-    blocks: [...template.blocks.slice(0, at), base, ...template.blocks.slice(at)],
-    added: [`${extraMinutes} min lockere Grundlage nach dem Hauptteil`],
+    blocks,
+    added: [
+      ...(ahead > 0 ? [`${ahead} min lockere Grundlage vor dem Hauptteil, Intervalle ab Minute ${from}`] : []),
+      ...(after > 0 ? [`${after} min lockere Grundlage nach dem Hauptteil`] : []),
+    ],
+    core: { from, latest: warmupMinutes + extraMinutes },
   }
 }

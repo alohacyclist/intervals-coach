@@ -493,6 +493,8 @@ export type SessionVariant = {
   readonly cuts: readonly string[]
   /** For the `extra` version: what was added, so the athlete can see nothing of the work grew. */
   readonly added?: readonly string[]
+  /** For an `extra` version with work in it: the minute the work begins, and the latest it could. */
+  readonly core?: { readonly from: number; readonly latest: number }
 }
 
 export type PlannedSession = {
