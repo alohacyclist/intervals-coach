@@ -381,18 +381,65 @@
   flex-direction: row;
   align-items: center;
 }
+/* Drawn here, not by the browser: the native control keeps its thumb short of
+   the end of its bar on iOS. The fill ends under the thumb's centre, which only
+   travels between half a thumb from either end. */
 .more-time input[type='range'] {
+  --thumb: 22px;
+  --filled: calc(var(--thumb) / 2 + var(--fill) * (100% - var(--thumb)));
+  -webkit-appearance: none;
+  appearance: none;
   flex: 1;
   min-width: 0;
+  height: 40px;
   margin: 0 12px;
-  accent-color: var(--data);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
 }
+.more-time input[type='range']::-webkit-slider-runnable-track {
+  height: 4px;
+  background: linear-gradient(to right, var(--data) var(--filled), var(--rule) var(--filled));
+}
+.more-time input[type='range']::-moz-range-track {
+  height: 4px;
+  background: linear-gradient(to right, var(--data) var(--filled), var(--rule) var(--filled));
+}
+.more-time input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: var(--thumb);
+  height: 26px;
+  margin-top: -11px;
+  border: 0;
+  border-radius: 0;
+  background: var(--ink);
+}
+.more-time input[type='range']::-moz-range-thumb {
+  width: var(--thumb);
+  height: 26px;
+  border: 0;
+  border-radius: 0;
+  background: var(--ink);
+}
+.more-time input[type='range']:focus-visible::-webkit-slider-thumb {
+  background: var(--data);
+}
+.more-time input[type='range']:focus-visible::-moz-range-thumb {
+  background: var(--data);
+}
+/* A fixed width: were it to follow the text, the track would shift under the finger. */
 .more-time__value {
-  min-width: 7ch;
-  padding: 9px 12px;
+  flex: none;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  width: calc(9ch + 25px);
+  padding: 0 12px;
   border-left: 1px solid var(--rule);
-  text-align: right;
   font-size: 13px;
+  white-space: nowrap;
 }
 
 /* ----------------------------------------------------------------- states */
