@@ -1,0 +1,413 @@
+/* Wochenfahrplan: the week head, the line of stops and the day panel on it. */
+
+[hidden] {
+  display: none !important;
+}
+
+.sport-icon {
+  display: inline-block;
+  vertical-align: -0.25em;
+  width: 1.3em;
+  height: 1.3em;
+  fill: currentColor;
+  flex: none;
+}
+
+/* Plan and Verlauf are tabs: the view is a place, the theme next to it only a setting. */
+.topbar {
+  border-bottom: 0;
+  padding: 0;
+}
+.topbar > .mode:first-child:not(:only-child) {
+  flex: 1;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  border: 0;
+}
+.topbar > .mode:first-child:not(:only-child) button {
+  min-height: 44px;
+  background: none;
+  border: 0;
+  border-bottom: 2px solid var(--rule);
+  color: var(--ink);
+  font-size: 15px;
+}
+.topbar > .mode:first-child:not(:only-child) button[aria-pressed='true'] {
+  border-bottom: 4px solid var(--ink);
+  font-weight: 800;
+}
+.demo-badge {
+  order: 1;
+}
+
+.header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px 8px;
+}
+.header__actions {
+  grid-column: 2;
+  grid-row: 1;
+  display: flex;
+}
+.header__actions button {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  display: grid;
+  place-items: center;
+  color: var(--ink);
+  font-size: 18px;
+}
+.week-title {
+  grid-column: 1;
+  grid-row: 1;
+  align-self: center;
+  margin: 0;
+  font-weight: 800;
+  font-size: 20px;
+  line-height: 1.2;
+  color: var(--ink);
+}
+.week-title span {
+  font-weight: 400;
+  font-size: 14px;
+  color: var(--dim);
+  white-space: nowrap;
+}
+.meters {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--dim);
+}
+.meter {
+  display: flex;
+  gap: 3px;
+  height: 8px;
+  margin-bottom: 3px;
+}
+.meter i {
+  flex: 1;
+  background: var(--rule);
+}
+.meter .meter__on {
+  background: var(--ink);
+}
+.header__summary {
+  grid-column: 1 / -1;
+}
+
+/* The panel runs edge to edge on a phone: the day is the page, the rest frames it. */
+.line {
+  list-style: none;
+  margin: 0 -14px;
+  padding: 0;
+  border-bottom: 1px solid var(--rule);
+}
+.line__row {
+  display: grid;
+  grid-template-columns: 48px 34px minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 4px;
+  min-height: 44px;
+  width: 100%;
+  padding: 0 14px;
+  background: none;
+  border: 0;
+  border-top: 1px solid var(--rule);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+}
+.line__day {
+  white-space: nowrap;
+  font-size: 14px;
+  color: var(--dim);
+}
+.line__rail {
+  position: relative;
+  display: grid;
+  place-items: center;
+  align-self: stretch;
+}
+.line__rail::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  margin-left: -1.5px;
+  border-left: 3px solid var(--ink);
+}
+.line__stop-item--future .line__rail::before {
+  border-left-style: dotted;
+}
+.line__stop {
+  position: relative;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--bg);
+  border: 3px solid var(--ink);
+}
+.line__title {
+  font-weight: 600;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.line__title--rest {
+  font-weight: 400;
+  color: var(--dim);
+}
+.line__side {
+  font-size: 13px;
+  color: var(--dim);
+  text-align: right;
+  white-space: nowrap;
+  padding-left: 6px;
+}
+.line__side b {
+  color: var(--ink);
+  font-weight: 600;
+}
+.line__panel:focus {
+  outline: none;
+}
+
+.mark {
+  position: relative;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 16px;
+  font-style: normal;
+  color: var(--ink);
+}
+.mark--easy {
+  background: var(--easy);
+  color: var(--easy-ink);
+}
+.mark--key {
+  background: var(--key);
+  color: var(--key-ink);
+}
+.mark--neutral {
+  background: var(--bg-lift);
+}
+.mark--missed {
+  background: var(--bg);
+  box-shadow: inset 0 0 0 2px var(--dim);
+  color: var(--dim);
+}
+
+/* Inside the panel the shared tokens point at the day's colour, so every card follows. */
+.panel {
+  --p: var(--easy);
+  --pi: var(--easy-ink);
+  --ink: var(--pi);
+  --text: var(--pi);
+  --dim: color-mix(in srgb, var(--pi) 84%, var(--p));
+  --faint: color-mix(in srgb, var(--pi) 84%, var(--p));
+  --rule: color-mix(in srgb, var(--pi) 32%, var(--p));
+  --rule-soft: color-mix(in srgb, var(--pi) 20%, var(--p));
+  --rule-loud: color-mix(in srgb, var(--pi) 50%, var(--p));
+  --bg: var(--p);
+  --bg-lift: color-mix(in srgb, var(--pi) 8%, var(--p));
+  --bg-sink: color-mix(in srgb, var(--pi) 8%, var(--p));
+  --data: var(--pi);
+  --on-data: var(--p);
+  --good: var(--pi);
+  --on-good: var(--p);
+  --warn: var(--pi);
+  --bad: var(--pi);
+  background: var(--p);
+  color: var(--pi);
+  padding: 12px 14px 14px;
+  display: grid;
+  gap: 10px;
+}
+.panel[data-state='key'] {
+  --p: var(--key);
+  --pi: var(--key-ink);
+}
+.panel[data-state='rest'] {
+  --p: var(--rest);
+  --pi: var(--rest-ink);
+}
+.panel__tag {
+  display: inline-block;
+  background: var(--pi);
+  color: var(--p);
+  font-weight: 800;
+  font-size: 13px;
+  padding: 2px 8px 0;
+  margin-right: 8px;
+}
+.panel__facts {
+  margin: 0;
+  color: var(--dim);
+  font-size: 14px;
+}
+.panel h2 {
+  margin: 6px 0 2px;
+  font-weight: 800;
+  font-size: 32px;
+  line-height: 1.05;
+  color: var(--pi);
+  overflow-wrap: anywhere;
+}
+.picks {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 6px;
+}
+.picks button {
+  position: relative;
+  min-height: 84px;
+  padding: 8px;
+  background: none;
+  color: inherit;
+  border: 1px solid var(--rule);
+  display: grid;
+  justify-items: start;
+  align-content: start;
+  gap: 2px;
+  text-align: left;
+  font: inherit;
+  font-size: 14px;
+}
+.picks button[aria-pressed='true'] {
+  border: 3px solid var(--pi);
+  padding: 6px;
+}
+.picks .sport-icon {
+  font-size: 22px;
+  margin-bottom: 4px;
+}
+.picks b {
+  font-weight: 800;
+}
+.picks__star {
+  position: absolute;
+  top: 6px;
+  right: 7px;
+  font-size: 17px;
+  line-height: 1;
+}
+.panel .session {
+  padding: 0;
+  background: none;
+  box-shadow: none;
+}
+.session__push {
+  width: 100%;
+  min-height: 50px;
+  border: 0;
+  background: var(--ink);
+  color: var(--bg);
+  font-weight: 800;
+  font-size: 16px;
+}
+.intent {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr 1fr;
+  gap: 4px;
+}
+.intent button {
+  min-height: 44px;
+  background: none;
+  color: inherit;
+  border: 1px solid var(--rule);
+  font: inherit;
+  font-size: 13px;
+  padding: 2px 2px 0;
+}
+.intent button[aria-pressed='true'] {
+  background: var(--pi);
+  color: var(--p);
+  font-weight: 800;
+}
+.more-time.intent {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.still-open {
+  display: grid;
+  gap: 8px;
+}
+.still-open h2 {
+  margin: 0;
+  font-weight: 800;
+  font-size: 17px;
+  color: var(--ink);
+}
+.still-open ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.still-open li {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  align-items: center;
+  min-height: 40px;
+}
+.still-open__since {
+  margin: 0;
+  color: var(--dim);
+  font-size: 14px;
+}
+
+.sport-bars {
+  list-style: none;
+  margin: 0;
+  padding: 8px 14px 12px;
+}
+.sport-bars li {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) 30px;
+  align-items: center;
+  min-height: 36px;
+  font-size: 14px;
+}
+.sport-bars li .sport-icon {
+  font-size: 18px;
+}
+.sport-bars i {
+  display: block;
+  height: 10px;
+  background: var(--rule-loud);
+}
+.sport-bars span {
+  grid-column: 3;
+  grid-row: 1;
+  text-align: right;
+  font-weight: 600;
+}
+
+@media (min-width: 761px) {
+  .app {
+    max-width: 720px;
+  }
+}
+
+/* Flat sections keep their 14px inset for the text and run their rules to the page edge, like the line. */
+.app > :is(.issue, .kpis, .history, .pause, .totals, .chart, .ladder, .benchmark, .goals) {
+  margin-inline: -14px;
+}
+.panel .disclose > summary,
+.panel .day__more-time,
+.panel .strength {
+  padding-inline: 0;
+}

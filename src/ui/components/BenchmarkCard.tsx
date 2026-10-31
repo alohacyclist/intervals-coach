@@ -1,5 +1,5 @@
 import type { BenchmarkStatus } from '../../coach/types.ts'
-import { SPORT_LABELS } from '../../coach/types.ts'
+import { SportIcon } from './SportIcon.tsx'
 
 const VERDICT_CLASS: Readonly<Record<string, string>> = {
   better: 'history__ok',
@@ -31,7 +31,7 @@ export const BenchmarkCard = ({ status }: { readonly status: BenchmarkStatus }) 
 
     {status.results.map((result) => (
       <p key={result.sport} className={`benchmark__result ${VERDICT_CLASS[result.verdict] ?? ''}`}>
-        <strong>{SPORT_LABELS[result.sport]}</strong> · {result.date}: {result.message}
+        <SportIcon sport={result.sport} /> {result.date}: {result.message}
       </p>
     ))}
 

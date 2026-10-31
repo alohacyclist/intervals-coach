@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import type { PlannedSession, RaceDetails, SessionTier } from '../../coach/types.ts'
-import { SPORT_LABELS, TIER_LABELS } from '../../coach/types.ts'
+import { TIER_LABELS } from '../../coach/types.ts'
 import { pushWorkout } from '../api.ts'
 import { WorkoutProfile } from './WorkoutProfile.tsx'
 import { Term } from './Term.tsx'
+import { SportIcon } from './SportIcon.tsx'
 
 type Props = {
   readonly session: PlannedSession
@@ -19,6 +20,10 @@ type Props = {
   readonly intent?: string
   /** Today's time, sent along for the same reason. */
   readonly minutesToday?: number
+  /** False when the surrounding day already carries this session's name as its heading. */
+  readonly titled?: boolean
+  /** Lets the surrounding day show the version chosen here. */
+  readonly onTier?: (tier: SessionTier) => void
 }
 
 type PushState = { readonly status: 'idle' | 'busy' | 'error'; readonly message?: string }
@@ -54,6 +59,8 @@ export const SessionCard = ({
   destinations,
   intent,
   minutesToday,
+  titled = true,
+  onTier,
 }: Props) => {
   const [push, setPush] = useState<PushState>({ status: 'idle' })
   const [sent, setSent] = useState<readonly number[]>([])
@@ -70,6 +77,7 @@ export const SessionCard = ({
 
   const choose = (next: SessionTier) => {
     setTier(next)
+    onTier?.(next)
     setPush({ status: 'idle' })
   }
 
@@ -104,17 +112,16 @@ export const SessionCard = ({
       className={`session ${recommended ? 'session--recommended' : ''} ${done ? 'session--done' : ''}`}
     >
       <div className="session__head">
-        <span className={`badge badge--${session.sport.toLowerCase()}`}>
-          {SPORT_LABELS[session.sport]}
-        </span>
-        {recommended && <span className="badge badge--pick">Empfehlung</span>}
+        {/* Without a title the day's pick tile above already shows sport and star. */}
+        {titled && <SportIcon sport={session.sport} />}
+        {titled && recommended && <span className="badge badge--pick">★ empfohlen</span>}
         {done && <span className="badge badge--done">✓ Erledigt</span>}
         <span className="session__meta">
           <Term term="tss">{active?.load ?? session.template.load} TSS</Term>
         </span>
       </div>
 
-      <h3>{active?.name ?? session.template.name}</h3>
+      {titled && <h3>{active?.name ?? session.template.name}</h3>}
       {/* The pick says why in one line; an alternative keeps it with the rest of the why. */}
       {recommended && <p className="session__reason">{session.reason}</p>}
       {session.race && <p className="session__race readout">{raceFacts(session.race)}</p>}
@@ -139,11 +146,11 @@ export const SessionCard = ({
             </button>
           ))}
         </div>
-      ) : (
+      ) : titled ? (
         <p className="session__duration readout">
           {active?.minutes ?? session.template.minutes} min
         </p>
-      )}
+      ) : null}
 
       {profile.length > 0 && <WorkoutProfile profile={profile} minutes={minutes} />}
 
@@ -181,7 +188,7 @@ export const SessionCard = ({
       {done || session.race ? null : onCalendar(minutes) ? (
         <p className="session__sent readout">✓ Diese Fassung ist im Kalender</p>
       ) : (
-        <button type="button" onClick={onPush} disabled={push.status === 'busy'}>
+        <button type="button" className="session__push" onClick={onPush} disabled={push.status === 'busy'}>
           {push.status === 'busy'
             ? 'Sende…'
             : destinations.length > 0

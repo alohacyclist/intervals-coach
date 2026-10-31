@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import type { ThresholdSuggestion } from '../../coach/types.ts'
-import { SPORT_LABELS } from '../../coach/types.ts'
 import { thresholdTestFor } from '../../coach/library.ts'
 import { adoptThreshold, pushWorkout } from '../api.ts'
+import { SportIcon } from './SportIcon.tsx'
 
 type Props = {
   readonly suggestions: readonly ThresholdSuggestion[]
@@ -55,7 +55,7 @@ export const ThresholdCard = ({ suggestions, date, onAdopted }: Props) => {
         return (
           <div key={suggestion.sport} className="threshold">
             <p>
-              <strong>{SPORT_LABELS[suggestion.sport]}:</strong> {suggestion.message}
+              <SportIcon sport={suggestion.sport} /> {suggestion.message}
             </p>
             {test && (
               <button

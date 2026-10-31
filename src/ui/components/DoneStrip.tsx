@@ -1,5 +1,5 @@
 import type { CompletedSession } from '../../coach/types.ts'
-import { SPORT_LABELS } from '../../coach/types.ts'
+import { SportIcon } from './SportIcon.tsx'
 import { ExecutionCard, comparable } from './ExecutionCard.tsx'
 
 type Props = { readonly sessions: readonly CompletedSession[]; readonly date: string }
@@ -11,9 +11,7 @@ export const DoneStrip = ({ sessions, date }: Props) => (
         <p className="done__item">
           <span className="badge badge--done">✓ Erledigt</span>
           {session.sport !== 'Other' && (
-            <span className={`badge badge--${session.sport.toLowerCase()}`}>
-              {SPORT_LABELS[session.sport]}
-            </span>
+            <SportIcon sport={session.sport} />
           )}
           <strong>{session.name}</strong>
           <span className="done__meta readout">

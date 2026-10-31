@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { CoachConfig, DestinationState, Sport, WorkoutDestination } from '../../coach/types.ts'
 import { SPORT_LABELS } from '../../coach/types.ts'
 import { putConfig } from '../api.ts'
+import { SportIcon } from './SportIcon.tsx'
 
 type Props = {
   readonly config: CoachConfig
@@ -51,18 +52,38 @@ export const DestinationBar = ({ config, destinations, onSaved }: Props) => {
     }
   }
 
+  const names = (sport: Sport): string => {
+    const chosen = chosenFor(sport)
+    const labels = offered.filter((state) => chosen.includes(state.destination)).map((state) => state.label)
+    return labels.length > 0 ? labels.join(', ') : 'nur Kalender'
+  }
+
+  // Sports going to the same place share a line: "Rad, Laufen → Wahoo".
+  const routes = [...new Set(sports.map(names))].map((target) => ({
+    target,
+    sports: sports.filter((sport) => names(sport) === target).map((sport) => SPORT_LABELS[sport]),
+  }))
+
+  // Nothing connected leaves nothing to switch: everything goes to the calendar anyway.
+  if (offered.length === 0) return null
+
   return (
-    <section className="destinations">
-      <div className="destinations__head">
-        <h2>Übertragen an</h2>
-        <span className="destinations__meta">pro Sportart</span>
-      </div>
+    <details className="disclose destinations">
+      <summary aria-label="Übertragen an, pro Sportart">
+        <span className="destinations__summary">
+          {routes.map((route) => (
+            <span key={route.target}>
+              {route.sports.join(', ')} → {route.target}
+            </span>
+          ))}
+        </span>
+      </summary>
 
       {sports.map((sport) => {
         const chosen = chosenFor(sport)
         return (
           <div key={sport} className="destinations__sport">
-            <span className={`badge badge--${sport.toLowerCase()}`}>{SPORT_LABELS[sport]}</span>
+            <SportIcon sport={sport} />
             <div className="destinations__row">
               {offered.map((state) => (
                 <button
@@ -77,20 +98,11 @@ export const DestinationBar = ({ config, destinations, onSaved }: Props) => {
                   {state.label}
                 </button>
               ))}
-              {chosen.length === 0 && (
-                <span className="destinations__meta">nur der Kalender</span>
-              )}
             </div>
           </div>
         )
       })}
-
-      <details className="disclose destinations__note">
-        <summary>Wie das funktioniert</summary>
-        intervals.icu leitet je Konto weiter, nicht je Einheit. Die App stellt die Schalter deshalb
-        kurz vor jedem Senden auf die Sportart um.
-      </details>
       {error && <p className="error" role="alert">{error}</p>}
-    </section>
+    </details>
   )
 }

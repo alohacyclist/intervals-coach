@@ -1,7 +1,10 @@
-import type { PlannedDay, PlannedSession, ScheduledWorkout } from '../../coach/types.ts'
-import { SPORT_LABELS } from '../../coach/types.ts'
+import { useState } from 'react'
+import type { ReactNode } from 'react'
+import type { PlannedDay, PlannedSession, ScheduledWorkout, SessionTier } from '../../coach/types.ts'
 import { PHASE_LABELS } from '../../coach/phase.ts'
+import { dayState, usualVariant } from '../week-line.ts'
 import { SessionCard } from './SessionCard.tsx'
+import { SportIcon } from './SportIcon.tsx'
 import { StrengthCard } from './StrengthCard.tsx'
 import { DoneStrip } from './DoneStrip.tsx'
 
@@ -23,35 +26,13 @@ type Props = {
   readonly intent?: string
   /** Today's time, for the same reason. */
   readonly minutesToday?: number
+  /** Today's controls; another day has no wish to change. */
+  readonly children?: ReactNode
 }
 
-/** The version shown first, mirroring the preference SessionCard applies. */
-const usualVariant = (session: PlannedSession) =>
-  session.variants.find((variant) => variant.tier === 'extra') ??
-  session.variants.find((variant) => variant.tier === 'normal') ??
-  session.variants[session.variants.length - 1]
-
-/** What a preview day is actually asked for: sport, name, size — not the intervals. */
-const summaryOf = (
-  day: PlannedDay,
-  pick: PlannedSession | undefined,
-): { readonly name: string; readonly meta: string } => {
-  if (day.completed.length > 0) {
-    const minutes = day.completed.reduce((sum, entry) => sum + entry.minutes, 0)
-    const load = day.completed.reduce((sum, entry) => sum + entry.load, 0)
-    return {
-      name: day.completed.map((entry) => entry.name || 'Einheit ohne Namen').join(' · '),
-      meta: `${Math.round(minutes)} min · ${Math.round(load)} TSS`,
-    }
-  }
-  if (day.recommended === 'REST') return { name: 'Ruhetag', meta: '—' }
-  if (!pick) return { name: 'Kein Vorschlag', meta: '—' }
-  const variant = usualVariant(pick)
-  return {
-    name: `${SPORT_LABELS[pick.sport]} · ${variant?.name ?? pick.template.name}`,
-    meta: `${variant?.minutes ?? pick.template.minutes} min · ${variant?.load ?? pick.template.load} TSS`,
-  }
-}
+/** A new length today brings a new choice of version, so the card starts over. */
+const cardKey = (session: PlannedSession): string =>
+  `${session.template.id}-${session.variants.map((variant) => variant.minutes).join('-')}`
 
 export const DayCard = ({
   day,
@@ -62,48 +43,48 @@ export const DayCard = ({
   scheduled,
   intent,
   minutesToday,
+  children,
 }: Props) => {
   const trained = day.completed.length > 0
-  const dimmed = trained || day.recommended === 'REST'
   // Two options can share a sport — a race and its alternative — but only one is the pick.
   const picked = day.options.find((option) => option.sport === day.recommended)
   const pick = picked?.template.id
-  // Today is the instrument; a preview day and a rest day are one line until asked for.
-  const folded = index > 0 || day.recommended === 'REST'
+  // A choice answers one recommendation: a new wish for today brings a new one to look at.
+  const [choice, setChoice] = useState<{ readonly forPick?: string; readonly id: string } | null>(null)
+  const [tiers, setTiers] = useState<Readonly<Record<string, SessionTier>>>({})
+  const chosenId = choice && choice.forPick === pick ? choice.id : pick
+  const chosen = day.options.find((option) => option.template.id === chosenId)
 
-  const label = index === 0 ? 'Heute' : index === 1 ? 'Morgen' : `${day.weekday}.`
+  const shownVariant = (session: PlannedSession) =>
+    session.variants.find((variant) => variant.tier === tiers[cardKey(session)]) ?? usualVariant(session)
+
+  const label = index === 0 ? 'Heute' : index === 1 ? 'Morgen' : day.weekday
   const date = `${day.date.slice(8, 10)}.${day.date.slice(5, 7)}.`
+  const facts = [
+    date,
+    DAY_TYPE_LABEL[day.dayType],
+    PHASE_LABELS[day.phase],
+    ...(day.optional ? ['freiwillig'] : []),
+  ].join(' · ')
+  const title = trained
+    ? day.completed.map((entry) => entry.name || 'Einheit ohne Namen').join(' · ')
+    : chosen
+      ? (shownVariant(chosen)?.name ?? chosen.template.name)
+      : day.recommended === 'REST'
+        ? 'Ruhetag'
+        : 'Kein Vorschlag'
 
-  const tags = (
-    <div className="day__tags">
-      {day.optional && <span className="badge badge--optional">freiwillig</span>}
-      <span className={`badge badge--${day.dayType.toLowerCase()}`}>
-        {DAY_TYPE_LABEL[day.dayType]}
-      </span>
-      <span className="badge">{PHASE_LABELS[day.phase]}</span>
-    </div>
-  )
-
-  // A folded day already names itself in its row; opening it must not repeat that.
-  const head = (
-    <div className={`day__head ${folded ? 'day__head--tags' : ''}`}>
-      {!folded && (
-        <h2>
-          {label} <span className="day__date">{date}</span>
-        </h2>
-      )}
-      {tags}
-    </div>
-  )
-
-  const body = (
-    <>
-      {/* The reason for the day reads first; the numbers behind it wait for a tap. */}
-      {day.notes.length > 0 && (
-        <p className={day.notes.length > 1 ? 'day__reason' : 'day__reason day__reason--alone'}>{day.notes[0]}</p>
-      )}
-      {/* Asked for on screen, answered on screen in a few words; the why waits in the background. */}
-      {day.moreTime.length > 0 && <p className="day__more-time">{day.moreTime.join(' · ')}</p>}
+  return (
+    <section className="panel" data-state={dayState(day.dayType)}>
+      <div className="panel__head">
+        <span className="panel__tag">{label}</span>
+        <span className="panel__facts">{facts}</span>
+        <h2>{title}</h2>
+        {/* The reason for the day reads first; the numbers behind it wait for a tap. */}
+        {day.notes.length > 0 && <p className="panel__facts">{day.notes[0]}</p>}
+        {/* Asked for on screen, answered on screen in a few words; the why waits in the background. */}
+        {day.moreTime.length > 0 && <p className="day__more-time">{day.moreTime.join(' · ')}</p>}
+      </div>
 
       {day.notes.length > 1 && (
         <details className="disclose day__why">
@@ -118,22 +99,42 @@ export const DayCard = ({
 
       {trained && <DoneStrip sessions={day.completed} date={day.date} />}
 
-      {/* A voluntary day says so in its badge and its reason; a third telling was noise. */}
+      {day.options.length > 0 && (
+        <div className="picks" role="group" aria-label="Einheit wählen">
+          {day.options.map((session) => {
+            const variant = shownVariant(session)
+            return (
+              <button
+                key={session.template.id}
+                type="button"
+                aria-pressed={session.template.id === chosenId}
+                onClick={() => setChoice({ forPick: pick, id: session.template.id })}
+              >
+                <SportIcon sport={session.sport} />
+                <b>{variant?.minutes ?? session.template.minutes} min</b>
+                <span>{variant?.load ?? session.template.load} TSS</span>
+                {session.template.id === pick && (
+                  <span className="picks__star" role="img" aria-label="empfohlen">
+                    ★
+                  </span>
+                )}
+              </button>
+            )
+          })}
+        </div>
+      )}
 
-      {day.recommended === 'REST' && !trained && (
-        <p className="rest-hint">
-          <span>
-            <strong>Heute ist Pause.</strong> Wer sich trotzdem bewegen will: unten die lockersten
-            Varianten.
-          </span>
+      {day.recommended === 'REST' && !trained && !chosen && (
+        <p className="panel__facts">
+          <strong>{index === 0 ? 'Heute ist Pause.' : 'Ruhetag.'}</strong> Tippe eine Sportart an, wenn du
+          trotzdem los willst.
         </p>
       )}
 
-      <div className={`day__options ${dimmed ? 'day__options--optional' : ''}`}>
-        {day.options.map((session) => (
+      {/* All stay mounted, so a version chosen or sent survives looking at another sport. */}
+      {day.options.map((session) => (
+        <div key={cardKey(session)} hidden={session.template.id !== chosenId}>
           <SessionCard
-            // A new length today brings a new choice of version, so the card starts over.
-            key={`${session.template.id}-${session.variants.map((variant) => variant.minutes).join('-')}`}
             session={session}
             date={day.date}
             recommended={session.template.id === pick}
@@ -144,9 +145,11 @@ export const DayCard = ({
             destinations={destinations[session.sport] ?? []}
             intent={intent}
             minutesToday={minutesToday}
+            titled={trained}
+            onTier={(tier) => setTiers((previous) => ({ ...previous, [cardKey(session)]: tier }))}
           />
-        ))}
-      </div>
+        </div>
+      ))}
 
       {day.strength && (
         <StrengthCard
@@ -156,33 +159,8 @@ export const DayCard = ({
           onLogged={onStrengthLogged}
         />
       )}
-    </>
-  )
 
-  if (!folded) {
-    return (
-      <section className="day">
-        {head}
-        {body}
-      </section>
-    )
-  }
-
-  const summary = summaryOf(day, picked)
-
-  return (
-    <details className={`disclose day day--folded ${trained ? 'day--trained' : ''}`}>
-      <summary className="fold">
-        <span className="fold__date">
-          {index === 0 ? label : `${day.weekday} ${date}`}
-        </span>
-        <span className={`fold__name ${day.recommended === 'REST' && !trained ? 'fold__name--rest' : ''}`}>
-          {summary.name}
-        </span>
-        <span className="fold__meta">{summary.meta}</span>
-      </summary>
-      {head}
-      {body}
-    </details>
+      {children}
+    </section>
   )
 }
