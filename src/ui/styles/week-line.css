@@ -208,29 +208,16 @@
   color: var(--dim);
 }
 
-/* Inside the panel the shared tokens point at the day's colour, so every card follows. */
+/* Karte A: the day panel stays white and ink, the day's colour runs down its left edge,
+   fills the day tag and tints the chosen pick, the same way for every kind of day. */
 .panel {
   --p: var(--easy);
   --pi: var(--easy-ink);
-  --ink: var(--pi);
-  --text: var(--pi);
-  --dim: color-mix(in srgb, var(--pi) 84%, var(--p));
-  --faint: color-mix(in srgb, var(--pi) 84%, var(--p));
-  --rule: color-mix(in srgb, var(--pi) 32%, var(--p));
-  --rule-soft: color-mix(in srgb, var(--pi) 20%, var(--p));
-  --rule-loud: color-mix(in srgb, var(--pi) 50%, var(--p));
-  --bg: var(--p);
-  --bg-lift: color-mix(in srgb, var(--pi) 8%, var(--p));
-  --bg-sink: color-mix(in srgb, var(--pi) 8%, var(--p));
-  --data: var(--pi);
-  --on-data: var(--p);
-  --good: var(--pi);
-  --on-good: var(--p);
-  --warn: var(--pi);
-  --bad: var(--pi);
-  background: var(--p);
-  color: var(--pi);
-  padding: 12px 14px 14px;
+  --tint: color-mix(in srgb, var(--p) 35%, var(--bg));
+  background: var(--bg);
+  color: var(--text);
+  border-left: 5px solid var(--p);
+  padding: 14px 14px 14px 13px;
   display: grid;
   gap: 10px;
 }
@@ -244,8 +231,8 @@
 }
 .panel__tag {
   display: inline-block;
-  background: var(--pi);
-  color: var(--p);
+  background: var(--p);
+  color: var(--pi);
   font-weight: 800;
   font-size: 13px;
   padding: 2px 8px 0;
@@ -261,7 +248,7 @@
   font-weight: 800;
   font-size: 32px;
   line-height: 1.05;
-  color: var(--pi);
+  color: var(--ink);
   overflow-wrap: anywhere;
 }
 .picks {
@@ -286,8 +273,9 @@
   font-size: 14px;
 }
 .picks button[aria-pressed='true'] {
-  border: 3px solid var(--pi);
+  border: 3px solid var(--ink);
   padding: 6px;
+  background: var(--tint);
 }
 .picks .sport-icon {
   font-size: 22px;
@@ -332,8 +320,8 @@
   padding: 2px 2px 0;
 }
 .intent button[aria-pressed='true'] {
-  background: var(--pi);
-  color: var(--p);
+  background: var(--ink);
+  color: var(--bg);
   font-weight: 800;
 }
 .more-time.intent {
