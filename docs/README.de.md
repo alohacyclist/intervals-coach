@@ -137,8 +137,9 @@ wo sie passt:
   Erholungswerte, die Ermüdung oder eine eingetragene Pause locker halten, rund um ein
   Rennen und bei Tests und Referenzeinheiten.
 
-Wofür die Zeit verwendet wird und wo sie endet, steht sichtbar unter dem Grund des Tages —
-nicht im aufklappbaren Hintergrund. Die verlängerte Fassung ist vorausgewählt, die üblichen
+Wofür die Zeit verwendet wird und wo sie endet, steht in Stichworten unter dem Grund des
+Tages („Mehr Zeit: lockere Grundlage nach den Intervallen · Laufen max. 55 min“), die
+Begründung dazu im aufklappbaren Hintergrund. Die verlängerte Fassung ist vorausgewählt, die üblichen
 bleiben daneben. Gerechnet werden die Folgetage mit ihrer Belastung (eine lockere Stunde
 ≈ 46 Load auf dem Rad, 55 beim Laufen). Der Wunsch gilt nur für heute.
 

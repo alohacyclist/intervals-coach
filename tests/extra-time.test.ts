@@ -113,7 +113,15 @@ describe('a day with more time', () => {
     const ride = today?.options.find((option) => option.sport === 'Ride')
     expect(intensityClass(ride?.template.stimulus ?? 'RECOVERY')).toBe('hard')
     expect(stretched(ride)).toMatchObject({ minutes: 120, added: [expect.stringContaining('Grundlage')] })
-    expect(today?.moreTime.some((note) => note.startsWith('Mehr Zeit an einem Qualitätstag'))).toBe(true)
+    expect(today?.notes.some((note) => note.startsWith('Mehr Zeit an einem Qualitätstag'))).toBe(true)
+  })
+
+  it('says on the day in a few words what the time is for and where it stops', () => {
+    const shorter = withLongOnes.map((entry) => (entry.sport === 'Run' ? { ...entry, movingTimeSec: 45 * 60 } : entry))
+    const [today] = planDays(stateFrom(shorter), config, 1, measured, undefined, [], 120)
+    expect(today?.moreTime).toEqual(['Mehr Zeit: lockere Grundlage nach den Intervallen', 'Laufen max. 55 min'])
+    // The why waits in the background.
+    expect(today?.notes.some((note) => note.startsWith('Laufen bis 55 min — dein längster Lauf'))).toBe(true)
   })
 
   it('still offers the full session next to the long one', () => {
@@ -130,7 +138,7 @@ describe('a day with more time', () => {
     const [today] = planDays(stateFrom(shorter), config, 1, measured, undefined, [], 180)
     const ride = today?.options.find((option) => option.sport === 'Ride')
     expect(stretched(ride)?.minutes).toBe(100)
-    expect(today?.moreTime.some((note) => note.startsWith('Rad bis 100 min — mehr tragen deine Fitness'))).toBe(true)
+    expect(today?.notes.some((note) => note.startsWith('Rad bis 100 min — mehr tragen deine Fitness'))).toBe(true)
   })
 
   it('lets fitness carry a ride far past the longest recent one', () => {
@@ -156,14 +164,14 @@ describe('a day with more time', () => {
     expect(stretched(today?.options.find((option) => option.sport === 'Run'))?.minutes).toBe(100)
     const short = withLongOnes.map((entry) => (entry.sport === 'Run' ? { ...entry, movingTimeSec: 45 * 60 } : entry))
     const [shortDay] = planDays(stateFrom(short), config, 1, measured, 'easy', [], 180)
-    expect(today?.moreTime.some((note) => note.startsWith('Laufen bis 100 min'))).toBe(true)
-    expect(shortDay?.moreTime.some((note) => note.startsWith('Laufen bis 55 min'))).toBe(true)
+    expect(today?.notes.some((note) => note.startsWith('Laufen bis 100 min'))).toBe(true)
+    expect(shortDay?.notes.some((note) => note.startsWith('Laufen bis 55 min'))).toBe(true)
   })
 
   it('says so when the day is a test, which stays as it is', () => {
     const [today] = planDays(stateFrom(withLongOnes), config, 1, [], undefined, [], 120)
     expect(today?.options.every((option) => stretched(option) === undefined)).toBe(true)
-    expect(today?.moreTime.some((note) => note.includes('ein Test bleibt, wie er ist'))).toBe(true)
+    expect(today?.notes.some((note) => note.includes('ein Test bleibt, wie er ist'))).toBe(true)
   })
 
   it('lengthens nothing past what the last six weeks have shown', () => {
@@ -172,14 +180,14 @@ describe('a day with more time', () => {
     for (const option of today?.options ?? []) {
       expect(stretched(option)?.minutes ?? 0).toBeLessThanOrEqual(option.sport === 'Ride' ? 75 : 70)
     }
-    expect(today?.moreTime.some((note) => note.startsWith('Rad bis 75 min'))).toBe(true)
+    expect(today?.notes.some((note) => note.startsWith('Rad bis 75 min'))).toBe(true)
   })
 
   it('does not lengthen a sport with nothing to measure against', () => {
     const rideOnly = withLongOnes.filter((entry) => entry.sport === 'Ride')
     const [today] = planDays(stateFrom(rideOnly), config, 1, measured, undefined, [], 120)
     expect(stretched(today?.options.find((option) => option.sport === 'Run'))).toBeUndefined()
-    expect(today?.moreTime).toContain(
+    expect(today?.notes).toContain(
       'Laufen wird nicht verlängert: in den letzten sechs Wochen kein Lauf, an dem sich mehr messen ließe.',
     )
   })
@@ -188,7 +196,7 @@ describe('a day with more time', () => {
     const tired = [wellness(0, { hrv: 50, restingHr: 52 }), ...baselineWellness()]
     const [today] = planDays(stateFrom(withLongOnes, tired), config, 1, measured, undefined, [], 120)
     expect(today?.options.every((option) => stretched(option) === undefined)).toBe(true)
-    expect(today?.moreTime.some((note) => note.startsWith('Mehr Zeit ändert heute nichts'))).toBe(true)
+    expect(today?.notes.some((note) => note.startsWith('Mehr Zeit ändert heute nichts'))).toBe(true)
   })
 
   it('applies to today only', () => {
