@@ -23,6 +23,9 @@ export const STATUS_MARK: Readonly<Record<AdherenceStatus, string>> = {
   rest: '·',
 }
 
+/** Every status a day can carry, so no mark in the strip goes unexplained. */
+const LEGEND = Object.keys(STATUS_MARK) as readonly AdherenceStatus[]
+
 const sportOf = (day: AdherenceDay): string =>
   day.completedSport && day.completedSport !== 'Other' ? SPORT_LABELS[day.completedSport] : 'Training'
 
@@ -69,6 +72,22 @@ export const HistoryStrip = ({ history }: { readonly history: readonly Adherence
         ))}
       </ol>
 
+      {/* A legend is understood once; after that it is only chrome above the data. */}
+      <details className="disclose history__key">
+        <summary>Legende</summary>
+        <p className="history__legend">
+          <span>Zahl: Belastung (TSS)</span>
+          {LEGEND.map((status) => (
+            <span key={status}>
+              <i className={`history__dot history__day--${status}`} aria-hidden="true">
+                {STATUS_MARK[status]}
+              </i>{' '}
+              {STATUS_LABEL[status]}
+            </span>
+          ))}
+        </p>
+      </details>
+
       {last && (
         <p className="history__last">
           Zuletzt geplant: <strong>{last.planned.join(' oder ')}</strong> am{' '}
@@ -91,21 +110,6 @@ export const HistoryStrip = ({ history }: { readonly history: readonly Adherence
       {compare && (
         <ExecutionCard activityId={compare.activityId} templateId={compare.templateId} date={compare.date} />
       )}
-
-      {/* A legend is understood once; after that it is only chrome above the data. */}
-      <details className="disclose history__key">
-        <summary>Legende</summary>
-        <p className="history__legend">
-          {(['done', 'race', 'switched', 'unplanned', 'missed', 'rest'] as const).map((status) => (
-            <span key={status}>
-              <i className={`history__dot history__day--${status}`} aria-hidden="true">
-                {STATUS_MARK[status]}
-              </i>{' '}
-              {STATUS_LABEL[status]}
-            </span>
-          ))}
-        </p>
-      </details>
     </section>
   )
 }
