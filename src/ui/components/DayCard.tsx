@@ -102,14 +102,8 @@ export const DayCard = ({
       {day.notes.length > 0 && (
         <p className={day.notes.length > 1 ? 'day__reason' : 'day__reason day__reason--alone'}>{day.notes[0]}</p>
       )}
-      {/* Asked for on screen, answered on screen: where the time goes and where it stops. */}
-      {day.moreTime.length > 0 && (
-        <ul className="day__more-time">
-          {day.moreTime.map((note) => (
-            <li key={note}>{note}</li>
-          ))}
-        </ul>
-      )}
+      {/* Asked for on screen, answered on screen in a few words; the why waits in the background. */}
+      {day.moreTime.length > 0 && <p className="day__more-time">{day.moreTime.join(' · ')}</p>}
 
       {day.notes.length > 1 && (
         <details className="disclose day__why">

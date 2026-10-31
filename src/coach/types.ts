@@ -526,7 +526,7 @@ export type PlannedDay = {
   readonly recommended: Sport | 'REST'
   readonly options: readonly PlannedSession[]
   readonly notes: readonly string[]
-  /** On a day with more time: what it is used for and where it stops, said where it is seen. */
+  /** On a day with more time: in a few words what it is used for and where it stops; the why is in the notes. */
   readonly moreTime: readonly string[]
   /** Beyond the athlete's stated weekly capacity — a suggestion, not a plan. */
   readonly optional: boolean

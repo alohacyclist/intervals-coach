@@ -698,9 +698,12 @@ type ExtraTime = {
   /** Minutes a sport may run to today; absent where it is not lengthened. */
   readonly ceilings: Partial<Record<Sport, number>>
   /** What the extra time is used for — said only where a session actually got longer. */
-  readonly lead: string | null
-  readonly notes: readonly string[]
+  readonly lead: TimeNote | null
+  readonly notes: readonly TimeNote[]
 }
+
+/** A few words on the day itself, the reason behind them in the background. */
+type TimeNote = { readonly short: string; readonly long: string }
 
 const NO_EXTRA: ExtraTime = { ceilings: {}, lead: null, notes: [] }
 
@@ -746,11 +749,15 @@ const extraTimeFor = (
 ): ExtraTime => {
   const usual = config.profile.sessionMinutes.max
   if (wanted === undefined || wanted <= usual) return NO_EXTRA
-  const unchanged = (why: string): ExtraTime => ({ ceilings: {}, lead: null, notes: [`Mehr Zeit ändert heute nichts: ${why}`] })
-  if (raceAround) return unchanged('das Rennen bestimmt den Tag.')
-  if (decision.dayType === 'REST') return unchanged('heute ist Pause.')
+  const unchanged = (word: string, why: string): ExtraTime => ({
+    ceilings: {},
+    lead: null,
+    notes: [{ short: `Mehr Zeit: heute nicht (${word})`, long: `Mehr Zeit ändert heute nichts: ${why}` }],
+  })
+  if (raceAround) return unchanged('Rennen', 'das Rennen bestimmt den Tag.')
+  if (decision.dayType === 'REST') return unchanged('Pause', 'heute ist Pause.')
   if (decision.dayType === 'RECOVERY' || decision.easyOnly === true) {
-    return unchanged('Erholung hat Vorrang — die zusätzliche Zeit wäre Belastung, keine Grundlage.')
+    return unchanged('Erholung', 'Erholung hat Vorrang — die zusätzliche Zeit wäre Belastung, keine Grundlage.')
   }
 
   const fast = state.rampRate > FAST_RAMP
@@ -758,33 +765,42 @@ const extraTimeFor = (
   const lengthened = sports.filter((sport) => sport !== 'Swim').map((sport) => {
     const capacity = capacityFor(sport, state, fast)
     const ceiling = Math.min(wanted, capacity.minutes)
-    const capped =
+    const capped: TimeNote | null =
       ceiling >= wanted
         ? null
         : ceiling === 0
-          ? `${SPORT_LABELS[sport]} wird nicht verlängert: ${capacity.why}`
-          : `${SPORT_LABELS[sport]} bis ${ceiling} min — ${capacity.why}`
+          ? { short: `${SPORT_LABELS[sport]} nicht länger`, long: `${SPORT_LABELS[sport]} wird nicht verlängert: ${capacity.why}` }
+          : { short: `${SPORT_LABELS[sport]} max. ${ceiling} min`, long: `${SPORT_LABELS[sport]} bis ${ceiling} min — ${capacity.why}` }
     return { sport, ceiling, capped }
   })
   return {
     ceilings: Object.fromEntries(lengthened.filter((entry) => entry.ceiling > 0).map((entry) => [entry.sport, entry.ceiling])),
     lead:
       decision.dayType === 'KEY'
-        ? 'Mehr Zeit an einem Qualitätstag: die Intervalle bleiben, wie sie sind — die zusätzliche Zeit ist lockere Grundlage danach.'
-        : 'Mehr Zeit an einem lockeren Tag: mehr Grundlage, nicht mehr Tempo.',
+        ? {
+            short: 'Mehr Zeit: lockere Grundlage nach den Intervallen',
+            long: 'Mehr Zeit an einem Qualitätstag: die Intervalle bleiben, wie sie sind — die zusätzliche Zeit ist lockere Grundlage danach.',
+          }
+        : { short: 'Mehr Zeit: längere Grundlage', long: 'Mehr Zeit an einem lockeren Tag: mehr Grundlage, nicht mehr Tempo.' },
     notes: lengthened.flatMap((entry) => (entry.capped ? [entry.capped] : [])),
   }
 }
 
 /** What the day says about its extra time, once it is known which sessions took it. */
-const extraTimeNotes = (extra: ExtraTime, options: readonly PlannedSession[]): readonly string[] => {
+const extraTimeNotes = (extra: ExtraTime, options: readonly PlannedSession[]): readonly TimeNote[] => {
   if (Object.keys(extra.ceilings).length === 0) return extra.notes
   if (options.some((option) => option.variants.some((variant) => variant.tier === 'extra'))) {
     return extra.lead ? [extra.lead, ...extra.notes] : extra.notes
   }
   const measuring = options.some((option) => option.template.benchmark === true || option.template.measures !== undefined)
   return measuring
-    ? ['Mehr Zeit ändert heute nichts: ein Test bleibt, wie er ist — verlängert misst er etwas anderes.', ...extra.notes]
+    ? [
+        {
+          short: 'Mehr Zeit: Test bleibt, wie er ist',
+          long: 'Mehr Zeit ändert heute nichts: ein Test bleibt, wie er ist — verlängert misst er etwas anderes.',
+        },
+        ...extra.notes,
+      ]
     : extra.notes
 }
 
@@ -948,6 +964,7 @@ export const planDays = (
       // The race is the one session of its day.
       const strength = around.race ? null : strengthFor(dayType, simulation, isToday ? morningConfig : config)
       const chosen = options.find((session) => session.sport === recommended) ?? null
+      const timeNotes = extraTimeNotes(extra, options)
 
       const day: PlannedDay = {
         date,
@@ -956,8 +973,8 @@ export const planDays = (
         phase,
         recommended,
         options,
-        notes: notesFor(decision, state, simulation, config, dayIndex, date),
-        moreTime: extraTimeNotes(extra, options),
+        notes: [...notesFor(decision, state, simulation, config, dayIndex, date), ...timeNotes.map((note) => note.long)],
+        moreTime: timeNotes.map((note) => note.short),
         optional: decision.optional,
         strength,
         completed: isToday ? completedFrom(doneToday, completions) : [],
