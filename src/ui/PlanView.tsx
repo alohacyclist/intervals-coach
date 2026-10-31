@@ -26,6 +26,14 @@ type Props = {
   readonly onNeedsOnboarding: () => void
 }
 
+const STAND_FORMAT: Intl.DateTimeFormatOptions = {
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+}
+
 const INTENTS = [
   { key: undefined, label: 'Wie geplant' },
   { key: 'hard', label: 'Heute hart' },
@@ -218,15 +226,18 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
 
       {plan && (
         <footer className="footer">
-          Stand: {new Date(plan.generatedAt).toLocaleString('de-DE')} ·{' '}
-          <a href="/datenschutz">Datenschutz</a> · <a href="/impressum">Impressum</a> ·{' '}
-          <a href="/auth/logout">Abmelden</a>
-          {me.mode === 'multi' && (
+          <span>Stand: {new Date(plan.generatedAt).toLocaleString('de-DE', STAND_FORMAT)}</span>
+          {me.mode === 'multi' && <span className="footer__account">Angemeldet als {me.name}</span>}
+          {me.mode === 'multi' && me.consentAt && (
             <span className="footer__account">
-              Angemeldet als {me.name}
-              {me.consentAt && ` · Einwilligung ${new Date(me.consentAt).toLocaleDateString('de-DE')}`}
+              Einwilligung {new Date(me.consentAt).toLocaleDateString('de-DE')}
             </span>
           )}
+          <nav className="footer__links" aria-label="Rechtliches und Konto">
+            <a href="/datenschutz">Datenschutz</a>
+            <a href="/impressum">Impressum</a>
+            <a href="/auth/logout">Abmelden</a>
+          </nav>
         </footer>
       )}
     </>

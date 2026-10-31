@@ -477,10 +477,17 @@
   text-transform: uppercase;
   color: var(--faint);
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.footer__links {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 4px 16px;
 }
 .footer__account {
-  display: block;
-  margin-top: 6px;
   text-transform: none;
 }
 
