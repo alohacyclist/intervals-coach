@@ -17,6 +17,7 @@ import { BreakBar } from './components/BreakBar.tsx'
 import { ZrlPanel } from './components/ZrlPanel.tsx'
 import { zrlRelevant } from './zrl-relevance.ts'
 import { GarminAttribution } from './components/GarminAttribution.tsx'
+import { MoreTimeSlider } from './components/MoreTimeSlider.tsx'
 
 const PLAN_DAYS = 3
 
@@ -31,13 +32,6 @@ const INTENTS = [
   { key: 'easy', label: 'Heute locker' },
   { key: 'rest', label: 'Heute Pause' },
 ] as const
-
-/** Offered lengths for a day with more time, in minutes; only those past the usual ceiling are shown. */
-const MORE_TIME = [90, 120, 150, 180, 240] as const
-const MAX_MORE_TIME_OPTIONS = 4
-
-const hoursLabel = (minutes: number): string =>
-  `${(minutes / 60).toLocaleString('de-DE', { maximumFractionDigits: 1 })} h`
 
 export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
   const [intent, setIntent] = useState<'hard' | 'easy' | 'rest' | undefined>(undefined)
@@ -158,24 +152,7 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
       )}
 
       {plan && config && (
-        <div className="intent" role="group" aria-label="Wie viel Zeit hast du heute?">
-          <span className="intent__label" aria-hidden="true">
-            Zeit
-          </span>
-          {[undefined, ...MORE_TIME.filter((minutes) => minutes > config.profile.sessionMinutes.max).slice(0, MAX_MORE_TIME_OPTIONS)].map(
-            (minutes) => (
-              <button
-                key={minutes ?? 'usual'}
-                type="button"
-                className={minutesToday === minutes ? 'intent__on' : ''}
-                aria-pressed={minutesToday === minutes}
-                onClick={() => setMinutesToday(minutes)}
-              >
-                {minutes === undefined ? 'Wie immer' : hoursLabel(minutes)}
-              </button>
-            ),
-          )}
-        </div>
+        <MoreTimeSlider usual={config.profile.sessionMinutes.max} onSettled={setMinutesToday} />
       )}
 
       {error && (
