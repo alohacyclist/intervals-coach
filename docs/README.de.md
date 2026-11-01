@@ -430,6 +430,29 @@ Ist der Puls zu kaputt für eine Schätzung, wird nichts geschrieben — auf der
 in Ordnung, upstream löschen nicht. Streams hochladen dürfen bei intervals.icu laut Forum nur
 Supporter; lehnt intervals.icu ab, sagt die Karte das.
 
+**Fahrten ohne Watt und Puls.** Fährt man draußen ohne Wattmesser und ohne Pulsgurt, hat die
+Fahrt bei intervals.icu keinen Load — und eine Aktivität ohne Load zählt hier für nichts: nicht als
+erledigt, nicht für Fitness und Ermüdung. Solche Fahrten liest die App aus Tempo und Höhenprofil
+(`src/coach/speed-power.ts`): Rollwiderstand, Luft und Steigung bremsen, was der Fahrer darüber
+hinaus leistet, steckt in der Beschleunigung. Aus der geschätzten Leistung kommen Load und Zeit in
+den Zonen. Ist die Fahrt mit einer gesendeten Einheit gekoppelt, sucht die App deren Sätze: jedes
+Muster (etwa 6 × 40/20) wird Sekunde für Sekunde über die Fahrt geschoben, in Reihenfolge und ohne
+Überlappung, dort, wo die Arbeit am deutlichsten über den Pausen liegt. Ein Satz gilt als
+*erkannt*, wenn seine Arbeit mindestens 30 % der FTP über den Pausen und bei drei Vierteln des
+Ziels liegt; Abfahrten, Bremsen und Ampeln zählen nicht mit.
+
+Wind und Sitzposition kennt die App nicht. Die Lage der Sätze ist davon kaum berührt, die Watt
+schon: bei Wind liegen sie leicht um ein Drittel daneben, und zwar eher zu hoch — Rückenwind hebt
+das Tempo mehr, als Gegenwind es senkt. Deshalb gewichtet der Load die 30-Sekunden-Mittel im
+Quadrat statt in der vierten Potenz wie die normalisierte Leistung, die sonst vor allem den Wind
+gewichten würde. Alles daraus ist als geschätzt markiert („~70 TSS geschätzt“); eine so erkannte
+Einheit gilt höchstens als *ähnlich*, die Übereinstimmung von intervals.icu (ohne Watt nur die
+Dauer) fällt weg, und eine Stufe schaltet sie allein nicht frei.
+
+Gelesen werden Fahrten draußen (nicht auf der Rolle) der letzten 14 Tage, höchstens zwei neue pro
+Plan, jede genau einmal: das Ergebnis liegt in der Konfiguration (`rideEstimates`), damit die Fahrt
+auch später für die Fitness zählt, ohne die Streams erneut zu laden.
+
 **Strava** ist optional und in beiden Modi möglich. Das Gerät lädt weiter selbst zu Strava hoch;
 die App schreibt nur die Auswertung als Absatz in die Beschreibung der passenden Aktivität
 (gleiche Sportart, Start höchstens zehn Minuten auseinander). Eigener Text bleibt stehen, ein
@@ -492,6 +515,7 @@ src/coach/     reine Trainingslogik, ohne IO — hier liegt die gesamte Fachlich
   adherence.ts absolviert, getauscht, ausgefallen — die letzten sieben Tage
   benchmark.ts Referenzeinheit alle acht Wochen
   heart-check.ts  Pulsaufzeichnung gegen die Arbeit prüfen, Störungen schätzen
+  speed-power.ts  Leistung aus Tempo und Höhenprofil, Sätze in Fahrten ohne Wattmessung
   threshold-drift.ts  Abgleich der Schwellenwerte mit intervals.icu
   config-schema.ts    Validierung und Migration der gespeicherten Konfiguration
   feasibility.ts  Realismus-Check der Ziele

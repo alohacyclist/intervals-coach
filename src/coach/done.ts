@@ -54,5 +54,6 @@ export const completedFrom = (
       minutes: Math.round(activity.movingTimeSec / 60),
       compliance: compliance === null ? null : Math.round(compliance),
       templateId,
+      ...(activity.estimate ? { estimate: activity.estimate } : {}),
     }
   })

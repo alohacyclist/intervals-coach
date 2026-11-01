@@ -42,7 +42,8 @@ export type IntervalsSource = {
   readonly activity: (activityId: string) => Promise<Activity>
   readonly intervals: (activityId: string) => Promise<readonly ActualInterval[]>
   readonly workIntervals: (activityId: string) => Promise<readonly WorkInterval[]>
-  readonly streams: (activityId: string, sport: Sport | null) => Promise<ActivityStreams>
+  /** `hills` adds altitude and distance; a run always gets them. */
+  readonly streams: (activityId: string, sport: Sport | null, hills?: boolean) => Promise<ActivityStreams>
   readonly sportSettings: () => Promise<SportSettings>
   readonly destinations: () => Promise<readonly DestinationState[]>
 
@@ -77,7 +78,7 @@ export const httpSource = (auth: IntervalsAuth): IntervalsSource => ({
   activity: (activityId) => fetchActivity(auth, activityId),
   intervals: (activityId) => fetchIntervals(auth, activityId),
   workIntervals: (activityId) => fetchActivityIntervals(auth, activityId),
-  streams: (activityId, sport) => fetchStreams(auth, activityId, sport),
+  streams: (activityId, sport, hills) => fetchStreams(auth, activityId, sport, hills ?? sport === 'Run'),
   sportSettings: () => fetchSportSettings(auth),
   destinations: () => fetchDestinations(auth),
   applyDestinations: (wanted) => applyDestinations(auth, wanted),

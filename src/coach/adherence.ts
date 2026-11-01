@@ -94,6 +94,7 @@ const dayFor = (
     load: Math.round(trained.reduce((sum, activity) => sum + activity.load, 0)),
     activityId: completed?.id ?? null,
     templateId,
+    ...(trained.some((activity) => activity.estimate) ? { estimated: true } : {}),
   }
 }
 

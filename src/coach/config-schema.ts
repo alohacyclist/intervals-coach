@@ -10,6 +10,9 @@ import type {
   TrainingBreak,
   WorkoutDestination,
   EnteredZrlRace,
+  EstimatedBlock,
+  RideEstimate,
+  StoredRideEstimate,
   ZrlFormat,
   ZrlRace,
   ZrlSettings,
@@ -302,6 +305,69 @@ const validateProposals = (raw: unknown): readonly DayProposal[] => {
     .slice(-MAX_PROPOSAL_DAYS)
 }
 
+/** Half a year of rides without power is far more than a sensor ever fails; older ones go first. */
+export const MAX_RIDE_ESTIMATES = 60
+const VERDICTS: readonly EstimatedBlock['verdict'][] = ['found', 'unclear', 'missing']
+
+const validateEstimatedBlock = (raw: unknown): EstimatedBlock | null => {
+  const block = (raw ?? {}) as Record<string, unknown>
+  const numbers = ['startSecond', 'seconds', 'workWatts', 'restWatts', 'targetWatts'] as const
+  if (!numbers.every((key) => finite(block[key]) && Number(block[key]) >= 0)) return null
+  const verdict = VERDICTS.find((entry) => entry === block['verdict'])
+  if (!verdict) return null
+  return {
+    startSecond: Number(block['startSecond']),
+    seconds: Number(block['seconds']),
+    verdict,
+    workWatts: Number(block['workWatts']),
+    restWatts: Number(block['restWatts']),
+    targetWatts: Number(block['targetWatts']),
+  }
+}
+
+const validateRideEstimate = (raw: unknown): RideEstimate | null => {
+  const estimate = (raw ?? {}) as Record<string, unknown>
+  const numbers = ['version', 'load', 'intensity', 'weightedWatts', 'averageWatts'] as const
+  if (!numbers.every((key) => finite(estimate[key]) && Number(estimate[key]) >= 0)) return null
+  const zones = (estimate['zoneSeconds'] ?? {}) as Record<string, unknown>
+  const blocks = Array.isArray(estimate['blocks']) ? estimate['blocks'].map(validateEstimatedBlock) : []
+  if (blocks.some((block) => block === null)) return null
+  return {
+    version: Number(estimate['version']),
+    load: Number(estimate['load']),
+    intensity: Number(estimate['intensity']),
+    weightedWatts: Number(estimate['weightedWatts']),
+    averageWatts: Number(estimate['averageWatts']),
+    zoneSeconds: Object.fromEntries(
+      Object.entries(zones).filter(
+        (entry): entry is [string, number] => /^(Z[1-7]|SS)$/.test(entry[0]) && finite(entry[1]) && entry[1] >= 0,
+      ),
+    ),
+    blocks: blocks.filter((block): block is EstimatedBlock => block !== null),
+  }
+}
+
+const validateRideEstimates = (raw: unknown): readonly StoredRideEstimate[] =>
+  (Array.isArray(raw) ? raw : [])
+    .map((entry) => (entry ?? {}) as Record<string, unknown>)
+    .filter(
+      (entry) =>
+        typeof entry['activityId'] === 'string' &&
+        entry['activityId'].length > 0 &&
+        isIsoDate(entry['date']) &&
+        finite(entry['version']) &&
+        (entry['templateId'] === null || typeof entry['templateId'] === 'string'),
+    )
+    .map((entry) => ({
+      activityId: String(entry['activityId']),
+      date: String(entry['date']),
+      templateId: entry['templateId'] === null ? null : String(entry['templateId']),
+      version: Number(entry['version']),
+      estimate: entry['estimate'] === null ? null : validateRideEstimate(entry['estimate']),
+    }))
+    .sort((left, right) => left.date.localeCompare(right.date))
+    .slice(-MAX_RIDE_ESTIMATES)
+
 /** A round is six races; a season holds four rounds. Past races are kept for a while, then dropped. */
 export const MAX_ZRL_RACES = 40
 export const MAX_ZRL_LAPS = 20
@@ -415,6 +481,8 @@ export const validateConfig = (raw: unknown): CoachConfig => {
     zrl: validateZrlSettings(input['zrl'], validateZrlRaces(input['zrlRaces'])),
     destinations: validateDestinations(input['destinations']),
     planStart: isIsoDate(input['planStart']) ? input['planStart'] : DEFAULT_CONFIG.planStart,
+    // Only once there is one, so a config without rides to estimate reads back as it was written.
+    ...(Array.isArray(input['rideEstimates']) ? { rideEstimates: validateRideEstimates(input['rideEstimates']) } : {}),
   }
 
   if (issues.length > 0) throw new ValidationError(issues)
