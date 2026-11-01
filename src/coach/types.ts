@@ -229,6 +229,8 @@ export type CoachConfig = {
   readonly destinations: Partial<Record<Sport, readonly WorkoutDestination[]>>
   /** ISO date the plan started, anchors the 3:1 build/recovery cycle. */
   readonly planStart: string
+  /** Rides without power, read from speed and the climb once and kept. */
+  readonly rideEstimates?: readonly StoredRideEstimate[]
 }
 
 export type Activity = {
@@ -255,6 +257,54 @@ export type Activity = {
   readonly zoneSeconds: Readonly<Record<string, number>>
   /** The recording device as intervals.icu names it, e.g. "Garmin Edge 530". */
   readonly device?: string | null
+  /** On a trainer or in Zwift: wheel speed there says nothing about the road. */
+  readonly indoor?: boolean
+  /**
+   * Set when load, intensity and time in zone were estimated by this app from
+   * speed and the climb, because the ride was recorded without power and heart rate.
+   */
+  readonly estimate?: EstimateSummary
+}
+
+/** One set of a session, looked for in a ride without power. */
+export type EstimatedBlock = {
+  /** Seconds since the start of the recording. */
+  readonly startSecond: number
+  readonly seconds: number
+  /** Found where its work stands out and comes near the target; unclear where the ride cannot be read there. */
+  readonly verdict: 'found' | 'unclear' | 'missing'
+  readonly workWatts: number
+  readonly restWatts: number
+  readonly targetWatts: number
+}
+
+/** What speed and the climb say about a ride without power. */
+export type RideEstimate = {
+  readonly version: number
+  readonly load: number
+  /** Weighted power over FTP, in percent, where intervals.icu would give its intensity. */
+  readonly intensity: number
+  /** The square mean of the thirty-second power — normalised power would weigh the wind. */
+  readonly weightedWatts: number
+  readonly averageWatts: number
+  readonly zoneSeconds: Readonly<Record<string, number>>
+  readonly blocks: readonly EstimatedBlock[]
+}
+
+/** A ride estimate as the views need it. */
+export type EstimateSummary = {
+  readonly blocksFound: number
+  readonly blocksUnclear: number
+  readonly blocksTotal: number
+}
+
+/** A ride estimate kept by the app, so the streams are read once. Null: tried and not readable. */
+export type StoredRideEstimate = {
+  readonly activityId: string
+  readonly date: string
+  readonly templateId: string | null
+  readonly estimate: RideEstimate | null
+  readonly version: number
 }
 
 /**
@@ -290,6 +340,8 @@ export type AdherenceDay = {
   readonly activityId: string | null
   /** The proposal it fulfilled, when one is known. */
   readonly templateId: string | null
+  /** Whether the day's load includes an estimate from speed and the climb. */
+  readonly estimated?: boolean
 }
 
 export type StrengthExercise = {
@@ -547,6 +599,8 @@ export type CompletedSession = {
   readonly compliance: number | null
   /** The proposal it fulfilled, when the athlete pushed it from the app. */
   readonly templateId: string | null
+  /** Load estimated from speed and the climb: the ride had neither power nor heart rate. */
+  readonly estimate?: EstimateSummary
 }
 
 export type Feasibility = {
@@ -730,6 +784,8 @@ export type Execution = {
   readonly garmin?: string | null
   /** Set when the heart rate recording failed somewhere; the card names it under the session. */
   readonly heart?: HeartNote | null
+  /** A ride without power, read from speed and the climb: where the sets lay and roughly what they took. */
+  readonly estimate?: RideEstimate | null
 }
 
 export type SeasonWeek = {

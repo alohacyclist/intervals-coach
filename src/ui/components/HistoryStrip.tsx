@@ -32,7 +32,8 @@ const sportOf = (day: AdherenceDay): string =>
 const detail = (day: AdherenceDay): string => {
   const date = `${day.date.slice(8, 10)}.${day.date.slice(5, 7)}.`
   const planned = day.planned.length > 0 ? `geplant: ${day.planned.join(' oder ')}` : 'nichts geplant'
-  const done = day.completed ? `${sportOf(day)}: ${day.completed} (${day.load} TSS)` : 'kein Training'
+  const load = day.estimated ? `~${day.load} TSS, aus Tempo geschätzt` : `${day.load} TSS`
+  const done = day.completed ? `${sportOf(day)}: ${day.completed} (${load})` : 'kein Training'
   return `${date} — ${planned} · ${done}`
 }
 
@@ -61,7 +62,7 @@ export const HistoryStrip = ({ history }: { readonly history: readonly Adherence
         {history.map((day) => (
           <li key={day.date} className={`history__day history__day--${day.status}`} title={detail(day)}>
             <span className="history__weekday">{day.weekday}</span>
-            <span className="history__load">{day.load > 0 ? day.load : '–'}</span>
+            <span className="history__load">{day.load > 0 ? `${day.estimated ? '~' : ''}${day.load}` : '–'}</span>
             <span className="history__mark" aria-hidden="true">
               {STATUS_MARK[day.status]}
             </span>
@@ -76,7 +77,7 @@ export const HistoryStrip = ({ history }: { readonly history: readonly Adherence
       <details className="disclose history__key">
         <summary>Legende</summary>
         <p className="history__legend">
-          <span>Zahl: Belastung (TSS)</span>
+          <span>Zahl: Belastung (TSS), ~ geschätzt</span>
           {LEGEND.map((status) => (
             <span key={status}>
               <i className={`history__dot history__day--${status}`} aria-hidden="true">

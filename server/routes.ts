@@ -51,6 +51,7 @@ import { activeBreak, endedBefore } from '../src/coach/breaks.ts'
 import { findTemplate } from '../src/coach/library.ts'
 import { buildSession } from '../src/coach/session.ts'
 import { loadExecution } from './execution-load.ts'
+import { readRideEstimates, rememberRideEstimates, withRideEstimates } from './ride-estimates.ts'
 import type { Intent, Plan, Progress } from '../src/coach/types.ts'
 
 export const DEFAULT_TIMEZONE = 'Europe/Berlin'
@@ -151,10 +152,11 @@ const referenceResult = async (
   execution: Execution,
   today: string,
 ): Promise<BenchmarkResult | null> => {
-  const [activities, events] = await Promise.all([
+  const [recorded, events] = await Promise.all([
     source.activities(addDays(today, -PROGRESSION_DAYS), today),
     source.events(addDays(today, -PROGRESSION_DAYS), today),
   ])
+  const activities = withRideEstimates(recorded, config.rideEstimates ?? [])
   const completions = mergeCompletions(
     completionsFrom(events, activities),
     matchedCompletions(withScheduled(config.proposals, scheduledFrom(events)), activities, config.profile),
@@ -189,11 +191,13 @@ const referenceResult = async (
 const buildProgressView = async (deps: RouteDeps, span: ProgressSpan): Promise<Progress> => {
   const today = todayFor(deps)
   const config = await deps.store.load()
-  const [activities, events] = await Promise.all([
+  const [recorded, events] = await Promise.all([
     // Levels and benchmarks judge the same history as the plan, whatever span is shown.
     deps.source.activities(addDays(today, -Math.max(ACTIVITY_HISTORY_DAYS, span + FITNESS_WARMUP_DAYS)), today),
     deps.source.events(addDays(today, -PROGRESSION_DAYS), today),
   ])
+  // Rides without power are read by the plan; here what it kept stands in.
+  const activities = withRideEstimates(recorded, config.rideEstimates ?? [])
   const recognised = mergeCompletions(
     completionsFrom(events, activities),
     matchedCompletions(withScheduled(config.proposals, scheduledFrom(events)), activities, config.profile),
@@ -244,7 +248,7 @@ const buildPlan = async (
 ): Promise<Plan> => {
   const today = todayFor(deps)
   const config = await deps.store.load()
-  const [activities, wellness, events, settings, destinations] = await Promise.all([
+  const [recorded, wellness, events, settings, destinations] = await Promise.all([
     deps.source.activities(addDays(today, -ACTIVITY_HISTORY_DAYS), today),
     deps.source.wellness(addDays(today, -WELLNESS_HISTORY_DAYS), today),
     // Ahead too, so the plan knows which versions are already on the calendar.
@@ -253,6 +257,17 @@ const buildPlan = async (
     deps.source.sportSettings().catch(() => null),
     deps.source.destinations().catch(() => []),
   ])
+  // A ride without power and heart rate has no load on intervals.icu: read from speed and the climb, once.
+  const readRides = await readRideEstimates(deps.source, config, recorded, events, today).catch((error: unknown) => {
+    console.error('Fahrten ohne Leistung nicht gelesen', error)
+    return []
+  })
+  if (readRides.length > 0) {
+    await rememberRideEstimates(deps.store, readRides).catch((error: unknown) =>
+      console.error('Schätzungen nicht gespeichert', error),
+    )
+  }
+  const activities = withRideEstimates(recorded, [...(config.rideEstimates ?? []), ...readRides])
   // Only an athlete with races entered pays for the extra history; without it the estimate is rougher, not wrong.
   const olderRaces =
     config.zrlRaces.length === 0
@@ -389,7 +404,12 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
     // Kept by their own endpoints; a settings form holding an older copy must not roll them back.
     // Only a missing config means there is nothing to keep; any other failure must not erase it.
     const owned = await store.load().then(
-      (stored) => ({ proposals: stored.proposals, zrlRaces: stored.zrlRaces, zrl: stored.zrl }),
+      (stored) => ({
+        proposals: stored.proposals,
+        zrlRaces: stored.zrlRaces,
+        zrl: stored.zrl,
+        ...(stored.rideEstimates ? { rideEstimates: stored.rideEstimates } : {}),
+      }),
       (error: unknown) => {
         if (error instanceof MissingConfigError) return { proposals: [], zrlRaces: [] }
         throw error
@@ -473,7 +493,20 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
     const { source, store } = deps
     const config = await store.load()
     const day = isIsoDate(date) ? date : null
-    const { execution } = await loadExecution(source, config.profile, activityId, template, day)
+    const loaded = await loadExecution(source, config.profile, activityId, template, day)
+    const estimate = (config.rideEstimates ?? []).find(
+      (entry) => entry.activityId === activityId && entry.templateId === template.id,
+    )?.estimate
+    // Without power intervals.icu measured nothing; the estimate is what there is, marked as such.
+    const execution =
+      estimate && loaded.activity.load <= 0
+        ? {
+            ...loaded.execution,
+            load: { ...loaded.execution.load, actual: estimate.load },
+            compliance: null,
+            estimate,
+          }
+        : loaded.execution
     const benchmark = isReference(template)
       ? await referenceResult(source, config, template.sport, activityId, day, execution, todayFor(deps)).catch(
           () => null,

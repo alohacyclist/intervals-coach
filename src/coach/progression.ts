@@ -38,7 +38,7 @@ type Pushed = {
  * `coach:<date>:<templateId>:<minutes>` is written when the app pushes a workout.
  * Older pushes end in `:short` or nothing, which says less about the duration.
  */
-const pushedOf = (event: PlannedEvent): Pushed | null => {
+export const pushedOf = (event: PlannedEvent): Pushed | null => {
   if (event.externalId?.startsWith(EXTERNAL_ID_PREFIX) !== true) return null
   const [, , templateId, suffix] = event.externalId.split(':')
   if (!templateId) return null

@@ -15,8 +15,11 @@ export const DoneStrip = ({ sessions, date }: Props) => (
           )}
           <strong>{session.name}</strong>
           <span className="done__meta readout">
-            {session.minutes} min · {session.load} TSS
+            {session.minutes} min · {session.estimate ? `~${session.load} TSS geschätzt` : `${session.load} TSS`}
             {session.compliance !== null && ` · ${session.compliance} % Übereinstimmung`}
+            {session.estimate &&
+              session.estimate.blocksTotal > 0 &&
+              ` · ${session.estimate.blocksFound} von ${session.estimate.blocksTotal} Sätzen erkannt`}
           </span>
         </p>
         {comparable(session.templateId) && (

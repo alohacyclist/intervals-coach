@@ -459,6 +459,20 @@
 .exec__note--heart {
   color: var(--text);
 }
+/* Sets found in a ride without power: a short list, the mark carries the verdict without colour. */
+.exec__estimate-sets {
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+  color: var(--text);
+}
+.exec__estimate-sets li + li {
+  margin-top: 2px;
+}
+.exec__estimate-sets small {
+  color: var(--dim);
+}
 .exec__benchmark {
   margin: 8px 0 0;
   font-size: 13px;
