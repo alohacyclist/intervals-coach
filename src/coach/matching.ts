@@ -97,7 +97,8 @@ const fit = (
   if (longer && !(stretched && roomForMore(template))) return null
 
   if (heldTheWork(template, activity, profile, share)) {
-    return { template, evidence: 'exact', share }
+    // Time in zone estimated from speed shows the work was there, not that it was held: close, not exact.
+    return { template, evidence: activity.estimate ? 'similar' : 'exact', share }
   }
   // A measurement needs its own stimulus; anything close would measure something else.
   if (template.benchmark === true || template.measures !== undefined) return null

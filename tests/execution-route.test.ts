@@ -2,7 +2,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createApiRoutes } from '../server/routes.ts'
 import { httpSource } from '../server/source.ts'
 import type { ConfigStore } from '../src/coach/config-schema.ts'
-import type { Execution } from '../src/coach/types.ts'
+import type { Execution, RideEstimate } from '../src/coach/types.ts'
+import { ESTIMATE_VERSION } from '../src/coach/speed-power.ts'
 import { config } from './fixtures.ts'
 
 const store: ConfigStore = { load: async () => config, save: async (next) => next }
@@ -121,5 +122,52 @@ describe('the planned-against-done endpoint', () => {
     intervalsIcu({})
     expect((await app.request('/api/execution/i1?template=zrl-race')).status).toBe(404)
     expect((await app.request('/api/execution/i1?template=gibt-es-nicht')).status).toBe(404)
+  })
+})
+
+describe('the comparison of a ride without power', () => {
+  const estimate: RideEstimate = {
+    version: ESTIMATE_VERSION,
+    load: 70,
+    intensity: 66,
+    weightedWatts: 191,
+    averageWatts: 175,
+    zoneSeconds: { Z2: 3000, Z5: 720 },
+    blocks: [{ startSecond: 1229, seconds: 360, verdict: 'found', workWatts: 373, restWatts: 217, targetWatts: 361 }],
+  }
+  const withEstimate = createApiRoutes(async () => ({
+    source: httpSource({ kind: 'apiKey' as const, apiKey: 'unused', athleteId: 'i0' }),
+    store: {
+      load: async () => ({
+        ...config,
+        rideEstimates: [
+          { activityId: 'i7', date: '2026-10-31', templateId: 'bike-vo2-3040', version: ESTIMATE_VERSION, estimate },
+        ],
+      }),
+      save: async (next) => next,
+    },
+  }))
+
+  it('carries the sets read from speed, and the estimated load instead of none', async () => {
+    intervalsIcu({
+      '/activity/i7/intervals': { icu_intervals: [{ type: 'WORK', moving_time: 600, average_speed: 9 }] },
+      '/activity/i7/streams.json': [{ type: 'time', data: [0, 1, 2] }],
+      '/activity/i7': { id: 'i7', type: 'Ride', icu_training_load: null, compliance: 123 },
+      '/athlete/i0/events': [],
+    })
+    const body = (await (await withEstimate.request('/api/execution/i7?template=bike-vo2-3040')).json()) as Execution
+    expect(body.estimate?.blocks).toHaveLength(1)
+    expect(body.load.actual).toBe(70)
+    expect(body.compliance).toBeNull()
+  })
+
+  it('stays as measured for another session than the one read', async () => {
+    intervalsIcu({
+      '/activity/i7/intervals': { icu_intervals: [] },
+      '/activity/i7': { id: 'i7', type: 'Ride', icu_training_load: null },
+      '/athlete/i0/events': [],
+    })
+    const body = (await (await withEstimate.request('/api/execution/i7?template=bike-thr-3x12')).json()) as Execution
+    expect(body.estimate).toBeUndefined()
   })
 })

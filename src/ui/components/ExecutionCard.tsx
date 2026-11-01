@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import type { ExecutedStep, Execution, ExecutionSegment } from '../../coach/types.ts'
+import type { ExecutedStep, Execution, ExecutionSegment, RideEstimate } from '../../coach/types.ts'
 import { SPORT_DONE } from '../../coach/types.ts'
 import { getExecution } from '../api.ts'
 import { ZRL_TEMPLATE_ID } from '../../coach/zrl.ts'
@@ -29,6 +29,56 @@ const WORDS = { on: 'im Ziel', over: 'zu hart', under: 'zu leicht' } as const
 const clock = (seconds: number): string => {
   const rounded = Math.round(seconds)
   return `${Math.floor(rounded / 60)}:${String(rounded % 60).padStart(2, '0')}`
+}
+
+/* ---------------------------------------------------------- estimated sets */
+
+const VERDICT = {
+  found: { mark: '■', word: 'erkannt' },
+  unclear: { mark: '◧', word: 'nicht eindeutig' },
+  missing: { mark: '□', word: 'nicht gefunden' },
+} as const
+
+/**
+ * A ride without power: where its sets lay, read from speed and the climb. The
+ * watts are an estimate — wind and position are unknown — so they are rounded
+ * and never compared against the corridor like measured ones.
+ */
+const EstimatedSets = ({ estimate }: { readonly estimate: RideEstimate }) => {
+  const found = estimate.blocks.filter((block) => block.verdict === 'found').length
+  return (
+    <div className="exec__estimate">
+      <p className="exec__note">
+        Ohne Watt und Puls aufgezeichnet. Belastung und Sätze sind aus Tempo und Höhenprofil geschätzt
+        {estimate.blocks.length > 0 && (
+          <>
+            {' '}— <strong>{found} von {estimate.blocks.length} Sätzen erkannt</strong>
+          </>
+        )}
+        .
+      </p>
+      {estimate.blocks.length > 0 && (
+        <ol className="exec__estimate-sets">
+          {estimate.blocks.map((block, index) => (
+            <li key={block.startSecond}>
+              <span aria-hidden="true">{VERDICT[block.verdict].mark}</span> Satz {index + 1} ab{' '}
+              <span className="readout">{clock(block.startSecond)}</span>: {VERDICT[block.verdict].word}
+              {block.verdict !== 'missing' && (
+                <span className="readout">
+                  {' '}
+                  · ~{Math.round(block.workWatts / 5) * 5} W / ~{Math.round(block.restWatts / 5) * 5} W
+                  <small> (Ziel {block.targetWatts} W)</small>
+                </span>
+              )}
+            </li>
+          ))}
+        </ol>
+      )}
+      <p className="exec__legend">
+        <span>Wind und Sitzposition sind unbekannt: bei Wind können die Watt um ein Drittel daneben liegen, die Lage der Sätze kaum.</span>
+      </p>
+    </div>
+  )
 }
 
 /* ------------------------------------------------------------------ strip */
@@ -275,7 +325,8 @@ export const ExecutionView = ({ execution }: { readonly execution: Execution }) 
         </p>
       )}
 
-      {execution.unavailable && <p className="exec__note">{execution.unavailable}</p>}
+      {execution.unavailable && !execution.estimate && <p className="exec__note">{execution.unavailable}</p>}
+      {execution.estimate && <EstimatedSets estimate={execution.estimate} />}
       {execution.heart && <p className="exec__note exec__note--heart">{execution.heart.message}</p>}
       {execution.benchmark && (
         <p className="exec__benchmark">

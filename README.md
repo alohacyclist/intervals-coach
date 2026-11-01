@@ -30,6 +30,9 @@ Worker are still called `intervals-coach`.
   level, schedules a benchmark session every eight weeks and suggests threshold updates.
 - **Checks heart-rate recordings** against the work done, flags wrist-sensor artefacts
   and estimates the affected segments, clearly marked as estimates.
+- **Reads rides recorded without power or heart rate** from speed and the elevation
+  profile: estimates the load so the ride counts, and finds the sets of the session it
+  was paired with — marked as an estimate, never enough on its own to unlock a level.
 - **Sends workouts** to the intervals.icu calendar and on to Zwift, Wahoo or Garmin, and
   optionally writes a summary to the matching Strava activity.
 - **Single-user and multi-user mode:** a password-protected personal deployment, or

@@ -176,6 +176,7 @@ const mapActivity = (raw: RawActivity): Activity => ({
   averageHr: nullableNum(raw['average_heartrate']),
   zoneSeconds: zoneSecondsOf(raw),
   device: typeof raw['device_name'] === 'string' && raw['device_name'].length > 0 ? raw['device_name'] : null,
+  indoor: raw['trainer'] === true || raw['type'] === 'VirtualRide' || raw['type'] === 'VirtualRun' || raw['type'] === 'Treadmill',
 })
 
 const mapEvent = (raw: Record<string, unknown>): PlannedEvent => ({
@@ -493,7 +494,10 @@ export const fetchIntervals = async (
 }
 
 const STREAM_TYPES = ['time', 'watts', 'velocity_smooth', 'heartrate'] as const
-/** Only a run needs the hills: power already carries them, pace does not. */
+/**
+ * A run needs the hills: power already carries them, pace does not. So does a
+ * ride without power, whose effort is read from speed and the climb.
+ */
 const HILL_TYPES = ['altitude', 'distance'] as const
 
 /**
@@ -505,8 +509,9 @@ export const fetchStreams = async (
   auth: IntervalsAuth,
   activityId: string,
   sport: Sport | null = null,
+  hills: boolean = sport === 'Run',
 ): Promise<ActivityStreams> => {
-  const types = sport === 'Run' ? [...STREAM_TYPES, ...HILL_TYPES] : STREAM_TYPES
+  const types = hills ? [...STREAM_TYPES, ...HILL_TYPES] : STREAM_TYPES
   const raw = await request<unknown>(auth, `/activity/${activityId}/streams.json?types=${types.join(',')}`)
   const list = Array.isArray(raw) ? raw.map((entry) => entry as Record<string, unknown>) : []
   const stream = (type: (typeof types)[number]): readonly (number | null)[] | null => {
@@ -518,7 +523,7 @@ export const fetchStreams = async (
     watts: stream('watts'),
     speed: stream('velocity_smooth'),
     heartRate: stream('heartrate'),
-    ...(sport === 'Run' ? { altitude: stream('altitude'), distance: stream('distance') } : {}),
+    ...(hills ? { altitude: stream('altitude'), distance: stream('distance') } : {}),
   }
 }
 
