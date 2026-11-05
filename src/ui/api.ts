@@ -114,6 +114,10 @@ export const getConfig = (): Promise<CoachConfig> => request<CoachConfig>('/api/
 export const putConfig = (config: CoachConfig): Promise<CoachConfig> =>
   request<CoachConfig>('/api/config', { method: 'PUT', body: JSON.stringify(config) })
 
+/** Chooses the level of one progression family; null hands it back to the intervals. */
+export const chooseLevel = (family: string, level: number | null): Promise<CoachConfig> =>
+  request<CoachConfig>('/api/level', { method: 'PUT', body: JSON.stringify({ family, level }) })
+
 export const fetchZwiftRoutes = (): Promise<readonly ZwiftRoute[]> =>
   request<readonly ZwiftRoute[]>('/api/zwift-routes')
 

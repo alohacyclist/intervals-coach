@@ -179,8 +179,33 @@ export const withHeld = (
     return verdict ? { ...completion, held: verdict.held, templateId: verdict.templateId } : completion
   })
 
-/** Level ceilings per family, so the engine can filter candidates in one pass. */
-export const levelCeilings = (completions: readonly Completion[]): Readonly<Record<string, number>> => {
+/** Every progression family, with the levels it has. */
+export const familyLevels = (): Readonly<Record<string, readonly number[]>> => {
   const families = [...new Set(LIBRARY.map((template) => template.family).filter(Boolean))] as string[]
-  return Object.fromEntries(families.map((family) => [family, levelFor(family, completions)]))
+  return Object.fromEntries(families.map((family) => [family, levelsIn(family)]))
 }
+
+/** A chosen level, when it names a level its family has; anything else is no choice. */
+export const chosenLevel = (
+  family: string,
+  choices: Readonly<Record<string, number>> | undefined,
+): number | null => {
+  const wanted = choices?.[family]
+  return wanted !== undefined && levelsIn(family).includes(wanted) ? wanted : null
+}
+
+/**
+ * Level ceilings per family, so the engine can filter candidates in one pass. A
+ * level the athlete chose stands, in either direction: they know a session
+ * the intervals could not read, or a week that calls for less.
+ */
+export const levelCeilings = (
+  completions: readonly Completion[],
+  choices?: Readonly<Record<string, number>>,
+): Readonly<Record<string, number>> =>
+  Object.fromEntries(
+    Object.keys(familyLevels()).map((family) => [
+      family,
+      chosenLevel(family, choices) ?? levelFor(family, completions),
+    ]),
+  )

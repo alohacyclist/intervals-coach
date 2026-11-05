@@ -231,6 +231,11 @@ export type CoachConfig = {
   readonly planStart: string
   /** Rides without power, read from speed and the climb once and kept. */
   readonly rideEstimates?: readonly StoredRideEstimate[]
+  /**
+   * Levels the athlete chose per progression family, overriding the earned one
+   * in either direction. A family without an entry follows its intervals.
+   */
+  readonly levelChoices?: Readonly<Record<string, number>>
 }
 
 export type Activity = {
@@ -678,7 +683,12 @@ export type FamilyLevel = {
   readonly family: string
   readonly sport: Sport
   readonly label: string
+  /** The level on offer: the chosen one where the athlete chose, else the earned one. */
   readonly level: number
+  /** The level the intervals have earned, whatever was chosen. */
+  readonly earned: number
+  /** The level the athlete chose, null while the family follows its intervals. */
+  readonly chosen: number | null
   readonly top: number
   readonly current: string | null
   readonly next: string | null

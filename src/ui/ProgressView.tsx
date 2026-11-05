@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { CoachConfig, Progress, Sport } from '../coach/types.ts'
-import { ApiError, EXPIRED_SESSION_URL, getConfig, getProgress } from './api.ts'
+import { ApiError, EXPIRED_SESSION_URL, chooseLevel, getConfig, getProgress } from './api.ts'
 import { FitnessCurve } from './components/FitnessCurve.tsx'
 import { WeekBars } from './components/WeekBars.tsx'
 import { SeasonBand } from './components/SeasonBand.tsx'
@@ -54,6 +54,7 @@ export const ProgressView = ({ onNeedsOnboarding }: Props) => {
   const [error, setError] = useState<string | null>(null)
   const [span, setSpan] = useState<ProgressSpan>(readSpan)
   const [busy, setBusy] = useState(false)
+  const [savingLevel, setSavingLevel] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     setError(null)
@@ -85,6 +86,18 @@ export const ProgressView = ({ onNeedsOnboarding }: Props) => {
   useEffect(() => {
     void load()
   }, [load])
+
+  const pickLevel = async (family: string, level: number | null) => {
+    setSavingLevel(family)
+    try {
+      setConfig(await chooseLevel(family, level))
+      setProgress(await getProgress(span))
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Stufe nicht gespeichert')
+    } finally {
+      setSavingLevel(null)
+    }
+  }
 
   if (error) {
     return (
@@ -194,7 +207,7 @@ export const ProgressView = ({ onNeedsOnboarding }: Props) => {
 
       {!early && <WeekBars weeks={progress.weeks} />}
 
-      <LevelLadder levels={progress.levels} />
+      <LevelLadder levels={progress.levels} onChoose={(family, level) => void pickLevel(family, level)} saving={savingLevel} />
 
       {(progress.benchmark.due || progress.benchmark.results.length > 0) && (
         <BenchmarkCard status={progress.benchmark} />
