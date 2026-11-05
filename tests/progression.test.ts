@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { completionsFrom, judgeIntervals, levelCeilings, levelFor, scheduledFrom, toJudge, withHeld } from '../src/coach/progression.ts'
+import { chosenLevel, completionsFrom, judgeIntervals, levelCeilings, levelFor, scheduledFrom, toJudge, withHeld } from '../src/coach/progression.ts'
 import { findTemplate } from '../src/coach/library.ts'
 import type { WorkoutTemplate } from '../src/coach/types.ts'
 import type { Completion } from '../src/coach/progression.ts'
@@ -181,5 +181,33 @@ describe('the intervals decide the level', () => {
     )
     expect(judgeIntervals(template, holding([]))).toEqual({ held: false, templateId: 'bike-thr-short-3x8' })
     expect(judgeIntervals(template, () => null)).toBeNull()
+  })
+})
+
+describe('a level the athlete chose', () => {
+  const held: Completion = {
+    templateId: 'run-thr-short-3x1k',
+    date: '2026-08-20',
+    compliance: null,
+    activityId: 'a',
+    variant: 'full',
+    evidence: 'exact',
+    held: false,
+  }
+
+  it('stands above what the intervals earned', () => {
+    expect(levelCeilings([held])['run-threshold']).toBe(1)
+    expect(levelCeilings([held], { 'run-threshold': 2 })['run-threshold']).toBe(2)
+  })
+
+  it('stands below it too', () => {
+    const cleared = { ...held, templateId: 'run-thr-5x1k', held: true }
+    expect(levelCeilings([cleared])['run-threshold']).toBe(3)
+    expect(levelCeilings([cleared], { 'run-threshold': 1 })['run-threshold']).toBe(1)
+  })
+
+  it('ignores a level the family does not have', () => {
+    expect(chosenLevel('run-threshold', { 'run-threshold': 7 })).toBeNull()
+    expect(levelCeilings([held], { 'run-threshold': 7 })['run-threshold']).toBe(1)
   })
 })

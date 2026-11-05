@@ -8,13 +8,32 @@ import { SportIcon } from './SportIcon.tsx'
  * cleared, capped by what the family has. So standing on the top rung means
  * the hardest version is being offered, not that it is already done, and the
  * wording here has to say "angeboten" rather than "erreicht".
+ *
+ * Every rung can also be chosen: the intervals cannot always be read, and the
+ * athlete may know better — up or down. "Auto" hands the family back.
  */
 
 type Props = {
   readonly levels: readonly FamilyLevel[]
+  /** Without it the ladder only shows; with it every level can be chosen. */
+  readonly onChoose?: (family: string, level: number | null) => void
+  /** The family whose choice is being saved. */
+  readonly saving?: string | null
 }
 
-export const LevelLadder = ({ levels }: Props) => {
+const stateText = (entry: FamilyLevel): string => {
+  const name = entry.current ?? '—'
+  const where =
+    entry.level >= entry.top
+      ? `${name} · oberste Stufe`
+      : entry.next
+        ? `${name} → ${entry.next}`
+        : name
+  if (entry.chosen === null) return where
+  return `${where} · selbst gewählt, erreicht ist Stufe ${entry.earned}`
+}
+
+export const LevelLadder = ({ levels, onChoose, saving = null }: Props) => {
   if (levels.length === 0) return null
 
   return (
@@ -48,13 +67,35 @@ export const LevelLadder = ({ levels }: Props) => {
             {entry.level} / {entry.top}
           </span>
 
-          <span className="rung__next">
-            {entry.level >= entry.top
-              ? `${entry.current ?? '—'} · oberste Stufe`
-              : entry.next
-                ? `${entry.current ?? '—'} → ${entry.next}`
-                : (entry.current ?? '—')}
-          </span>
+          <span className="rung__next">{stateText(entry)}</span>
+
+          {onChoose && entry.top > 1 ? (
+            <span className="rung__choose" role="group" aria-label={`Stufe für ${entry.label} wählen`}>
+              <button
+                type="button"
+                className="rung__pick"
+                aria-pressed={entry.chosen === null}
+                disabled={saving !== null}
+                onClick={() => onChoose(entry.family, null)}
+                title="Stufe folgt den gelaufenen und gefahrenen Intervallen"
+              >
+                Auto
+              </button>
+              {Array.from({ length: entry.top }, (_, index) => index + 1).map((level) => (
+                <button
+                  key={level}
+                  type="button"
+                  className="rung__pick"
+                  aria-pressed={entry.chosen === level}
+                  disabled={saving !== null}
+                  onClick={() => onChoose(entry.family, level)}
+                >
+                  Stufe {level}
+                </button>
+              ))}
+              {saving === entry.family ? <span className="rung__saving readout">speichert…</span> : null}
+            </span>
+          ) : null}
         </div>
       ))}
 
@@ -62,7 +103,8 @@ export const LevelLadder = ({ levels }: Props) => {
       <p className="ladder__rule">
         Die nächste Stufe wird frei, sobald du in einer Einheit jedes Intervall voll und mindestens im
         Zielbereich fährst. Zu hart gefahren hebt die Schwelle, nicht die Stufe. Auf der obersten
-        steigern sich die Einheiten über die Schwellenwerte.
+        steigern sich die Einheiten über die Schwellenwerte. Du kannst die Stufe auch selbst wählen —
+        nach oben wie nach unten; mit „Auto“ entscheiden wieder die Intervalle.
       </p>
     </section>
   )
