@@ -20,7 +20,7 @@ import { assessGoals } from '../src/coach/feasibility.ts'
 import { weekOutlook } from '../src/coach/week.ts'
 import { seasonBand } from '../src/coach/phase.ts'
 import { buildHistory } from '../src/coach/adherence.ts'
-import { completionsFrom, scheduledFrom, toJudge, withHeld } from '../src/coach/progression.ts'
+import { chosenLevel, completionsFrom, familyLevels, scheduledFrom, toJudge, withHeld } from '../src/coach/progression.ts'
 import type { IntervalVerdict } from '../src/coach/progression.ts'
 import { benchmarkCompletions, benchmarkStatus, compareBenchmarks } from '../src/coach/benchmark.ts'
 import type { WorkReading } from '../src/coach/efficiency.ts'
@@ -221,6 +221,7 @@ const buildProgressView = async (deps: RouteDeps, span: ProgressSpan): Promise<P
     feasibility: assessGoals(config.goals, config.profile, today),
     sports: config.profile.sports.map((setting) => setting.sport),
     season: seasonBand(config, today),
+    levelChoices: config.levelChoices,
   })
   return { ...progress, garmin: garminAttribution(activities) }
 }
@@ -409,6 +410,7 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
         zrlRaces: stored.zrlRaces,
         zrl: stored.zrl,
         ...(stored.rideEstimates ? { rideEstimates: stored.rideEstimates } : {}),
+        ...(stored.levelChoices ? { levelChoices: stored.levelChoices } : {}),
       }),
       (error: unknown) => {
         if (error instanceof MissingConfigError) return { proposals: [], zrlRaces: [] }
@@ -642,6 +644,21 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
     const { store } = await resolve(context)
     const config = await store.load()
     return context.json(await store.save(validateConfig({ ...config, zrlRaces: validateZrlRaces(races) })))
+  })
+
+  /** Chooses the level of one progression family, or hands it back to the intervals with null. */
+  app.put('/api/level', async (context) => {
+    const body = (await context.req.json()) as { family?: unknown; level?: unknown }
+    const family = typeof body.family === 'string' ? body.family : ''
+    if (!(family in familyLevels())) return context.json({ error: 'Unbekannte Trainingsfamilie' }, 400)
+    if (body.level !== null && chosenLevel(family, { [family]: Number(body.level) }) === null) {
+      return context.json({ error: 'Diese Stufe gibt es in der Familie nicht' }, 400)
+    }
+    const { store } = await resolve(context)
+    const config = await store.load()
+    const { [family]: _dropped, ...others } = config.levelChoices ?? {}
+    const levelChoices = body.level === null ? others : { ...others, [family]: Number(body.level) }
+    return context.json(await store.save(validateConfig({ ...config, levelChoices })))
   })
 
   /** Records or removes a completed strength session; progression follows the log. */

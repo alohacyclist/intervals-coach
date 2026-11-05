@@ -15,7 +15,7 @@ import { addDays, diffDays, startOfWeek } from './dates.ts'
 import { ATL_DAYS, CTL_DAYS, dailyLoads, ewmaSeries } from './fitness.ts'
 import { LIBRARY } from './library.ts'
 import type { Completion } from './progression.ts'
-import { levelFor } from './progression.ts'
+import { chosenLevel, levelFor } from './progression.ts'
 
 /**
  * What the plan page cannot answer: am I getting anywhere? The daily view asks
@@ -107,6 +107,7 @@ const weeklyLoads = (
 const familyLevels = (
   completions: readonly Completion[],
   sports: readonly Sport[],
+  choices: Readonly<Record<string, number>> | undefined,
 ): readonly FamilyLevel[] => {
   const families = [...new Set(LIBRARY.map((template) => template.family).filter(Boolean))]
   return families
@@ -122,7 +123,9 @@ const familyLevels = (
       const levels = [...new Set(members.map((template) => template.level ?? 1))].sort(
         (left, right) => left - right,
       )
-      const level = levelFor(family, completions)
+      const earned = levelFor(family, completions)
+      const chosen = chosenLevel(family, choices)
+      const level = chosen ?? earned
       const next = members.find((template) => (template.level ?? 1) === level + 1)
       const here = members.find((template) => (template.level ?? 1) === level)
       return {
@@ -130,6 +133,8 @@ const familyLevels = (
         sport: members[0]?.sport ?? ('Ride' as Sport),
         label: STIMULUS_LABELS[members[0]?.stimulus ?? 'ENDURANCE'],
         level,
+        earned,
+        chosen,
         top: levels[levels.length - 1] ?? 1,
         current: here?.name ?? null,
         next: next?.name ?? null,
@@ -144,6 +149,8 @@ type Achievements = {
   /** The athlete's own sports; empty means every family in the library. */
   readonly sports: readonly Sport[]
   readonly season?: readonly SeasonWeek[]
+  /** Levels the athlete chose, per family. */
+  readonly levelChoices?: Readonly<Record<string, number>>
 }
 
 export const buildProgress = (
@@ -167,7 +174,7 @@ export const buildProgress = (
     historyDays,
     fitness: fitnessSeries(activities, today, historyDays),
     weeks: weeklyLoads(activities, today, weeks),
-    levels: familyLevels(completions, achieved.sports),
+    levels: familyLevels(completions, achieved.sports, achieved.levelChoices),
     benchmark: achieved.benchmark,
     feasibility: achieved.feasibility,
     // The band comes from the calendar, not from activities; the route fills it.

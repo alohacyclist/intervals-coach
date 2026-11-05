@@ -25,7 +25,7 @@ import { selectedSports } from './thresholds.ts'
 import { breakLimit, returnWindow } from './breaks.ts'
 import { thresholdTestDue } from './threshold-test.ts'
 import { benchmarkDue } from './benchmark.ts'
-import { levelCeilings } from './progression.ts'
+import { chosenLevel, levelCeilings } from './progression.ts'
 import { completedFrom, effortsFrom } from './done.ts'
 import type { Effort } from './done.ts'
 import type { Completion } from './progression.ts'
@@ -458,6 +458,28 @@ const withinLevel = (
 ): boolean =>
   template.family === undefined || (template.level ?? 1) <= (ceilings[template.family] ?? 1)
 
+/**
+ * A lower rung is the short version for a day too tight for the one earned —
+ * not a variation to rotate in. Offered beside the higher rung that fits, it won
+ * whenever that one had been done in the last days, and an athlete who earned
+ * the 5x1km kept getting the 3x1km. Below a rung that fits the phase and the
+ * time, it goes; a repeat of that rung leaves room for another stimulus instead.
+ */
+const belowReachableRung = (
+  template: WorkoutTemplate,
+  allowed: readonly WorkoutTemplate[],
+  phase: Phase,
+  budgetMinutes: number,
+): boolean =>
+  template.family !== undefined &&
+  allowed.some(
+    (higher) =>
+      higher.family === template.family &&
+      (higher.level ?? 1) > (template.level ?? 1) &&
+      higher.phases.includes(phase) &&
+      higher.minutes <= budgetMinutes,
+  )
+
 const candidatesFor = (
   sport: Sport,
   dayType: DayType,
@@ -468,12 +490,13 @@ const candidatesFor = (
   goalKind: GoalKind | undefined,
   easyOnly: boolean,
 ): readonly WorkoutTemplate[] => {
-  const available = templatesFor(sport)
+  const allowed = templatesFor(sport)
     // Benchmarks are scheduled deliberately, never offered as ordinary work; nor is anything made for a race.
     .filter((template) => template.benchmark !== true && template.occasion === undefined)
     // Race pace belongs to whoever is racing; a watt goal has no use for it.
     .filter((template) => template.goalKind === undefined || template.goalKind === goalKind)
     .filter((template) => withinLevel(template, ceilings))
+  const available = allowed.filter((template) => !belowReachableRung(template, allowed, phase, budgetMinutes))
 
   const byClass = (classes: readonly IntensityClass[]) =>
     available.filter((template) => classes.includes(intensityClass(template.stimulus)))
@@ -507,11 +530,16 @@ const candidatesFor = (
 }
 
 /** Where the session sits on its ladder, and on the top offered rung what opens the next one. */
-const levelNote = (template: WorkoutTemplate, ceilings: Readonly<Record<string, number>>): string => {
+const levelNote = (
+  template: WorkoutTemplate,
+  ceilings: Readonly<Record<string, number>>,
+  choices: Readonly<Record<string, number>> | undefined,
+): string => {
   if (template.family === undefined) return ''
   const own = template.level ?? 1
   const level = ceilings[template.family] ?? 1
-  if (own < level) return ` · Stufe ${own} von ${level} verfügbar`
+  if (own < level) return ` · Stufe ${own} von ${level} verfügbar — Stufe ${level} passt heute nicht in Zeit oder Phase`
+  if (chosenLevel(template.family, choices) !== null) return ` · Stufe ${own}, selbst gewählt`
   const next = templatesFor(template.sport).some(
     (candidate) => candidate.family === template.family && (candidate.level ?? 1) === own + 1,
   )
@@ -526,13 +554,14 @@ const reasonFor = (
   phase: Phase,
   simulation: Simulation,
   ceilings: Readonly<Record<string, number>>,
+  choices?: Readonly<Record<string, number>>,
 ): string => {
   const age = stimulusAge(simulation, template.sport, template.stimulus)
   const ageText =
     age >= STALE_STIMULUS_DAYS
       ? 'dieser Reiz fehlt seit über vier Wochen'
       : `${STIMULUS_LABELS[template.stimulus]} zuletzt vor ${age} Tagen`
-  if (dayType === 'KEY') return `${PHASE_LABELS[phase]}, Qualitätstag — ${ageText}${levelNote(template, ceilings)}`
+  if (dayType === 'KEY') return `${PHASE_LABELS[phase]}, Qualitätstag — ${ageText}${levelNote(template, ceilings, choices)}`
   if (dayType === 'EASY') return `Lockerer Tag zwischen zwei harten Einheiten (${PHASE_LABELS[phase]})`
   return `Regeneration hat Vorrang (${PHASE_LABELS[phase]})`
 }
@@ -855,7 +884,7 @@ export const planDays = (
       const isToday = dayIndex === 0
       const known = isToday ? morningCompletions : completions
       const view = isToday ? state : laterState
-      const ceilings = levelCeilings(known)
+      const ceilings = levelCeilings(known, config.levelChoices)
       const phases = Object.fromEntries(
         sports.map((sport) => [sport, phaseForSport(config, sport, date)]),
       ) as Record<Sport, Phase>
@@ -966,7 +995,7 @@ export const planDays = (
         if (!best) return null
         const reason = held(sport)
           ? `${legsNote(simulation)} — die Qualität heute in der anderen Sportart, der Lauf bleibt leicht`
-          : reasonFor(best, dayType, sportPhase, simulation, ceilings)
+          : reasonFor(best, dayType, sportPhase, simulation, ceilings, config.levelChoices)
         return buildSession(best, config, reason, date, stretchTo, isToday ? coreAt : undefined)
       }).filter((session): session is PlannedSession => session !== null)
       const options = withRace(

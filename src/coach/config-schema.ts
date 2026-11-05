@@ -18,6 +18,7 @@ import type {
   ZrlSettings,
   ZwiftRoute,
 } from './types.ts'
+import { chosenLevel } from './progression.ts'
 import { ALL_BREAK_KINDS, ALL_SPORTS, ZRL_FORMATS } from './types.ts'
 import type { Equipment } from './types.ts'
 import { MAX_PROPOSAL_DAYS } from './proposals.ts'
@@ -347,6 +348,16 @@ const validateRideEstimate = (raw: unknown): RideEstimate | null => {
   }
 }
 
+/** Only levels a family has; anything else falls back to what the intervals earned. */
+export const validateLevelChoices = (raw: unknown): Readonly<Record<string, number>> =>
+  raw !== null && typeof raw === 'object' && !Array.isArray(raw)
+    ? Object.fromEntries(
+        Object.entries(raw as Record<string, unknown>).flatMap(([family, level]) =>
+          typeof level === 'number' && chosenLevel(family, { [family]: level }) !== null ? [[family, level]] : [],
+        ),
+      )
+    : {}
+
 const validateRideEstimates = (raw: unknown): readonly StoredRideEstimate[] =>
   (Array.isArray(raw) ? raw : [])
     .map((entry) => (entry ?? {}) as Record<string, unknown>)
@@ -483,6 +494,10 @@ export const validateConfig = (raw: unknown): CoachConfig => {
     planStart: isIsoDate(input['planStart']) ? input['planStart'] : DEFAULT_CONFIG.planStart,
     // Only once there is one, so a config without rides to estimate reads back as it was written.
     ...(Array.isArray(input['rideEstimates']) ? { rideEstimates: validateRideEstimates(input['rideEstimates']) } : {}),
+    // Likewise only once a level was chosen.
+    ...(input['levelChoices'] !== undefined && Object.keys(validateLevelChoices(input['levelChoices'])).length > 0
+      ? { levelChoices: validateLevelChoices(input['levelChoices']) }
+      : {}),
   }
 
   if (issues.length > 0) throw new ValidationError(issues)

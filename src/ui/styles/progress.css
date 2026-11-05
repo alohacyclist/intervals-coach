@@ -242,6 +242,35 @@
   color: var(--dim);
   max-width: 78ch;
 }
+.rung__choose {
+  flex-basis: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.rung__pick {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  padding: 4px 9px;
+  border: 1px solid var(--rule-loud);
+  background: transparent;
+  color: var(--dim);
+  cursor: pointer;
+}
+.rung__pick[aria-pressed='true'] {
+  background: var(--data);
+  border-color: var(--data);
+  color: var(--bg);
+}
+.rung__pick:disabled {
+  cursor: progress;
+  opacity: 0.6;
+}
+.rung__saving {
+  font-size: 11.5px;
+  color: var(--faint);
+}
 
 @media (max-width: 560px) {
   .plot {
