@@ -40,8 +40,12 @@
 .mode button:last-child {
   border-right: 0;
 }
-.mode button:hover:not(:disabled) {
-  color: var(--ink);
+/* Only where a pointer hovers: a tap on a phone leaves :hover stuck, and on the
+   chosen button that painted light text onto the light fill in the dark theme. */
+@media (hover: hover) {
+  .mode button:hover:not(:disabled):not([aria-pressed='true']) {
+    color: var(--ink);
+  }
 }
 .mode button[aria-pressed='true'] {
   background: var(--data);
