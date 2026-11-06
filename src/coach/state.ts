@@ -10,7 +10,7 @@ import type {
 } from './types.ts'
 import { ALL_SPORTS } from './types.ts'
 import { addDays, diffDays, startOfWeek } from './dates.ts'
-import { computeFitness, deliveredStimuli, isHardActivity, rampRate } from './fitness.ts'
+import { computeFitness, ctlGain, deliveredStimuli, isHardActivity, rampRate } from './fitness.ts'
 import { computeReadiness } from './readiness.ts'
 import { raceSamples } from './zrl.ts'
 
@@ -221,6 +221,7 @@ export const buildState = (
       ),
     loadLast7: Math.round(last7.reduce((sum, activity) => sum + activity.load, 0)),
     rampRate: rampRate(activities, today),
+    ctlGain28: ctlGain(activities, today, 28),
     readiness: computeReadiness(wellness, today, overall.tsb),
     recency: stimulusRecency(activities, today),
     lastActivity: newestActivity(activities, today),
