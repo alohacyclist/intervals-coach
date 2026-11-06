@@ -431,6 +431,8 @@ export type TrainingState = {
   readonly loadLast7: number
   /** CTL change over the last 7 days. */
   readonly rampRate: number
+  /** CTL change over the last 28 days: one full 3:1 cycle, so a recovery week does not read as a plateau. */
+  readonly ctlGain28: number
   readonly readiness: Readiness
   readonly recency: readonly StimulusRecency[]
   /** The newest activity the plan was built from — makes stale data visible. */
