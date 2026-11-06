@@ -31,7 +31,7 @@ import type { Effort } from './done.ts'
 import type { Completion } from './progression.ts'
 import { findTemplate, flattenBlocks, intensityClass, isPreferredSport, strengthSession, templatesFor } from './library.ts'
 import { buildSession } from './session.ts'
-import { BASE_LOAD_PER_HOUR } from './variant.ts'
+import { BASE_LOAD_PER_HOUR, MIN_SAVING_MINUTES } from './variant.ts'
 import { aroundRace, raceSession, racesAround, withRace } from './race-day.ts'
 
 /** Minimum days between two hard sessions, regardless of sport. */
@@ -72,6 +72,60 @@ const RIDE_GROWTH = 1.25
  */
 const RUN_GROWTH = 1.1
 const RUN_MIN_STEP = 10
+
+/**
+ * Less than this CTL gained over one 3:1 cycle, with every promised session done,
+ * is a plateau: the body has adapted to the load it gets. More intensity is the
+ * wrong answer to that — the cheapest lever is volume at low intensity, so the
+ * sessions grow by easy base, not by harder work.
+ */
+const PLATEAU_GAIN = 2
+/** Below this many sessions with load there is no curve to read yet. */
+const PLATEAU_MIN_SESSIONS = 8
+/** A session grows by a quarter, and at least by enough to be a different session. */
+const PLATEAU_GROWTH = 1.25
+const PLATEAU_MIN_STEP = 15
+/** A break this recent explains a flat curve on its own. */
+const PLATEAU_WINDOW_DAYS = 28
+
+type Plateau =
+  | { readonly kind: 'none' }
+  /** Fewer sessions than promised: the curve is flat because training is missing, not because it stopped working. */
+  | { readonly kind: 'missing'; readonly note: string }
+  | { readonly kind: 'adapted'; readonly note: string }
+
+const NO_PLATEAU: Plateau = { kind: 'none' }
+
+const plateauFor = (state: TrainingState, config: CoachConfig, phase: Phase, date: string): Plateau => {
+  // A recovery week and a taper flatten the curve on purpose.
+  if (phase === 'RECOVERY' || phase === 'TAPER') return NO_PLATEAU
+  if (state.loadedActivityCount < PLATEAU_MIN_SESSIONS || state.ctlGain28 >= PLATEAU_GAIN) return NO_PLATEAU
+  const breakSince = addDays(date, -PLATEAU_WINDOW_DAYS)
+  if (config.breaks.some((entry) => entry.until >= breakSince && entry.from <= date)) return NO_PLATEAU
+  const gain = `${state.ctlGain28 >= 0 ? '+' : ''}${state.ctlGain28.toLocaleString('de-DE')}`
+  const promised = config.profile.weeklySessions.min
+  if (state.sessionsPerWeekRecent < promised) {
+    // Where the plan already plans with fewer, that note says it; a second one would only repeat it.
+    if (effectiveWeeklyMin(config, state) < promised) return NO_PLATEAU
+    return {
+      kind: 'missing',
+      note: `Fitness in vier Wochen ${gain} — es fehlen Einheiten (${state.sessionsPerWeekRecent.toLocaleString('de-DE')} statt ${promised} pro Woche), nicht Härte`,
+    }
+  }
+  return {
+    kind: 'adapted',
+    note: `Fitness in vier Wochen nur ${gain} bei vollem Pensum — die Einheiten werden mit lockerer Grundlage länger, nicht härter. Eine Einheit mehr pro Woche hilft ebenso.`,
+  }
+}
+
+/** How long a session may grow on a plateau: a quarter, within the athlete's longest day and what recent training carries. */
+const plateauStretch = (template: WorkoutTemplate, config: CoachConfig, state: TrainingState): number | undefined => {
+  if (template.sport === 'Swim') return undefined
+  const grown = Math.max(roundDownToFive(template.minutes * PLATEAU_GROWTH), template.minutes + PLATEAU_MIN_STEP)
+  const capacity = capacityFor(template.sport, state, state.rampRate > FAST_RAMP).minutes
+  const target = Math.min(grown, config.profile.sessionMinutes.max, capacity)
+  return target >= template.minutes + MIN_SAVING_MINUTES ? target : undefined
+}
 
 type Simulation = {
   readonly fitness: Fitness
@@ -920,6 +974,8 @@ export const planDays = (
         : NO_EXTRA
 
       const returning = returnWindow(config.breaks, date) !== null
+      // Read from the morning's curve: the days ahead have not happened yet.
+      const plateau = around.race || around.raceTomorrow ? NO_PLATEAU : plateauFor(state, config, phase, date)
       const openers =
         around.raceTomorrow && dayType === 'EASY' ? findTemplate('bike-zrl-openers') : undefined
       // On race day the race is the plan; the day before, the openers are.
@@ -996,7 +1052,18 @@ export const planDays = (
         const reason = held(sport)
           ? `${legsNote(simulation)} — die Qualität heute in der anderen Sportart, der Lauf bleibt leicht`
           : reasonFor(best, dayType, sportPhase, simulation, ceilings, config.levelChoices)
-        return buildSession(best, config, reason, date, stretchTo, isToday ? coreAt : undefined)
+        // On a plateau the session grows by easy base — not on a day meant to recover,
+        // nor where the athlete already said how long today is.
+        const grows =
+          plateau.kind === 'adapted' &&
+          stretchTo === undefined &&
+          !held(sport) &&
+          (sportDayType === 'KEY' ||
+            (sportDayType === 'EASY' &&
+              decision.easyOnly !== true &&
+              minDaysSinceHard(simulation, sports) >= HARD_SPACING_DAYS))
+        const length = grows ? plateauStretch(best, config, view) : stretchTo
+        return buildSession(best, config, reason, date, length, isToday ? coreAt : undefined)
       }).filter((session): session is PlannedSession => session !== null)
       const options = withRace(
         regular,
@@ -1015,7 +1082,11 @@ export const planDays = (
         phase,
         recommended,
         options,
-        notes: [...notesFor(decision, state, simulation, config, dayIndex, date), ...timeNotes.map((note) => note.long)],
+        notes: [
+          ...notesFor(decision, state, simulation, config, dayIndex, date),
+          ...(plateau.kind === 'none' || dayIndex > 0 ? [] : [plateau.note]),
+          ...timeNotes.map((note) => note.long),
+        ],
         moreTime: timeNotes.map((note) => note.short),
         optional: decision.optional,
         strength,

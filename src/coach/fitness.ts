@@ -58,12 +58,16 @@ export const computeFitness = (
   }
 }
 
-/** CTL gained over the last 7 days — the ramp rate guardrail. */
-export const rampRate = (activities: readonly Activity[], today: string, historyDays = 180): number => {
+/** CTL gained over the last `days` days; negative when fitness fell. */
+export const ctlGain = (activities: readonly Activity[], today: string, days: number, historyDays = 180): number => {
   const from = addDays(today, -historyDays)
   const ctlSeries = ewmaSeries(dailyLoads(activities, from, today), CTL_DAYS)
-  return round(last(ctlSeries) - nthFromEnd(ctlSeries, 7))
+  return round(last(ctlSeries) - nthFromEnd(ctlSeries, days))
 }
+
+/** CTL gained over the last 7 days — the ramp rate guardrail. */
+export const rampRate = (activities: readonly Activity[], today: string, historyDays = 180): number =>
+  ctlGain(activities, today, 7, historyDays)
 
 /** Applies one extra day of load to an existing fitness snapshot. */
 export const projectFitness = (fitness: Fitness, load: number): Fitness => {
