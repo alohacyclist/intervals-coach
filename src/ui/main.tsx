@@ -6,6 +6,7 @@ import '@fontsource/overpass/latin-500.css'
 import '@fontsource/overpass/latin-600.css'
 import '@fontsource/overpass/latin-800.css'
 import './styles.css'
+import { registerServiceWorker } from './register-sw.ts'
 
 const container = document.getElementById('root')
 if (!container) throw new Error('Root element missing')
@@ -15,3 +16,5 @@ createRoot(container).render(
     <App />
   </StrictMode>,
 )
+
+registerServiceWorker()

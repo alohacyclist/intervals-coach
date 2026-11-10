@@ -92,6 +92,7 @@ export const App = () => {
   }
 
   const load = useCallback(async () => {
+    setError(null)
     try {
       setMe(await getMe())
     } catch (caught) {
@@ -103,10 +104,29 @@ export const App = () => {
     void load()
   }, [load])
 
+  // Opened without a connection, the kept shell lands here; it carries on by itself once there is one.
+  useEffect(() => {
+    if (!error) return
+    const retry = () => void load()
+    window.addEventListener('online', retry)
+    return () => window.removeEventListener('online', retry)
+  }, [error, load])
+
   if (path === '/datenschutz') return <Shell><Privacy /></Shell>
   if (path === '/impressum') return <Shell><Imprint /></Shell>
 
-  if (error) return <Shell><p className="error error--block" role="alert">{error}</p></Shell>
+  if (error) {
+    return (
+      <Shell>
+        <p className="error error--block" role="alert">
+          {error}
+          <button type="button" onClick={() => void load()}>
+            Erneut versuchen
+          </button>
+        </p>
+      </Shell>
+    )
+  }
   if (!me) return <Shell><p className="loading" role="status">Einen Moment…</p></Shell>
 
   const demo = me.mode === 'demo'
