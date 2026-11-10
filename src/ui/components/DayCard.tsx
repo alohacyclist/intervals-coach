@@ -18,6 +18,8 @@ const DAY_TYPE_LABEL: Record<PlannedDay['dayType'], string> = {
 type Props = {
   readonly day: PlannedDay
   readonly index: number
+  /** Beyond the three days the plan stands for: shown as what is likely, not what is set. */
+  readonly outlook?: boolean
   readonly strengthDone: boolean
   readonly onStrengthLogged: () => void
   readonly destinations: Readonly<Record<string, readonly string[]>>
@@ -39,6 +41,7 @@ const cardKey = (session: PlannedSession): string =>
 export const DayCard = ({
   day,
   index,
+  outlook = false,
   strengthDone,
   onStrengthLogged,
   destinations,
@@ -87,6 +90,13 @@ export const DayCard = ({
         {day.notes.length > 0 && <p className="panel__facts">{day.notes[0]}</p>}
         {/* Asked for on screen, answered on screen in a few words; the why waits in the background. */}
         {day.moreTime.length > 0 && <p className="day__more-time">{day.moreTime.join(' · ')}</p>}
+        {/* Every day until then moves this one, and the plan says so rather than promise it. */}
+        {outlook && (
+          <p className="panel__outlook">
+            Ausblick: so sieht der Tag aus, wenn bis dahin alles wie geplant läuft. Was du vorher trainierst
+            oder auslässt, verschiebt ihn.
+          </p>
+        )}
       </div>
 
       {day.notes.length > 1 && (

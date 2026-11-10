@@ -21,7 +21,8 @@ import { zrlRelevant } from './zrl-relevance.ts'
 import { GarminAttribution } from './components/GarminAttribution.tsx'
 import { CoreStartSlider, MoreTimeSlider } from './components/MoreTimeSlider.tsx'
 
-const PLAN_DAYS = 3
+import { SHORT_HORIZON, keepHorizon, readHorizon } from './plan-horizon.ts'
+import type { PlanHorizon } from './plan-horizon.ts'
 
 type Props = {
   readonly me: Me
@@ -51,6 +52,7 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
   const [intent, setIntent] = useState<'hard' | 'easy' | 'rest' | undefined>(undefined)
   const [minutesToday, setMinutesToday] = useState<number | undefined>(undefined)
   const [coreAt, setCoreAt] = useState<number | undefined>(undefined)
+  const [horizon, setHorizon] = useState<PlanHorizon>(readHorizon)
   const [plan, setPlan] = useState<Plan | null>(null)
   const [selected, setSelected] = useState<string | null>(null)
   const [config, setConfig] = useState<CoachConfig | null>(null)
@@ -89,7 +91,7 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
     setBusy(true)
     setError(null)
     try {
-      const [nextPlan, nextConfig] = await Promise.all([getPlan(PLAN_DAYS, intent, fresh, minutesToday, coreAt), getConfig()])
+      const [nextPlan, nextConfig] = await Promise.all([getPlan(horizon, intent, fresh, minutesToday, coreAt), getConfig()])
       setPlan(nextPlan)
       setConfig(nextConfig)
     } catch (caught) {
@@ -105,7 +107,7 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
     } finally {
       setBusy(false)
     }
-  }, [onNeedsOnboarding, intent, minutesToday, coreAt])
+  }, [onNeedsOnboarding, horizon, intent, minutesToday, coreAt])
 
   useEffect(() => {
     void load()
@@ -177,10 +179,17 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
           days={plan.days}
           selected={plan.days.some((day) => day.date === selected) ? (selected ?? '') : (plan.days[0]?.date ?? '')}
           onSelect={setSelected}
+          horizon={horizon}
+          busy={busy}
+          onHorizon={(next) => {
+            keepHorizon(next)
+            setHorizon(next)
+          }}
           panel={(day, index) => (
             <DayCard
               day={day}
               index={index}
+              outlook={index >= SHORT_HORIZON}
               strengthDone={config?.strengthLog.includes(day.date) ?? false}
               onStrengthLogged={() => void load()}
               destinations={destinationLabels}
