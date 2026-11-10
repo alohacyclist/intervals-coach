@@ -3,7 +3,6 @@ import type { Execution, ExecutionTrace } from '../coach/types.ts'
 import {
   areaPath,
   ceilingFor,
-  clock,
   corridorLabel,
   corridorsOf,
   beatLabel,

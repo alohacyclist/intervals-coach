@@ -12,6 +12,7 @@
     "dev:web": "vite",
     "build": "tsc --noEmit && vite build",
     "start": "NODE_ENV=production tsx server/index.ts",
+    "lint": "biome lint --error-on-warnings",
     "test": "vitest run",
     "test:watch": "vitest",
     "coverage": "vitest run --coverage",
@@ -30,6 +31,7 @@
     "zwift-data": "1.50.0"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.6.6",
     "@types/node": "^26.4.0",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.5",

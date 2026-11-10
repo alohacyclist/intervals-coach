@@ -351,7 +351,6 @@ const decideDay = (
   date: string,
   sports: readonly Sport[],
 ): DayDecision => {
-  const { max } = config.profile.weeklySessions
   const min = effectiveWeeklyMin(config, state)
   const readinessRed = state.readiness.score === 'red'
   const planned = simulation.sessionsThisWeek
