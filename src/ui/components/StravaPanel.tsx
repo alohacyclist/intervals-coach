@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { StravaStatus } from '../api.ts'
 import { disconnectStrava, getStrava } from '../api.ts'
+import { t } from '../../coach/lang.ts'
 
 /**
  * Connecting Strava. The device keeps uploading there; the app only writes the
@@ -10,11 +11,11 @@ import { disconnectStrava, getStrava } from '../api.ts'
 
 /** What the return from Strava's consent page says, by the word it put in the address. */
 const RESULTS: Readonly<Record<string, string>> = {
-  verbunden: 'Strava ist verbunden.',
-  abgelehnt: 'Auf Strava abgebrochen — nichts verbunden.',
+  verbunden: t('Strava ist verbunden.'),
+  abgelehnt: t('Auf Strava abgebrochen — nichts verbunden.'),
   rechte:
-    'Ohne das Recht, Aktivitäten zu bearbeiten, kann die App auf Strava nichts ergänzen. Beim Verbinden bitte alle Häkchen gesetzt lassen.',
-  fehler: 'Die Verbindung mit Strava ist fehlgeschlagen. Bitte noch einmal versuchen.',
+    t('Ohne das Recht, Aktivitäten zu bearbeiten, kann die App auf Strava nichts ergänzen. Beim Verbinden bitte alle Häkchen gesetzt lassen.'),
+  fehler: t('Die Verbindung mit Strava ist fehlgeschlagen. Bitte noch einmal versuchen.'),
 }
 
 /** Official assets from developers.strava.com/guidelines, served unmodified from public/strava. */
@@ -48,7 +49,7 @@ export const StravaPanel = () => {
     try {
       setStatus(await disconnectStrava())
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Trennen fehlgeschlagen')
+      setError(caught instanceof Error ? caught.message : t('Trennen fehlgeschlagen'))
     } finally {
       setBusy(false)
     }
@@ -58,35 +59,32 @@ export const StravaPanel = () => {
 
   return (
     <div className="strava">
-      <h3>Strava</h3>
+      <h3>{t('Strava')}</h3>
       {result && RESULTS[result] && <p className="strava__result" role="status">{RESULTS[result]}</p>}
       {status.connected ? (
         <>
           <p className="hint">
-            Verbunden als {status.name}. Nach jeder erkannten Einheit steht der Soll-Ist-Vergleich in ihrer
-            Beschreibung auf Strava; dein eigener Text bleibt stehen. Hochladen tut weiter dein Gerät.
+            {t('Verbunden als ')}{status.name}{t('. Nach jeder erkannten Einheit steht der Soll-Ist-Vergleich in ihrer Beschreibung auf Strava; dein eigener Text bleibt stehen. Hochladen tut weiter dein Gerät.')}
           </p>
           <button type="button" disabled={busy} onClick={() => void disconnect()}>
-            {busy ? 'Trennt…' : 'Strava trennen'}
+            {busy ? 'Trennt…' : t('Strava trennen')}
           </button>
         </>
       ) : (
         <>
           <p className="hint">
-            Schreibt nach jeder erkannten Einheit den Soll-Ist-Vergleich in die Beschreibung der Aktivität auf
-            Strava. Bilder nimmt Strava von anderen Apps nicht an — dafür gibt es unter jeder Einheit „Bild
-            teilen“.
+            {t('Schreibt nach jeder erkannten Einheit den Soll-Ist-Vergleich in die Beschreibung der Aktivität auf Strava. Bilder nimmt Strava von anderen Apps nicht an — dafür gibt es unter jeder Einheit „Bild teilen“.')}
           </p>
           {/* Strava's own button, unaltered, as its brand guidelines require. */}
           <a className="strava__connect" href="/auth/strava/login">
-            <img src={CONNECT_BUTTON} alt="Connect with Strava" width={237} height={48} />
+            <img src={CONNECT_BUTTON} alt={t('Connect with Strava')} width={237} height={48} />
           </a>
         </>
       )}
       {error && <p className="error" role="alert">{error}</p>}
       <p className="strava__compatible">
-        <img className="light-only" src={COMPATIBLE_LOGO} alt="Compatible with Strava" width={213} height={18} />
-        <img className="dark-only" src={COMPATIBLE_LOGO_DARK} alt="Compatible with Strava" width={213} height={18} />
+        <img className="light-only" src={COMPATIBLE_LOGO} alt={t('Compatible with Strava')} width={213} height={18} />
+        <img className="dark-only" src={COMPATIBLE_LOGO_DARK} alt={t('Compatible with Strava')} width={213} height={18} />
       </p>
     </div>
   )

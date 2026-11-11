@@ -5,6 +5,7 @@ import { formatDistance } from '../coach/format.ts'
 import { projectedRaceTime } from '../coach/feasibility.ts'
 import { ftpOf } from '../coach/thresholds.ts'
 import { formatClock, parseTime, timeError } from './format-input.ts'
+import { t } from '../coach/lang.ts'
 
 /** A goal as the form holds it: text as typed, turned into a goal only when all of it reads. */
 export type GoalDraft = {
@@ -79,18 +80,18 @@ export const predictedTime = (draft: GoalDraft, profile: AthleteProfile): number
 
 const dateError = (value: string, earliest: string | null): string | null => {
   if (value === '') return null
-  if (!isIsoDate(value)) return 'Bitte ein gültiges Datum wählen'
-  return earliest !== null && value < earliest ? 'Das Datum liegt in der Vergangenheit' : null
+  if (!isIsoDate(value)) return t('Bitte ein gültiges Datum wählen')
+  return earliest !== null && value < earliest ? t('Das Datum liegt in der Vergangenheit') : null
 }
 
 const ftpErrors = (draft: GoalDraft, profile: AthleteProfile): GoalErrors => {
   const target = positiveNumber(draft.target)
-  if (ftpOf(profile) === null) return { target: 'Ein FTP-Ziel braucht Rad mit FTP bei den Sportarten' }
-  return target === null ? { target: 'FTP-Ziel in Watt, z. B. 300' } : {}
+  if (ftpOf(profile) === null) return { target: t('Ein FTP-Ziel braucht Rad mit FTP bei den Sportarten') }
+  return target === null ? { target: t('FTP-Ziel in Watt, z. B. 300') } : {}
 }
 
 const raceErrors = (draft: GoalDraft, profile: AthleteProfile): GoalErrors => {
-  const distance = distanceKmOf(draft) === null ? `Bitte die Distanz in ${distanceUnit(draft.sport)} eintragen` : null
+  const distance = distanceKmOf(draft) === null ? t`Bitte die Distanz in ${distanceUnit(draft.sport)} eintragen` : null
   // Left blank, the current time comes from the threshold where there is a pace to project from.
   const predictable = projectedRaceTime(profile, draft.sport, 1) !== null
   const current = timeError(draft.current, !predictable)
@@ -116,7 +117,7 @@ export const hasErrors = (errors: GoalErrors): boolean => Object.keys(errors).le
 const autoLabel = (draft: GoalDraft, distanceKm: number, target: number): string =>
   draft.kind === 'ftp'
     ? `FTP ${target} W`
-    : `${formatDistance(draft.sport, distanceKm)} ${SPORT_LABELS[draft.sport]} in ${formatClock(target)}`
+    : t`${formatDistance(draft.sport, distanceKm)} ${SPORT_LABELS[draft.sport]} in ${formatClock(target)}`
 
 /** The goal the draft describes, or null while any field is still wrong. */
 export const goalFromDraft = (draft: GoalDraft, profile: AthleteProfile, earliest: string | null): Goal | null => {

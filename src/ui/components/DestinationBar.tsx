@@ -3,6 +3,7 @@ import type { CoachConfig, DestinationState, Sport, WorkoutDestination } from '.
 import { SPORT_LABELS } from '../../coach/types.ts'
 import { putConfig } from '../api.ts'
 import { SportIcon } from './SportIcon.tsx'
+import { t } from '../../coach/lang.ts'
 
 type Props = {
   readonly config: CoachConfig
@@ -46,7 +47,7 @@ export const DestinationBar = ({ config, destinations, onSaved }: Props) => {
         }),
       )
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Fehler')
+      setError(caught instanceof Error ? caught.message : t('Fehler'))
     } finally {
       setBusy(false)
     }
@@ -55,7 +56,7 @@ export const DestinationBar = ({ config, destinations, onSaved }: Props) => {
   const names = (sport: Sport): string => {
     const chosen = chosenFor(sport)
     const labels = offered.filter((state) => chosen.includes(state.destination)).map((state) => state.label)
-    return labels.length > 0 ? labels.join(', ') : 'nur Kalender'
+    return labels.length > 0 ? labels.join(', ') : t('nur Kalender')
   }
 
   // Sports going to the same place share a line: "Rad, Laufen → Wahoo".
@@ -69,7 +70,7 @@ export const DestinationBar = ({ config, destinations, onSaved }: Props) => {
 
   return (
     <details className="disclose destinations">
-      <summary aria-label="Übertragen an, pro Sportart">
+      <summary aria-label={t('Übertragen an, pro Sportart')}>
         <span className="destinations__summary">
           {routes.map((route) => (
             <span key={route.target}>

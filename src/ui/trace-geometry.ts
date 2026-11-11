@@ -1,6 +1,7 @@
 import type { ExecutedStep, Execution, ExecutionTrace, SportThreshold } from '../coach/types.ts'
 import type { Span } from '../coach/trace.ts'
 import { inTargetRuns } from '../coach/trace.ts'
+import { pick, t } from '../coach/lang.ts'
 
 /**
  * The drawing of a session over time, apart from any surface: the card draws it
@@ -164,7 +165,7 @@ export const valueText = (value: number | null, metric: SportThreshold['metric']
 }
 
 export const intensityWord = (metric: SportThreshold['metric']): string =>
-  metric === 'power' ? 'Leistung' : 'Tempo'
+  metric === 'power' ? t('Leistung') : pick('Tempo', 'Pace')
 
 /** Intervals to judge, and the data to judge them by. */
 export const isCompared = (execution: Execution): boolean =>

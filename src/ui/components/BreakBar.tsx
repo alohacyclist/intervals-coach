@@ -3,6 +3,7 @@ import type { BreakKind, CoachConfig } from '../../coach/types.ts'
 import { ALL_BREAK_KINDS } from '../../coach/types.ts'
 import { BREAK_DEFAULT_DAYS, BREAK_LABELS, activeBreak, breakLimit } from '../../coach/breaks.ts'
 import { declareBreak, endBreak } from '../api.ts'
+import { t } from '../../coach/lang.ts'
 
 type Props = {
   readonly config: CoachConfig
@@ -28,7 +29,7 @@ export const BreakBar = ({ config, today, onChanged }: Props) => {
       setOpen(false)
       onChanged()
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Fehler')
+      setError(caught instanceof Error ? caught.message : t('Fehler'))
     } finally {
       setBusy(false)
     }
@@ -46,11 +47,11 @@ export const BreakBar = ({ config, today, onChanged }: Props) => {
         <div className="pause__head">
           <span className="badge badge--pause">{BREAK_LABELS[running.kind]}</span>
           <span className="pause__left readout">
-            noch {limit.daysLeft} Tag{limit.daysLeft === 1 ? '' : 'e'} · bis{' '}
+            {limit.daysLeft === 1 ? t('noch 1 Tag · bis') : t`noch ${limit.daysLeft} Tage · bis`}{' '}
             {running.until.slice(8, 10)}.{running.until.slice(5, 7)}.
           </span>
           <button type="button" disabled={busy} onClick={() => void run(endBreak)}>
-            {busy ? 'Beendet…' : 'Pause beenden'}
+            {busy ? 'Beendet…' : t('Pause beenden')}
           </button>
         </div>
         <p className="pause__note">{limit.reason}</p>
@@ -62,11 +63,11 @@ export const BreakBar = ({ config, today, onChanged }: Props) => {
   return (
     <section className="pause">
       <div className="pause__head">
-        <span className="pause__label">Längere Pause</span>
+        <span className="pause__label">{t('Längere Pause')}</span>
         {open ? (
           <>
             <select
-              aria-label="Grund"
+              aria-label={t('Grund')}
               value={kind}
               onChange={(event) => chooseKind(event.target.value as BreakKind)}
             >
@@ -77,31 +78,30 @@ export const BreakBar = ({ config, today, onChanged }: Props) => {
               ))}
             </select>
             <input
-              aria-label="Tage"
+              aria-label={t('Tage')}
               type="number"
               min={1}
               max={120}
               value={days}
               onChange={(event) => setDays(Number(event.target.value))}
             />
-            <span className="pause__unit">Tage</span>
+            <span className="pause__unit">{t('Tage')}</span>
             <button type="button" disabled={busy} onClick={() => void run(() => declareBreak(kind, days))}>
-              {busy ? 'Trägt ein…' : 'Eintragen'}
+              {busy ? t('Trägt ein…') : t('Eintragen')}
             </button>
             <button type="button" onClick={() => setOpen(false)}>
-              Abbrechen
+              {t('Abbrechen')}
             </button>
           </>
         ) : (
           <button type="button" onClick={() => setOpen(true)}>
-            Eintragen
+            {t('Eintragen')}
           </button>
         )}
       </div>
       {open && (
         <p className="pause__note">
-          Solange sie läuft, plant der Coach nichts Hartes und rechnet die Woche nicht als
-          verpasst. Danach kommt die Intensität schrittweise zurück, nicht auf einen Schlag.
+          {t('Solange sie läuft, plant der Coach nichts Hartes und rechnet die Woche nicht als verpasst. Danach kommt die Intensität schrittweise zurück, nicht auf einen Schlag.')}
         </p>
       )}
       {error && <p className="error" role="alert">{error}</p>}

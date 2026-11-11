@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { deleteAccount } from '../api.ts'
+import { t } from '../../coach/lang.ts'
 
 /**
  * Art. 17 without writing an email. Two clicks rather than a browser dialog, so
@@ -17,40 +18,35 @@ export const DeleteAccount = () => {
       await deleteAccount()
       window.location.href = '/'
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Löschen fehlgeschlagen')
+      setError(caught instanceof Error ? caught.message : t('Löschen fehlgeschlagen'))
       setBusy(false)
     }
   }
 
   return (
     <div className="danger">
-      <h3>Konto</h3>
+      <h3>{t('Konto')}</h3>
       {confirming ? (
         <>
           <p className="hint">
-            Gelöscht werden dein Zugangs-Token, deine Ziele und Einstellungen sowie das Protokoll
-            deiner Krafteinheiten, und Formkurve gibt die Freigabe bei intervals.icu zurück. Deine
-            Daten bei intervals.icu bleiben unberührt — auch bereits in den Kalender geschriebene
-            Einheiten. Das lässt sich nicht rückgängig machen.
+            {t('Gelöscht werden dein Zugangs-Token, deine Ziele und Einstellungen sowie das Protokoll deiner Krafteinheiten, und Formkurve gibt die Freigabe bei intervals.icu zurück. Deine Daten bei intervals.icu bleiben unberührt — auch bereits in den Kalender geschriebene Einheiten. Das lässt sich nicht rückgängig machen.')}
           </p>
           <div className="settings__actions">
             <button type="button" className="danger__go" disabled={busy} onClick={() => void remove()}>
-              {busy ? 'Löscht…' : 'Endgültig löschen'}
+              {busy ? t('Löscht…') : t('Endgültig löschen')}
             </button>
             <button type="button" disabled={busy} onClick={() => setConfirming(false)}>
-              Abbrechen
+              {t('Abbrechen')}
             </button>
           </div>
         </>
       ) : (
         <>
           <p className="hint">
-            Löscht alles, was diese App über dich gespeichert hat, und widerruft damit deine
-            Einwilligung. Ohne Löschung geschieht das automatisch zwölf Monate nach deinem letzten
-            Besuch.
+            {t('Löscht alles, was diese App über dich gespeichert hat, und widerruft damit deine Einwilligung. Ohne Löschung geschieht das automatisch zwölf Monate nach deinem letzten Besuch.')}
           </p>
           <button type="button" onClick={() => setConfirming(true)}>
-            Konto und Daten löschen
+            {t('Konto und Daten löschen')}
           </button>
         </>
       )}

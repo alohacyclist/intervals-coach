@@ -1,4 +1,5 @@
 import { Hono } from 'hono'
+import { languageMiddleware } from '../server/lang.ts'
 import type { Context } from 'hono'
 import { DEFAULT_TIMEZONE, apiErrorResponse, createApiRoutes, validTimeZone } from '../server/routes.ts'
 import type { RouteDeps } from '../server/routes.ts'
@@ -41,6 +42,7 @@ import { edgeCache, responseCache } from './response-cache.ts'
 import { withinLimit } from './api-throttle.ts'
 import { allowSignup, brevoConfig, isEmail, requestDoubleOptIn } from './waitlist.ts'
 import { demoApp, isDemo } from './demo.ts'
+import { t } from '../src/coach/lang.ts'
 
 const REFRESH_MARGIN_SECONDS = 120
 
@@ -48,6 +50,9 @@ const REFRESH_MARGIN_SECONDS = 120
 const SINGLE_USER_SUBJECT = 'einzelbetrieb'
 
 const app = new Hono<{ Bindings: Bindings }>()
+
+// Before anything answers: every sentence below is written in the language of the request.
+app.use('*', languageMiddleware)
 
 /** Plain http only happens under `wrangler dev`; there a Secure cookie is never stored. */
 const isSecure = (context: Context): boolean => new URL(context.req.url).protocol === 'https:'
@@ -195,7 +200,7 @@ app.get('/healthz', (context) => {
 // ---------------------------------------------------------------- auth routes
 
 app.get('/auth/login', async (context) => {
-  if (!isMultiUser(context.env)) return context.text('Anmeldung ist nicht konfiguriert', 404)
+  if (!isMultiUser(context.env)) return context.text(t('Anmeldung ist nicht konfiguriert'), 404)
   // Health data needs explicit consent (Art. 9 (2) (a) GDPR), so the login refuses
   // without it rather than trusting the page to have asked.
   if (context.req.query('einwilligung') !== 'ja') return context.redirect('/?fehler=einwilligung', 302)
@@ -205,7 +210,7 @@ app.get('/auth/login', async (context) => {
 })
 
 app.get('/auth/callback', async (context) => {
-  if (!isMultiUser(context.env)) return context.text('Anmeldung ist nicht konfiguriert', 404)
+  if (!isMultiUser(context.env)) return context.text(t('Anmeldung ist nicht konfiguriert'), 404)
 
   const code = context.req.query('code')
   const state = context.req.query('state')
@@ -251,12 +256,12 @@ app.get('/auth/callback', async (context) => {
  */
 app.post('/api/login', async (context) => {
   const env = context.env as Bindings
-  if (isMultiUser(env)) return context.json({ error: 'Die Anmeldung läuft über intervals.icu' }, 400)
-  if (!singleUserConfigured(env)) return context.json({ error: 'Nicht konfiguriert' }, 500)
+  if (isMultiUser(env)) return context.json({ error: t('Die Anmeldung läuft über intervals.icu') }, 400)
+  if (!singleUserConfigured(env)) return context.json({ error: t('Nicht konfiguriert') }, 500)
 
   const client = context.req.header('CF-Connecting-IP') ?? 'unbekannt'
   if (await blocked(env.COACH_CONFIG, client)) {
-    return context.json({ error: 'Zu viele Fehlversuche. Bitte in 15 Minuten erneut versuchen.' }, 429)
+    return context.json({ error: t('Zu viele Fehlversuche. Bitte in 15 Minuten erneut versuchen.') }, 429)
   }
 
   const body = (await context.req.json().catch(() => ({}))) as { passwort?: unknown }
@@ -264,7 +269,7 @@ app.post('/api/login', async (context) => {
 
   if (!(await secretEquals(passwort, env.APP_PASSWORD ?? ''))) {
     await recordFailure(env.COACH_CONFIG, client)
-    return context.json({ error: 'Passwort falsch' }, 401)
+    return context.json({ error: t('Passwort falsch') }, 401)
   }
 
   await clearFailures(env.COACH_CONFIG, client)
@@ -309,20 +314,20 @@ app.get('/api/me', async (context) => {
 app.post('/api/waitlist', async (context) => {
   const env = context.env as Bindings
   const config = brevoConfig(env, new URL(context.req.url).origin)
-  if (!config) return context.json({ error: 'Die Warteliste ist noch nicht eingerichtet.', forAthlete: true }, 503)
+  if (!config) return context.json({ error: t('Die Warteliste ist noch nicht eingerichtet.'), forAthlete: true }, 503)
 
   const body = (await context.req.json().catch(() => ({}))) as { email?: unknown; website?: unknown }
   if (typeof body.website === 'string' && body.website.length > 0) return context.json({ ok: true })
   const email = typeof body.email === 'string' ? body.email.trim() : ''
-  if (!isEmail(email)) return context.json({ error: 'Das sieht nicht nach einer E-Mail-Adresse aus.' }, 400)
+  if (!isEmail(email)) return context.json({ error: t('Das sieht nicht nach einer E-Mail-Adresse aus.') }, 400)
 
   const client = context.req.header('CF-Connecting-IP') ?? 'unbekannt'
   if (!(await allowSignup(env.COACH_CONFIG, client))) {
-    return context.json({ error: 'Zu viele Versuche. Bitte in einer Stunde erneut.' }, 429)
+    return context.json({ error: t('Zu viele Versuche. Bitte in einer Stunde erneut.') }, 429)
   }
   return (await requestDoubleOptIn(config, email)) === 'sent'
     ? context.json({ ok: true })
-    : context.json({ error: 'Das Eintragen hat gerade nicht geklappt. Bitte versuch es später noch einmal.', forAthlete: true }, 502)
+    : context.json({ error: t('Das Eintragen hat gerade nicht geklappt. Bitte versuch es später noch einmal.'), forAthlete: true }, 502)
 })
 
 // ------------------------------------------------------------- access control
@@ -339,9 +344,9 @@ app.use('*', async (context, next) => {
 
   if (!isMultiUser(env) && !singleUserConfigured(env)) {
     return context.text(
-      'Nicht konfiguriert. Entweder INTERVALS_CLIENT_ID, INTERVALS_CLIENT_SECRET und SESSION_SECRET ' +
-        'für den Mehrbenutzer-Betrieb setzen, oder INTERVALS_API_KEY, INTERVALS_ATHLETE_ID und APP_PASSWORD ' +
-        'für den Einzelbetrieb.',
+      t('Nicht konfiguriert. Entweder INTERVALS_CLIENT_ID, INTERVALS_CLIENT_SECRET und SESSION_SECRET ') +
+        t('für den Mehrbenutzer-Betrieb setzen, oder INTERVALS_API_KEY, INTERVALS_ATHLETE_ID und APP_PASSWORD ') +
+        t('für den Einzelbetrieb.'),
       500,
     )
   }
@@ -349,11 +354,11 @@ app.use('*', async (context, next) => {
   if (!context.req.path.startsWith('/api/')) return next()
 
   const session = await currentSession(context)
-  if (!session) return context.json({ error: 'Nicht angemeldet', needsLogin: true }, 401)
+  if (!session) return context.json({ error: t('Nicht angemeldet'), needsLogin: true }, 401)
 
   if (isMultiUser(env) && !(await withinLimit(env.API_LIMITER, session.athleteId))) {
     context.header('Retry-After', '60')
-    return context.json({ error: 'Zu viele Anfragen auf einmal. Bitte eine Minute warten.' }, 429)
+    return context.json({ error: t('Zu viele Anfragen auf einmal. Bitte eine Minute warten.') }, 429)
   }
 
   await renewIfNeeded(context, session)
@@ -379,9 +384,9 @@ const disconnectIntervals = async (env: Bindings, athleteId: string): Promise<vo
 /** Art. 17 in one request: erase the account, then end the session. */
 app.delete('/api/account', async (context) => {
   const env = context.env as Bindings
-  if (!isMultiUser(env)) return context.json({ error: 'Nur im Mehrbenutzer-Betrieb' }, 400)
+  if (!isMultiUser(env)) return context.json({ error: t('Nur im Mehrbenutzer-Betrieb') }, 400)
   const athleteId = await sessionAthlete(context)
-  if (!athleteId) return context.json({ error: 'Nicht angemeldet', needsLogin: true }, 401)
+  if (!athleteId) return context.json({ error: t('Nicht angemeldet'), needsLogin: true }, 401)
 
   // Strava is told first, while the token to tell it with still exists.
   const link = await loadLink(env.COACH_CONFIG, sessionSecret(env), athleteId)

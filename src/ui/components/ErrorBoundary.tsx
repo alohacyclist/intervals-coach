@@ -1,5 +1,6 @@
 import { Component } from 'react'
 import type { ErrorInfo, ReactNode } from 'react'
+import { t } from '../../coach/lang.ts'
 
 type Props = { readonly children: ReactNode }
 type State = { readonly message: string | null }
@@ -14,7 +15,7 @@ export class ErrorBoundary extends Component<Props, State> {
   override state: State = { message: null }
 
   static getDerivedStateFromError(error: unknown): State {
-    return { message: error instanceof Error ? error.message : 'Unbekannter Fehler' }
+    return { message: error instanceof Error ? error.message : t('Unbekannter Fehler') }
   }
 
   override componentDidCatch(error: Error, info: ErrorInfo): void {
@@ -27,14 +28,13 @@ export class ErrorBoundary extends Component<Props, State> {
 
     return (
       <section className="issue">
-        <h2>Die Ansicht konnte nicht aufgebaut werden</h2>
+        <h2>{t('Die Ansicht konnte nicht aufgebaut werden')}</h2>
         <p>{this.state.message}</p>
         <p>
-          Neu laden hilft meistens. Bleibt es dabei, hilft der genaue Text oben beim Finden der
-          Ursache.
+          {t('Neu laden hilft meistens. Bleibt es dabei, hilft der genaue Text oben beim Finden der Ursache.')}
         </p>
         <button type="button" onClick={() => window.location.reload()}>
-          Neu laden
+          {t('Neu laden')}
         </button>
       </section>
     )

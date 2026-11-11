@@ -1,4 +1,5 @@
 import type { FitnessPoint } from '../../coach/types.ts'
+import { t } from '../../coach/lang.ts'
 
 /**
  * Fitness against fatigue over the whole history. The marks live in a stretched
@@ -46,8 +47,8 @@ export const FitnessCurve = ({ points }: Props) => {
   return (
     <figure className="chart">
       <figcaption className="chart__head">
-        <span className="chart__title">Fitness und Ermüdung</span>
-        <span className="chart__span readout">{points.length} Tage</span>
+        <span className="chart__title">{t('Fitness und Ermüdung')}</span>
+        <span className="chart__span readout">{points.length}{t(' Tage')}</span>
       </figcaption>
 
       <div className="plot">
@@ -62,8 +63,8 @@ export const FitnessCurve = ({ points }: Props) => {
           preserveAspectRatio="none"
           role="img"
           aria-label={
-            `Fitness heute ${last!.ctl}, Höchstwert ${best.ctl} am ${best.date}. ` +
-            `Ermüdung heute ${last!.atl}. Form ${form > 0 ? 'plus' : 'minus'} ${Math.abs(form)}.`
+            t`Fitness heute ${last!.ctl}, Höchstwert ${best.ctl} am ${best.date}. ` +
+            t`Ermüdung heute ${last!.atl}. Form ${form > 0 ? 'plus' : 'minus'} ${Math.abs(form)}.`
           }
         >
           {ticks.map((tick) => (
@@ -99,18 +100,18 @@ export const FitnessCurve = ({ points }: Props) => {
 
       <div className="chart__axis readout">
         <span>{points[0]!.date.slice(8, 10)}.{points[0]!.date.slice(5, 7)}.</span>
-        <span>heute</span>
+        <span>{t('heute')}</span>
       </div>
 
       <p className="chart__legend">
         <span>
-          <i className="chart__key chart__key--ctl" /> Fitness {last!.ctl}
+          <i className="chart__key chart__key--ctl" />{t(' Fitness ')}{last!.ctl}
         </span>
         <span>
-          <i className="chart__key chart__key--atl" /> Ermüdung {last!.atl}
+          <i className="chart__key chart__key--atl" />{t(' Ermüdung ')}{last!.atl}
         </span>
         <span>
-          Form {form > 0 ? `+${form}` : form} · Bestwert {best.ctl}
+          {t('Form ')}{form > 0 ? `+${form}` : form}{t(' · Bestwert ')}{best.ctl}
         </span>
       </p>
     </figure>

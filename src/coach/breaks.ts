@@ -1,5 +1,6 @@
 import type { BreakKind, DayType, TrainingBreak } from './types.ts'
 import { addDays, diffDays } from './dates.ts'
+import { perLang, pick, t } from './lang.ts'
 
 /**
  * A declared break outranks everything the plan would otherwise work out. It is
@@ -13,12 +14,12 @@ import { addDays, diffDays } from './dates.ts'
  * a return window keeps maximal work off the table for a few more days.
  */
 
-export const BREAK_LABELS: Readonly<Record<BreakKind, string>> = {
-  illness: 'Krankheit',
-  vaccination: 'Impfung',
-  injury: 'Verletzung',
-  pause: 'Pause',
-}
+export const BREAK_LABELS: Readonly<Record<BreakKind, string>> = perLang(() => ({
+  illness: t('Krankheit'),
+  vaccination: t('Impfung'),
+  injury: t('Verletzung'),
+  pause: pick('Pause', 'Break'),
+}))
 
 /** Where the entry form starts. The athlete can always change it. */
 export const BREAK_DEFAULT_DAYS: Readonly<Record<BreakKind, number>> = {
@@ -37,35 +38,35 @@ type Recovery = {
   readonly returning: string
 }
 
-const RECOVERY: Readonly<Record<BreakKind, Recovery>> = {
+const RECOVERY: Readonly<Record<BreakKind, Recovery>> = perLang(() => ({
   vaccination: {
     restDays: 2,
     returnDays: 3,
     during:
-      'Die Reaktion kommt meist erst 12 bis 36 Stunden später, nicht sofort. Erst zwei Tage nichts, danach höchstens locker.',
-    returning: 'Zurück nach der Impfung — Schwelle vor VO₂max.',
+      t('Die Reaktion kommt meist erst 12 bis 36 Stunden später, nicht sofort. Erst zwei Tage nichts, danach höchstens locker.'),
+    returning: t('Zurück nach der Impfung — Schwelle vor VO₂max.'),
   },
   illness: {
     restDays: 3,
     returnDays: 7,
     during:
-      'Bei Fieber oder Beschwerden unterhalb des Halses gehört Training ganz weg. Grund ist das Risiko einer Herzmuskelentzündung, nicht die Leistung.',
-    returning: 'Erste Woche zurück nach Krankheit — Umfang vor Intensität, VO₂max wartet.',
+      t('Bei Fieber oder Beschwerden unterhalb des Halses gehört Training ganz weg. Grund ist das Risiko einer Herzmuskelentzündung, nicht die Leistung.'),
+    returning: t('Erste Woche zurück nach Krankheit — Umfang vor Intensität, VO₂max wartet.'),
   },
   injury: {
     restDays: 0,
     returnDays: 5,
-    during: 'Was schmerzfrei geht, darf locker weiterlaufen. Alles andere pausiert.',
-    returning: 'Zurück nach der Verletzung — erst wieder Belastung aufbauen, dann Spitzen.',
+    during: t('Was schmerzfrei geht, darf locker weiterlaufen. Alles andere pausiert.'),
+    returning: t('Zurück nach der Verletzung — erst wieder Belastung aufbauen, dann Spitzen.'),
   },
   pause: {
     restDays: 0,
     returnDays: 0,
     during:
-      'Keine körperliche Einschränkung — der Plan hält still und drängt nicht auf das Wochenpensum.',
+      t('Keine körperliche Einschränkung — der Plan hält still und drängt nicht auf das Wochenpensum.'),
     returning: '',
   },
-}
+}))
 
 const covers = (entry: TrainingBreak, date: string): boolean =>
   date >= entry.from && date <= entry.until
@@ -95,15 +96,15 @@ export const breakLimit = (
   const daysLeft = diffDays(date, entry.until) + 1
   const resting = dayOfBreak < recovery.restDays
   const label = BREAK_LABELS[entry.kind]
-  const remaining = `noch ${daysLeft} Tag${daysLeft === 1 ? '' : 'e'}`
+  const remaining = daysLeft === 1 ? t('noch 1 Tag') : t`noch ${daysLeft} Tage`
 
   return {
     kind: entry.kind,
     dayType: resting ? 'REST' : 'EASY',
     daysLeft,
     reason: resting
-      ? `${label} eingetragen, ${remaining} — heute nichts. ${recovery.during}`
-      : `${label} eingetragen, ${remaining} — höchstens locker, freiwillig. ${recovery.during}`,
+      ? t`${label} eingetragen, ${remaining} — heute nichts. ${recovery.during}`
+      : t`${label} eingetragen, ${remaining} — höchstens locker, freiwillig. ${recovery.during}`,
   }
 }
 

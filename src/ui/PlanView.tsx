@@ -21,7 +21,9 @@ import { zrlRelevant } from './zrl-relevance.ts'
 import { GarminAttribution } from './components/GarminAttribution.tsx'
 import { CoreStartSlider, MoreTimeSlider } from './components/MoreTimeSlider.tsx'
 
-const PLAN_DAYS = 3
+import { SHORT_HORIZON, keepHorizon, readHorizon } from './plan-horizon.ts'
+import type { PlanHorizon } from './plan-horizon.ts'
+import { locale, t } from '../coach/lang.ts'
 
 type Props = {
   readonly me: Me
@@ -41,16 +43,17 @@ const latestCore = (day: PlannedDay): number =>
   Math.max(0, ...day.options.flatMap((option) => option.variants.flatMap((variant) => (variant.core ? [variant.core.latest] : []))))
 
 const INTENTS = [
-  { key: undefined, label: 'Wie geplant' },
-  { key: 'hard', label: 'Hart' },
-  { key: 'easy', label: 'Locker' },
-  { key: 'rest', label: 'Pause' },
+  { key: undefined, label: t('Wie geplant') },
+  { key: 'hard', label: t('Hart') },
+  { key: 'easy', label: t('Locker') },
+  { key: 'rest', label: t('Pause') },
 ] as const
 
 export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
   const [intent, setIntent] = useState<'hard' | 'easy' | 'rest' | undefined>(undefined)
   const [minutesToday, setMinutesToday] = useState<number | undefined>(undefined)
   const [coreAt, setCoreAt] = useState<number | undefined>(undefined)
+  const [horizon, setHorizon] = useState<PlanHorizon>(readHorizon)
   const [plan, setPlan] = useState<Plan | null>(null)
   const [selected, setSelected] = useState<string | null>(null)
   const [config, setConfig] = useState<CoachConfig | null>(null)
@@ -89,7 +92,7 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
     setBusy(true)
     setError(null)
     try {
-      const [nextPlan, nextConfig] = await Promise.all([getPlan(PLAN_DAYS, intent, fresh, minutesToday, coreAt), getConfig()])
+      const [nextPlan, nextConfig] = await Promise.all([getPlan(horizon, intent, fresh, minutesToday, coreAt), getConfig()])
       setPlan(nextPlan)
       setConfig(nextConfig)
     } catch (caught) {
@@ -101,11 +104,11 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
         window.location.href = EXPIRED_SESSION_URL
         return
       }
-      setError(caught instanceof Error ? caught.message : 'Unbekannter Fehler')
+      setError(caught instanceof Error ? caught.message : t('Unbekannter Fehler'))
     } finally {
       setBusy(false)
     }
-  }, [onNeedsOnboarding, intent, minutesToday, coreAt])
+  }, [onNeedsOnboarding, horizon, intent, minutesToday, coreAt])
 
   useEffect(() => {
     void load()
@@ -160,14 +163,14 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
         <p className="error error--block" role="alert">
           {error}
           <button type="button" onClick={() => void load()}>
-            Erneut versuchen
+            {t('Erneut versuchen')}
           </button>
         </p>
       )}
 
       {!plan && !error && (
         <p className="loading" role="status">
-          Lade Daten von intervals.icu…
+          {t('Lade Daten von intervals.icu…')}
         </p>
       )}
 
@@ -177,10 +180,17 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
           days={plan.days}
           selected={plan.days.some((day) => day.date === selected) ? (selected ?? '') : (plan.days[0]?.date ?? '')}
           onSelect={setSelected}
+          horizon={horizon}
+          busy={busy}
+          onHorizon={(next) => {
+            keepHorizon(next)
+            setHorizon(next)
+          }}
           panel={(day, index) => (
             <DayCard
               day={day}
               index={index}
+              outlook={index >= SHORT_HORIZON}
               strengthDone={config?.strengthLog.includes(day.date) ?? false}
               onStrengthLogged={() => void load()}
               destinations={destinationLabels}
@@ -191,7 +201,7 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
             >
               {index === 0 && (
                 <>
-                  <div className="intent" role="group" aria-label="Wie soll heute werden?">
+                  <div className="intent" role="group" aria-label={t('Wie soll heute werden?')}>
                     {INTENTS.map((option) => (
                       <button
                         key={option.label}
@@ -249,17 +259,17 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
 
       {plan && (
         <footer className="footer">
-          <span>Stand: {new Date(plan.generatedAt).toLocaleString('de-DE', STAND_FORMAT)}</span>
-          {me.mode === 'multi' && <span className="footer__account">Angemeldet als {me.name}</span>}
+          <span>{t('Stand: ')}{new Date(plan.generatedAt).toLocaleString(locale(), STAND_FORMAT)}</span>
+          {me.mode === 'multi' && <span className="footer__account">{t('Angemeldet als ')}{me.name}</span>}
           {me.mode === 'multi' && me.consentAt && (
             <span className="footer__account">
-              Einwilligung {new Date(me.consentAt).toLocaleDateString('de-DE')}
+              {t('Einwilligung ')}{new Date(me.consentAt).toLocaleDateString(locale())}
             </span>
           )}
-          <nav className="footer__links" aria-label="Rechtliches und Konto">
-            <a href="/datenschutz">Datenschutz</a>
-            <a href="/impressum">Impressum</a>
-            <a href="/auth/logout">Abmelden</a>
+          <nav className="footer__links" aria-label={t('Rechtliches und Konto')}>
+            <a href="/datenschutz">{t('Datenschutz')}</a>
+            <a href="/impressum">{t('Impressum')}</a>
+            <a href="/auth/logout">{t('Abmelden')}</a>
           </nav>
         </footer>
       )}

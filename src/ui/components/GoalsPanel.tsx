@@ -1,23 +1,25 @@
 import type { Feasibility, Goal } from '../../coach/types.ts'
 import { formatClock } from '../../coach/dates.ts'
 import { formatDistance } from '../../coach/format.ts'
+import { t } from '../../coach/lang.ts'
 
 const VERDICT_LABEL: Record<Feasibility['verdict'], string> = {
-  'on-track': 'realistisch',
-  ambitious: 'ambitioniert',
-  unrealistic: 'nicht realistisch',
+  'on-track': t('realistisch'),
+  ambitious: t('ambitioniert'),
+  unrealistic: t('nicht realistisch'),
 }
 
 /** Where the athlete stands now, not where they stood when the plan was set up. */
 const goalValue = (goal: Goal, current: number): string =>
   goal.kind === 'ftp'
     ? `${current} W → ${goal.targetValue} W`
-    : `${formatClock(current)} → ${formatClock(goal.targetValue)}${goal.distanceKm === undefined ? '' : ` auf ${formatDistance(goal.sport, goal.distanceKm)}`}`
+    : `${formatClock(current)} → ${formatClock(goal.targetValue)}${goal.distanceKm === undefined ? '' : t` auf ${formatDistance(goal.sport, goal.distanceKm)}`}`
 
 const remaining = (goal: Goal, weeksLeft: number | null): string => {
-  if (goal.targetDate === undefined) return 'ohne Zieldatum'
+  if (goal.targetDate === undefined) return t('ohne Zieldatum')
   const weeks = Math.round(weeksLeft ?? 0)
-  return `noch ${weeks} Woche${weeks === 1 ? '' : 'n'} · bis ${goal.targetDate.slice(8, 10)}.${goal.targetDate.slice(5, 7)}.${goal.targetDate.slice(0, 4)}`
+  const until = `${goal.targetDate.slice(8, 10)}.${goal.targetDate.slice(5, 7)}.${goal.targetDate.slice(0, 4)}`
+  return weeks === 1 ? t`noch 1 Woche · bis ${until}` : t`noch ${weeks} Wochen · bis ${until}`
 }
 
 type Props = {
@@ -27,11 +29,10 @@ type Props = {
 
 export const GoalsPanel = ({ goals, feasibility }: Props) => (
   <section className="goals">
-    <h2>Ziele</h2>
+    <h2>{t('Ziele')}</h2>
     {goals.length === 0 && (
       <p className="goal__message">
-        Kein konkretes Ziel – fit bleiben. Der Plan wechselt Grundlage und Aufbau in
-        Vier-Wochen-Blöcken; ein Ziel legst du in den Einstellungen an.
+        {t('Kein konkretes Ziel – fit bleiben. Der Plan wechselt Grundlage und Aufbau in Vier-Wochen-Blöcken; ein Ziel legst du in den Einstellungen an.')}
       </p>
     )}
     {goals.map((goal) => {

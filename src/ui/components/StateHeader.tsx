@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import type { ReadinessScore } from '../../coach/types.ts'
+import { t } from '../../coach/lang.ts'
 
 type Props = {
   /** One sentence on how the athlete stands and what that means for today. */
@@ -27,15 +28,15 @@ const ActionIcon = ({ path }: { readonly path: string }) => (
 export const StateHeader = ({ summary, readiness, onRefresh, onSettings, busy, children }: Props) => (
   <header className="header">
     <div className="header__actions">
-      <button type="button" onClick={onSettings} aria-label="Einstellungen" title="Einstellungen">
+      <button type="button" onClick={onSettings} aria-label={t('Einstellungen')} title={t('Einstellungen')}>
         <ActionIcon path={SETTINGS_PATH} />
       </button>
       <button
         type="button"
         onClick={onRefresh}
         disabled={busy}
-        aria-label={busy ? 'Lädt…' : 'Aktualisieren'}
-        title={busy ? 'Lädt…' : 'Aktualisieren'}
+        aria-label={busy ? t('Lädt…') : t('Aktualisieren')}
+        title={busy ? t('Lädt…') : t('Aktualisieren')}
       >
         <ActionIcon path={REFRESH_PATH} />
       </button>

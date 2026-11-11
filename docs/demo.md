@@ -45,8 +45,10 @@ Danach liegt die Demo unter `https://formkurve-demo.<dein-subdomain>.workers.dev
 eigene Adresse (z. B. `demo.formkurve.org`) im Cloudflare-Dashboard beim Worker
 `formkurve-demo` unter *Settings → Domains & Routes* eine Custom Domain hinzufügen.
 
-Der GitHub-Workflow deployt nur die Produktion. Die Demo wird von Hand mit
-`npm run deploy:demo` aktualisiert, auch nach Änderungen an der App.
+Der GitHub-Workflow deployt bei jedem Push auf `main` auch die Demo (Job *Demo-Worker*),
+mit demselben Cloudflare-Token wie die Produktion; sie bleibt damit auf dem Stand der App.
+Ist in GitHub das Secret `DEMO_PASSWORD` gesetzt, geht es mit; sonst bleibt das Passwort,
+das beim Worker liegt. Von Hand geht es weiter mit `npm run deploy:demo`.
 
 **Nicht setzen** in der Umgebung `demo`: `INTERVALS_*`, `APP_PASSWORD`, `STRAVA_*`. Optional
 ist `SESSION_SECRET`. Dann signiert er die Sitzungen statt des Demo-Passworts, und ein
