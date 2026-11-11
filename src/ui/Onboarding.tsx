@@ -10,13 +10,14 @@ import type { GoalDraft } from './goal-draft.ts'
 import { emptyGoalDraft, goalErrors, goalFromDraft, hasErrors } from './goal-draft.ts'
 import type { ThresholdSources } from './threshold-input.ts'
 import { prefillSports, prefilledThreshold } from './threshold-input.ts'
+import { t } from '../coach/lang.ts'
 
 type GoalChoice = 'none' | 'ftp' | 'raceTime'
 
 const GOAL_CHOICES: readonly { readonly value: GoalChoice; readonly label: string }[] = [
-  { value: 'none', label: 'Kein konkretes Ziel – fit bleiben' },
-  { value: 'raceTime', label: 'Wettkampf – eine Zielzeit' },
-  { value: 'ftp', label: 'FTP steigern' },
+  { value: 'none', label: t('Kein konkretes Ziel – fit bleiben') },
+  { value: 'raceTime', label: t('Wettkampf – eine Zielzeit') },
+  { value: 'ftp', label: t('FTP steigern') },
 ]
 
 type Draft = {
@@ -106,7 +107,7 @@ export const Onboarding = ({ onDone }: { readonly onDone: () => void }) => {
     setAttempted(true)
     const goal = activeDraft === null ? null : goalFromDraft(activeDraft, profile, today)
     if (!thresholdsValid || hasErrors(errors) || (activeDraft !== null && goal === null)) {
-      setError('Bitte die markierten Felder prüfen.')
+      setError(t('Bitte die markierten Felder prüfen.'))
       return
     }
     const config: CoachConfig = {
@@ -121,7 +122,7 @@ export const Onboarding = ({ onDone }: { readonly onDone: () => void }) => {
       planStart: today,
     }
     if (config.profile.sports.length === 0) {
-      setError('Wähl mindestens eine Sportart.')
+      setError(t('Wähl mindestens eine Sportart.'))
       return
     }
     setBusy(true)
@@ -130,7 +131,7 @@ export const Onboarding = ({ onDone }: { readonly onDone: () => void }) => {
       await putConfig(config)
       onDone()
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Speichern fehlgeschlagen')
+      setError(caught instanceof Error ? caught.message : t('Speichern fehlgeschlagen'))
     } finally {
       setBusy(false)
     }
@@ -138,14 +139,13 @@ export const Onboarding = ({ onDone }: { readonly onDone: () => void }) => {
 
   return (
     <section className="onboarding">
-      <h1>Kurz einrichten</h1>
-      <p className="onboarding__lead">Zwei Minuten. Alles lässt sich später ändern.</p>
+      <h1>{t('Kurz einrichten')}</h1>
+      <p className="onboarding__lead">{t('Zwei Minuten. Alles lässt sich später ändern.')}</p>
 
       <fieldset>
-        <legend>Was trainierst du</legend>
+        <legend>{t('Was trainierst du')}</legend>
         <p className="hint">
-          Der Plan zeigt für jeden Tag zu jeder gewählten Sportart eine Einheit — du nimmst die, für
-          die du Zeit hast. FTP, Laufpace und CSS holt er, wenn möglich, aus deinen intervals.icu-Einstellungen.
+          {t('Der Plan zeigt für jeden Tag zu jeder gewählten Sportart eine Einheit — du nimmst die, für die du Zeit hast. FTP, Laufpace und CSS holt er, wenn möglich, aus deinen intervals.icu-Einstellungen.')}
         </p>
         <SportPicker
           sports={draft.sports}
@@ -156,11 +156,11 @@ export const Onboarding = ({ onDone }: { readonly onDone: () => void }) => {
         />
         <div className="grid">
           <label>
-            Gewicht (kg)
+            {t('Gewicht (kg)')}
             <input type="number" value={draft.weightKg} onChange={set('weightKg')} />
           </label>
           <label>
-            Krafttraining mit
+            {t('Krafttraining mit')}
             <select value={draft.equipment} onChange={set('equipment')}>
               {(Object.keys(EQUIPMENT_LABELS) as Equipment[]).map((option) => (
                 <option key={option} value={option}>
@@ -173,8 +173,8 @@ export const Onboarding = ({ onDone }: { readonly onDone: () => void }) => {
       </fieldset>
 
       <fieldset>
-        <legend>Was willst du erreichen</legend>
-        <div className="choices" role="radiogroup" aria-label="Ziel">
+        <legend>{t('Was willst du erreichen')}</legend>
+        <div className="choices" role="radiogroup" aria-label={t('Ziel')}>
           {choices.map((entry) => (
             <label key={entry.value} className="sports__toggle">
               <input
@@ -189,8 +189,7 @@ export const Onboarding = ({ onDone }: { readonly onDone: () => void }) => {
         </div>
         {activeDraft === null ? (
           <p className="hint">
-            Der Plan wechselt Grundlage und Aufbau in Vier-Wochen-Blöcken und setzt ab und zu eine
-            Standortbestimmung. Ein Ziel kannst du jederzeit in den Einstellungen anlegen.
+            {t('Der Plan wechselt Grundlage und Aufbau in Vier-Wochen-Blöcken und setzt ab und zu eine Standortbestimmung. Ein Ziel kannst du jederzeit in den Einstellungen anlegen.')}
           </p>
         ) : (
           <GoalEditor
@@ -204,30 +203,29 @@ export const Onboarding = ({ onDone }: { readonly onDone: () => void }) => {
       </fieldset>
 
       <fieldset>
-        <legend>Wie viel Zeit hast du</legend>
+        <legend>{t('Wie viel Zeit hast du')}</legend>
         <p className="hint">
-          Das Minimum ist dein Vorsatz — der Plan sagt dir, wenn du drunter liegst. Das Maximum
-          steuert, wie viele harte Einheiten pro Woche eingeplant werden.
+          {t('Das Minimum ist dein Vorsatz — der Plan sagt dir, wenn du drunter liegst. Das Maximum steuert, wie viele harte Einheiten pro Woche eingeplant werden.')}
         </p>
         <div className="grid">
           <label>
-            Einheiten / Woche mindestens
+            {t('Einheiten / Woche mindestens')}
             <input type="number" min={1} max={14} value={draft.sessionsMin} onChange={set('sessionsMin')} />
           </label>
           <label>
-            Einheiten / Woche höchstens
+            {t('Einheiten / Woche höchstens')}
             <input type="number" min={1} max={14} value={draft.sessionsMax} onChange={set('sessionsMax')} />
           </label>
           <label>
-            Minuten — schaffe ich immer
+            {t('Minuten — schaffe ich immer')}
             <input type="number" value={draft.minMinutes} onChange={set('minMinutes')} />
           </label>
           <label>
-            Minuten — normalerweise
+            {t('Minuten — normalerweise')}
             <input type="number" value={draft.normalMinutes} onChange={set('normalMinutes')} />
           </label>
           <label>
-            Minuten — wenn viel Zeit ist
+            {t('Minuten — wenn viel Zeit ist')}
             <input type="number" value={draft.maxMinutes} onChange={set('maxMinutes')} />
           </label>
         </div>
@@ -236,7 +234,7 @@ export const Onboarding = ({ onDone }: { readonly onDone: () => void }) => {
       {error && <p className="error" role="alert">{error}</p>}
 
       <button type="button" className="cta cta--button" disabled={busy} onClick={() => void submit()}>
-        {busy ? 'Speichert…' : 'Plan erstellen'}
+        {busy ? 'Speichert…' : t('Plan erstellen')}
       </button>
     </section>
   )

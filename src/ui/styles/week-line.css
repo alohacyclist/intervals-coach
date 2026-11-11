@@ -399,3 +399,31 @@
 .panel .strength {
   padding-inline: 0;
 }
+
+/* Past the three days the plan stands for: lighter on the line, and said so on the day. */
+.line__stop-item--outlook > .line__row .line__title,
+.line__stop-item--outlook > .line__row .line__side b {
+  font-weight: 400;
+}
+.panel__outlook {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: var(--dim);
+}
+.line__more {
+  border-top: 1px solid var(--rule);
+}
+.line__more button {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 14px;
+  background: none;
+  border: 0;
+  color: var(--dim);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+}
+.line__more button:hover:not(:disabled) {
+  color: var(--ink);
+}

@@ -5,6 +5,7 @@ import { pushWorkout } from '../api.ts'
 import { WorkoutProfile } from './WorkoutProfile.tsx'
 import { Term } from './Term.tsx'
 import { SportIcon } from './SportIcon.tsx'
+import { locale, t } from '../../coach/lang.ts'
 
 type Props = {
   readonly session: PlannedSession
@@ -31,15 +32,15 @@ type Props = {
 type PushState = { readonly status: 'idle' | 'busy' | 'error'; readonly message?: string }
 
 const decimal = (value: number): string =>
-  value.toLocaleString('de-DE', { maximumFractionDigits: 1 })
+  value.toLocaleString(locale(), { maximumFractionDigits: 1 })
 
 /** A race has no push button: it happens on Zwift, not from the calendar. */
 const raceFacts = (race: RaceDetails): string =>
   [
-    race.distanceKm === null ? 'Route noch offen' : `${decimal(race.distanceKm)} km`,
+    race.distanceKm === null ? t('Route noch offen') : `${decimal(race.distanceKm)} km`,
     race.elevationM === null ? null : `${race.elevationM} hm`,
-    race.race.route ? `${race.race.laps} ${race.race.laps === 1 ? 'Runde' : 'Runden'}` : null,
-    race.rough ? 'grobe Schätzung' : `geschätzt aus ${race.basedOn} Rennen`,
+    race.race.route ? `${race.race.laps} ${race.race.laps === 1 ? t('Runde') : t('Runden')}` : null,
+    race.rough ? t('grobe Schätzung') : t`geschätzt aus ${race.basedOn} Rennen`,
   ]
     .filter(Boolean)
     .join(' · ')
@@ -91,7 +92,7 @@ export const SessionCard = ({
       setSent((previous) => [...previous, minutes])
       setPush({ status: 'idle' })
     } catch (error) {
-      setPush({ status: 'error', message: error instanceof Error ? error.message : 'Fehler' })
+      setPush({ status: 'error', message: error instanceof Error ? error.message : t('Fehler') })
     }
   }
 
@@ -117,10 +118,10 @@ export const SessionCard = ({
       <div className="session__head">
         {/* Without a title the day's pick tile above already shows sport and star. */}
         {titled && <SportIcon sport={session.sport} />}
-        {titled && recommended && <span className="badge badge--pick">★ empfohlen</span>}
-        {done && <span className="badge badge--done">✓ Erledigt</span>}
+        {titled && recommended && <span className="badge badge--pick">{t('★ empfohlen')}</span>}
+        {done && <span className="badge badge--done">{t('✓ Erledigt')}</span>}
         <span className="session__meta">
-          <Term term="tss">{active?.load ?? session.template.load} TSS</Term>
+          <Term term="tss">{active?.load ?? session.template.load}{t(' TSS')}</Term>
         </span>
       </div>
 
@@ -130,7 +131,7 @@ export const SessionCard = ({
       {session.race && <p className="session__race readout">{raceFacts(session.race)}</p>}
 
       {variants.length > 1 ? (
-        <div className="variants" role="group" aria-label="Dauer wählen">
+        <div className="variants" role="group" aria-label={t('Dauer wählen')}>
           {variants.map((variant) => (
             <button
               key={variant.tier}
@@ -141,7 +142,7 @@ export const SessionCard = ({
               aria-pressed={variant.tier === tier}
               onClick={() => choose(variant.tier)}
             >
-              {variant.minutes} min{' '}
+              {variant.minutes}{t(' min')}{' '}
               <span>
                 {TIER_LABELS[variant.tier]}
                 {onCalendar(variant.minutes) && ' ✓'}
@@ -151,7 +152,7 @@ export const SessionCard = ({
         </div>
       ) : titled ? (
         <p className="session__duration readout">
-          {active?.minutes ?? session.template.minutes} min
+          {active?.minutes ?? session.template.minutes}{t(' min')}
         </p>
       ) : null}
 
@@ -162,7 +163,7 @@ export const SessionCard = ({
           stand in for it, the table is the only reading and stays open. */}
       {profile.length > 0 ? (
         <details className="disclose session__steps">
-          <summary>Schritte im Detail</summary>
+          <summary>{t('Schritte im Detail')}</summary>
           {stepList}
         </details>
       ) : (
@@ -171,37 +172,35 @@ export const SessionCard = ({
 
       {/* The one sentence why stays above; the coaching prose is a tap away. */}
       <details className="disclose session__why">
-        <summary>Warum diese Einheit</summary>
+        <summary>{t('Warum diese Einheit')}</summary>
         {!recommended && <p className="session__note">{session.reason}</p>}
         {active?.added && active.added.length > 0 && (
           <p className="session__note">
-            {active.added.join(' · ')}. Intervalle und Zielwerte bleiben unverändert — die zusätzliche
-            Zeit ist lockere Grundlage, kein zweiter Reiz.
+            {active.added.join(' · ')}{t('. Intervalle und Zielwerte bleiben unverändert — die zusätzliche Zeit ist lockere Grundlage, kein zweiter Reiz.')}
           </p>
         )}
         {trimmed && (
           <p className="session__note">
-            {active?.cuts.join(' · ')}. Intervalllänge und Zielwerte bleiben unverändert — nur das
-            Volumen sinkt. Fehlen dabei Intervalle, zählt sie nicht für die nächste Stufe.
+            {active?.cuts.join(' · ')}{t('. Intervalllänge und Zielwerte bleiben unverändert — nur das Volumen sinkt. Fehlen dabei Intervalle, zählt sie nicht für die nächste Stufe.')}
           </p>
         )}
         <p className="session__note">{session.template.coachNote}</p>
       </details>
 
       {done || session.race ? null : onCalendar(minutes) ? (
-        <p className="session__sent readout">✓ Diese Fassung ist im Kalender</p>
+        <p className="session__sent readout">{t('✓ Diese Fassung ist im Kalender')}</p>
       ) : (
         <button type="button" className="session__push" onClick={onPush} disabled={push.status === 'busy'}>
           {push.status === 'busy'
             ? 'Sende…'
             : destinations.length > 0
-              ? `→ Kalender + ${destinations.join(', ')}`
-              : '→ Kalender'}
+              ? t`→ Kalender + ${destinations.join(', ')}`
+              : t('→ Kalender')}
         </button>
       )}
       {push.status === 'error' && <p className="error" role="alert">{push.message}</p>}
       <p className="sr-only" role="status">
-        {push.status === 'busy' ? 'Wird an den Kalender gesendet…' : sent.includes(minutes) ? 'Diese Fassung ist jetzt im Kalender.' : ''}
+        {push.status === 'busy' ? t('Wird an den Kalender gesendet…') : sent.includes(minutes) ? t('Diese Fassung ist jetzt im Kalender.') : ''}
       </p>
     </article>
   )

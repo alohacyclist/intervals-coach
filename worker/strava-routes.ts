@@ -1,4 +1,5 @@
 import { Hono } from 'hono'
+import { LANG_HEADER } from '../server/lang.ts'
 import type { Context } from 'hono'
 import type { RouteDeps } from '../server/routes.ts'
 import { isIsoDate } from '../src/coach/config-schema.ts'
@@ -10,6 +11,7 @@ import type { StravaApp } from './strava.ts'
 import { StravaError, authorizeUrl, exchangeCode, grantedEnough, withdraw } from './strava.ts'
 import { deleteLink, loadLink, saveLink } from './strava-store.ts'
 import { postSession } from './strava-sync.ts'
+import { t, isLang } from '../src/coach/lang.ts'
 
 /** What these routes need from the Worker around them: who is asking, and with which secrets. */
 export type StravaRouteHelpers = {
@@ -32,7 +34,7 @@ export const createStravaRoutes = (helpers: StravaRouteHelpers): Hono<{ Bindings
   const app = new Hono<{ Bindings: Bindings }>()
 
   app.get('/auth/strava/login', async (context) => {
-    if (!hasStrava(context.env)) return context.text('Strava ist nicht eingerichtet', 404)
+    if (!hasStrava(context.env)) return context.text(t('Strava ist nicht eingerichtet'), 404)
     if (!(await helpers.subjectOf(context))) return context.redirect('/', 302)
     const state = randomToken()
     context.header('Set-Cookie', createStateCookie(state, helpers.secure(context), 'strava'))
@@ -40,7 +42,7 @@ export const createStravaRoutes = (helpers: StravaRouteHelpers): Hono<{ Bindings
   })
 
   app.get('/auth/strava/callback', async (context) => {
-    if (!hasStrava(context.env)) return context.text('Strava ist nicht eingerichtet', 404)
+    if (!hasStrava(context.env)) return context.text(t('Strava ist nicht eingerichtet'), 404)
     const subject = await helpers.subjectOf(context)
     if (!subject) return context.redirect('/', 302)
 
@@ -77,6 +79,11 @@ export const createStravaRoutes = (helpers: StravaRouteHelpers): Hono<{ Bindings
   app.get('/api/strava', async (context) => {
     const subject = await helpers.subjectOf(context)
     const link = subject ? await loadLink(context.env.COACH_CONFIG, helpers.secretOf(context.env), subject) : null
+    // The summaries the cron writes at night follow the language the athlete reads here.
+    const wanted = context.req.header(LANG_HEADER)
+    if (link && isLang(wanted) && link.lang !== wanted) {
+      await saveLink(context.env.COACH_CONFIG, helpers.secretOf(context.env), { ...link, lang: wanted })
+    }
     return context.json({
       available: hasStrava(context.env),
       connected: link !== null,
@@ -88,7 +95,7 @@ export const createStravaRoutes = (helpers: StravaRouteHelpers): Hono<{ Bindings
   /** Disconnecting also withdraws this app's access on Strava's side. */
   app.delete('/api/strava', async (context) => {
     const subject = await helpers.subjectOf(context)
-    if (!subject) return context.json({ error: 'Nicht angemeldet', needsLogin: true }, 401)
+    if (!subject) return context.json({ error: t('Nicht angemeldet'), needsLogin: true }, 401)
     const link = await loadLink(context.env.COACH_CONFIG, helpers.secretOf(context.env), subject)
     if (link) await withdraw(stravaApp(context.env, new URL(context.req.url).origin), link.tokens)
     await deleteLink(context.env.COACH_CONFIG, subject)
@@ -96,21 +103,21 @@ export const createStravaRoutes = (helpers: StravaRouteHelpers): Hono<{ Bindings
   })
 
   app.post('/api/strava/sessions', async (context) => {
-    if (!hasStrava(context.env)) return context.json({ error: 'Strava ist nicht eingerichtet' }, 404)
+    if (!hasStrava(context.env)) return context.json({ error: t('Strava ist nicht eingerichtet') }, 404)
     const subject = await helpers.subjectOf(context)
-    if (!subject) return context.json({ error: 'Nicht angemeldet', needsLogin: true }, 401)
+    if (!subject) return context.json({ error: t('Nicht angemeldet'), needsLogin: true }, 401)
     const body = (await context.req.json().catch(() => ({}))) as Record<string, unknown>
     const { activityId, templateId, date } = body
     if (typeof activityId !== 'string' || !/^[A-Za-z0-9_-]{1,40}$/.test(activityId)) {
-      return context.json({ error: 'Ungültige Aktivität' }, 400)
+      return context.json({ error: t('Ungültige Aktivität') }, 400)
     }
     if (typeof templateId !== 'string' || !isIsoDate(date)) {
-      return context.json({ error: 'templateId und date (YYYY-MM-DD) fehlen' }, 400)
+      return context.json({ error: t('templateId und date (YYYY-MM-DD) fehlen') }, 400)
     }
 
     const secret = helpers.secretOf(context.env)
     const link = await loadLink(context.env.COACH_CONFIG, secret, subject)
-    if (!link) return context.json({ error: 'Strava ist nicht verbunden' }, 409)
+    if (!link) return context.json({ error: t('Strava ist nicht verbunden') }, 409)
 
     try {
       const outcome = await postSession(
@@ -126,7 +133,7 @@ export const createStravaRoutes = (helpers: StravaRouteHelpers): Hono<{ Bindings
     } catch (error) {
       if (error instanceof StravaError) {
         console.error('Strava-Schreiben fehlgeschlagen', error.status, error.message)
-        return context.json({ error: `Strava hat abgelehnt (${error.status})` }, 502)
+        return context.json({ error: t`Strava hat abgelehnt (${error.status})` }, 502)
       }
       throw error
     }

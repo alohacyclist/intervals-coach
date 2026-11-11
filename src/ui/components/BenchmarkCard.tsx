@@ -1,5 +1,6 @@
 import type { BenchmarkStatus } from '../../coach/types.ts'
 import { SportIcon } from './SportIcon.tsx'
+import { t } from '../../coach/lang.ts'
 
 const VERDICT_CLASS: Readonly<Record<string, string>> = {
   better: 'history__ok',
@@ -16,17 +17,16 @@ const VERDICT_CLASS: Readonly<Record<string, string>> = {
 export const BenchmarkCard = ({ status }: { readonly status: BenchmarkStatus }) => (
   <section className="benchmark">
     <div className="benchmark__head">
-      <h2>Formkontrolle</h2>
+      <h2>{t('Formkontrolle')}</h2>
       <span className="benchmark__meta">
         {status.weeksSinceLast === null
-          ? 'noch nie durchgeführt'
-          : `zuletzt vor ${status.weeksSinceLast} Wochen`}
+          ? t('noch nie durchgeführt')
+          : t`zuletzt vor ${status.weeksSinceLast} Wochen`}
       </span>
     </div>
 
     <p className="benchmark__meta">
-      Alle {status.intervalWeeks} Wochen dieselbe Einheit. Verglichen wird Tempo bzw. Leistung pro
-      Herzschlag in den Arbeitsintervallen — mehr Arbeit für denselben Puls ist der Fortschritt.
+      {t`Alle ${status.intervalWeeks} Wochen dieselbe Einheit. Verglichen wird Tempo bzw. Leistung pro Herzschlag in den Arbeitsintervallen — mehr Arbeit für denselben Puls ist der Fortschritt.`}
     </p>
 
     {status.results.map((result) => (
@@ -37,8 +37,8 @@ export const BenchmarkCard = ({ status }: { readonly status: BenchmarkStatus }) 
 
     <p className="benchmark__meta">
       {status.due
-        ? 'Fällig — steht am nächsten Qualitätstag im Plan.'
-        : `Wieder fällig in ${Math.max(0, status.intervalWeeks - (status.weeksSinceLast ?? 0))} Wochen.`}
+        ? t('Fällig — steht am nächsten Qualitätstag im Plan.')
+        : t`Wieder fällig in ${Math.max(0, status.intervalWeeks - (status.weeksSinceLast ?? 0))} Wochen.`}
     </p>
   </section>
 )

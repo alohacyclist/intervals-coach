@@ -12,9 +12,11 @@
     "dev:web": "vite",
     "build": "tsc --noEmit && vite build",
     "start": "NODE_ENV=production tsx server/index.ts",
+    "lint": "biome lint --error-on-warnings",
     "test": "vitest run",
     "test:watch": "vitest",
     "coverage": "vitest run --coverage",
+    "e2e": "playwright test",
     "deploy": "npm run build && wrangler deploy",
     "cf": "npm run build && wrangler dev",
     "cf:demo": "npm run build && wrangler dev --env demo",
@@ -30,6 +32,9 @@
     "zwift-data": "1.50.0"
   },
   "devDependencies": {
+    "@babel/parser": "^8.1.0",
+    "@biomejs/biome": "^2.6.6",
+    "@playwright/test": "^1.63.0",
     "@types/node": "^26.4.0",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.5",
@@ -40,6 +45,6 @@
     "typescript": "^7.0.2",
     "vite": "^8.2.2",
     "vitest": "^4.1.11",
-    "wrangler": "^4.86.0"
+    "wrangler": "^4.160.0"
   }
 }

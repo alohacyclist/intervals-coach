@@ -1,6 +1,7 @@
 import type { Execution, ExecutionTrace, HeartNote, Sport, SportThreshold } from './types.ts'
 import type { ActivityStreams, Span } from './trace.ts'
 import { percentOf } from './trace.ts'
+import { perLang, t } from './lang.ts'
 
 /**
  * Whether the heart rate of a session was recorded, or only written down. A
@@ -572,23 +573,23 @@ const minute = (seconds: number): number => Math.round(seconds / 60)
 const where = (spans: readonly Span[]): string => {
   const named = spans
     .slice(0, 3)
-    .map((span) => `${minute(span.from)}.–${Math.max(minute(span.from) + 1, minute(span.to))}. min`)
-  return spans.length > 3 ? `${named.join(', ')} und ${spans.length - 3} weitere` : named.join(', ')
+    .map((span) => t`${minute(span.from)}.–${Math.max(minute(span.from) + 1, minute(span.to))}. min`)
+  return spans.length > 3 ? t`${named.join(', ')} und ${spans.length - 3} weitere` : named.join(', ')
 }
 
-const CAUSE: Record<HeartCheck['direction'], { readonly Ride: string; readonly Run: string }> = {
+const CAUSE: Record<HeartCheck['direction'], { readonly Ride: string; readonly Run: string }> = perLang(() => ({
   high: {
-    Ride: 'zu hoch für die Leistung',
-    Run: 'zu hoch für das Tempo — oft zählt die Uhr dann die Schritte statt des Pulses',
+    Ride: t('zu hoch für die Leistung'),
+    Run: t('zu hoch für das Tempo — oft zählt die Uhr dann die Schritte statt des Pulses'),
   },
   low: {
-    Ride: 'zu niedrig für die Leistung — oft sitzt der Sensor zu locker',
-    Run: 'zu niedrig für das Tempo — oft sitzt die Uhr zu locker',
+    Ride: t('zu niedrig für die Leistung — oft sitzt der Sensor zu locker'),
+    Run: t('zu niedrig für das Tempo — oft sitzt die Uhr zu locker'),
   },
-  missing: { Ride: 'ohne Messung', Run: 'ohne Messung' },
-  mixed: { Ride: 'passen nicht zur Leistung', Run: 'passen nicht zum Tempo' },
-  flat: { Ride: 'folgen der Leistung gar nicht', Run: 'folgen dem Tempo gar nicht' },
-}
+  missing: { Ride: t('ohne Messung'), Run: t('ohne Messung') },
+  mixed: { Ride: t('passen nicht zur Leistung'), Run: t('passen nicht zum Tempo') },
+  flat: { Ride: t('folgen der Leistung gar nicht'), Run: t('folgen dem Tempo gar nicht') },
+}))
 
 const noteFor = (check: HeartCheck, sport: Sport): HeartNote => {
   const spans = check.faulty.map((span) => ({ from: span.from * check.step, to: span.to * check.step }))
@@ -596,19 +597,19 @@ const noteFor = (check: HeartCheck, sport: Sport): HeartNote => {
   const cause = CAUSE[check.direction][sport === 'Run' ? 'Run' : 'Ride']
   const head =
     check.direction === 'flat'
-      ? `Pulsaufzeichnung unbrauchbar: die Werte ${cause}.`
-      : `Pulsaufzeichnung gestört: ${minute(faultySeconds)} von ${minute(check.recordedSeconds)} min ${cause} (${where(spans)}).`
+      ? t`Pulsaufzeichnung unbrauchbar: die Werte ${cause}.`
+      : t`Pulsaufzeichnung gestört: ${minute(faultySeconds)} von ${minute(check.recordedSeconds)} min ${cause} (${where(spans)}).`
   const measured = check.measuredAverage === null ? null : Math.round(check.measuredAverage)
   const corrected = check.correctedAverage === null ? null : Math.round(check.correctedAverage)
   const tail = check.canEstimate
-    ? ` Geschätzt aus ${minute(check.cleanSeconds)} min sauberer Messung${
+    ? t` Geschätzt aus ${minute(check.cleanSeconds)} min sauberer Messung${
         measured !== null && corrected !== null && measured !== corrected
-          ? `: Ø ${corrected} bpm statt der aufgezeichneten ${measured}`
+          ? t`: Ø ${corrected} bpm statt der aufgezeichneten ${measured}`
           : ''
       }. Geschätzte Werte sind mit ~ markiert.`
     : check.direction === 'flat'
-      ? ' Daraus lässt sich nichts schätzen — der Puls ist für diese Einheit ausgeblendet.'
-      : ' Zu wenig saubere Messung für eine Schätzung — der Puls ist dort ausgeblendet.'
+      ? t(' Daraus lässt sich nichts schätzen — der Puls ist für diese Einheit ausgeblendet.')
+      : t(' Zu wenig saubere Messung für eine Schätzung — der Puls ist dort ausgeblendet.')
   return {
     faultySeconds,
     recordedSeconds: check.recordedSeconds,
@@ -712,8 +713,8 @@ export const correctedHeartRate = (
 
 /** The note left under the activity on intervals.icu, so the edit is never mistaken for the recording. */
 export const correctionNote = (note: HeartNote): string =>
-  `Puls von Formkurve korrigiert: ${minute(note.faultySeconds)} min (${where(note.spans)}) passten nicht zur Arbeit ` +
-  `und sind aus der sauberen Messung geschätzt.` +
+  t`Puls von Formkurve korrigiert: ${minute(note.faultySeconds)} min (${where(note.spans)}) passten nicht zur Arbeit ` +
+  t`und sind aus der sauberen Messung geschätzt.` +
   (note.measuredAverage !== null && note.correctedAverage !== null
-    ? ` Ø aufgezeichnet ${note.measuredAverage} bpm, korrigiert ${note.correctedAverage} bpm.`
+    ? t` Ø aufgezeichnet ${note.measuredAverage} bpm, korrigiert ${note.correctedAverage} bpm.`
     : '')

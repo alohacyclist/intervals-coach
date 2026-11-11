@@ -7,7 +7,6 @@ import type {
   Progress,
   SeasonWeek,
   Sport,
-  Stimulus,
   WeekLoad,
 } from './types.ts'
 import { STIMULUS_LABELS } from './types.ts'

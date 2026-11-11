@@ -1,3 +1,5 @@
+import { lang } from './lang.ts'
+
 const MS_PER_DAY = 86_400_000
 
 const WEEKDAYS_DE = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'] as const
@@ -22,7 +24,14 @@ export const addDays = (iso: string, days: number): string =>
 export const diffDays = (from: string, to: string): number =>
   Math.round((parseIso(to).getTime() - parseIso(from).getTime()) / MS_PER_DAY)
 
+const WEEKDAYS_EN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const
+
+/** The German short name, whatever the athlete reads: for rules that ask which weekday a date is. */
 export const weekdayDe = (iso: string): string => WEEKDAYS_DE[parseIso(iso).getUTCDay()] ?? '??'
+
+/** The weekday as the athlete reads it. */
+export const weekdayLabel = (iso: string): string =>
+  (lang() === 'en' ? WEEKDAYS_EN : WEEKDAYS_DE)[parseIso(iso).getUTCDay()] ?? '??'
 
 /** Monday-based start of the week containing `iso`. */
 export const startOfWeek = (iso: string): string => {

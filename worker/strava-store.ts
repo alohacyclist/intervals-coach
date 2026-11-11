@@ -1,4 +1,5 @@
 import { decryptJson, encryptJson } from './crypto.ts'
+import type { Lang } from '../src/coach/lang.ts'
 import type { KVNamespace, KVPutOptions } from './bindings.ts'
 import type { StravaTokens } from './strava.ts'
 import { RETENTION_SECONDS } from './users.ts'
@@ -13,6 +14,8 @@ export type StravaLink = {
   /** Where the app runs, for the link under each summary; the cron has no request to read it from. */
   readonly appUrl: string
   readonly connectedAt: string
+  /** The language the athlete last read the app in; the cron has no request to read it from. German without it. */
+  readonly lang?: Lang
   /** Sessions already written, newest first, so the cron does not rewrite them every run. */
   readonly posted: readonly PostedSession[]
 }

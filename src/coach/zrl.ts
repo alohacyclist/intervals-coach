@@ -10,6 +10,7 @@ import type {
 } from './types.ts'
 import { ZRL_FORMAT_LABELS } from './types.ts'
 import { parseIso } from './dates.ts'
+import { t } from './lang.ts'
 
 /** Zwift names every league race after it: "Zwift - TTT: Zwift Racing League: … on <route> in <world>". */
 const ZRL_PATTERN = /zwift racing league/i
@@ -75,7 +76,7 @@ export const zrlRaceOn = <Race extends ZrlRace>(races: readonly Race[], date: st
   races.find((race) => race.date === date) ?? null
 
 export const formatLabel = (race: ZrlRace): string =>
-  race.format ? ZRL_FORMAT_LABELS[race.format] : 'Format offen'
+  race.format ? ZRL_FORMAT_LABELS[race.format] : t('Format offen')
 
 /** Every league round races on Tuesdays, whatever the time slot. */
 const LEAGUE_WEEKDAY = 2
@@ -214,16 +215,16 @@ export const raceTemplate = (race: ZrlRace, estimate: RaceEstimate): WorkoutTemp
   phases: ALL_PHASES,
   occasion: 'race',
   coachNote: estimate.rough
-    ? 'Grobe Schätzung — es fehlen eigene Rennen dieser Art oder die Route. Nach dem Rennen wird sie genauer.'
-    : `Geschätzt aus ${estimate.basedOn} deiner Rennen dieser Art. Nicht dabei? Die Alternative daneben hält die Woche genauso.`,
+    ? t('Grobe Schätzung — es fehlen eigene Rennen dieser Art oder die Route. Nach dem Rennen wird sie genauer.')
+    : t`Geschätzt aus ${estimate.basedOn} deiner Rennen dieser Art. Nicht dabei? Die Alternative daneben hält die Woche genauso.`,
   blocks: [
     {
       kind: 'step',
       duration: `${estimate.warmupMinutes}m`,
       target: 'ramp 50%-75%',
-      label: 'Aufwärmen',
+      label: t('Aufwärmen'),
     },
-    { kind: 'step', duration: `${estimate.raceMinutes}m`, target: 'Rennen' },
+    { kind: 'step', duration: `${estimate.raceMinutes}m`, target: t('Rennen') },
   ],
 })
 

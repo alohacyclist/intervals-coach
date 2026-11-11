@@ -5,6 +5,9 @@ import { isoWeek } from '../../coach/dates.ts'
 import type { LineRow } from '../week-line.ts'
 import { pastRows, planRow } from '../week-line.ts'
 import { SportIcon } from './SportIcon.tsx'
+import { LONG_HORIZON, SHORT_HORIZON } from '../plan-horizon.ts'
+import type { PlanHorizon } from '../plan-horizon.ts'
+import { t } from '../../coach/lang.ts'
 
 type Props = {
   readonly history: readonly AdherenceDay[]
@@ -12,6 +15,11 @@ type Props = {
   readonly selected: string
   readonly onSelect: (date: string) => void
   readonly panel: (day: PlannedDay, index: number) => ReactNode
+  /** How many days ahead the line shows. */
+  readonly horizon: PlanHorizon
+  /** A plan is on its way: the switch waits for it. */
+  readonly busy: boolean
+  readonly onHorizon: (next: PlanHorizon) => void
 }
 
 const RowBody = ({ row, nextWeek }: { readonly row: LineRow; readonly nextWeek: number | null }) => (
@@ -28,7 +36,7 @@ const RowBody = ({ row, nextWeek }: { readonly row: LineRow; readonly nextWeek: 
     </span>
     <span className={row.mark === 'rest' ? 'line__title line__title--rest' : 'line__title'}>
       {row.title}
-      {nextWeek !== null && `, KW ${nextWeek}`}
+      {nextWeek !== null && `, ${t('KW')} ${nextWeek}`}
     </span>
     <span className="line__side">
       {row.load !== null && <b>{row.load}</b>} {row.note}
@@ -37,10 +45,10 @@ const RowBody = ({ row, nextWeek }: { readonly row: LineRow; readonly nextWeek: 
 )
 
 /**
- * The week as a line of stops. Every planned day stays mounted, hidden until it is chosen,
+ * The week as a line of stops, three days ahead or seven. Every planned day stays mounted, hidden until it is chosen,
  * so a chosen duration or a sent workout is still there on the way back.
  */
-export const WeekLine = ({ history, days, selected, onSelect, panel }: Props) => {
+export const WeekLine = ({ history, days, selected, onSelect, panel, horizon, busy, onHorizon }: Props) => {
   const today = days[0]?.date ?? ''
   const panelRef = useRef<HTMLDivElement | null>(null)
   const focused = useRef(selected)
@@ -63,7 +71,16 @@ export const WeekLine = ({ history, days, selected, onSelect, panel }: Props) =>
         const open = day.date === selected
         const week = isoWeek(day.date)
         return (
-          <li key={day.date} className={index === 0 ? 'line__stop-item' : 'line__stop-item line__stop-item--future'}>
+          <li
+            key={day.date}
+            className={
+              index === 0
+                ? 'line__stop-item'
+                : index >= SHORT_HORIZON
+                  ? 'line__stop-item line__stop-item--future line__stop-item--outlook'
+                  : 'line__stop-item line__stop-item--future'
+            }
+          >
             <button type="button" className="line__row" hidden={open} onClick={() => onSelect(day.date)}>
               <RowBody row={planRow(day)} nextWeek={week !== isoWeek(today) ? week : null} />
             </button>
@@ -73,6 +90,16 @@ export const WeekLine = ({ history, days, selected, onSelect, panel }: Props) =>
           </li>
         )
       })}
+      <li className="line__more">
+        <button
+          type="button"
+          aria-expanded={horizon === LONG_HORIZON}
+          disabled={busy}
+          onClick={() => onHorizon(horizon === LONG_HORIZON ? SHORT_HORIZON : LONG_HORIZON)}
+        >
+          {horizon === LONG_HORIZON ? t('− Nur die nächsten drei Tage') : t('+ Ganze Woche zeigen')}
+        </button>
+      </li>
     </ol>
   )
 }

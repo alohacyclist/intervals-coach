@@ -12,13 +12,14 @@ import { DEFAULT_PROGRESS_SPAN, EARLY_DAYS, isProgressSpan, PROGRESS_SPANS, trac
 import type { ProgressSpan } from '../coach/progress.ts'
 import { GarminAttribution } from './components/GarminAttribution.tsx'
 import { SportIcon } from './components/SportIcon.tsx'
+import { t } from '../coach/lang.ts'
 
 const SPAN_KEY = 'progress-span'
 const SPAN_LABELS: Readonly<Record<ProgressSpan, string>> = {
-  30: '30 Tage',
-  90: '90 Tage',
-  180: '180 Tage',
-  365: '1 Jahr',
+  30: t('30 Tage'),
+  90: t('90 Tage'),
+  180: t('180 Tage'),
+  365: t('1 Jahr'),
 }
 
 /** Private browsing modes throw on storage access; the page then opens on the default. */
@@ -72,7 +73,7 @@ export const ProgressView = ({ onNeedsOnboarding }: Props) => {
         window.location.href = EXPIRED_SESSION_URL
         return
       }
-      setError(caught instanceof Error ? caught.message : 'Unbekannter Fehler')
+      setError(caught instanceof Error ? caught.message : t('Unbekannter Fehler'))
     } finally {
       setBusy(false)
     }
@@ -93,7 +94,7 @@ export const ProgressView = ({ onNeedsOnboarding }: Props) => {
       setConfig(await chooseLevel(family, level))
       setProgress(await getProgress(span))
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Stufe nicht gespeichert')
+      setError(caught instanceof Error ? caught.message : t('Stufe nicht gespeichert'))
     } finally {
       setSavingLevel(null)
     }
@@ -104,13 +105,13 @@ export const ProgressView = ({ onNeedsOnboarding }: Props) => {
       <p className="error error--block" role="alert">
         {error}
         <button type="button" onClick={() => void load()}>
-          Erneut versuchen
+          {t('Erneut versuchen')}
         </button>
       </p>
     )
   }
 
-  if (!progress) return <p className="loading" role="status">Lade Verlauf von intervals.icu…</p>
+  if (!progress) return <p className="loading" role="status">{t('Lade Verlauf von intervals.icu…')}</p>
 
   const { totals } = progress
   // A new athlete would otherwise meet zeros and empty charts, which read as broken.
@@ -124,9 +125,9 @@ export const ProgressView = ({ onNeedsOnboarding }: Props) => {
   return (
     <>
       <div className="span-switch">
-        <h1 className="span-switch__title">Verlauf</h1>
+        <h1 className="span-switch__title">{t('Verlauf')}</h1>
         {/* The page stays on the last span while the next one loads, so it does not jump to empty. */}
-        <div className="mode" role="group" aria-label="Zeitraum" aria-busy={busy}>
+        <div className="mode" role="group" aria-label={t('Zeitraum')} aria-busy={busy}>
           {PROGRESS_SPANS.map((option) => (
             <button
               key={option}
@@ -145,12 +146,10 @@ export const ProgressView = ({ onNeedsOnboarding }: Props) => {
       {early && (
         <section className="totals early">
           <div className="totals__head">
-            <h2>Noch am Anfang</h2>
+            <h2>{t('Noch am Anfang')}</h2>
           </div>
           <p className="early__text">
-            Nach etwa zwei Wochen Training siehst du hier, wie sich deine Fitness entwickelt, wie
-            viel du pro Woche trainierst und auf welcher Stufe du je Trainingsart stehst. Bis dahin
-            reicht der Plan: einfach die Einheit des Tages machen.
+            {t('Nach etwa zwei Wochen Training siehst du hier, wie sich deine Fitness entwickelt, wie viel du pro Woche trainierst und auf welcher Stufe du je Trainingsart stehst. Bis dahin reicht der Plan: einfach die Einheit des Tages machen.')}
           </p>
         </section>
       )}
@@ -158,32 +157,32 @@ export const ProgressView = ({ onNeedsOnboarding }: Props) => {
       {(!early || totals.sessions > 0) && (
         <section className={busy ? 'totals totals--stale' : 'totals'}>
           <div className="totals__head">
-            <h2>Erreicht</h2>
-            <span className="totals__span readout">letzte {progress.historyDays} Tage</span>
+            <h2>{t('Erreicht')}</h2>
+            <span className="totals__span readout">{t`letzte ${progress.historyDays} Tage`}</span>
           </div>
           <dl className="metrics">
             <div>
-              <dt>Einheiten</dt>
+              <dt>{t('Einheiten')}</dt>
               <dd>{totals.sessions}</dd>
             </div>
             <div>
-              <dt>Stunden</dt>
+              <dt>{t('Stunden')}</dt>
               <dd>{totals.hours}</dd>
             </div>
             <div>
-              <dt>Load gesamt</dt>
+              <dt>{t('Load gesamt')}</dt>
               <dd>{totals.load}</dd>
             </div>
             <div>
-              <dt>Tage trainiert</dt>
+              <dt>{t('Tage trainiert')}</dt>
               <dd>{totals.days}</dd>
             </div>
             <div>
-              <dt>Längste Pause</dt>
+              <dt>{t('Längste Pause')}</dt>
               <dd>{totals.longestBreak}</dd>
             </div>
             <div>
-              <dt>Ø pro Woche</dt>
+              <dt>{t('Ø pro Woche')}</dt>
               <dd>{Math.round((totals.sessions / progress.historyDays) * 7 * 10) / 10}</dd>
             </div>
           </dl>

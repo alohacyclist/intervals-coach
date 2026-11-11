@@ -5,6 +5,7 @@ import type { StravaStatus } from '../api.ts'
 import { getStrava, postToStrava } from '../api.ts'
 import { renderShareImage, shareImage } from '../share-image.ts'
 import { drawableTrace } from '../trace-geometry.ts'
+import { t } from '../../coach/lang.ts'
 
 /**
  * What can be done with one finished session: its picture to the share sheet,
@@ -22,9 +23,9 @@ type Props = {
 type Sending = 'idle' | 'busy' | 'posted' | 'not-found' | 'failed'
 
 const NOTES: Readonly<Partial<Record<Sending, string>>> = {
-  posted: 'Steht jetzt in der Beschreibung auf Strava.',
-  'not-found': 'Auf Strava nicht gefunden — ist die Einheit dort schon hochgeladen?',
-  failed: 'Strava hat gerade nicht geantwortet. Später noch einmal versuchen.',
+  posted: t('Steht jetzt in der Beschreibung auf Strava.'),
+  'not-found': t('Auf Strava nicht gefunden — ist die Einheit dort schon hochgeladen?'),
+  failed: t('Strava hat gerade nicht geantwortet. Später noch einmal versuchen.'),
 }
 
 export const ExecutionActions = ({ execution, activityId, templateId, date }: Props) => {
@@ -83,17 +84,17 @@ export const ExecutionActions = ({ execution, activityId, templateId, date }: Pr
     <div className="exec__actions">
       {trace && (
         <button type="button" disabled={!image} onClick={share}>
-          {image ? 'Bild teilen' : 'Zeichnet…'}
+          {image ? t('Bild teilen') : 'Zeichnet…'}
         </button>
       )}
       {strava?.connected && (
         <button type="button" disabled={sending === 'busy'} onClick={() => void send()}>
-          {sending === 'busy' ? 'Schreibt…' : posted ? 'Auf Strava erneuern' : 'Auf Strava ergänzen'}
+          {sending === 'busy' ? 'Schreibt…' : posted ? t('Auf Strava erneuern') : t('Auf Strava ergänzen')}
         </button>
       )}
-      {posted && sending !== 'posted' && <span className="exec__sent readout">Auf Strava ✓</span>}
+      {posted && sending !== 'posted' && <span className="exec__sent readout">{t('Auf Strava ✓')}</span>}
       {NOTES[sending] && <p className="exec__note exec__note--action">{NOTES[sending]}</p>}
-      {sharing === 'failed' && <p className="exec__note exec__note--action">Bild ließ sich nicht erzeugen.</p>}
+      {sharing === 'failed' && <p className="exec__note exec__note--action">{t('Bild ließ sich nicht erzeugen.')}</p>}
     </div>
   )
 }

@@ -1,4 +1,5 @@
 import type { WeekLoad } from '../../coach/types.ts'
+import { t } from '../../coach/lang.ts'
 
 /**
  * Volume per calendar week. Drawn as plain elements rather than as an SVG:
@@ -40,13 +41,13 @@ export const WeekBars = ({ weeks }: Props) => {
   return (
     <figure className="chart">
       <figcaption className="chart__head">
-        <span className="chart__title">Wochenlast</span>
-        <span className="chart__span readout">Ø {average} TSS</span>
+        <span className="chart__title">{t('Wochenlast')}</span>
+        <span className="chart__span readout">Ø {average}{t(' TSS')}</span>
       </figcaption>
 
       <ol
         className="weeks"
-        aria-label={`Wochenlast der letzten ${weeks.length} Wochen, Höchstwert ${peak} TSS, Durchschnitt ${average} TSS`}
+        aria-label={t`Wochenlast der letzten ${weeks.length} Wochen, Höchstwert ${peak} TSS, Durchschnitt ${average} TSS`}
       >
         {weeks.map((week, index) => (
           <li key={week.start} className={`weeks__item ${quiet(index, weeks.length)}`}>
@@ -59,8 +60,8 @@ export const WeekBars = ({ weeks }: Props) => {
                   week.partial ? 'weeks__bar--partial' : ''
                 }`}
                 style={{ height: `${Math.max(1, (week.load / peak) * 100)}%` }}
-                title={`${label(week)} — ${week.load} TSS aus ${week.sessions} Einheiten${
-                  week.partial ? ' (Woche läuft noch)' : ''
+                title={t`${label(week)} — ${week.load} TSS aus ${week.sessions} Einheiten${
+                  week.partial ? t(' (Woche läuft noch)') : ''
                 }`}
               />
             </span>
@@ -71,10 +72,10 @@ export const WeekBars = ({ weeks }: Props) => {
 
       <p className="chart__legend">
         <span>
-          <i className="chart__key chart__key--ctl" /> höchste Woche {peak} TSS
+          <i className="chart__key chart__key--ctl" />{t(' höchste Woche ')}{peak}{t(' TSS')}
         </span>
         <span>
-          <i className="chart__key chart__key--partial" /> laufende Woche, noch nicht vorbei
+          <i className="chart__key chart__key--partial" />{t(' laufende Woche, noch nicht vorbei')}
         </span>
       </p>
     </figure>

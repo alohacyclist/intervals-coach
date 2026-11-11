@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import type { CoachConfig, ZrlSettings, ZwiftRoute } from '../../coach/types.ts'
 import { ZRL_FORMATS, ZRL_FORMAT_LABELS } from '../../coach/types.ts'
-import { weekdayDe } from '../../coach/dates.ts'
+import { weekdayLabel } from '../../coach/dates.ts'
 import { fetchZwiftRoutes, putZrlRaces, putZrlSettings } from '../api.ts'
 import type { ZrlRow } from '../zrl-rows.ts'
 import { inputOf, nextTuesday, racesFrom, routeLabel, rowOf, withRound } from '../zrl-rows.ts'
+import { t } from '../../coach/lang.ts'
 
 type Props = {
   readonly config: CoachConfig
@@ -39,7 +40,7 @@ export const ZrlPanel = ({ config, today, onSaved }: Props) => {
       onSaved(await putZrlSettings(next))
     } catch (caught) {
       setLeague(config.zrl)
-      setError(caught instanceof Error ? caught.message : 'Speichern fehlgeschlagen')
+      setError(caught instanceof Error ? caught.message : t('Speichern fehlgeschlagen'))
     } finally {
       setSwitching(false)
     }
@@ -47,7 +48,7 @@ export const ZrlPanel = ({ config, today, onSaved }: Props) => {
 
   useEffect(() => {
     fetchZwiftRoutes().then(setRoutes, () =>
-      setError('Routenliste nicht erreichbar — Routen lassen sich gerade nicht eintragen.'),
+      setError(t('Routenliste nicht erreichbar — Routen lassen sich gerade nicht eintragen.')),
     )
   }, [])
 
@@ -79,7 +80,7 @@ export const ZrlPanel = ({ config, today, onSaved }: Props) => {
       setSaved(true)
       setDirty(false)
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Speichern fehlgeschlagen')
+      setError(caught instanceof Error ? caught.message : t('Speichern fehlgeschlagen'))
     } finally {
       setBusy(false)
     }
@@ -88,7 +89,7 @@ export const ZrlPanel = ({ config, today, onSaved }: Props) => {
   return (
     <section className="settings zrl">
       <div className="settings__head">
-        <h2>Zwift Racing League</h2>
+        <h2>{t('Zwift Racing League')}</h2>
       </div>
       <div className="zrl__switches">
         <label className="zrl__toggle">
@@ -98,7 +99,7 @@ export const ZrlPanel = ({ config, today, onSaved }: Props) => {
             disabled={switching}
             onChange={() => void switchLeague({ ...league, enabled: !league.enabled })}
           />
-          ZRL-Termine im Trainingsplan berücksichtigen
+          {t('ZRL-Termine im Trainingsplan berücksichtigen')}
         </label>
         <label className="zrl__toggle">
           <input
@@ -107,22 +108,20 @@ export const ZrlPanel = ({ config, today, onSaved }: Props) => {
             disabled={switching || !league.enabled}
             onChange={() => void switchLeague({ ...league, taper: !league.taper })}
           />
-          Taper: Tag vor dem Rennen locker mit kurzen Antritten
+          {t('Taper: Tag vor dem Rennen locker mit kurzen Antritten')}
         </label>
       </div>
       <p className="zrl__hint">
-        Eingeschaltet wird jeder Dienstag ein Renntag — ein Qualitätstag, die Alternative steht
-        immer daneben, ob du fährst, entscheidest du am Tag selbst. Ohne Eintrag ist die Schätzung
-        grob; Format und Route stehen bei WTRL oder Zwift Insider. Zwischen zwei Runden ausschalten.
+        {t('Eingeschaltet wird jeder Dienstag ein Renntag — ein Qualitätstag, die Alternative steht immer daneben, ob du fährst, entscheidest du am Tag selbst. Ohne Eintrag ist die Schätzung grob; Format und Route stehen bei WTRL oder Zwift Insider. Zwischen zwei Runden ausschalten.')}
       </p>
 
       <div className="grid">
         <label>
-          Erstes Rennen
+          {t('Erstes Rennen')}
           <input type="date" value={start} onChange={(event) => setStart(event.target.value)} />
         </label>
         <label>
-          Wochen
+          {t('Wochen')}
           <input
             type="number"
             min={1}
@@ -134,7 +133,7 @@ export const ZrlPanel = ({ config, today, onSaved }: Props) => {
       </div>
       <div className="settings__actions">
         <button type="button" onClick={() => edit(withRound(rows, start, weeks))}>
-          Termine anlegen
+          {t('Termine anlegen')}
         </button>
       </div>
 
@@ -143,17 +142,17 @@ export const ZrlPanel = ({ config, today, onSaved }: Props) => {
           {rows.map((row) => (
             <li key={row.date} className="zrl__race">
               <span className="zrl__date readout">
-                {weekdayDe(row.date)} {row.date.slice(8, 10)}.{row.date.slice(5, 7)}.
+                {weekdayLabel(row.date)} {row.date.slice(8, 10)}.{row.date.slice(5, 7)}.
               </span>
               <label>
-                Format
+                {t('Format')}
                 <select
                   value={row.format}
                   onChange={(event) =>
                     patch(row.date, { format: event.target.value as ZrlRow['format'] })
                   }
                 >
-                  <option value="">wählen…</option>
+                  <option value="">{t('wählen…')}</option>
                   {ZRL_FORMATS.map((format) => (
                     <option key={format} value={format}>
                       {ZRL_FORMAT_LABELS[format]}
@@ -162,16 +161,16 @@ export const ZrlPanel = ({ config, today, onSaved }: Props) => {
                 </select>
               </label>
               <label className="zrl__route">
-                Route
+                {t('Route')}
                 <input
                   list="zwift-routes"
                   value={row.route}
-                  placeholder="noch offen"
+                  placeholder={t('noch offen')}
                   onChange={(event) => patch(row.date, { route: event.target.value })}
                 />
               </label>
               <label>
-                Runden
+                {t('Runden')}
                 <input
                   type="number"
                   min={1}
@@ -182,7 +181,7 @@ export const ZrlPanel = ({ config, today, onSaved }: Props) => {
               </label>
               <button
                 type="button"
-                aria-label="Rennen entfernen"
+                aria-label={t('Rennen entfernen')}
                 onClick={() => edit(rows.filter((entry) => entry.date !== row.date))}
               >
                 ×
@@ -203,7 +202,7 @@ export const ZrlPanel = ({ config, today, onSaved }: Props) => {
       {error && <p className="error" role="alert">{error}</p>}
       <div className="settings__actions">
         <button type="button" disabled={busy} onClick={() => void save()}>
-          {busy ? 'Speichert…' : saved ? '✓ Gespeichert' : 'Runde speichern'}
+          {busy ? 'Speichert…' : saved ? t('✓ Gespeichert') : t('Runde speichern')}
         </button>
       </div>
     </section>

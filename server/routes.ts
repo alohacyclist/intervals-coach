@@ -1,4 +1,5 @@
 import { Hono } from 'hono'
+import { languageMiddleware } from './lang.ts'
 import type { Context } from 'hono'
 import type { ConfigStore } from '../src/coach/config-schema.ts'
 import {
@@ -53,6 +54,7 @@ import { buildSession } from '../src/coach/session.ts'
 import { loadExecution } from './execution-load.ts'
 import { readRideEstimates, rememberRideEstimates, withRideEstimates } from './ride-estimates.ts'
 import type { Intent, Plan, Progress } from '../src/coach/types.ts'
+import { t } from '../src/coach/lang.ts'
 
 export const DEFAULT_TIMEZONE = 'Europe/Berlin'
 /** Longer than this is not a break any more, it is a different training year. */
@@ -378,13 +380,15 @@ export const apiErrorResponse = (error: Error, context: Context): Response => {
   // Written for the athlete (a missing scope says to sign in again), unlike a gateway's own 502.
   if (error instanceof IntervalsError) return context.json({ error: error.message, forAthlete: true }, 502)
   if (error instanceof SourceReadOnlyError) return context.json({ error: error.message, forAthlete: true }, 403)
-  if (error instanceof SyntaxError) return context.json({ error: 'Ungültige Anfrage' }, 400)
+  if (error instanceof SyntaxError) return context.json({ error: t('Ungültige Anfrage') }, 400)
   console.error(error)
-  return context.json({ error: 'Unerwarteter Fehler. Bitte später noch einmal versuchen.' }, 500)
+  return context.json({ error: t('Unerwarteter Fehler. Bitte später noch einmal versuchen.') }, 500)
 }
 
 export const createApiRoutes = (resolve: DepsResolver): Hono => {
   const app = new Hono()
+
+  app.use('*', languageMiddleware)
 
   // Plan data changes as soon as an activity syncs, so the browser must never keep it.
   // The Worker's own few minutes of memory are cleared by every write and skipped by `frisch=1`.
@@ -483,11 +487,11 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
     const activityId = context.req.param('activityId')
     // It becomes part of a path on intervals.icu, so only an id's own characters get through.
     if (!/^[A-Za-z0-9_-]{1,40}$/.test(activityId)) {
-      return context.json({ error: 'Ungültige Aktivität' }, 400)
+      return context.json({ error: t('Ungültige Aktivität') }, 400)
     }
     const template = findTemplate(context.req.query('template') ?? '')
     if (!template || template.occasion !== undefined) {
-      return context.json({ error: 'Zu dieser Einheit gibt es keinen Plan zum Vergleichen' }, 404)
+      return context.json({ error: t('Zu dieser Einheit gibt es keinen Plan zum Vergleichen') }, 404)
     }
     const date = context.req.query('date')
 
@@ -526,7 +530,7 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
   app.post('/api/execution/:activityId/heart', async (context) => {
     const activityId = context.req.param('activityId')
     if (!/^[A-Za-z0-9_-]{1,40}$/.test(activityId)) {
-      return context.json({ error: 'Ungültige Aktivität' }, 400)
+      return context.json({ error: t('Ungültige Aktivität') }, 400)
     }
     const body = (await context.req.json()) as {
       readonly templateId?: unknown
@@ -535,24 +539,24 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
     }
     const template = findTemplate(typeof body.templateId === 'string' ? body.templateId : '')
     if (!template || template.occasion !== undefined) {
-      return context.json({ error: 'Zu dieser Einheit gibt es keinen Plan zum Vergleichen' }, 404)
+      return context.json({ error: t('Zu dieser Einheit gibt es keinen Plan zum Vergleichen') }, 404)
     }
     const { source, store } = await resolve(context)
     if (!source.canRewriteStreams) {
-      return context.json({ error: 'Zurückschreiben geht nur mit einem API-Key von intervals.icu.', forAthlete: true }, 403)
+      return context.json({ error: t('Zurückschreiben geht nur mit einem API-Key von intervals.icu.'), forAthlete: true }, 403)
     }
     const config = await store.load()
     const day = isIsoDate(body.date) ? body.date : null
     const loaded = await loadExecution(source, config.profile, activityId, template, day)
     const heart = loaded.execution.heart
     if (!heart?.writable || !loaded.correctedHeartRate) {
-      return context.json({ error: 'An dieser Aufzeichnung gibt es nichts mehr zu korrigieren.', forAthlete: true }, 409)
+      return context.json({ error: t('An dieser Aufzeichnung gibt es nichts mehr zu korrigieren.'), forAthlete: true }, 409)
     }
     if (
       body.expected?.faultySeconds !== heart.faultySeconds ||
       body.expected?.correctedAverage !== heart.correctedAverage
     ) {
-      return context.json({ error: 'Die Aufzeichnung hat sich geändert. Bitte neu laden und noch einmal prüfen.', forAthlete: true }, 409)
+      return context.json({ error: t('Die Aufzeichnung hat sich geändert. Bitte neu laden und noch einmal prüfen.'), forAthlete: true }, 409)
     }
 
     try {
@@ -561,7 +565,7 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
       if (error instanceof IntervalsError && error.status === 403) {
         return context.json(
           {
-            error: 'intervals.icu hat das Überschreiben abgelehnt. Streams ändern dürfen dort nur Supporter.',
+            error: t('intervals.icu hat das Überschreiben abgelehnt. Streams ändern dürfen dort nur Supporter.'),
             forAthlete: true,
           },
           403,
@@ -587,7 +591,7 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
   app.post('/api/threshold', async (context) => {
     const body = (await context.req.json()) as { sport?: string; observed?: number }
     if (body.sport !== 'Ride' && body.sport !== 'Run' && body.sport !== 'Swim') {
-      return context.json({ error: 'sport muss Ride, Run oder Swim sein' }, 400)
+      return context.json({ error: t('sport muss Ride, Run oder Swim sein') }, 400)
     }
     if (typeof body.observed !== 'number' || body.observed <= 0) {
       return context.json({ error: 'observed muss > 0 sein' }, 400)
@@ -614,7 +618,7 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
     const body = (await context.req.json()) as Record<string, unknown>
     const { enabled, taper } = body
     if (typeof enabled !== 'boolean' || typeof taper !== 'boolean') {
-      return context.json({ error: 'enabled und taper müssen true oder false sein' }, 400)
+      return context.json({ error: t('enabled und taper müssen true oder false sein') }, 400)
     }
     const config = await store.load()
     return context.json(await store.save(validateConfig({ ...config, zrl: { enabled, taper } })))
@@ -622,23 +626,23 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
 
   app.put('/api/zrl', async (context) => {
     const body = (await context.req.json()) as { races?: unknown }
-    if (!Array.isArray(body.races)) return context.json({ error: 'races muss eine Liste sein' }, 400)
+    if (!Array.isArray(body.races)) return context.json({ error: t('races muss eine Liste sein') }, 400)
     if (body.races.length > MAX_ZRL_RACES) {
-      return context.json({ error: `Höchstens ${MAX_ZRL_RACES} Rennen` }, 400)
+      return context.json({ error: t`Höchstens ${MAX_ZRL_RACES} Rennen` }, 400)
     }
 
     const issues: string[] = []
     const races = body.races.map((entry: unknown, index: number) => {
       const raw = (entry ?? {}) as Record<string, unknown>
-      const where = typeof raw['date'] === 'string' ? raw['date'] : `Eintrag ${index + 1}`
+      const where = typeof raw['date'] === 'string' ? raw['date'] : t`Eintrag ${index + 1}`
       const route = raw['routeId'] == null ? null : findRoute(Number(raw['routeId']))
-      if (raw['routeId'] != null && route === null) issues.push(`${where}: Route unbekannt`)
+      if (raw['routeId'] != null && route === null) issues.push(t`${where}: Route unbekannt`)
       const race = { date: raw['date'], format: raw['format'], laps: raw['laps'], route }
-      if (validateZrlRaces([race]).length === 0) issues.push(`${where}: Datum, Format oder Runden ungültig`)
+      if (validateZrlRaces([race]).length === 0) issues.push(t`${where}: Datum, Format oder Runden ungültig`)
       return race
     })
     const dates = races.map((race) => String(race.date))
-    if (new Set(dates).size !== dates.length) issues.push('Ein Datum ist doppelt eingetragen')
+    if (new Set(dates).size !== dates.length) issues.push(t('Ein Datum ist doppelt eingetragen'))
     if (issues.length > 0) return context.json({ error: issues.join('; ') }, 400)
 
     const { store } = await resolve(context)
@@ -650,9 +654,9 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
   app.put('/api/level', async (context) => {
     const body = (await context.req.json()) as { family?: unknown; level?: unknown }
     const family = typeof body.family === 'string' ? body.family : ''
-    if (!(family in familyLevels())) return context.json({ error: 'Unbekannte Trainingsfamilie' }, 400)
+    if (!(family in familyLevels())) return context.json({ error: t('Unbekannte Trainingsfamilie') }, 400)
     if (body.level !== null && chosenLevel(family, { [family]: Number(body.level) }) === null) {
-      return context.json({ error: 'Diese Stufe gibt es in der Familie nicht' }, 400)
+      return context.json({ error: t('Diese Stufe gibt es in der Familie nicht') }, 400)
     }
     const { store } = await resolve(context)
     const config = await store.load()
@@ -682,10 +686,10 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
     const kind = ALL_BREAK_KINDS.find((known) => known === body.kind)
     const days = Math.round(Number(body.days))
     if (!kind) {
-      return context.json({ error: `kind muss eines von ${ALL_BREAK_KINDS.join(', ')} sein` }, 400)
+      return context.json({ error: t`kind muss eines von ${ALL_BREAK_KINDS.join(', ')} sein` }, 400)
     }
     if (!Number.isFinite(days) || days < 1 || days > MAX_BREAK_DAYS) {
-      return context.json({ error: `days muss zwischen 1 und ${MAX_BREAK_DAYS} liegen` }, 400)
+      return context.json({ error: t`days muss zwischen 1 und ${MAX_BREAK_DAYS} liegen` }, 400)
     }
 
     const deps = await resolve(context)
@@ -704,7 +708,7 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
     const today = todayFor(deps)
     const config = await store.load()
     const running = activeBreak(config.breaks, today)
-    if (!running) return context.json({ error: 'Keine Pause eingetragen' }, 400)
+    if (!running) return context.json({ error: t('Keine Pause eingetragen') }, 400)
 
     const shortened = endedBefore(running, today)
     const breaks = config.breaks
@@ -726,9 +730,9 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
     if (!body.date || !/^\d{4}-\d{2}-\d{2}$/.test(body.date)) {
       return context.json({ error: 'date muss YYYY-MM-DD sein' }, 400)
     }
-    if (!template) return context.json({ error: `Unbekanntes Workout: ${body.templateId}` }, 400)
+    if (!template) return context.json({ error: t`Unbekanntes Workout: ${body.templateId}` }, 400)
     if (body.variant !== undefined && !TIERS.includes(body.variant as SessionTier)) {
-      return context.json({ error: `variant muss eines von ${TIERS.join(', ')} sein` }, 400)
+      return context.json({ error: t`variant muss eines von ${TIERS.join(', ')} sein` }, 400)
     }
 
     const resolved = await resolve(context)
@@ -744,11 +748,11 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
     // Rebuilt, the plan may no longer offer what was tapped — new data, another
     // day. The versions follow from the template and the profile alone, so the
     // one on screen is built here rather than refused.
-    const session = planned ?? buildSession(template, config, 'manuell ausgewählt', body.date)
+    const session = planned ?? buildSession(template, config, t('manuell ausgewählt'), body.date)
 
     const chosen = session.variants.find((variant) => variant.tier === body.variant)
     if (body.variant !== undefined && !chosen) {
-      return context.json({ error: `Keine ${body.variant}-Fassung für ${template.name}` }, 400)
+      return context.json({ error: t`Keine ${body.variant}-Fassung für ${template.name}` }, 400)
     }
     // Shortened, or on a day with more time lengthened by base.
     const resized = chosen && chosen.minutes !== template.minutes ? chosen : undefined

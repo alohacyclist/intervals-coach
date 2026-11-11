@@ -10,6 +10,7 @@ import { addDays } from './dates.ts'
 import { breakLimit } from './breaks.ts'
 import { buildSession } from './session.ts'
 import { estimateRace, formatLabel, leagueRaceOn, raceDetails, raceTemplate } from './zrl.ts'
+import { pick, t } from './lang.ts'
 
 type Decision = { readonly dayType: DayType; readonly reason: string; readonly optional: boolean }
 
@@ -41,7 +42,7 @@ export const racesAround = (
 }
 
 const raceLabel = (race: ZrlRace): string =>
-  `ZRL ${formatLabel(race)}${race.route ? ` auf ${race.route.name}` : ''}`
+  `ZRL ${formatLabel(race)}${race.route ? `${pick(' auf ', ' on ')}${race.route.name}` : ''}`
 
 /**
  * The athlete only knows on the day whether they race, so the day is planned to
@@ -63,23 +64,23 @@ export const aroundRace = (
       return {
         dayType: 'EASY',
         optional: false,
-        reason: `${label} — Erholungswoche: das Rennen nur freiwillig, die Alternative bleibt locker`,
+        reason: t`${label} — Erholungswoche: das Rennen nur freiwillig, die Alternative bleibt locker`,
       }
     }
     if (exhausted)
-      return { ...decision, reason: `${decision.reason} · ${label} nur, wenn es sich gut anfühlt` }
-    const warning = recentlyHard ? ' Achtung: die letzte harte Einheit ist keine 48 h her.' : ''
+      return { ...decision, reason: t`${decision.reason} · ${label} nur, wenn es sich gut anfühlt` }
+    const warning = recentlyHard ? t(' Achtung: die letzte harte Einheit ist keine 48 h her.') : ''
     return {
       dayType: 'KEY',
       optional: false,
-      reason: `${label} — Rennen oder eine gleichwertige Qualitätseinheit.${warning}`,
+      reason: t`${label} — Rennen oder eine gleichwertige Qualitätseinheit.${warning}`,
     }
   }
   if (raceTomorrow && around.taper && !exhausted) {
     return {
       dayType: 'EASY',
       optional: false,
-      reason: `Morgen ${raceLabel(raceTomorrow)} — heute locker mit kurzen Antritten, damit die Beine wach sind`,
+      reason: t`Morgen ${raceLabel(raceTomorrow)} — heute locker mit kurzen Antritten, damit die Beine wach sind`,
     }
   }
   return decision
@@ -92,7 +93,7 @@ export const raceSession = (
   dayType: DayType,
 ): PlannedSession => {
   const estimate = estimateRace(race, state.raceHistory, config.zrlRaces)
-  const reason = `${raceLabel(race)} · geschätzt ${estimate.minutes} min mit Aufwärmen, ${estimate.load} TSS${dayType === 'KEY' ? '' : ' · freiwillig'}`
+  const reason = t`${raceLabel(race)} · geschätzt ${estimate.minutes} min mit Aufwärmen, ${estimate.load} TSS${dayType === 'KEY' ? '' : t(' · freiwillig')}`
   return {
     ...buildSession(raceTemplate(race, estimate), config, reason, race.date),
     race: raceDetails(race, estimate),

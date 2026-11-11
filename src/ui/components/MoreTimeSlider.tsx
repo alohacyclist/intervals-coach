@@ -1,4 +1,5 @@
 import { useEffect, useState, type CSSProperties } from 'react'
+import { t } from '../../coach/lang.ts'
 
 /** From the usual ceiling up to five hours, in quarter hours. */
 const STEP = 15
@@ -97,9 +98,9 @@ export const MoreTimeSlider = ({
 }) => (
   <StopSlider
     id="more-time"
-    label="Zeit"
+    label={t('Zeit')}
     stops={[undefined, ...moreTimeStops(usual).slice(1)]}
-    restingLabel="wie immer"
+    restingLabel={t('wie immer')}
     onSettled={onSettled}
   />
 )
@@ -119,7 +120,7 @@ export const CoreStartSlider = ({
 }) => (
   <StopSlider
     id="core-start"
-    label="Kern ab"
+    label={t('Kern ab')}
     stops={coreStartStops(latest)}
     restingLabel="direkt"
     onSettled={onSettled}

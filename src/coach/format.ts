@@ -1,5 +1,6 @@
 import type { Block, Sport, Step, SportThreshold, WorkoutTemplate } from './types.ts'
 import { formatSeconds } from './dates.ts'
+import { locale, t } from './lang.ts'
 
 /**
  * A pause at the wall. intervals.icu reads "intensity=rest" as a rest step and
@@ -61,7 +62,7 @@ const humanTarget = (target: string, threshold: SportThreshold): string => {
   if (threshold.metric === 'swimPace') return renderPace(values, threshold.cssSecPer100m, '/100m')
 
   const powers = [...new Set(values.map((value) => watts(value, threshold.ftp)))]
-  return `${powers.join(isRamp ? '→' : '–')} W${isRamp ? ' (Rampe)' : ''}`
+  return `${powers.join(isRamp ? '→' : '–')} W${isRamp ? t(' (Rampe)') : ''}`
 }
 
 const humanDuration = (duration: string): string => {
@@ -79,7 +80,7 @@ const humanDuration = (duration: string): string => {
 
 const humanStep = (step: Step, threshold: SportThreshold): string =>
   isRest(step)
-    ? `${humanDuration(step.duration)} @ Pause am Rand`
+    ? t`${humanDuration(step.duration)} @ Pause am Rand`
     : [
         `${humanDuration(step.duration)} @ ${humanTarget(step.target, threshold)}`,
         step.cadence,
@@ -104,7 +105,7 @@ export const describeBlocks = (
   note: string,
   reason: string,
 ): string =>
-  `${toIntervalsText(blocks)}\n\n${note}\n\nWarum heute: ${reason}\n\n(automatisch erstellt von Formkurve)`
+  t`${toIntervalsText(blocks)}\n\n${note}\n\nWarum heute: ${reason}\n\n(automatisch erstellt von Formkurve)`
 
 export const describeWorkout = (template: WorkoutTemplate, reason: string): string =>
   describeBlocks(template.blocks, template.coachNote, reason)
@@ -113,7 +114,7 @@ export const describeWorkout = (template: WorkoutTemplate, reason: string): stri
 export const formatDistance = (sport: Sport, distanceKm: number): string =>
   sport === 'Swim' || distanceKm < 1
     ? `${Math.round(distanceKm * 1000)} m`
-    : `${distanceKm.toLocaleString('de-DE', { maximumFractionDigits: 3 })} km`
+    : `${distanceKm.toLocaleString(locale(), { maximumFractionDigits: 3 })} km`
 
 /** Race pace per km for a target time over a distance. */
 export const racePaceSecPerKm = (targetTimeSec: number, distanceKm: number): number =>

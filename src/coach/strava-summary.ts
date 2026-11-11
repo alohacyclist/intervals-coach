@@ -1,4 +1,5 @@
 import type { Execution, Sport } from './types.ts'
+import { pick, t } from './lang.ts'
 
 /**
  * What the app writes under a session on Strava. Strava takes no pictures from
@@ -8,10 +9,13 @@ import type { Execution, Sport } from './types.ts'
 
 /** Marks the paragraph as this app's, so a second run replaces it instead of adding another. */
 export const SIGNATURE = 'geplant und ausgewertet mit Formkurve'
+/** The same line for an athlete who reads English. */
+const SIGNATURE_EN = 'planned and analysed with Formkurve'
 /** Written before the app was named Formkurve; still this app's paragraph to replace. */
 const EARLIER_SIGNATURES = ['geplant und ausgewertet mit intervals-coach']
+/** Whatever language a paragraph was written in, it is this app's to replace. */
 const isOurs = (paragraph: string): boolean =>
-  [SIGNATURE, ...EARLIER_SIGNATURES].some((signature) => paragraph.includes(signature))
+  [SIGNATURE, SIGNATURE_EN, ...EARLIER_SIGNATURES].some((signature) => paragraph.includes(signature))
 
 const BLOCKS = '▁▂▃▄▅▆▇█'
 /** Fits one line of the Strava app on a phone. */
@@ -71,11 +75,11 @@ export const summaryOf = (execution: Execution, appUrl: string | null): string =
   const verdicts = execution.steps.map((step) => (step.verdict ? SYMBOL[step.verdict] : '·')).join('')
 
   const headline = compared
-    ? `${execution.templateName} · ${hit} von ${execution.steps.length} im Ziel ${verdicts}`
-    : `${execution.templateName} · ${Math.round(execution.duration.actual / 60)} min`
+    ? t`${execution.templateName} · ${hit} von ${execution.steps.length} im Ziel ${verdicts}`
+    : t`${execution.templateName} · ${Math.round(execution.duration.actual / 60)} min`
   // No heart rate: Strava lets an athlete hide it per activity, and a description would show it anyway.
   const figures = [
-    compared ? `Im Ziel ${clock(execution.inTargetSeconds)} von ${clock(execution.workPlannedSeconds)}` : null,
+    compared ? t`Im Ziel ${clock(execution.inTargetSeconds)} von ${clock(execution.workPlannedSeconds)}` : null,
     `${execution.load.actual} TSS`,
   ].filter((part): part is string => part !== null)
 
@@ -85,7 +89,7 @@ export const summaryOf = (execution: Execution, appUrl: string | null): string =
     figures.join(' · '),
     // Garmin's terms follow its data wherever it is shown, this text included.
     execution.garmin ? `Daten: ${execution.garmin}` : null,
-    `— ${SIGNATURE}${link ? ` · ${link}` : ''}`,
+    `— ${pick(SIGNATURE, SIGNATURE_EN)}${link ? ` · ${link}` : ''}`,
   ]
     .filter((line): line is string => line !== null)
     .join('\n')

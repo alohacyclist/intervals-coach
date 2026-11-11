@@ -2,6 +2,7 @@ import { useId } from 'react'
 import type { ReactNode } from 'react'
 import { GLOSSARY } from '../glossary.ts'
 import type { GlossaryTerm } from '../glossary.ts'
+import { t } from '../../coach/lang.ts'
 
 type Props = {
   readonly term: GlossaryTerm
@@ -22,14 +23,14 @@ export const Term = ({ term, children }: Props) => {
         <span className="term__mark" aria-hidden="true">
           ?
         </span>
-        <span className="sr-only"> (Erklärung)</span>
+        <span className="sr-only">{t(' (Erklärung)')}</span>
       </button>
       <span id={id} popover="auto" role="note" className="term__pop">
         <strong>{entry.name}</strong>
         <span>{entry.what}</span>
         <span className="term__why">{entry.why}</span>
         <button type="button" popoverTarget={id} popoverTargetAction="hide">
-          Schließen
+          {t('Schließen')}
         </button>
       </span>
     </>

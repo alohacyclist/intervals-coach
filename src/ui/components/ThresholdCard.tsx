@@ -3,6 +3,7 @@ import type { ThresholdSuggestion } from '../../coach/types.ts'
 import { thresholdTestFor } from '../../coach/library.ts'
 import { adoptThreshold, pushWorkout } from '../api.ts'
 import { SportIcon } from './SportIcon.tsx'
+import { t } from '../../coach/lang.ts'
 
 type Props = {
   readonly suggestions: readonly ThresholdSuggestion[]
@@ -23,7 +24,7 @@ export const ThresholdCard = ({ suggestions, date, onAdopted }: Props) => {
       await pushWorkout(date, templateId)
       setScheduled(suggestion.sport)
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Einplanen fehlgeschlagen')
+      setError(caught instanceof Error ? caught.message : t('Einplanen fehlgeschlagen'))
     } finally {
       setBusy(null)
     }
@@ -36,7 +37,7 @@ export const ThresholdCard = ({ suggestions, date, onAdopted }: Props) => {
       await adoptThreshold(suggestion.sport, suggestion.observed)
       onAdopted()
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Übernehmen fehlgeschlagen')
+      setError(caught instanceof Error ? caught.message : t('Übernehmen fehlgeschlagen'))
     } finally {
       setBusy(null)
     }
@@ -44,11 +45,9 @@ export const ThresholdCard = ({ suggestions, date, onAdopted }: Props) => {
 
   return (
     <aside className="issue">
-      <h2>Deine Schwellenwerte stimmen nicht mehr</h2>
+      <h2>{t('Deine Schwellenwerte stimmen nicht mehr')}</h2>
       <p>
-        Sämtliche Watt- und Pace-Vorgaben werden aus diesen Werten berechnet — und intervals.icu
-        rechnet Belastung und Übereinstimmung mit seinen eigenen. Übernehmen setzt beide Seiten auf
-        denselben Wert.
+        {t('Sämtliche Watt- und Pace-Vorgaben werden aus diesen Werten berechnet — und intervals.icu rechnet Belastung und Übereinstimmung mit seinen eigenen. Übernehmen setzt beide Seiten auf denselben Wert.')}
       </p>
       {suggestions.map((suggestion) => {
         const test = suggestion.action === 'verify' ? thresholdTestFor(suggestion.sport) : undefined
@@ -64,16 +63,16 @@ export const ThresholdCard = ({ suggestions, date, onAdopted }: Props) => {
                 onClick={() => void schedule(suggestion, test.id)}
               >
                 {scheduled === suggestion.sport
-                  ? '✓ Im Kalender'
-                  : `${test.name} einplanen`}
+                  ? t('✓ Im Kalender')
+                  : t`${test.name} einplanen`}
               </button>
             )}
             <button type="button" disabled={busy !== null} onClick={() => void adopt(suggestion)}>
               {busy === suggestion.sport
-                ? 'Übernimmt…'
+                ? t('Übernimmt…')
                 : suggestion.action === 'adopt'
-                  ? 'Übernehmen und synchronisieren'
-                  : 'Trotzdem übernehmen'}
+                  ? t('Übernehmen und synchronisieren')
+                  : t('Trotzdem übernehmen')}
             </button>
           </div>
         )

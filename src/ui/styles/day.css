@@ -621,8 +621,6 @@
 }
 
 @media (max-width: 560px) {
-  .exec__kpis dt {
-  }
   .exec__kpis dd {
     font-size: 16px;
   }

@@ -1,4 +1,5 @@
 import { formatClock, formatSeconds } from '../coach/dates.ts'
+import { t } from '../coach/lang.ts'
 
 const LEADING = /^\d+$/
 const TRAILING = /^\d{1,2}$/
@@ -18,11 +19,11 @@ export const parseTime = (value: string): number | null => {
   return seconds > 0 ? seconds : null
 }
 
-export const TIME_FORMAT_HINT = 'Zeit als mm:ss oder h:mm:ss, z. B. 38:30 oder 1:45:00'
+export const TIME_FORMAT_HINT = t('Zeit als mm:ss oder h:mm:ss, z. B. 38:30 oder 1:45:00')
 
 /** The message for a time field, or null when it holds a valid time or may stay empty. */
 export const timeError = (value: string, required: boolean): string | null => {
-  if (value.trim() === '') return required ? 'Bitte eine Zeit eintragen' : null
+  if (value.trim() === '') return required ? t('Bitte eine Zeit eintragen') : null
   return parseTime(value) === null ? TIME_FORMAT_HINT : null
 }
 

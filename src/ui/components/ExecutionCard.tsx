@@ -8,6 +8,7 @@ import { ExecutionActions } from './ExecutionActions.tsx'
 import { drawableTrace, intensityWord, isCompared } from '../trace-geometry.ts'
 import { GarminDevice } from './GarminAttribution.tsx'
 import { HeartCorrection } from './HeartCorrection.tsx'
+import { t } from '../../coach/lang.ts'
 
 /**
  * Planned against done. The strip answers "did it sit" in a glance; the rows
@@ -24,7 +25,7 @@ type Props = {
 }
 
 const SYMBOL = { on: '✓', over: '↑', under: '↓' } as const
-const WORDS = { on: 'im Ziel', over: 'zu hart', under: 'zu leicht' } as const
+const WORDS = { on: t('im Ziel'), over: t('zu hart'), under: t('zu leicht') } as const
 
 const clock = (seconds: number): string => {
   const rounded = Math.round(seconds)
@@ -35,8 +36,8 @@ const clock = (seconds: number): string => {
 
 const VERDICT = {
   found: { mark: '■', word: 'erkannt' },
-  unclear: { mark: '◧', word: 'nicht eindeutig' },
-  missing: { mark: '□', word: 'nicht gefunden' },
+  unclear: { mark: '◧', word: t('nicht eindeutig') },
+  missing: { mark: '□', word: t('nicht gefunden') },
 } as const
 
 /**
@@ -49,10 +50,10 @@ const EstimatedSets = ({ estimate }: { readonly estimate: RideEstimate }) => {
   return (
     <div className="exec__estimate">
       <p className="exec__note">
-        Ohne Watt und Puls aufgezeichnet. Belastung und Sätze sind aus Tempo und Höhenprofil geschätzt
+        {t('Ohne Watt und Puls aufgezeichnet. Belastung und Sätze sind aus Tempo und Höhenprofil geschätzt')}
         {estimate.blocks.length > 0 && (
           <>
-            {' '}— <strong>{found} von {estimate.blocks.length} Sätzen erkannt</strong>
+            {' '}— <strong>{found}{t(' von ')}{estimate.blocks.length}{t(' Sätzen erkannt')}</strong>
           </>
         )}
         .
@@ -61,13 +62,13 @@ const EstimatedSets = ({ estimate }: { readonly estimate: RideEstimate }) => {
         <ol className="exec__estimate-sets">
           {estimate.blocks.map((block, index) => (
             <li key={block.startSecond}>
-              <span aria-hidden="true">{VERDICT[block.verdict].mark}</span> Satz {index + 1} ab{' '}
+              <span aria-hidden="true">{VERDICT[block.verdict].mark}</span>{t(' Satz ')}{index + 1}{t(' ab')}{' '}
               <span className="readout">{clock(block.startSecond)}</span>: {VERDICT[block.verdict].word}
               {block.verdict !== 'missing' && (
                 <span className="readout">
                   {' '}
                   · ~{Math.round(block.workWatts / 5) * 5} W / ~{Math.round(block.restWatts / 5) * 5} W
-                  <small> (Ziel {block.targetWatts} W)</small>
+                  <small>{t(' (Ziel ')}{block.targetWatts} W)</small>
                 </span>
               )}
             </li>
@@ -75,7 +76,7 @@ const EstimatedSets = ({ estimate }: { readonly estimate: RideEstimate }) => {
         </ol>
       )}
       <p className="exec__legend">
-        <span>Wind und Sitzposition sind unbekannt: bei Wind können die Watt um ein Drittel daneben liegen, die Lage der Sätze kaum.</span>
+        <span>{t('Wind und Sitzposition sind unbekannt: bei Wind können die Watt um ein Drittel daneben liegen, die Lage der Sätze kaum.')}</span>
       </p>
     </div>
   )
@@ -113,7 +114,7 @@ const Strip = ({
   })
 
   const hit = steps.filter((step) => step.verdict === 'on').length
-  const spoken = `${steps.length} Intervalle geplant, ${hit} im Zielbereich`
+  const spoken = t`${steps.length} Intervalle geplant, ${hit} im Zielbereich`
 
   return (
     <div className={steps.length > 0 ? 'exec__strip' : 'exec__strip exec__strip--plain'}>
@@ -130,12 +131,12 @@ const Strip = ({
         {drawn.map(({ segment, index, x, width, height, step }) => {
           const y = HEIGHT - height
           const title = step
-            ? `Intervall ${step.index}: ${
-                step.verdict ? `${step.actualPercent} % (${WORDS[step.verdict]})` : `nicht ${done}`
+            ? t`Intervall ${step.index}: ${
+                step.verdict ? `${step.actualPercent} % (${WORDS[step.verdict]})` : t`nicht ${done}`
               }, ${step.actualSeconds === null ? '–' : clock(step.actualSeconds)} von ${clock(step.plannedSeconds)}${
-                step.pieces > 1 ? ', mit Unterbrechung' : ''
+                step.pieces > 1 ? t(', mit Unterbrechung') : ''
               }`
-            : segment.label ?? 'Pause'
+            : segment.label ?? t('Pause')
           if (segment.state === 'rest') {
             return (
               <rect key={index} x={x} y={y} width={width} height={height} className="exec__rest">
@@ -197,7 +198,7 @@ const Rows = ({ steps, done }: { readonly steps: readonly ExecutedStep[]; readon
               </span>
               <span className="exec__value readout">
                 {step.actualPercent === null
-                  ? `nicht ${done}`
+                  ? t`nicht ${done}`
                   : `${step.actualValue ?? ''} · ${step.actualPercent} %`}
                 {verdict && <b> {SYMBOL[verdict]}</b>}
               </span>
@@ -211,8 +212,8 @@ const Rows = ({ steps, done }: { readonly steps: readonly ExecutedStep[]; readon
               </span>
               <span className="exec__word">
                 {verdict ? WORDS[verdict] : ''}
-                {step.pieces > 1 ? ', mit Unterbrechung' : ''}
-                {step.cutShort ? ', abgebrochen' : ''}
+                {step.pieces > 1 ? t(', mit Unterbrechung') : ''}
+                {step.cutShort ? t(', abgebrochen') : ''}
               </span>
             </li>
           )
@@ -246,8 +247,8 @@ export const ExecutionCard = ({ activityId, templateId, date }: Props) => {
     }
   }, [activityId, templateId, date])
 
-  if (failed) return <p className="exec__quiet">Soll-Ist-Vergleich gerade nicht verfügbar.</p>
-  if (!execution) return <p className="exec__quiet">Soll-Ist-Vergleich wird geladen…</p>
+  if (failed) return <p className="exec__quiet">{t('Soll-Ist-Vergleich gerade nicht verfügbar.')}</p>
+  if (!execution) return <p className="exec__quiet">{t('Soll-Ist-Vergleich wird geladen…')}</p>
   return (
     <>
       <ExecutionView execution={execution} />
@@ -271,45 +272,45 @@ export const ExecutionView = ({ execution }: { readonly execution: Execution }) 
   const first = steps[0]
   const band =
     first && steps.every((step) => step.low === first.low && step.high === first.high)
-      ? `Ziel ${first.low}–${first.high} %`
+      ? t`Ziel ${first.low}–${first.high} %`
       : ''
 
   return (
-    <section className="exec" aria-label={`Soll und Ist: ${execution.templateName}`}>
+    <section className="exec" aria-label={t`Soll und Ist: ${execution.templateName}`}>
       <GarminDevice device={execution.garmin} />
       <dl className="exec__kpis">
         {compared ? (
           <>
             <div>
-              <dt>Im Zielbereich</dt>
+              <dt>{t('Im Zielbereich')}</dt>
               <dd>
                 {clock(execution.inTargetSeconds)}
-                <small> von {clock(execution.workPlannedSeconds)}</small>
+                <small>{t(' von ')}{clock(execution.workPlannedSeconds)}</small>
               </dd>
             </div>
             <div>
               {/* A soft hyphen: one word this long does not fit a third of a phone. */}
-              <dt>Inter&shy;vall&shy;zeit</dt>
+              <dt>{t('Inter­vall­zeit')}</dt>
               <dd>
                 {clock(execution.workDoneSeconds)}
-                <small> von {clock(execution.workPlannedSeconds)}</small>
+                <small>{t(' von ')}{clock(execution.workPlannedSeconds)}</small>
               </dd>
             </div>
           </>
         ) : (
           <div>
-            <dt>Dauer</dt>
+            <dt>{t('Dauer')}</dt>
             <dd>
               {Math.round(execution.duration.actual / 60)}
-              <small> von {Math.round(execution.duration.planned / 60)} min</small>
+              <small>{t(' von ')}{Math.round(execution.duration.planned / 60)}{t(' min')}</small>
             </dd>
           </div>
         )}
         <div>
-          <dt>Belastung</dt>
+          <dt>{t('Belastung')}</dt>
           <dd>
             {execution.load.actual}
-            <small> von {execution.load.planned} TSS</small>
+            <small>{t(' von ')}{execution.load.planned}{t(' TSS')}</small>
           </dd>
         </div>
       </dl>
@@ -321,7 +322,7 @@ export const ExecutionView = ({ execution }: { readonly execution: Execution }) 
       )}
       {trace && compared && undone.length > 0 && (
         <p className="exec__note">
-          Nicht {done}: Intervall {undone.map((step) => step.index).join(', ')}.
+          {t`Nicht ${done}: Intervall ${undone.map((step) => step.index).join(', ')}.`}
         </p>
       )}
 
@@ -339,7 +340,7 @@ export const ExecutionView = ({ execution }: { readonly execution: Execution }) 
                   : ''
             }
           >
-            Formkontrolle:
+            {t('Formkontrolle:')}
           </strong>{' '}
           {execution.benchmark.message}
         </p>
@@ -349,19 +350,19 @@ export const ExecutionView = ({ execution }: { readonly execution: Execution }) 
         <p className="exec__legend">
           {compared && (
             <>
-              <span><i className="exec__key exec__key--band" /> Zielkorridor</span>
-              <span><i className="exec__key exec__key--inband" /> Zeit im Korridor</span>
+              <span><i className="exec__key exec__key--band" />{t(' Zielkorridor')}</span>
+              <span><i className="exec__key exec__key--inband" />{t(' Zeit im Korridor')}</span>
             </>
           )}
           <span>
             <i className="exec__key exec__key--line" /> {intensityWord(execution.metric)},{' '}
-            {trace.smoothing}-s-Mittel
+            {trace.smoothing}{t('-s-Mittel')}
           </span>
           {trace.points.some((point) => point.heartRate !== null && !point.heartEstimated) && (
-            <span><i className="exec__key exec__key--pulse" /> Puls</span>
+            <span><i className="exec__key exec__key--pulse" />{t(' Puls')}</span>
           )}
           {trace.points.some((point) => point.heartEstimated) && (
-            <span><i className="exec__key exec__key--estimated" /> Puls geschätzt</span>
+            <span><i className="exec__key exec__key--estimated" />{t(' Puls geschätzt')}</span>
           )}
         </p>
       )}
@@ -369,14 +370,14 @@ export const ExecutionView = ({ execution }: { readonly execution: Execution }) 
         <>
           {!trace && (
             <p className="exec__legend">
-              <span><i className="exec__key exec__key--hit" /> im Ziel</span>
-              <span><i className="exec__key exec__key--off" /> daneben</span>
-              <span><i className="exec__key exec__key--missing" /> nicht {done}</span>
+              <span><i className="exec__key exec__key--hit" />{t(' im Ziel')}</span>
+              <span><i className="exec__key exec__key--off" />{t(' daneben')}</span>
+              <span><i className="exec__key exec__key--missing" />{' '}{t`nicht ${done}`}</span>
             </p>
           )}
           <details className="disclose exec__more">
             <summary>
-              Intervall für Intervall <span className="readout">{band}</span>
+              {t('Intervall für Intervall ')}<span className="readout">{band}</span>
             </summary>
             <Rows steps={steps} done={done} />
           </details>

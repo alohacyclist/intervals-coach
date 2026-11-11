@@ -1,5 +1,6 @@
 import type { FamilyLevel } from '../../coach/types.ts'
 import { SportIcon } from './SportIcon.tsx'
+import { t } from '../../coach/lang.ts'
 
 /**
  * The ladder the engine has always climbed, finally shown.
@@ -25,12 +26,12 @@ const stateText = (entry: FamilyLevel): string => {
   const name = entry.current ?? '—'
   const where =
     entry.level >= entry.top
-      ? `${name} · oberste Stufe`
+      ? t`${name} · oberste Stufe`
       : entry.next
         ? `${name} → ${entry.next}`
         : name
   if (entry.chosen === null) return where
-  return `${where} · selbst gewählt, erreicht ist Stufe ${entry.earned}`
+  return t`${where} · selbst gewählt, erreicht ist Stufe ${entry.earned}`
 }
 
 export const LevelLadder = ({ levels, onChoose, saving = null }: Props) => {
@@ -39,9 +40,9 @@ export const LevelLadder = ({ levels, onChoose, saving = null }: Props) => {
   return (
     <section className="ladder">
       <div className="ladder__head">
-        <h2>Stufen</h2>
+        <h2>{t('Stufen')}</h2>
         <span className="ladder__hint readout">
-          {levels.filter((entry) => entry.level > 1).length} von {levels.length} gesteigert
+          {levels.filter((entry) => entry.level > 1).length}{t(' von ')}{levels.length}{t(' gesteigert')}
         </span>
       </div>
 
@@ -53,7 +54,7 @@ export const LevelLadder = ({ levels, onChoose, saving = null }: Props) => {
           <span
             className="pips"
             role="img"
-            aria-label={`Stufe ${entry.level} von ${entry.top} angeboten`}
+            aria-label={t`Stufe ${entry.level} von ${entry.top} angeboten`}
           >
             {Array.from({ length: entry.top }, (_, index) => (
               <i
@@ -70,16 +71,16 @@ export const LevelLadder = ({ levels, onChoose, saving = null }: Props) => {
           <span className="rung__next">{stateText(entry)}</span>
 
           {onChoose && entry.top > 1 ? (
-            <span className="rung__choose" role="group" aria-label={`Stufe für ${entry.label} wählen`}>
+            <span className="rung__choose" role="group" aria-label={t`Stufe für ${entry.label} wählen`}>
               <button
                 type="button"
                 className="rung__pick"
                 aria-pressed={entry.chosen === null}
                 disabled={saving !== null}
                 onClick={() => onChoose(entry.family, null)}
-                title="Stufe folgt den gelaufenen und gefahrenen Intervallen"
+                title={t('Stufe folgt den gelaufenen und gefahrenen Intervallen')}
               >
-                Auto
+                {t('Auto')}
               </button>
               {Array.from({ length: entry.top }, (_, index) => index + 1).map((level) => (
                 <button
@@ -90,10 +91,10 @@ export const LevelLadder = ({ levels, onChoose, saving = null }: Props) => {
                   disabled={saving !== null}
                   onClick={() => onChoose(entry.family, level)}
                 >
-                  Stufe {level}
+                  {t('Stufe ')}{level}
                 </button>
               ))}
-              {saving === entry.family ? <span className="rung__saving readout">speichert…</span> : null}
+              {saving === entry.family ? <span className="rung__saving readout">{t('speichert…')}</span> : null}
             </span>
           ) : null}
         </div>
@@ -101,10 +102,7 @@ export const LevelLadder = ({ levels, onChoose, saving = null }: Props) => {
 
       {/* The rule once for all rungs, instead of once in every one. */}
       <p className="ladder__rule">
-        Die nächste Stufe wird frei, sobald du in einer Einheit jedes Intervall voll und mindestens im
-        Zielbereich fährst. Zu hart gefahren hebt die Schwelle, nicht die Stufe. Auf der obersten
-        steigern sich die Einheiten über die Schwellenwerte. Du kannst die Stufe auch selbst wählen —
-        nach oben wie nach unten; mit „Auto“ entscheiden wieder die Intervalle.
+        {t('Die nächste Stufe wird frei, sobald du in einer Einheit jedes Intervall voll und mindestens im Zielbereich fährst. Zu hart gefahren hebt die Schwelle, nicht die Stufe. Auf der obersten steigern sich die Einheiten über die Schwellenwerte. Du kannst die Stufe auch selbst wählen — nach oben wie nach unten; mit „Auto“ entscheiden wieder die Intervalle.')}
       </p>
     </section>
   )

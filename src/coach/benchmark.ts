@@ -12,6 +12,7 @@ import { diffDays } from './dates.ts'
 import { selectedSports } from './thresholds.ts'
 import type { WorkReading } from './efficiency.ts'
 import { efficiencyChange } from './efficiency.ts'
+import { locale, pick, t } from './lang.ts'
 
 export const BENCHMARK_INTERVAL_WEEKS = 8
 /** Heart rate wanders a couple of beats day to day; less than this proves nothing. */
@@ -77,8 +78,8 @@ export const benchmarkDue = (
     templateId: template.id,
     reason:
       done.length === 0
-        ? 'Formkontrolle: dieselbe Einheit alle acht Wochen. Verglichen wird Tempo bzw. Leistung pro Herzschlag in den Intervallen — heute wird die erste Referenz gesetzt.'
-        : `Formkontrolle: dieselbe Einheit wie vor ${Math.floor(since / 7)} Wochen. Mehr Arbeit pro Herzschlag ist der Fortschritt.`,
+        ? t('Formkontrolle: dieselbe Einheit alle acht Wochen. Verglichen wird Tempo bzw. Leistung pro Herzschlag in den Intervallen — heute wird die erste Referenz gesetzt.')
+        : t`Formkontrolle: dieselbe Einheit wie vor ${Math.floor(since / 7)} Wochen. Mehr Arbeit pro Herzschlag ist der Fortschritt.`,
   }
 }
 
@@ -100,20 +101,20 @@ const describe = (result: Omit<BenchmarkResult, 'message' | 'basis' | 'efficienc
   const { averageHr, previousAverageHr, previousDate } = result
   if (result.verdict === 'first') {
     return averageHr === null
-      ? 'Erste Referenz gesetzt. Beim nächsten Mal gibt es einen Vergleich.'
-      : `Erste Referenz: ${Math.round(averageHr)} bpm im Schnitt. Beim nächsten Mal gibt es einen Vergleich.`
+      ? t('Erste Referenz gesetzt. Beim nächsten Mal gibt es einen Vergleich.')
+      : t`Erste Referenz: ${Math.round(averageHr)} bpm im Schnitt. Beim nächsten Mal gibt es einen Vergleich.`
   }
   if (result.verdict === 'unknown' || averageHr === null || previousAverageHr === null) {
-    return 'Ohne Herzfrequenz lässt sich die Einheit nicht vergleichen.'
+    return t('Ohne Herzfrequenz lässt sich die Einheit nicht vergleichen.')
   }
   const delta = Math.round(averageHr - previousAverageHr)
-  const since = previousDate ? ` gegenüber ${previousDate}` : ''
+  const since = previousDate ? t` gegenüber ${previousDate}` : ''
   if (result.verdict === 'unchanged') {
-    return `${Math.round(averageHr)} bpm — unverändert${since}. Gleiche Arbeit, gleicher Preis.`
+    return t`${Math.round(averageHr)} bpm — unverändert${since}. Gleiche Arbeit, gleicher Preis.`
   }
   return result.verdict === 'better'
-    ? `${Math.round(averageHr)} bpm statt ${Math.round(previousAverageHr)}${since}: ${Math.abs(delta)} Schläge weniger für dieselbe Arbeit. Das ist der Fortschritt.`
-    : `${Math.round(averageHr)} bpm statt ${Math.round(previousAverageHr)}${since}: ${delta} Schläge mehr. Ermüdung, Hitze oder ein Formverlust — erst beim nächsten Mal wiederholen, bevor du daraus etwas ableitest.`
+    ? t`${Math.round(averageHr)} bpm statt ${Math.round(previousAverageHr)}${since}: ${Math.abs(delta)} Schläge weniger für dieselbe Arbeit. Das ist der Fortschritt.`
+    : t`${Math.round(averageHr)} bpm statt ${Math.round(previousAverageHr)}${since}: ${delta} Schläge mehr. Ermüdung, Hitze oder ein Formverlust — erst beim nächsten Mal wiederholen, bevor du daraus etwas ableitest.`
 }
 
 /** One reference session as the comparison needs it. */
@@ -127,7 +128,7 @@ export type BenchmarkSession = {
 
 const shortDate = (date: string): string => `${date.slice(8, 10)}.${date.slice(5, 7)}.`
 
-const intensityWord = (sport: Sport): string => (sport === 'Ride' ? 'Leistung' : 'Tempo')
+const intensityWord = (sport: Sport): string => (sport === 'Ride' ? t('Leistung') : pick('Tempo', 'Pace'))
 
 /**
  * Pace per heartbeat over the work intervals: faster at the same heart rate, or
@@ -145,15 +146,15 @@ const byIntervals = (
   const verdict: BenchmarkResult['verdict'] =
     Math.abs(change) < MEANINGFUL_EFFICIENCY_PERCENT ? 'unchanged' : change > 0 ? 'better' : 'worse'
   const describeReading = (reading: WorkReading) =>
-    `${Math.round(reading.percent)} % bei ${Math.round(reading.heartRate!)} bpm`
+    t`${Math.round(reading.percent)} % bei ${Math.round(reading.heartRate!)} bpm`
   const facts = `${intensityWord(sport)} ${describeReading(latest.reading)}, am ${shortDate(previous.date)} ${describeReading(previous.reading)}`
-  const amount = Math.abs(Math.round(change * 10) / 10).toLocaleString('de-DE')
+  const amount = Math.abs(Math.round(change * 10) / 10).toLocaleString(locale())
   const message =
     verdict === 'unchanged'
-      ? `${facts}: gleiche Effizienz.`
+      ? t`${facts}: gleiche Effizienz.`
       : verdict === 'better'
-        ? `${facts}: ${amount} % effizienter. Das ist der Fortschritt.`
-        : `${facts}: ${amount} % weniger effizient. Ermüdung, Hitze oder ein Formverlust — erst beim nächsten Mal wiederholen, bevor du daraus etwas ableitest.`
+        ? t`${facts}: ${amount} % effizienter. Das ist der Fortschritt.`
+        : t`${facts}: ${amount} % weniger effizient. Ermüdung, Hitze oder ein Formverlust — erst beim nächsten Mal wiederholen, bevor du daraus etwas ableitest.`
   return {
     sport,
     date: latest.date,

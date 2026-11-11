@@ -432,3 +432,8 @@
   font-size: 13px;
   color: var(--dim);
 }
+.legal__note {
+  border-left: 3px solid var(--rule);
+  padding-left: 12px;
+  color: var(--dim);
+}

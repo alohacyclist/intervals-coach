@@ -1,5 +1,6 @@
 import type { EnteredZrlRace, ZrlFormat, ZwiftRoute } from '../coach/types.ts'
 import { addDays, weekdayDe } from '../coach/dates.ts'
+import { t } from '../coach/lang.ts'
 
 /** One line of the round as it is being edited: the route is still typed text. */
 export type ZrlRow = {
@@ -72,9 +73,9 @@ export const racesFrom = (
   const issues = rows.flatMap((row) => {
     const route = row.route.trim() === '' ? null : resolveRoute(row.route, routes)
     return [
-      ...(row.format === '' ? [`${shortDate(row.date)}: Format fehlt`] : []),
+      ...(row.format === '' ? [t`${shortDate(row.date)}: Format fehlt`] : []),
       ...(route === undefined
-        ? [`${shortDate(row.date)}: Route „${row.route.trim()}" nicht gefunden`]
+        ? [t`${shortDate(row.date)}: Route „${row.route.trim()}" nicht gefunden`]
         : []),
     ]
   })

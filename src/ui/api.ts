@@ -2,6 +2,7 @@ import type { SessionTier } from '../coach/types.ts'
 import type { CoachConfig, Execution, Plan, Progress, ZrlSettings, ZwiftRoute } from '../coach/types.ts'
 import type { ZrlRaceInput } from './zrl-rows.ts'
 import { OFFLINE, humanError } from './error-message.ts'
+import { LANGUAGE } from './language.ts'
 
 export class ApiError extends Error {
   constructor(
@@ -22,7 +23,8 @@ const send = async (path: string, init?: RequestInit): Promise<Response> => {
   try {
     return await fetch(path, {
       ...init,
-      headers: { 'Content-Type': 'application/json', ...init?.headers },
+      // The server writes its sentences in the language this browser reads.
+      headers: { 'Content-Type': 'application/json', 'X-Formkurve-Lang': LANGUAGE, ...init?.headers },
     })
   } catch {
     throw new ApiError(humanError(OFFLINE), OFFLINE)

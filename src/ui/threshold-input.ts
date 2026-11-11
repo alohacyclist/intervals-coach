@@ -2,6 +2,7 @@ import type { Sport, SportSetting, SportThreshold } from '../coach/types.ts'
 import { defaultThreshold } from '../coach/thresholds.ts'
 import type { SportSettings } from './api.ts'
 import { formatSeconds, parseTime } from './format-input.ts'
+import { t } from '../coach/lang.ts'
 
 /**
  * Where a threshold in the form came from. A value nobody chose must never pass
@@ -12,8 +13,8 @@ export type ThresholdSource = 'intervals' | 'estimate' | 'own'
 export type ThresholdSources = Partial<Readonly<Record<Sport, ThresholdSource>>>
 
 export const SOURCE_NOTES: Readonly<Record<Exclude<ThresholdSource, 'own'>, string>> = {
-  intervals: 'aus intervals.icu übernommen',
-  estimate: 'Schätzwert – bitte prüfen',
+  intervals: t('aus intervals.icu übernommen'),
+  estimate: t('Schätzwert – bitte prüfen'),
 }
 
 export const thresholdText = (threshold: SportThreshold): string => {

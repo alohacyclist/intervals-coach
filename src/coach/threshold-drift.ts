@@ -2,6 +2,7 @@ import type { AthleteProfile, Sport, SportThreshold, ThresholdSuggestion } from 
 import { formatSeconds } from './dates.ts'
 import type { WorkReading } from './efficiency.ts'
 import { thresholdImplied } from './efficiency.ts'
+import { locale, t } from './lang.ts'
 
 /** Below this the difference is noise, not drift. */
 const REPORT_THRESHOLD_PERCENT = 3
@@ -37,11 +38,11 @@ const describe = (
     metric === 'power'
       ? `${Math.round(value)} W`
       : `${formatSeconds(value)}${metric === 'swimPace' ? '/100m' : '/km'}`
-  const measured = `intervals.icu misst ${render(observed)}, eingestellt sind ${render(configured)} — ${Math.abs(drift).toFixed(1)} %`
+  const measured = t`intervals.icu misst ${render(observed)}, eingestellt sind ${render(configured)} — ${Math.abs(drift).toFixed(1)} %`
 
   return drift > 0
-    ? `${measured} besser. Diese Leistung hast du nachweislich erbracht, deine Vorgaben sind also zu leicht geworden.`
-    : `${measured} schwächer. Der Schätzwert kann aber nur abbilden, was du versucht hast — fehlen maximale Belastungen, sinkt er von selbst. Bestätige ihn mit der Standortbestimmung, bevor du den Wert senkst.`
+    ? t`${measured} besser. Diese Leistung hast du nachweislich erbracht, deine Vorgaben sind also zu leicht geworden.`
+    : t`${measured} schwächer. Der Schätzwert kann aber nur abbilden, was du versucht hast — fehlen maximale Belastungen, sinkt er von selbst. Bestätige ihn mit der Standortbestimmung, bevor du den Wert senkst.`
 }
 
 /**
@@ -101,8 +102,8 @@ export const measuredSuggestion = (
     driftPercent: Math.round(drift * 10) / 10,
     action: 'adopt',
     message:
-      `Aus deiner Standortbestimmung: ${render(value)} statt ${render(configured)}. ` +
-      'Das ist gemessen, nicht geschätzt — alle Vorgaben sollten jetzt darauf stehen.',
+      t`Aus deiner Standortbestimmung: ${render(value)} statt ${render(configured)}. ` +
+      t('Das ist gemessen, nicht geschätzt — alle Vorgaben sollten jetzt darauf stehen.'),
   }
 }
 
@@ -139,8 +140,8 @@ export const executionSuggestion = (
     setting.threshold.metric === 'power'
       ? `${Math.round(amount)} W`
       : `${formatSeconds(amount)}${setting.threshold.metric === 'swimPace' ? '/100m' : '/km'}`
-  const average = Math.abs((deviations[0]! + deviations[1]!) / 2).toLocaleString('de-DE', { maximumFractionDigits: 1 })
-  const dates = [before.date, latest.date].map((date) => `${date.slice(8, 10)}.${date.slice(5, 7)}.`).join(' und ')
+  const average = Math.abs((deviations[0]! + deviations[1]!) / 2).toLocaleString(locale(), { maximumFractionDigits: 1 })
+  const dates = [before.date, latest.date].map((date) => `${date.slice(8, 10)}.${date.slice(5, 7)}.`).join(t(' und '))
 
   return {
     sport,
@@ -150,10 +151,10 @@ export const executionSuggestion = (
     driftPercent: Math.round(drift * 10) / 10,
     action: above ? 'adopt' : 'verify',
     message: above
-      ? `Deine Intervalle am ${dates} lagen im Schnitt ${average} Punkte über dem Zielbereich. ` +
-        `Das passt zu einer Schwelle von ${render(implied)} statt ${render(configured)} — die Vorgaben sind zu leicht geworden.`
-      : `Deine Intervalle am ${dates} lagen im Schnitt ${average} Punkte unter dem Zielbereich. ` +
-        `Rechnerisch wären das ${render(implied)} statt ${render(configured)}. Müde Beine sehen genauso aus — bestätige es mit der Standortbestimmung, bevor du den Wert senkst.`,
+      ? t`Deine Intervalle am ${dates} lagen im Schnitt ${average} Punkte über dem Zielbereich. ` +
+        t`Das passt zu einer Schwelle von ${render(implied)} statt ${render(configured)} — die Vorgaben sind zu leicht geworden.`
+      : t`Deine Intervalle am ${dates} lagen im Schnitt ${average} Punkte unter dem Zielbereich. ` +
+        t`Rechnerisch wären das ${render(implied)} statt ${render(configured)}. Müde Beine sehen genauso aus — bestätige es mit der Standortbestimmung, bevor du den Wert senkst.`,
   }
 }
 

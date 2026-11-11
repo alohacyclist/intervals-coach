@@ -1,9 +1,10 @@
 import type { Activity, AdherenceDay, AdherenceStatus, DayProposal, PlannedEvent } from './types.ts'
 import type { Completion } from './progression.ts'
-import { addDays, weekdayDe } from './dates.ts'
-import { LIBRARY, findTemplate } from './library.ts'
+import { addDays, weekdayLabel } from './dates.ts'
+import { LIBRARY, findTemplate, namesOf } from './library.ts'
 import { ZRL_TEMPLATE_ID, isZrlRace } from './zrl.ts'
 import { sessionName } from './done.ts'
+import { t } from './lang.ts'
 
 const EXTERNAL_ID_PREFIX = 'coach:'
 
@@ -56,7 +57,7 @@ const dayFor = (
   const alreadyNamed =
     recommendedName &&
     (pushed.some((event) => event.externalId?.split(':')[2] === recommended) ||
-      names.some((name) => name.startsWith(recommendedName)))
+      names.some((name) => namesOf(recommended ?? '').some((known) => name.startsWith(known))))
   const planned = recommendedName && !alreadyNamed ? [...names, recommendedName] : names
   const trained = activities.filter((activity) => activity.date === date && activity.load > 0)
 
@@ -84,10 +85,10 @@ const dayFor = (
 
   return {
     date,
-    weekday: weekdayDe(date),
+    weekday: weekdayLabel(date),
     status: classify(planned, trained, paired, date === today),
     planned,
-    completed: completed ? sessionName(completed.name, templateId) || 'Einheit ohne Namen' : null,
+    completed: completed ? sessionName(completed.name, templateId) || t('Einheit ohne Namen') : null,
     completedSport: completed?.sport ?? null,
     // Against the session recognised, which is not the paired one when intervals.icu paired wrongly.
     compliance: paired ? (completion ? completion.compliance : paired.compliance) : null,

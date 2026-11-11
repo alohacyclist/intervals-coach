@@ -1,8 +1,15 @@
+import { lang } from '../../coach/lang.ts'
 import { OPERATOR } from './operator.ts'
 
 export const Imprint = () => (
   <article className="legal">
     <h1>Impressum</h1>
+    {/* The German text is the binding one; an English reader is told so rather than left guessing. */}
+    {lang() === 'en' && (
+      <p className="legal__note" lang="en">
+        This page is available in German only. The German text is the legally binding version.
+      </p>
+    )}
 
     <h2>Angaben gemäß § 5 DDG</h2>
     <p>

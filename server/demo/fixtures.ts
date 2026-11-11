@@ -13,6 +13,7 @@
 import { addDays, startOfWeek } from '../../src/coach/dates.ts'
 import { isRest, percentages } from '../../src/coach/format.ts'
 import { findTemplate } from '../../src/coach/library.ts'
+import { pick } from '../../src/coach/lang.ts'
 import { estimateSeconds } from '../../src/coach/variant.ts'
 import type { ActualInterval } from '../../src/coach/execution.ts'
 import type { ActivityStreams } from '../../src/coach/trace.ts'
@@ -134,7 +135,7 @@ export const demoConfig = (today: string): CoachConfig => ({
       sport: 'Run',
       kind: 'raceTime',
       // Ambitious against the 4:30 threshold pace, so the goal check has something to weigh.
-      label: 'Halbmarathon unter 1:35',
+      label: pick('Halbmarathon unter 1:35', 'Half marathon under 1:35'),
       targetValue: 5700,
       currentValue: 6240,
       distanceKm: 21.1,

@@ -1,7 +1,7 @@
 import type { Activity, CompletedSession, Sport, Stimulus } from './types.ts'
 import type { Completion } from './progression.ts'
 import { deliveredStimuli, isHardActivity } from './fitness.ts'
-import { LIBRARY, findTemplate } from './library.ts'
+import { LIBRARY, findTemplate, namesOf } from './library.ts'
 import { ZRL_TEMPLATE_ID, isZrlRace } from './zrl.ts'
 
 /** What a day cost, whether the plan proposed it or the athlete actually trained it. */
@@ -33,7 +33,12 @@ export const effortsFrom = (activities: readonly Activity[]): readonly Effort[] 
 export const sessionName = (name: string, templateId: string | null): string => {
   const recognised = templateId === null ? undefined : findTemplate(templateId)
   if (!recognised || name.startsWith(recognised.name)) return name
-  const ours = LIBRARY.some((template) => name === template.name || name.startsWith(`${template.name} (`))
+  // Sent in the other language, it is still this session: it reads in the athlete's own.
+  const foreign = namesOf(recognised.id).find((other) => name.startsWith(other))
+  if (foreign) return `${recognised.name}${name.slice(foreign.length)}`
+  const ours = LIBRARY.some((template) =>
+    namesOf(template.id).some((known) => name === known || name.startsWith(`${known} (`)),
+  )
   return ours ? recognised.name : name
 }
 

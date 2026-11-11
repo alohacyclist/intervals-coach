@@ -10,8 +10,10 @@ import { ProgressView } from './ProgressView.tsx'
 import { Imprint } from './legal/Imprint.tsx'
 import { Privacy } from './legal/Privacy.tsx'
 import { ThemeSwitch } from './components/ThemeSwitch.tsx'
+import { LanguageSwitch } from './components/LanguageSwitch.tsx'
 import { ErrorBoundary } from './components/ErrorBoundary.tsx'
 import { DemoBadge } from './components/DemoBadge.tsx'
+import { t } from '../coach/lang.ts'
 
 const PLAN_PATH = '/app'
 const PROGRESS_PATH = '/verlauf'
@@ -31,20 +33,20 @@ const ViewSwitch = ({
   readonly path: string
   readonly onGo: (next: string) => void
 }) => (
-  <div className="mode" role="group" aria-label="Ansicht">
+  <div className="mode" role="group" aria-label={t('Ansicht')}>
     <button
       type="button"
       aria-pressed={path !== PROGRESS_PATH}
       onClick={() => onGo(PLAN_PATH)}
     >
-      Plan
+      {t('Plan')}
     </button>
     <button
       type="button"
       aria-pressed={path === PROGRESS_PATH}
       onClick={() => onGo(PROGRESS_PATH)}
     >
-      Verlauf
+      {t('Verlauf')}
     </button>
   </div>
 )
@@ -67,6 +69,7 @@ const Shell = ({
     <div className="topbar">
       {nav}
       {demo && <DemoBadge />}
+      <LanguageSwitch />
       <ThemeSwitch />
     </div>
     <ErrorBoundary key={resetKey}>{children}</ErrorBoundary>
@@ -92,10 +95,11 @@ export const App = () => {
   }
 
   const load = useCallback(async () => {
+    setError(null)
     try {
       setMe(await getMe())
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Unbekannter Fehler')
+      setError(caught instanceof Error ? caught.message : t('Unbekannter Fehler'))
     }
   }, [])
 
@@ -103,11 +107,30 @@ export const App = () => {
     void load()
   }, [load])
 
+  // Opened without a connection, the kept shell lands here; it carries on by itself once there is one.
+  useEffect(() => {
+    if (!error) return
+    const retry = () => void load()
+    window.addEventListener('online', retry)
+    return () => window.removeEventListener('online', retry)
+  }, [error, load])
+
   if (path === '/datenschutz') return <Shell><Privacy /></Shell>
   if (path === '/impressum') return <Shell><Imprint /></Shell>
 
-  if (error) return <Shell><p className="error error--block" role="alert">{error}</p></Shell>
-  if (!me) return <Shell><p className="loading" role="status">Einen Moment…</p></Shell>
+  if (error) {
+    return (
+      <Shell>
+        <p className="error error--block" role="alert">
+          {error}
+          <button type="button" onClick={() => void load()}>
+            {t('Erneut versuchen')}
+          </button>
+        </p>
+      </Shell>
+    )
+  }
+  if (!me) return <Shell><p className="loading" role="status">{t('Einen Moment…')}</p></Shell>
 
   const demo = me.mode === 'demo'
 

@@ -312,6 +312,18 @@ describe('the cron', () => {
     expect(writes[0]?.description).toContain(SIGNATURE)
   })
 
+  it('writes in the language the athlete last read the app in', async () => {
+    const { env } = setup()
+    const { writes } = platforms()
+    await connected(env)
+    await call('/api/strava', { headers: { Cookie: await signIn(env), 'X-Formkurve-Lang': 'en' } }, env)
+    expect((await loadLink(env.COACH_CONFIG, PASSWORD, SUBJECT))?.lang).toBe('en')
+    await runCron(env)
+    expect(writes[0]?.description).toContain('planned and analysed with Formkurve')
+    expect(writes[0]?.description).toContain('on target')
+    expect(writes[0]?.description).not.toContain(SIGNATURE)
+  })
+
   it('writes the other sessions when Strava refuses one of them', async () => {
     const { env } = setup()
     const { writes } = platforms({ rides: [EVENING, MORNING], refuse: [EVENING.stravaId], status: 500 })

@@ -2,6 +2,7 @@ import type { AthleteProfile, Feasibility, Goal, Sport } from './types.ts'
 import { diffDays, formatClock, formatSeconds } from './dates.ts'
 import { formatDistance, racePaceSecPer100m, racePaceSecPerKm } from './format.ts'
 import { ftpOf, thresholdFor } from './thresholds.ts'
+import { locale, t } from './lang.ts'
 
 /** Realistic FTP gain for a trained athlete on two to three sessions per week. */
 const FTP_PERCENT_PER_MONTH = 2.5
@@ -23,7 +24,7 @@ const ANCHOR_SECONDS: Readonly<Partial<Record<Sport, number>>> = { Run: 3600, Sw
 const RIEGEL: Readonly<Partial<Record<Sport, number>>> = { Run: 1.06, Swim: 1.03 }
 
 const number = (value: number, digits = 1): string =>
-  value.toLocaleString('de-DE', { minimumFractionDigits: digits, maximumFractionDigits: digits })
+  value.toLocaleString(locale(), { minimumFractionDigits: digits, maximumFractionDigits: digits })
 
 /** Weeks from today to the goal date — half a week at the very least, so the maths holds. */
 const weeksUntil = (goal: Goal, today: string): number | null =>
@@ -71,7 +72,7 @@ const ftpFeasibility = (goal: Goal, profile: AthleteProfile, today: string): Fea
     return reached(
       goal,
       current,
-      `Ziel erreicht: jetzt ${current} W, angepeilt waren ${goal.targetValue} W.`,
+      t`Ziel erreicht: jetzt ${current} W, angepeilt waren ${goal.targetValue} W.`,
     )
   }
 
@@ -83,7 +84,7 @@ const ftpFeasibility = (goal: Goal, profile: AthleteProfile, today: string): Fea
       verdict: 'on-track',
       currentValue: current,
       weeksLeft: null,
-      message: `Jetzt ${current} W → ${goal.targetValue} W, kein Zieldatum. Bei realistischen ${number(FTP_PERCENT_PER_MONTH)} %/Monat sind das rund ${number(months)} Monate.`,
+      message: t`Jetzt ${current} W → ${goal.targetValue} W, kein Zieldatum. Bei realistischen ${number(FTP_PERCENT_PER_MONTH)} %/Monat sind das rund ${number(months)} Monate.`,
     }
   }
 
@@ -93,17 +94,17 @@ const ftpFeasibility = (goal: Goal, profile: AthleteProfile, today: string): Fea
     perWeek <= realistic ? 'on-track' : perWeek <= realistic * 2 ? 'ambitious' : 'unrealistic'
   const advice =
     verdict === 'on-track'
-      ? 'Machbar mit zwei Qualitätseinheiten pro Woche.'
+      ? t('Machbar mit zwei Qualitätseinheiten pro Woche.')
       : verdict === 'ambitious'
-        ? 'Möglich, wenn du drei Wochen am Stück belastest und die vierte reduzierst — Regeneration ist hier der Engpass.'
-        : 'Zeitfenster verlängern oder Ziel senken; schneller geht es nur mit deutlich mehr Umfang.'
+        ? t('Möglich, wenn du drei Wochen am Stück belastest und die vierte reduzierst — Regeneration ist hier der Engpass.')
+        : t('Zeitfenster verlängern oder Ziel senken; schneller geht es nur mit deutlich mehr Umfang.')
 
   return {
     goalId: goal.id,
     verdict,
     currentValue: current,
     weeksLeft: weeks,
-    message: `Jetzt ${current} W → ${goal.targetValue} W in ${number(weeks)} Wochen = +${number(perWeek)} W/Woche nötig (realistisch ~${number(realistic)} W/Woche). ${advice}`,
+    message: t`Jetzt ${current} W → ${goal.targetValue} W in ${number(weeks)} Wochen = +${number(perWeek)} W/Woche nötig (realistisch ~${number(realistic)} W/Woche). ${advice}`,
   }
 }
 
@@ -120,27 +121,27 @@ const raceFeasibility = (goal: Goal, profile: AthleteProfile, today: string): Fe
     projected === null
       ? 'eingetragen'
       : perHundred
-        ? 'aus deiner CSS hochgerechnet'
-        : 'aus deiner Schwellenpace hochgerechnet'
+        ? t('aus deiner CSS hochgerechnet')
+        : t('aus deiner Schwellenpace hochgerechnet')
   const where =
     distanceKm === undefined
-      ? ` (${source}, ohne Distanz keine Hochrechnung)`
-      : ` auf ${formatDistance(goal.sport, distanceKm)} (${pace(current, distanceKm)}${unit} → ${pace(goal.targetValue, distanceKm)}${unit}, ${source})`
-  const times = `Jetzt ${formatClock(current)} → ${formatClock(goal.targetValue)}${where}`
+      ? t` (${source}, ohne Distanz keine Hochrechnung)`
+      : t` auf ${formatDistance(goal.sport, distanceKm)} (${pace(current, distanceKm)}${unit} → ${pace(goal.targetValue, distanceKm)}${unit}, ${source})`
+  const times = t`Jetzt ${formatClock(current)} → ${formatClock(goal.targetValue)}${where}`
 
   const volumeShortfall =
     goal.sport === 'Run' &&
     (distanceKm ?? 0) >= 10 &&
     profile.weeklySessions.max < MIN_RUN_SESSIONS_FOR_10K + 1
   const volumeNote = volumeShortfall
-    ? ` Der Engpass ist die Laufhäufigkeit: in den letzten drei Monaten vor dem Ziel brauchst du ${MIN_RUN_SESSIONS_FOR_10K}+ Läufe/Woche statt der aktuell geplanten ${profile.weeklySessions.max} Einheiten insgesamt.`
+    ? t` Der Engpass ist die Laufhäufigkeit: in den letzten drei Monaten vor dem Ziel brauchst du ${MIN_RUN_SESSIONS_FOR_10K}+ Läufe/Woche statt der aktuell geplanten ${profile.weeklySessions.max} Einheiten insgesamt.`
     : ''
 
   if (current <= goal.targetValue) {
     return reached(
       goal,
       current,
-      `${times} — die Zielzeit liegt bereits im Bereich deiner aktuellen Form.${volumeNote}`,
+      t`${times} — die Zielzeit liegt bereits im Bereich deiner aktuellen Form.${volumeNote}`,
     )
   }
 
@@ -151,7 +152,7 @@ const raceFeasibility = (goal: Goal, profile: AthleteProfile, today: string): Fe
       verdict: volumeShortfall ? 'ambitious' : 'on-track',
       currentValue: current,
       weeksLeft: null,
-      message: `${times}, kein Zieldatum.${volumeNote}`,
+      message: t`${times}, kein Zieldatum.${volumeNote}`,
     }
   }
 
@@ -165,7 +166,7 @@ const raceFeasibility = (goal: Goal, profile: AthleteProfile, today: string): Fe
     verdict: volumeShortfall && timeVerdict === 'on-track' ? 'ambitious' : timeVerdict,
     currentValue: current,
     weeksLeft: weeks,
-    message: `${times} in ${number(weeks)} Wochen = ${number(perWeek, 0)} s/Woche nötig (realistisch ~${number(realistic, 0)} s/Woche).${volumeNote}`,
+    message: t`${times} in ${number(weeks)} Wochen = ${number(perWeek, 0)} s/Woche nötig (realistisch ~${number(realistic, 0)} s/Woche).${volumeNote}`,
   }
 }
 

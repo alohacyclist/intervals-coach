@@ -17,6 +17,7 @@ import {
   timeTicks,
   valueText,
 } from '../trace-geometry.ts'
+import { t } from '../../coach/lang.ts'
 
 /**
  * The session over time: what was ridden or run as a line in front of the
@@ -69,8 +70,8 @@ export const ExecutionTrace = ({ execution, trace, compared }: Props) => {
     : null
 
   const spoken =
-    `${intensityWord(execution.metric)} über ${Math.round(total / 60)} Minuten` +
-    (corridors.length > 0 ? `, ${hit} von ${corridors.length} Intervallen im Zielbereich` : '')
+    t`${intensityWord(execution.metric)} über ${Math.round(total / 60)} Minuten` +
+    (corridors.length > 0 ? t`, ${hit} von ${corridors.length} Intervallen im Zielbereich` : '')
 
   return (
     <figure
@@ -184,7 +185,7 @@ export const ExecutionTrace = ({ execution, trace, compared }: Props) => {
       </div>
 
       <figcaption className={readout ? 'trace__readout readout' : 'trace__readout trace__readout--hint readout'}>
-        {readout ?? 'Tippen oder darüberfahren für Werte'}
+        {readout ?? t('Tippen oder darüberfahren für Werte')}
       </figcaption>
     </figure>
   )

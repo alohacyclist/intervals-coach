@@ -13,6 +13,7 @@ import { flattenBlocks } from './library.ts'
 import { percentages } from './format.ts'
 import { estimateSeconds, renameShortened, shorten, totalSeconds } from './variant.ts'
 import { intensityOfPercent } from './profile.ts'
+import { t } from './lang.ts'
 
 /**
  * Planned against done, interval by interval. The comparison is made by order,
@@ -330,13 +331,13 @@ export const compareExecution = (input: ExecutionInput): Execution => {
     planned.length === 0
       ? null
       : detected.length === 0
-        ? 'intervals.icu hat in dieser Aktivität keine Intervalle erkannt.'
+        ? t('intervals.icu hat in dieser Aktivität keine Intervalle erkannt.')
         : !measurable
           ? threshold.metric === 'power'
-            ? 'Keine Leistungsdaten — die Einheit lief ohne Wattmessung.'
-            : 'Keine Tempodaten für die Intervalle.'
+            ? t('Keine Leistungsdaten — die Einheit lief ohne Wattmessung.')
+            : t('Keine Tempodaten für die Intervalle.')
           : shortIntervals
-            ? 'Kurze Intervalle fasst intervals.icu zu Blöcken zusammen — einzeln lassen sie sich nicht vergleichen.'
+            ? t('Kurze Intervalle fasst intervals.icu zu Blöcken zusammen — einzeln lassen sie sich nicht vergleichen.')
             : null
 
   const alignment = alignIntervals(

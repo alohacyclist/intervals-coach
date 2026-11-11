@@ -1,22 +1,23 @@
+import { perLang, t } from './lang.ts'
 export type Sport = 'Ride' | 'Run' | 'Swim'
 
 export const ALL_SPORTS: readonly Sport[] = ['Ride', 'Run', 'Swim'] as const
 
-export const SPORT_LABELS: Readonly<Record<Sport, string>> = {
-  Ride: 'Rad',
-  Run: 'Laufen',
-  Swim: 'Schwimmen',
-}
+export const SPORT_LABELS: Readonly<Record<Sport, string>> = perLang(() => ({
+  Ride: t('Rad'),
+  Run: t('Laufen'),
+  Swim: t('Schwimmen'),
+}))
 
 /**
  * How a session is said to have been done. A run is not "gefahren", and a text
  * that serves every sport has to ask for the word instead of assuming the bike.
  */
-export const SPORT_DONE: Readonly<Record<Sport, string>> = {
-  Ride: 'gefahren',
-  Run: 'gelaufen',
-  Swim: 'geschwommen',
-}
+export const SPORT_DONE: Readonly<Record<Sport, string>> = perLang(() => ({
+  Ride: t('gefahren'),
+  Run: t('gelaufen'),
+  Swim: t('geschwommen'),
+}))
 
 /**
  * Every sport is steered by a different quantity. Keeping them in one union lets
@@ -47,16 +48,16 @@ export type Stimulus =
   | 'RECOVERY'
 
 /** How a stimulus is named to the athlete; the enum names are for the code only. */
-export const STIMULUS_LABELS: Readonly<Record<Stimulus, string>> = {
+export const STIMULUS_LABELS: Readonly<Record<Stimulus, string>> = perLang(() => ({
   VO2: 'VO2max',
-  THRESHOLD: 'Schwelle',
+  THRESHOLD: t('Schwelle'),
   SWEETSPOT: 'Sweetspot',
   TEMPO: 'Tempo',
-  NEURO: 'Antritte',
-  ENDURANCE: 'Grundlage',
-  LONG: 'Lange Einheit',
-  RECOVERY: 'Regeneration',
-}
+  NEURO: t('Antritte'),
+  ENDURANCE: t('Grundlage'),
+  LONG: t('Lange Einheit'),
+  RECOVERY: t('Regeneration'),
+}))
 
 export type IntensityClass = 'hard' | 'moderate' | 'easy'
 
@@ -77,12 +78,12 @@ export type SessionMinutes = {
 /** The configured budgets, and on a day with more time a version past all of them. */
 export type SessionTier = keyof SessionMinutes | 'extra'
 
-export const TIER_LABELS: Readonly<Record<SessionTier, string>> = {
+export const TIER_LABELS: Readonly<Record<SessionTier, string>> = perLang(() => ({
   min: 'knapp',
   normal: 'normal',
-  max: 'lang',
-  extra: 'mehr Zeit',
-}
+  max: t('lang'),
+  extra: t('mehr Zeit'),
+}))
 
 export type WeeklySessions = {
   readonly min: number
@@ -131,12 +132,12 @@ export type ZrlFormat = 'scratch' | 'points' | 'ttt' | 'truth'
 
 export const ZRL_FORMATS: readonly ZrlFormat[] = ['scratch', 'points', 'ttt', 'truth']
 
-export const ZRL_FORMAT_LABELS: Readonly<Record<ZrlFormat, string>> = {
+export const ZRL_FORMAT_LABELS: Readonly<Record<ZrlFormat, string>> = perLang(() => ({
   scratch: 'Scratch',
-  points: 'Punkterennen',
-  ttt: 'Mannschaftszeitfahren',
+  points: t('Punkterennen'),
+  ttt: t('Mannschaftszeitfahren'),
   truth: 'Race of Truth',
-}
+}))
 
 /** A Zwift route as the race uses it, copied in when the round is entered. */
 export type ZwiftRoute = {
@@ -360,11 +361,11 @@ export type StrengthPhase = 'intro' | 'full' | 'maintain'
 /** What the athlete can actually train with. */
 export type Equipment = 'gym' | 'dumbbells' | 'bodyweight'
 
-export const EQUIPMENT_LABELS: Readonly<Record<Equipment, string>> = {
-  gym: 'Studio / Langhantel',
-  dumbbells: 'Kurzhanteln bis 10 kg',
-  bodyweight: 'Nur Körpergewicht',
-}
+export const EQUIPMENT_LABELS: Readonly<Record<Equipment, string>> = perLang(() => ({
+  gym: t('Studio / Langhantel'),
+  dumbbells: t('Kurzhanteln bis 10 kg'),
+  bodyweight: t('Nur Körpergewicht'),
+}))
 
 export type StrengthSuggestion = {
   readonly name: string

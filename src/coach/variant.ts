@@ -1,4 +1,5 @@
 import type { Block, Repeat, Sport, SportThreshold, Step, Stimulus, WorkoutTemplate } from './types.ts'
+import { locale, t } from './lang.ts'
 
 /**
  * Every session also exists as a short version, so a day with less time than
@@ -83,7 +84,7 @@ const trimEdge = (
   if (seconds <= floorSec) return trim
   return {
     blocks: replaceAt(trim.blocks, index, withMinutes(block, floorSec)),
-    cuts: [...trim.cuts, `${block.label} auf ${Math.round(floorSec / 60)} min`],
+    cuts: [...trim.cuts, t`${block.label} auf ${Math.round(floorSec / 60)} min`],
   }
 }
 
@@ -155,7 +156,7 @@ const repeatCuts = (
   return Object.entries(counted).map(([change, blocks]) => {
     const [from, to] = change.split('>')
     const prefix = blocks > 1 ? `${blocks}\u00d7` : ''
-    return `${prefix}${to} statt ${prefix}${from} Intervalle`
+    return t`${prefix}${to} statt ${prefix}${from} Intervalle`
   })
 }
 
@@ -207,7 +208,7 @@ const shrinkContinuous = (trim: Trim, targetSec: number, threshold: SportThresho
     ),
     cuts: [
       ...trim.cuts,
-      `Hauptteil ${Math.round((mainSec * keep) / 60)} statt ${Math.round(mainSec / 60)} min`,
+      t`Hauptteil ${Math.round((mainSec * keep) / 60)} statt ${Math.round(mainSec / 60)} min`,
     ],
   }
 }
@@ -233,13 +234,13 @@ export const shorten = (
 }
 
 const minutesLabel = (minutes: number): string =>
-  `${Number.isInteger(minutes) ? minutes : minutes.toLocaleString('de-DE', { maximumFractionDigits: 1 })}min`
+  `${Number.isInteger(minutes) ? minutes : minutes.toLocaleString(locale(), { maximumFractionDigits: 1 })}min`
 
 const escape = (text: string): string => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
 /** Replaces the first count the name gives as `<from>x`, but not the 4 of "14x". */
 const replaceCount = (name: string, from: string, to: string): string =>
-  name.replace(new RegExp(`(?<![\\d,])${escape(from)}x`), `${to}x`)
+  name.replace(new RegExp(`(?<![\\d,.])${escape(from)}x`), `${to}x`)
 
 /**
  * The counts in a name follow the repeats: "3x6x40/20" with two intervals less
@@ -265,13 +266,14 @@ const renameRepeats = (
     if (current.includes(nested)) return current.replace(nested, `${sets.length}x${after.times}x`)
     const rep = repSeconds(block, threshold) / 60
     return current.replace(
-      new RegExp(`(?<![\\d,])${sets.length}x${escape(minutesLabel(block.times * rep))}`),
+      new RegExp(`(?<![\\d,.])${sets.length}x${escape(minutesLabel(block.times * rep))}`),
       `${sets.length}x${minutesLabel(after.times * rep)}`,
     )
   }, name)
 }
 
-const DURATION_PATTERN = /(?<![\d,])(\d+(?:,\d+)?)(min|h)(?![a-z])/i
+// A decimal is written with a comma in German and a point in English; a name may carry either.
+const DURATION_PATTERN = /(?<![\d,.])(\d+(?:[,.]\d+)?)(min|h)(?![a-z])/i
 
 const nameMinutes = (value: string, unit: string): number => {
   const amount = Number(value.replace(',', '.'))
@@ -398,7 +400,7 @@ export const lengthen = (
       minutes,
       load,
       blocks,
-      added: [`Hauptteil ${Math.round((before + extraSec) / 60)} statt ${Math.round(before / 60)} min`],
+      added: [t`Hauptteil ${Math.round((before + extraSec) / 60)} statt ${Math.round(before / 60)} min`],
     }
   }
 
@@ -408,7 +410,7 @@ export const lengthen = (
   const warmupMinutes = Math.round(warmup / 60)
   const ahead = coreAt === undefined ? 0 : Math.min(extraMinutes, Math.max(0, Math.round(coreAt - warmupMinutes)))
   const after = extraMinutes - ahead
-  const base = (length: number): Step => ({ kind: 'step', duration: `${length}m`, target, label: 'Grundlage' })
+  const base = (length: number): Step => ({ kind: 'step', duration: `${length}m`, target, label: t('Grundlage') })
   const opening = template.blocks.findIndex((block) => block.kind !== 'step' || block.label === undefined)
   const start = opening === -1 ? template.blocks.length : opening
   // Before the cool-down, which stays the last thing ridden.
@@ -423,13 +425,13 @@ export const lengthen = (
   ]
   const from = warmupMinutes + ahead
   return {
-    name: `${template.name} + ${extraMinutes}min Grundlage`,
+    name: t`${template.name} + ${extraMinutes}min Grundlage`,
     minutes,
     load,
     blocks,
     added: [
-      ...(ahead > 0 ? [`${ahead} min lockere Grundlage vor dem Hauptteil, Intervalle ab Minute ${from}`] : []),
-      ...(after > 0 ? [`${after} min lockere Grundlage nach dem Hauptteil`] : []),
+      ...(ahead > 0 ? [t`${ahead} min lockere Grundlage vor dem Hauptteil, Intervalle ab Minute ${from}`] : []),
+      ...(after > 0 ? [t`${after} min lockere Grundlage nach dem Hauptteil`] : []),
     ],
     core: { from, latest: warmupMinutes + extraMinutes },
   }

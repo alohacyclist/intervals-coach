@@ -1,5 +1,6 @@
 import type { AthleteProfile, CoachConfig, Goal, Phase, SeasonWeek, Sport } from './types.ts'
 import { addDays, diffDays, startOfWeek, weeksBetween } from './dates.ts'
+import { perLang, pick, t } from './lang.ts'
 
 /** Weeks remaining until a goal date, or null for open-ended goals. */
 export const weeksToGoal = (goal: Goal, today: string): number | null =>
@@ -121,10 +122,10 @@ export const weeklyHardBudget = (phase: Phase, profile: AthleteProfile): number 
   return Math.min(phaseBudget, volumeBudget)
 }
 
-export const PHASE_LABELS: Readonly<Record<Phase, string>> = {
-  BASE: 'Grundlage',
-  BUILD: 'Aufbau',
-  SPECIFIC: 'Spezifisch',
-  TAPER: 'Tapering',
-  RECOVERY: 'Erholungswoche',
-}
+export const PHASE_LABELS: Readonly<Record<Phase, string>> = perLang(() => ({
+  BASE: pick('Grundlage', 'Base'),
+  BUILD: t('Aufbau'),
+  SPECIFIC: t('Spezifisch'),
+  TAPER: t('Tapering'),
+  RECOVERY: t('Erholungswoche'),
+}))

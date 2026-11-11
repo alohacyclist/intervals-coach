@@ -1,15 +1,16 @@
 import type { AdherenceDay, AdherenceStatus } from '../../coach/types.ts'
 import { SPORT_LABELS } from '../../coach/types.ts'
 import { ExecutionCard, comparable } from './ExecutionCard.tsx'
+import { t } from '../../coach/lang.ts'
 
 const STATUS_LABEL: Readonly<Record<AdherenceStatus, string>> = {
-  done: 'geplant und absolviert',
-  race: 'Rennen',
-  switched: 'anders trainiert als geplant',
-  missed: 'geplant, nicht absolviert',
-  open: 'heute, noch offen',
-  unplanned: 'spontan trainiert',
-  rest: 'Ruhetag',
+  done: t('geplant und absolviert'),
+  race: t('Rennen'),
+  switched: t('anders trainiert als geplant'),
+  missed: t('geplant, nicht absolviert'),
+  open: t('heute, noch offen'),
+  unplanned: t('spontan trainiert'),
+  rest: t('Ruhetag'),
 }
 
 /** The status as a shape, so it reads without colour, on touch and aloud. */
@@ -31,9 +32,9 @@ const sportOf = (day: AdherenceDay): string =>
 
 const detail = (day: AdherenceDay): string => {
   const date = `${day.date.slice(8, 10)}.${day.date.slice(5, 7)}.`
-  const planned = day.planned.length > 0 ? `geplant: ${day.planned.join(' oder ')}` : 'nichts geplant'
-  const load = day.estimated ? `~${day.load} TSS, aus Tempo geschätzt` : `${day.load} TSS`
-  const done = day.completed ? `${sportOf(day)}: ${day.completed} (${load})` : 'kein Training'
+  const planned = day.planned.length > 0 ? t`geplant: ${day.planned.join(t(' oder '))}` : t('nichts geplant')
+  const load = day.estimated ? t`~${day.load} TSS, aus Tempo geschätzt` : `${day.load} TSS`
+  const done = day.completed ? `${sportOf(day)}: ${day.completed} (${load})` : t('kein Training')
   return `${date} — ${planned} · ${done}`
 }
 
@@ -54,8 +55,8 @@ export const HistoryStrip = ({ history }: { readonly history: readonly Adherence
   return (
     <section className="history">
       <div className="history__head">
-        <h2>Letzte 7 Tage</h2>
-        <span className="history__summary">{trained} Tage trainiert</span>
+        <h2>{t('Letzte 7 Tage')}</h2>
+        <span className="history__summary">{trained}{t(' Tage trainiert')}</span>
       </div>
 
       <ol className="history__strip">
@@ -75,9 +76,9 @@ export const HistoryStrip = ({ history }: { readonly history: readonly Adherence
 
       {/* A legend is understood once; after that it is only chrome above the data. */}
       <details className="disclose history__key">
-        <summary>Legende</summary>
+        <summary>{t('Legende')}</summary>
         <p className="history__legend">
-          <span>Zahl: Belastung (TSS), ~ geschätzt</span>
+          <span>{t('Zahl: Belastung (TSS), ~ geschätzt')}</span>
           {LEGEND.map((status) => (
             <span key={status}>
               <i className={`history__dot history__day--${status}`} aria-hidden="true">
@@ -91,19 +92,19 @@ export const HistoryStrip = ({ history }: { readonly history: readonly Adherence
 
       {last && (
         <p className="history__last">
-          Zuletzt geplant: <strong>{last.planned.join(' oder ')}</strong> am{' '}
+          {t('Zuletzt geplant: ')}<strong>{last.planned.join(t(' oder '))}</strong>{t(' am')}{' '}
           {last.date.slice(8, 10)}.{last.date.slice(5, 7)}. —{' '}
           {last.status === 'done' ? (
             <span className="history__ok">
-              absolviert
-              {last.compliance !== null && ` (${Math.round(last.compliance)} % Übereinstimmung)`}
+              {t('absolviert')}
+              {last.compliance !== null && t` (${Math.round(last.compliance)} % Übereinstimmung)`}
             </span>
           ) : last.status === 'switched' || last.status === 'race' ? (
             <span className="history__alt">
-              stattdessen {sportOf(last)}: {last.completed}
+              {t('stattdessen ')}{sportOf(last)}: {last.completed}
             </span>
           ) : (
-            <span className="history__miss">nicht absolviert</span>
+            <span className="history__miss">{t('nicht absolviert')}</span>
           )}
         </p>
       )}

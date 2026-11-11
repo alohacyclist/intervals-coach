@@ -1,8 +1,15 @@
+import { lang } from '../../coach/lang.ts'
 import { MAILER, OPERATOR, PROCESSOR, RETENTION_MONTHS, SUPERVISOR } from './operator.ts'
 
 export const Privacy = () => (
   <article className="legal">
     <h1>Datenschutzerklärung</h1>
+    {/* The German text is the binding one; an English reader is told so rather than left guessing. */}
+    {lang() === 'en' && (
+      <p className="legal__note" lang="en">
+        This page is available in German only. The German text is the legally binding version.
+      </p>
+    )}
 
     <p>
       Formkurve verarbeitet Gesundheitsdaten. Diese Erklärung sagt in einfacher Sprache, was

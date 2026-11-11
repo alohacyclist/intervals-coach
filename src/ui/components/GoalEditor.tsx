@@ -6,6 +6,7 @@ import { formatClock } from '../format-input.ts'
 import type { GoalDraft, GoalErrors, GoalField } from '../goal-draft.ts'
 import { distancePlaceholder, distanceUnit, predictedTime } from '../goal-draft.ts'
 import { TimeField } from './TimeField.tsx'
+import { t } from '../../coach/lang.ts'
 
 type Props = {
   readonly draft: GoalDraft
@@ -46,10 +47,10 @@ export const GoalEditor = ({ draft, onChange, errors, showMissing, profile, deta
     <div className="grid grid--goal">
       {detailed && (
         <label>
-          Bezeichnung
+          {t('Bezeichnung')}
           <input
             type="text"
-            placeholder="wird aus den Werten gebildet"
+            placeholder={t('wird aus den Werten gebildet')}
             value={draft.label}
             onChange={(event) => set({ label: event.target.value })}
           />
@@ -57,7 +58,7 @@ export const GoalEditor = ({ draft, onChange, errors, showMissing, profile, deta
       )}
       {draft.kind === 'ftp' ? (
         <label>
-          FTP-Ziel (W){ftp !== null && ` · jetzt ${ftp} W`}
+          {t('FTP-Ziel (W)')}{ftp !== null && t` · jetzt ${ftp} W`}
           <input
             type="text"
             inputMode="numeric"
@@ -71,7 +72,7 @@ export const GoalEditor = ({ draft, onChange, errors, showMissing, profile, deta
       ) : (
         <>
           <label>
-            Sportart
+            {t('Sportart')}
             <select value={draft.sport} onChange={(event) => set({ sport: event.target.value as Sport })}>
               {[...new Set([...sports, draft.sport])].map((sport) => (
                 <option key={sport} value={sport}>
@@ -81,7 +82,7 @@ export const GoalEditor = ({ draft, onChange, errors, showMissing, profile, deta
             </select>
           </label>
           <label>
-            Distanz ({distanceUnit(draft.sport)})
+            {t('Distanz (')}{distanceUnit(draft.sport)})
             <input
               type="text"
               inputMode="decimal"
@@ -93,15 +94,15 @@ export const GoalEditor = ({ draft, onChange, errors, showMissing, profile, deta
             <Message id={`${baseId}-distance`} text={shown('distance')} />
           </label>
           <TimeField
-            label={predicted === null ? 'aktuelle Zeit' : 'aktuelle Zeit (optional)'}
-            placeholder={predicted === null ? '38:00 oder 1:45:00' : `geschätzt ${formatClock(predicted)}`}
+            label={predicted === null ? t('aktuelle Zeit') : t('aktuelle Zeit (optional)')}
+            placeholder={predicted === null ? t('38:00 oder 1:45:00') : t`geschätzt ${formatClock(predicted)}`}
             value={draft.current}
             onChange={(current) => set({ current })}
             error={shown('current')}
           />
           <TimeField
-            label="Zielzeit"
-            placeholder="36:00 oder 1:39:00"
+            label={t('Zielzeit')}
+            placeholder={t('36:00 oder 1:39:00')}
             value={draft.target}
             onChange={(target) => set({ target })}
             error={shown('target')}
@@ -109,7 +110,7 @@ export const GoalEditor = ({ draft, onChange, errors, showMissing, profile, deta
         </>
       )}
       <label>
-        bis wann (optional)
+        {t('bis wann (optional)')}
         <input
           type="date"
           value={draft.targetDate}
@@ -120,16 +121,16 @@ export const GoalEditor = ({ draft, onChange, errors, showMissing, profile, deta
       </label>
       {detailed && (
         <label>
-          Priorität
+          {t('Priorität')}
           <select value={draft.priority} onChange={(event) => set({ priority: event.target.value === 'B' ? 'B' : 'A' })}>
-            <option value="A">A – Hauptziel</option>
-            <option value="B">B – Nebenziel</option>
+            <option value="A">{t('A – Hauptziel')}</option>
+            <option value="B">{t('B – Nebenziel')}</option>
           </select>
         </label>
       )}
       {onRemove && (
         <button type="button" onClick={onRemove}>
-          Ziel entfernen
+          {t('Ziel entfernen')}
         </button>
       )}
     </div>

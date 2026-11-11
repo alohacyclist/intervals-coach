@@ -11,12 +11,13 @@ import type { GoalDraft } from '../goal-draft.ts'
 import { draftFromGoal, emptyGoalDraft, goalErrors, goalFromDraft, hasErrors } from '../goal-draft.ts'
 
 const MINUTE_LABELS = {
-  min: 'Min. — schaffe ich immer',
-  normal: 'Min. — normalerweise',
-  max: 'Min. — wenn viel Zeit ist',
+  min: t('Min. — schaffe ich immer'),
+  normal: t('Min. — normalerweise'),
+  max: t('Min. — wenn viel Zeit ist'),
 } as const
 import { DeleteAccount } from './DeleteAccount.tsx'
 import { StravaPanel } from './StravaPanel.tsx'
+import { t } from '../../coach/lang.ts'
 
 type Props = {
   readonly config: CoachConfig
@@ -60,7 +61,7 @@ export const SettingsPanel = ({ config, onSaved, onClose, canDelete }: Props) =>
     setAttempted(true)
     const built = goals.map((goal) => goalFromDraft(goal, draft.profile, earliest(goal)))
     if (!thresholdsValid || errors.some(hasErrors) || built.some((goal) => goal === null)) {
-      setError('Bitte die markierten Felder prüfen.')
+      setError(t('Bitte die markierten Felder prüfen.'))
       return
     }
     void run(() => putConfig({ ...draft, goals: built.filter((goal): goal is Goal => goal !== null) }))
@@ -72,7 +73,7 @@ export const SettingsPanel = ({ config, onSaved, onClose, canDelete }: Props) =>
     try {
       onSaved(await action())
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Fehler')
+      setError(caught instanceof Error ? caught.message : t('Fehler'))
     } finally {
       setBusy(false)
     }
@@ -81,13 +82,13 @@ export const SettingsPanel = ({ config, onSaved, onClose, canDelete }: Props) =>
   return (
     <section className="settings">
       <div className="settings__head">
-        <h2>Einstellungen</h2>
+        <h2>{t('Einstellungen')}</h2>
         <button type="button" onClick={onClose}>
-          Schließen
+          {t('Schließen')}
         </button>
       </div>
 
-      <h3>Sportarten</h3>
+      <h3>{t('Sportarten')}</h3>
       <SportPicker
         sports={draft.profile.sports}
         sources={sources}
@@ -100,7 +101,7 @@ export const SettingsPanel = ({ config, onSaved, onClose, canDelete }: Props) =>
 
       <div className="grid">
         <label>
-          Krafttraining mit
+          {t('Krafttraining mit')}
           <select
             value={draft.profile.equipment}
             onChange={(event) => patchProfile({ equipment: event.target.value as Equipment })}
@@ -113,7 +114,7 @@ export const SettingsPanel = ({ config, onSaved, onClose, canDelete }: Props) =>
           </select>
         </label>
         <label>
-          Gewicht (kg)
+          {t('Gewicht (kg)')}
           <input
             type="number"
             value={draft.profile.weightKg}
@@ -121,7 +122,7 @@ export const SettingsPanel = ({ config, onSaved, onClose, canDelete }: Props) =>
           />
         </label>
         <label>
-          Einheiten / Woche (mindestens)
+          {t('Einheiten / Woche (mindestens)')}
           <input
             type="number"
             min={1}
@@ -135,7 +136,7 @@ export const SettingsPanel = ({ config, onSaved, onClose, canDelete }: Props) =>
           />
         </label>
         <label>
-          Einheiten / Woche (höchstens)
+          {t('Einheiten / Woche (höchstens)')}
           <input
             type="number"
             min={1}
@@ -166,7 +167,7 @@ export const SettingsPanel = ({ config, onSaved, onClose, canDelete }: Props) =>
           </label>
         ))}
         <label>
-          Planstart
+          {t('Planstart')}
           <input
             type="date"
             value={draft.planStart}
@@ -175,8 +176,8 @@ export const SettingsPanel = ({ config, onSaved, onClose, canDelete }: Props) =>
         </label>
       </div>
 
-      <h3>Ziele</h3>
-      {goals.length === 0 && <p className="hint">Kein konkretes Ziel – fit bleiben.</p>}
+      <h3>{t('Ziele')}</h3>
+      {goals.length === 0 && <p className="hint">{t('Kein konkretes Ziel – fit bleiben.')}</p>}
       {goals.map((goal, index) => (
         <GoalEditor
           key={goal.id}
@@ -191,11 +192,11 @@ export const SettingsPanel = ({ config, onSaved, onClose, canDelete }: Props) =>
       ))}
       <div className="settings__actions">
         <button type="button" onClick={() => addGoal('raceTime')}>
-          Wettkampfziel hinzufügen
+          {t('Wettkampfziel hinzufügen')}
         </button>
         {ftp !== null && (
           <button type="button" onClick={() => addGoal('ftp')}>
-            FTP-Ziel hinzufügen
+            {t('FTP-Ziel hinzufügen')}
           </button>
         )}
       </div>
@@ -204,14 +205,14 @@ export const SettingsPanel = ({ config, onSaved, onClose, canDelete }: Props) =>
 
       <div className="settings__actions">
         <button type="button" disabled={busy} onClick={save}>
-          Speichern
+          {t('Speichern')}
         </button>
         <button
           type="button"
           disabled={busy}
           onClick={() => run(async () => (await syncSettings()).config)}
         >
-          Schwellen von intervals.icu holen
+          {t('Schwellen von intervals.icu holen')}
         </button>
       </div>
 

@@ -1,3 +1,4 @@
+import { t } from '../coach/lang.ts'
 import { useEffect, useState } from "react";
 
 export type Theme = "auto" | "light" | "dark";
@@ -6,8 +7,8 @@ export const THEMES: readonly Theme[] = ["auto", "light", "dark"];
 
 export const THEME_LABELS: Readonly<Record<Theme, string>> = {
   auto: "Auto",
-  light: "Hell",
-  dark: "Dunkel",
+  light: t("Hell"),
+  dark: t("Dunkel"),
 };
 
 const STORAGE_KEY = "coach:theme";

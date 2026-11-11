@@ -1,4 +1,5 @@
 import type { StravaCandidate } from '../src/coach/strava-summary.ts'
+import { t } from '../src/coach/lang.ts'
 
 /**
  * The few Strava calls this app makes: sign in, find a session by its start,
@@ -70,13 +71,13 @@ const postToken = async (app: StravaApp, body: Record<string, string>): Promise<
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({ client_id: app.clientId, client_secret: app.clientSecret, ...body }),
   })
-  if (!response.ok) throw new StravaError(`Strava-Anmeldung fehlgeschlagen (${response.status})`, response.status)
+  if (!response.ok) throw new StravaError(t`Strava-Anmeldung fehlgeschlagen (${response.status})`, response.status)
   return (await response.json()) as TokenResponse
 }
 
 const tokensFrom = (payload: TokenResponse): StravaTokens => {
   if (!payload.access_token || !payload.refresh_token || typeof payload.expires_at !== 'number') {
-    throw new StravaError('Strava hat kein vollständiges Token geschickt', 502)
+    throw new StravaError(t('Strava hat kein vollständiges Token geschickt'), 502)
   }
   return {
     accessToken: payload.access_token,
@@ -91,7 +92,7 @@ export const exchangeCode = async (
 ): Promise<{ readonly tokens: StravaTokens; readonly athlete: StravaAthlete }> => {
   const payload = await postToken(app, { code, grant_type: 'authorization_code' })
   const athlete = payload.athlete
-  if (athlete?.id === undefined) throw new StravaError('Strava hat kein Athletenprofil geschickt', 502)
+  if (athlete?.id === undefined) throw new StravaError(t('Strava hat kein Athletenprofil geschickt'), 502)
   return {
     tokens: tokensFrom(payload),
     athlete: {

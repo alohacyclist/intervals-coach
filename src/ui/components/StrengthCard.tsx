@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import type { StrengthPhase, StrengthSuggestion } from '../../coach/types.ts'
 import { logStrength } from '../api.ts'
+import { t } from '../../coach/lang.ts'
 
 const PHASE_LABEL: Readonly<Record<StrengthPhase, string>> = {
-  intro: 'Einstieg',
-  full: 'Volles Programm',
-  maintain: 'Erhalt',
+  intro: t('Einstieg'),
+  full: t('Volles Programm'),
+  maintain: t('Erhalt'),
 }
 
 type Props = {
@@ -22,7 +23,7 @@ export const settle = async (save: () => Promise<unknown>, onSaved: () => void):
     onSaved()
     return null
   } catch (caught) {
-    return caught instanceof Error ? caught.message : 'Speichern fehlgeschlagen'
+    return caught instanceof Error ? caught.message : t('Speichern fehlgeschlagen')
   }
 }
 
@@ -40,11 +41,11 @@ export const StrengthCard = ({ strength, date, done, onLogged }: Props) => {
   return (
     <details className="disclose strength">
       <summary>
-        <span className="badge badge--strength">Kraft</span>
+        <span className="badge badge--strength">{t('Kraft')}</span>
         <strong>{strength.name}</strong>
         <span className="badge">{PHASE_LABEL[strength.phase]}</span>
         <span className="strength__meta">
-          {strength.minutes} min · {strength.completed} absolviert
+          {strength.minutes}{t(' min · ')}{strength.completed}{t(' absolviert')}
         </span>
       </summary>
 
@@ -64,7 +65,7 @@ export const StrengthCard = ({ strength, date, done, onLogged }: Props) => {
 
       <label className="strength__done">
         <input type="checkbox" checked={done} disabled={busy} onChange={() => void toggle()} />
-        Erledigt — zählt für die Progression
+        {t('Erledigt — zählt für die Progression')}
       </label>
       {error && (
         <p className="error" role="alert">

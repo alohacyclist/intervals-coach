@@ -3,6 +3,8 @@
   "name": "intervals-coach",
   "main": "worker/index.ts",
   "compatibility_date": "2026-08-31",
+  // Carries the language of a request through its awaits (server/lang.ts).
+  "compatibility_flags": ["nodejs_als"],
   "assets": {
     "directory": "./dist/",
     "binding": "ASSETS",

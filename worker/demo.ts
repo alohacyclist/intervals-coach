@@ -13,6 +13,7 @@
  * change what the next visitor sees.
  */
 import { Hono } from 'hono'
+import { languageMiddleware } from '../server/lang.ts'
 import type { Context } from 'hono'
 import type { ConfigStore } from '../src/coach/config-schema.ts'
 import { validateConfig } from '../src/coach/config-schema.ts'
@@ -26,6 +27,7 @@ import { blocked, clearFailures, recordFailure } from './login-throttle.ts'
 import { withinLimit } from './api-throttle.ts'
 import { clearSessionCookie, createSessionCookie, readSession, shouldRenew } from './session.ts'
 import type { Session } from './session.ts'
+import { t } from '../src/coach/lang.ts'
 
 /** How long a visitor's changes outlive their last one. */
 export const SANDBOX_SECONDS = 2 * 60 * 60
@@ -52,9 +54,9 @@ const FORBIDDEN: readonly (keyof Bindings)[] = [
 export const demoMisconfiguration = (env: Bindings): string | null => {
   const present = FORBIDDEN.filter((name) => Boolean(env[name]))
   if (present.length > 0) {
-    return `Der Demo-Betrieb läuft ohne Zugang zu echten Konten. Bitte entfernen: ${present.join(', ')}.`
+    return t`Der Demo-Betrieb läuft ohne Zugang zu echten Konten. Bitte entfernen: ${present.join(', ')}.`
   }
-  if (!env.DEMO_PASSWORD) return 'Nicht konfiguriert: DEMO_PASSWORD fehlt.'
+  if (!env.DEMO_PASSWORD) return t('Nicht konfiguriert: DEMO_PASSWORD fehlt.')
   return null
 }
 
@@ -97,6 +99,9 @@ const demoDeps = (env: Bindings, subject: string): RouteDeps => {
 
 export const demoApp = new Hono<{ Bindings: Bindings }>()
 
+// Before anything answers: every sentence below is written in the language of the request.
+demoApp.use('*', languageMiddleware)
+
 demoApp.use('*', async (context, next) => {
   const problem = demoMisconfiguration(context.env)
   if (problem) return context.text(problem, 500)
@@ -112,13 +117,13 @@ demoApp.post('/api/login', async (context) => {
   const env = context.env
   const client = context.req.header('CF-Connecting-IP') ?? 'unbekannt'
   if (await blocked(env.COACH_CONFIG, client)) {
-    return context.json({ error: 'Zu viele Fehlversuche. Bitte in 15 Minuten erneut versuchen.' }, 429)
+    return context.json({ error: t('Zu viele Fehlversuche. Bitte in 15 Minuten erneut versuchen.') }, 429)
   }
   const body = (await context.req.json().catch(() => ({}))) as { passwort?: unknown }
   const passwort = typeof body.passwort === 'string' ? body.passwort : ''
   if (!(await secretEquals(passwort, env.DEMO_PASSWORD ?? ''))) {
     await recordFailure(env.COACH_CONFIG, client)
-    return context.json({ error: 'Passwort falsch' }, 401)
+    return context.json({ error: t('Passwort falsch') }, 401)
   }
   await clearFailures(env.COACH_CONFIG, client)
   // A subject of their own per sign-in: the sandbox is theirs, not the next visitor's.
@@ -138,10 +143,10 @@ demoApp.get('/api/me', async (context) => {
 
 demoApp.use('/api/*', async (context, next) => {
   const session = await currentSession(context)
-  if (!session) return context.json({ error: 'Nicht angemeldet', needsLogin: true }, 401)
+  if (!session) return context.json({ error: t('Nicht angemeldet'), needsLogin: true }, 401)
   if (!(await withinLimit(context.env.API_LIMITER, session.athleteId))) {
     context.header('Retry-After', '60')
-    return context.json({ error: 'Zu viele Anfragen auf einmal. Bitte eine Minute warten.' }, 429)
+    return context.json({ error: t('Zu viele Anfragen auf einmal. Bitte eine Minute warten.') }, 429)
   }
   if (shouldRenew(session)) {
     context.header('Set-Cookie', await createSessionCookie(session.athleteId, secretOf(context.env), isSecure(context)))
@@ -152,7 +157,7 @@ demoApp.use('/api/*', async (context, next) => {
 const subjectOf = async (context: Context): Promise<string> => {
   const session = await currentSession(context)
   // The middleware above let nobody through without one.
-  if (!session) throw new Error('Demo-Sitzung fehlt')
+  if (!session) throw new Error(t('Demo-Sitzung fehlt'))
   return session.athleteId
 }
 
@@ -162,7 +167,7 @@ demoApp.route(
 )
 
 /** Strava, the waitlist, deleting an account: none of it exists here, and an unknown API path is not the app shell. */
-demoApp.all('/api/*', (context) => context.json({ error: 'In der Demo nicht verfügbar' }, 404))
+demoApp.all('/api/*', (context) => context.json({ error: t('In der Demo nicht verfügbar') }, 404))
 demoApp.all('/auth/*', (context) => context.redirect('/', 302))
 
 demoApp.all('*', (context) => context.env.ASSETS.fetch(context.req.raw))
