@@ -10,7 +10,7 @@ import { addDays } from './dates.ts'
 import { breakLimit } from './breaks.ts'
 import { buildSession } from './session.ts'
 import { estimateRace, formatLabel, leagueRaceOn, raceDetails, raceTemplate } from './zrl.ts'
-import { t } from './lang.ts'
+import { pick, t } from './lang.ts'
 
 type Decision = { readonly dayType: DayType; readonly reason: string; readonly optional: boolean }
 
@@ -42,7 +42,7 @@ export const racesAround = (
 }
 
 const raceLabel = (race: ZrlRace): string =>
-  `ZRL ${formatLabel(race)}${race.route ? t` auf ${race.route.name}` : ''}`
+  `ZRL ${formatLabel(race)}${race.route ? `${pick(' auf ', ' on ')}${race.route.name}` : ''}`
 
 /**
  * The athlete only knows on the day whether they race, so the day is planned to

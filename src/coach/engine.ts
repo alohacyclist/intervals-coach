@@ -29,7 +29,7 @@ import { chosenLevel, levelCeilings } from './progression.ts'
 import { completedFrom, effortsFrom } from './done.ts'
 import type { Effort } from './done.ts'
 import type { Completion } from './progression.ts'
-import { findTemplate, flattenBlocks, intensityClass, isPreferredSport, strengthSession, templatesFor } from './library.ts'
+import { findTemplate, flattenBlocks, intensityClass, isPreferredSport, strengthSession, templatesFor, namesOf } from './library.ts'
 import { buildSession } from './session.ts'
 import { BASE_LOAD_PER_HOUR, MIN_SAVING_MINUTES } from './variant.ts'
 import { aroundRace, raceSession, racesAround, withRace } from './race-day.ts'
@@ -441,14 +441,15 @@ const looksLikeRepeat = (
   template: WorkoutTemplate,
   recent: readonly RecentWorkout[],
 ): boolean => {
-  const wanted = signature(template.name)
+  // An activity keeps the name of the language its session was sent in.
+  const wanted = namesOf(template.id).map(signature)
   return recent
     // Only within one sport: "Schwelle kompakt" means a different session on a
     // bike than in running shoes, and the words alone cannot tell them apart.
     .filter((workout) => workout.sport === template.sport)
     .some((workout) => {
       const seen = new Set(signature(workout.name))
-      return wanted.filter((term) => seen.has(term)).length >= 2
+      return wanted.some((terms) => terms.filter((term) => seen.has(term)).length >= 2)
     })
 }
 
@@ -662,7 +663,7 @@ const notesFor = (
   date: string,
 ): readonly string[] => {
   const notes: string[] = [decision.reason]
-  if (dayIndex === 0 && state.readiness.reasons[0] !== 'Keine Warnsignale') {
+  if (dayIndex === 0 && state.readiness.reasons[0] !== t('Keine Warnsignale')) {
     notes.push(...state.readiness.reasons)
   }
   notes.push(formNote(simulation.fitness))

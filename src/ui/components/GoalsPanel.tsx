@@ -4,8 +4,8 @@ import { formatDistance } from '../../coach/format.ts'
 import { t } from '../../coach/lang.ts'
 
 const VERDICT_LABEL: Record<Feasibility['verdict'], string> = {
-  'on-track': 'realistisch',
-  ambitious: 'ambitioniert',
+  'on-track': t('realistisch'),
+  ambitious: t('ambitioniert'),
   unrealistic: t('nicht realistisch'),
 }
 

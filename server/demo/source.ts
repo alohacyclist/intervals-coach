@@ -3,7 +3,8 @@ import { SourceReadOnlyError } from '../source.ts'
 import { IntervalsError } from '../intervals.ts'
 import type { DemoData } from './fixtures.ts'
 import { DEMO_ATHLETE_ID, generateDemo, intervalsOf, streamsOf } from './fixtures.ts'
-import { t } from '../../src/coach/lang.ts'
+import { lang, t } from '../../src/coach/lang.ts'
+import type { Lang } from '../../src/coach/lang.ts'
 
 const notSent = (): string => t('Demo mit Beispieldaten: hier wird nichts an intervals.icu gesendet.')
 
@@ -59,10 +60,17 @@ export const fixtureSource = (data: DemoData): IntervalsSource => {
   return source
 }
 
-/** The fixtures for one day, built once per isolate and day — generating them takes a few milliseconds. */
-let cached: DemoData | null = null
+/**
+ * The fixtures for one day, built once per isolate, day and language — generating them
+ * takes a few milliseconds, and the sessions in them are named in the visitor's language.
+ */
+const cached: Partial<Record<Lang, DemoData>> = {}
 
 export const demoData = (today: string): DemoData => {
-  if (cached?.today !== today) cached = generateDemo(today)
-  return cached
+  const language = lang()
+  const known = cached[language]
+  if (known?.today === today) return known
+  const fresh = generateDemo(today)
+  cached[language] = fresh
+  return fresh
 }

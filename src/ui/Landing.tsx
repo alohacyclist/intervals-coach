@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { joinWaitlist } from './api.ts'
-import { t } from '../coach/lang.ts'
+import { pick, t } from '../coach/lang.ts'
 
 /**
  * The page a shared picture leads to. It says what the app does in the first
@@ -131,7 +131,7 @@ const Waitlist = () => {
             onChange={(event) => setEmail(event.target.value)}
           />
           <button type="submit" className="cta cta--button" disabled={state === 'busy'}>
-            {state === 'busy' ? 'Sende…' : t('Eintragen')}
+            {state === 'busy' ? t('Sende…') : pick('Eintragen', 'Sign up')}
           </button>
         </div>
       </label>

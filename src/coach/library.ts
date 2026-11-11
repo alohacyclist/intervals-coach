@@ -12,7 +12,7 @@ import type {
   WorkoutTemplate,
 } from './types.ts'
 import { REST_TARGET } from './format.ts'
-import { perLang, t } from './lang.ts'
+import { LANGS, inLang, perLang, t } from './lang.ts'
 
 const step = (duration: string, target: string, extra: Partial<Step> = {}): Step => ({
   kind: 'step',
@@ -783,6 +783,15 @@ export const templatesFor = (sport: Sport): readonly WorkoutTemplate[] =>
 
 export const findTemplate = (id: string): WorkoutTemplate | undefined =>
   LIBRARY.find((template) => template.id === id)
+
+/**
+ * The names a session goes by, one per language. What is on the calendar, the watch
+ * and in old activities carries the name of the language it was sent in, so whoever
+ * recognises a session by its name has to know all of them.
+ */
+export const namesOf = (id: string): readonly string[] => [
+  ...new Set(LANGS.flatMap((language) => inLang(language, () => findTemplate(id)?.name ?? []))),
+]
 
 /** The sustained maximal effort that settles a sport's threshold, where one exists. */
 export const thresholdTestFor = (sport: Sport): WorkoutTemplate | undefined =>

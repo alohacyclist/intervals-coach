@@ -13,11 +13,11 @@ export const SPORT_LABELS: Readonly<Record<Sport, string>> = perLang(() => ({
  * How a session is said to have been done. A run is not "gefahren", and a text
  * that serves every sport has to ask for the word instead of assuming the bike.
  */
-export const SPORT_DONE: Readonly<Record<Sport, string>> = {
-  Ride: 'gefahren',
-  Run: 'gelaufen',
-  Swim: 'geschwommen',
-}
+export const SPORT_DONE: Readonly<Record<Sport, string>> = perLang(() => ({
+  Ride: t('gefahren'),
+  Run: t('gelaufen'),
+  Swim: t('geschwommen'),
+}))
 
 /**
  * Every sport is steered by a different quantity. Keeping them in one union lets
