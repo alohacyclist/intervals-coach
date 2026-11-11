@@ -8,6 +8,7 @@ import type {
   Wellness,
   WorkoutDestination,
 } from '../src/coach/types.ts'
+import { t } from '../src/coach/lang.ts'
 
 /**
  * Credentials for one athlete. A personal API key covers the single user setup;
@@ -59,7 +60,7 @@ export class IntervalsError extends Error {
  * refused. Only a new sign-in helps, so the session ends with it.
  */
 export class ReauthRequiredError extends Error {
-  constructor(message = 'Die Anmeldung bei intervals.icu ist abgelaufen. Bitte neu anmelden.') {
+  constructor(message = t('Die Anmeldung bei intervals.icu ist abgelaufen. Bitte neu anmelden.')) {
     super(message)
     this.name = 'ReauthRequiredError'
   }
@@ -70,15 +71,15 @@ export class ReauthRequiredError extends Error {
  * internals of intervals.icu that are nobody's business in the browser.
  */
 export const upstreamMessage = (kind: IntervalsAuth['kind'], status: number): string => {
-  if (status === 429) return 'intervals.icu drosselt gerade die Anfragen. Bitte in ein paar Minuten noch einmal versuchen.'
-  if (status >= 500) return 'intervals.icu ist gerade nicht erreichbar. Bitte später noch einmal versuchen.'
+  if (status === 429) return t('intervals.icu drosselt gerade die Anfragen. Bitte in ein paar Minuten noch einmal versuchen.')
+  if (status >= 500) return t('intervals.icu ist gerade nicht erreichbar. Bitte später noch einmal versuchen.')
   if (status === 401 || status === 403) {
     return kind === 'apiKey'
-      ? `intervals.icu ${status} — API-Key oder Athlete-ID prüfen (intervals.icu → Settings → Developer).`
+      ? t`intervals.icu ${status} — API-Key oder Athlete-ID prüfen (intervals.icu → Settings → Developer).`
       : // A missing scope, not a lost session: signing out and in again grants the current scopes.
-        `intervals.icu ${status}: Zugriff verweigert. Abmelden und neu anmelden erteilt die nötigen Rechte.`
+        t`intervals.icu ${status}: Zugriff verweigert. Abmelden und neu anmelden erteilt die nötigen Rechte.`
   }
-  return `intervals.icu ${status}: Anfrage abgelehnt.`
+  return t`intervals.icu ${status}: Anfrage abgelehnt.`
 }
 
 const UNREACHABLE = 599

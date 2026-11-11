@@ -6,17 +6,18 @@ import type { Prefilled, ThresholdEdit, ThresholdSources } from '../threshold-in
 import { SOURCE_NOTES, shownText, thresholdFromText } from '../threshold-input.ts'
 import type { GlossaryTerm } from '../glossary.ts'
 import { Term } from './Term.tsx'
+import { t } from '../../coach/lang.ts'
 
 const THRESHOLD_LABEL: Readonly<Record<Sport, { readonly term: GlossaryTerm; readonly name: string; readonly unit: string }>> = {
   Ride: { term: 'ftp', name: 'FTP', unit: 'Watt' },
-  Run: { term: 'thresholdPace', name: 'Schwellenpace', unit: 'min/km' },
-  Swim: { term: 'css', name: 'CSS', unit: 'min/100 m' },
+  Run: { term: 'thresholdPace', name: t('Schwellenpace'), unit: 'min/km' },
+  Swim: { term: 'css', name: 'CSS', unit: t('min/100 m') },
 }
 
 const INVALID: Readonly<Record<Sport, string>> = {
-  Ride: 'FTP in Watt, z. B. 250',
-  Run: 'Pace als m:ss pro km, z. B. 4:30',
-  Swim: 'CSS als m:ss pro 100 m, z. B. 1:50',
+  Ride: t('FTP in Watt, z. B. 250'),
+  Run: t('Pace als m:ss pro km, z. B. 4:30'),
+  Swim: t('CSS als m:ss pro 100 m, z. B. 1:50'),
 }
 
 const estimate = (sport: Sport): Prefilled => ({ threshold: defaultThreshold(sport), source: 'estimate' })

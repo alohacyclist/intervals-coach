@@ -1,3 +1,4 @@
+import { t } from '../src/coach/lang.ts'
 const AUTHORIZE_URL = 'https://intervals.icu/oauth/authorize'
 // Outside /api/v1, unlike every other call: /api/v1/oauth/token answers 404.
 const TOKEN_URL = 'https://intervals.icu/api/oauth/token'
@@ -68,11 +69,11 @@ const postToken = async (app: OAuthApp, body: Record<string, string>): Promise<T
   })
 
   if (!response.ok) {
-    throw new OAuthError(`Token-Austausch fehlgeschlagen (${response.status})`, response.status)
+    throw new OAuthError(t`Token-Austausch fehlgeschlagen (${response.status})`, response.status)
   }
 
   const payload = (await response.json()) as TokenResponse
-  if (!payload.access_token) throw new OAuthError('Antwort enthielt kein access_token')
+  if (!payload.access_token) throw new OAuthError(t('Antwort enthielt kein access_token'))
 
   return {
     accessToken: payload.access_token,
@@ -97,9 +98,9 @@ export const fetchAthlete = async (
   const response = await fetch('https://intervals.icu/api/v1/athlete/0', {
     headers: { Authorization: `Bearer ${accessToken}` },
   })
-  if (!response.ok) throw new OAuthError(`Athletenprofil nicht lesbar (${response.status})`, response.status)
+  if (!response.ok) throw new OAuthError(t`Athletenprofil nicht lesbar (${response.status})`, response.status)
   const athlete = (await response.json()) as AthleteResponse
-  if (athlete.id === undefined) throw new OAuthError('Athletenprofil ohne id')
+  if (athlete.id === undefined) throw new OAuthError(t('Athletenprofil ohne id'))
   return { id: String(athlete.id), name: athlete.name ?? 'Athlet', timezone: athlete.timezone }
 }
 

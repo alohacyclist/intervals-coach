@@ -1,4 +1,5 @@
 import type { Block, Repeat, Sport, SportThreshold, Step, Stimulus, WorkoutTemplate } from './types.ts'
+import { t } from './lang.ts'
 
 /**
  * Every session also exists as a short version, so a day with less time than
@@ -83,7 +84,7 @@ const trimEdge = (
   if (seconds <= floorSec) return trim
   return {
     blocks: replaceAt(trim.blocks, index, withMinutes(block, floorSec)),
-    cuts: [...trim.cuts, `${block.label} auf ${Math.round(floorSec / 60)} min`],
+    cuts: [...trim.cuts, t`${block.label} auf ${Math.round(floorSec / 60)} min`],
   }
 }
 
@@ -155,7 +156,7 @@ const repeatCuts = (
   return Object.entries(counted).map(([change, blocks]) => {
     const [from, to] = change.split('>')
     const prefix = blocks > 1 ? `${blocks}\u00d7` : ''
-    return `${prefix}${to} statt ${prefix}${from} Intervalle`
+    return t`${prefix}${to} statt ${prefix}${from} Intervalle`
   })
 }
 
@@ -207,7 +208,7 @@ const shrinkContinuous = (trim: Trim, targetSec: number, threshold: SportThresho
     ),
     cuts: [
       ...trim.cuts,
-      `Hauptteil ${Math.round((mainSec * keep) / 60)} statt ${Math.round(mainSec / 60)} min`,
+      t`Hauptteil ${Math.round((mainSec * keep) / 60)} statt ${Math.round(mainSec / 60)} min`,
     ],
   }
 }
@@ -398,7 +399,7 @@ export const lengthen = (
       minutes,
       load,
       blocks,
-      added: [`Hauptteil ${Math.round((before + extraSec) / 60)} statt ${Math.round(before / 60)} min`],
+      added: [t`Hauptteil ${Math.round((before + extraSec) / 60)} statt ${Math.round(before / 60)} min`],
     }
   }
 
@@ -408,7 +409,7 @@ export const lengthen = (
   const warmupMinutes = Math.round(warmup / 60)
   const ahead = coreAt === undefined ? 0 : Math.min(extraMinutes, Math.max(0, Math.round(coreAt - warmupMinutes)))
   const after = extraMinutes - ahead
-  const base = (length: number): Step => ({ kind: 'step', duration: `${length}m`, target, label: 'Grundlage' })
+  const base = (length: number): Step => ({ kind: 'step', duration: `${length}m`, target, label: t('Grundlage') })
   const opening = template.blocks.findIndex((block) => block.kind !== 'step' || block.label === undefined)
   const start = opening === -1 ? template.blocks.length : opening
   // Before the cool-down, which stays the last thing ridden.
@@ -423,13 +424,13 @@ export const lengthen = (
   ]
   const from = warmupMinutes + ahead
   return {
-    name: `${template.name} + ${extraMinutes}min Grundlage`,
+    name: t`${template.name} + ${extraMinutes}min Grundlage`,
     minutes,
     load,
     blocks,
     added: [
-      ...(ahead > 0 ? [`${ahead} min lockere Grundlage vor dem Hauptteil, Intervalle ab Minute ${from}`] : []),
-      ...(after > 0 ? [`${after} min lockere Grundlage nach dem Hauptteil`] : []),
+      ...(ahead > 0 ? [t`${ahead} min lockere Grundlage vor dem Hauptteil, Intervalle ab Minute ${from}`] : []),
+      ...(after > 0 ? [t`${after} min lockere Grundlage nach dem Hauptteil`] : []),
     ],
     core: { from, latest: warmupMinutes + extraMinutes },
   }

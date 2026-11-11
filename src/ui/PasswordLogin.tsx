@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { login } from './api.ts'
+import { t } from '../coach/lang.ts'
 
 /**
  * Single user sign in. One password, then a session that lasts thirty days —
@@ -20,7 +21,7 @@ export const PasswordLogin = ({ onDone, demo = false }: { readonly onDone: () =>
       setPasswort('')
       onDone()
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Anmeldung fehlgeschlagen')
+      setError(caught instanceof Error ? caught.message : t('Anmeldung fehlgeschlagen'))
     } finally {
       setBusy(false)
     }
@@ -28,24 +29,21 @@ export const PasswordLogin = ({ onDone, demo = false }: { readonly onDone: () =>
 
   return (
     <form className="login" onSubmit={(event) => void submit(event)}>
-      <h1>Formkurve</h1>
+      <h1>{t('Formkurve')}</h1>
       {demo ? (
         <p className="login__lead">
-          Ein Trainingsplaner, der die nächsten drei Tage aus dem plant, was wirklich trainiert
-          wurde. Die Demo zeigt ihn an einer erfundenen Athletin mit einem Jahr Beispieldaten.
-          Was du änderst, siehst nur du, und nach zwei Stunden ist es wieder vergessen.
+          {t('Ein Trainingsplaner, der die nächsten drei Tage aus dem plant, was wirklich trainiert wurde. Die Demo zeigt ihn an einer erfundenen Athletin mit einem Jahr Beispieldaten. Was du änderst, siehst nur du, und nach zwei Stunden ist es wieder vergessen.')}
         </p>
       ) : (
         <p className="login__lead">
-          Angemeldet bleibst du 30 Tage. Jeder Besuch verlängert das wieder — nach einem Monat
-          ohne Nutzung fragt der Coach erneut.
+          {t('Angemeldet bleibst du 30 Tage. Jeder Besuch verlängert das wieder — nach einem Monat ohne Nutzung fragt der Coach erneut.')}
         </p>
       )}
 
       {error && <p className="error error--block" role="alert">{error}</p>}
 
       <label className="login__field">
-        <span>{demo ? 'Demo-Passwort' : 'Passwort'}</span>
+        <span>{demo ? 'Demo-Passwort' : t('Passwort')}</span>
         <input
           type="password"
           name="password"
@@ -59,11 +57,11 @@ export const PasswordLogin = ({ onDone, demo = false }: { readonly onDone: () =>
       </label>
 
       <button type="submit" className="cta cta--button" disabled={busy || passwort.length === 0}>
-        {busy ? 'Einen Moment…' : demo ? 'Demo öffnen' : 'Anmelden'}
+        {busy ? t('Einen Moment…') : demo ? t('Demo öffnen') : t('Anmelden')}
       </button>
 
       <p className="login__legal">
-        <a href="/datenschutz">Datenschutz</a> · <a href="/impressum">Impressum</a>
+        <a href="/datenschutz">{t('Datenschutz')}</a> · <a href="/impressum">{t('Impressum')}</a>
       </p>
     </form>
   )

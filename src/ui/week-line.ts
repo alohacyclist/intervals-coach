@@ -2,6 +2,7 @@ import type { AdherenceDay, DayType, PlannedDay, PlannedSession, Sport } from '.
 import { startOfWeek } from '../coach/dates.ts'
 import { HARD_STIMULI } from '../coach/fitness.ts'
 import { findTemplate } from '../coach/library.ts'
+import { t } from '../coach/lang.ts'
 
 /** What a stop on the line shows: `neutral` is training whose intensity is not known. */
 export type LineMark = 'key' | 'easy' | 'neutral' | 'missed' | 'rest'
@@ -31,11 +32,11 @@ export const usualVariant = (session: PlannedSession) =>
 
 const PAST_NOTE: Readonly<Record<AdherenceDay['status'], string>> = {
   done: '✓',
-  race: '⚑ Rennen',
-  switched: '↔ anders',
-  missed: '✕ nicht absolviert',
+  race: t('⚑ Rennen'),
+  switched: t('↔ anders'),
+  missed: t('✕ nicht absolviert'),
   open: '',
-  unplanned: '+ spontan',
+  unplanned: t('+ spontan'),
   rest: '',
 }
 
@@ -48,14 +49,14 @@ const trainedMark = (templateId: string | null): LineMark => {
 const pastRow = (day: AdherenceDay): LineRow => {
   const base = { date: day.date, day: label(day.weekday, day.date), note: PAST_NOTE[day.status] }
   if (day.status === 'rest') {
-    return { ...base, mark: 'rest', sport: null, title: 'Ruhetag', load: null }
+    return { ...base, mark: 'rest', sport: null, title: t('Ruhetag'), load: null }
   }
   if (day.status === 'missed') {
-    const title = day.planned.join(' oder ')
+    const title = day.planned.join(t(' oder '))
     return { ...base, mark: 'missed', sport: null, title, load: null }
   }
   const sport = day.completedSport && day.completedSport !== 'Other' ? day.completedSport : null
-  const title = day.completed ?? day.planned.join(' oder ')
+  const title = day.completed ?? day.planned.join(t(' oder '))
   return { ...base, mark: trainedMark(day.templateId), sport, title, load: day.load }
 }
 
@@ -77,16 +78,16 @@ export const planRow = (day: PlannedDay): LineRow => {
       ...base,
       mark: state === 'rest' ? 'neutral' : state,
       sport: sport && sport !== 'Other' ? sport : null,
-      title: day.completed.map((entry) => entry.name || 'Einheit ohne Namen').join(' · '),
+      title: day.completed.map((entry) => entry.name || t('Einheit ohne Namen')).join(' · '),
       load: Math.round(load),
       note: `✓ ${Math.round(minutes)} min`,
     }
   }
   if (day.recommended === 'REST') {
-    return { ...base, mark: 'rest', sport: null, title: 'Ruhetag', load: null, note: '' }
+    return { ...base, mark: 'rest', sport: null, title: t('Ruhetag'), load: null, note: '' }
   }
   const pick = day.options.find((option) => option.sport === day.recommended)
-  if (!pick) return { ...base, mark: 'rest', sport: null, title: 'Kein Vorschlag', load: null, note: '' }
+  if (!pick) return { ...base, mark: 'rest', sport: null, title: t('Kein Vorschlag'), load: null, note: '' }
   const variant = usualVariant(pick)
   const state = dayState(day.dayType)
   return {

@@ -12,9 +12,10 @@ import { defaultThreshold, thresholdFor } from './thresholds.ts'
 import { profileOf } from './profile.ts'
 import { MIN_SAVING_MINUTES, lengthen, renameShortened, shorten, totalSeconds } from './variant.ts'
 import { goalForSport } from './phase.ts'
+import { t } from './lang.ts'
 
-const SHORT_NOTE =
-  'Gekürzte Fassung: gleiche Intervalllänge, gleiche Zielwerte, weniger Volumen. Der Reiz bleibt, die Zeit nicht.'
+const shortNote = (): string =>
+  t('Gekürzte Fassung: gleiche Intervalllänge, gleiche Zielwerte, weniger Volumen. Der Reiz bleibt, die Zeit nicht.')
 
 /**
  * One tier's version of a session. The full template is the top of what is
@@ -54,15 +55,15 @@ const variantFor = (
     minutes: Math.round((template.minutes * shortSec) / fullSec),
     load: Math.round((template.load * shortSec) / fullSec),
     blocks,
-    description: describeBlocks(blocks, `${template.coachNote}\n\n${SHORT_NOTE}`, reason),
+    description: describeBlocks(blocks, `${template.coachNote}\n\n${shortNote()}`, reason),
     humanSteps: toHumanSteps(blocks, threshold),
     profile: profileOf(blocks, threshold),
     cuts,
   }
 }
 
-const STRETCH_NOTE =
-  'Verlängerte Fassung: Intervalle und Zielwerte bleiben, wie sie sind — die zusätzliche Zeit ist lockere Grundlage, kein zweiter Reiz.'
+const stretchNote = (): string =>
+  t('Verlängerte Fassung: Intervalle und Zielwerte bleiben, wie sie sind — die zusätzliche Zeit ist lockere Grundlage, kein zweiter Reiz.')
 
 /** The longest version on a day with more time than usual, where the session allows it. */
 const stretchedFor = (
@@ -80,7 +81,7 @@ const stretchedFor = (
     minutes: stretch.minutes,
     load: stretch.load,
     blocks: stretch.blocks,
-    description: describeBlocks(stretch.blocks, `${template.coachNote}\n\n${STRETCH_NOTE}`, reason),
+    description: describeBlocks(stretch.blocks, `${template.coachNote}\n\n${stretchNote()}`, reason),
     humanSteps: toHumanSteps(stretch.blocks, threshold),
     profile: profileOf(stretch.blocks, threshold),
     cuts: [],
@@ -143,7 +144,7 @@ export const personalNote = (note: string, config: CoachConfig, date: string): s
     'Ride',
     date,
   )
-  return note.replaceAll(FTP_GOAL, goal ? `FTP ${Math.round(goal.targetValue)}` : 'die Schwelle')
+  return note.replaceAll(FTP_GOAL, goal ? `FTP ${Math.round(goal.targetValue)}` : t('die Schwelle'))
 }
 
 export const buildSession = (

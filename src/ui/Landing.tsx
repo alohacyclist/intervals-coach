@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { joinWaitlist } from './api.ts'
+import { t } from '../coach/lang.ts'
 
 /**
  * The page a shared picture leads to. It says what the app does in the first
@@ -19,74 +20,74 @@ type Props = {
 
 /** A made-up morning, so the page shows the product before asking for anything. */
 const EXAMPLE: readonly { readonly sport: string; readonly css: string; readonly name: string; readonly minutes: number }[] = [
-  { sport: 'Rad', css: 'ride', name: 'Sweetspot 3 × 12′', minutes: 60 },
-  { sport: 'Laufen', css: 'run', name: 'Schwelle 4 × 6′', minutes: 45 },
-  { sport: 'Rad', css: 'ride', name: 'Sweetspot 2 × 10′ · Kurzfassung', minutes: 30 },
+  { sport: t('Rad'), css: 'ride', name: 'Sweetspot 3 × 12′', minutes: 60 },
+  { sport: t('Laufen'), css: 'run', name: t('Schwelle 4 × 6′'), minutes: 45 },
+  { sport: t('Rad'), css: 'ride', name: t('Sweetspot 2 × 10′ · Kurzfassung'), minutes: 30 },
 ]
 
 const ExampleDay = () => (
-  <figure className="example" aria-label="Beispiel: so sieht ein Tag in Formkurve aus">
+  <figure className="example" aria-label={t('Beispiel: so sieht ein Tag in Formkurve aus')}>
     <figcaption className="example__head">
-      <span>Heute · Beispiel</span>
-      <span className="badge badge--key">Qualitätstag</span>
+      <span>{t('Heute · Beispiel')}</span>
+      <span className="badge badge--key">{t('Qualitätstag')}</span>
     </figcaption>
-    <p className="example__reason">Du bist erholt – heute darf es hart sein.</p>
+    <p className="example__reason">{t('Du bist erholt – heute darf es hart sein.')}</p>
     <ul className="example__options">
       {EXAMPLE.map((option, index) => (
         <li key={option.name}>
-          {index > 0 && <span className="example__or">oder</span>}
+          {index > 0 && <span className="example__or">{t('oder')}</span>}
           <strong className="readout">{option.minutes}′</strong>
           <span className={`badge badge--${option.css}`}>{option.sport}</span>
           <span>{option.name}</span>
         </li>
       ))}
     </ul>
-    <p className="example__note">Derselbe Reiz, egal welche du nimmst.</p>
+    <p className="example__note">{t('Derselbe Reiz, egal welche du nimmst.')}</p>
   </figure>
 )
 
 const SHOTS: readonly { readonly src: string; readonly alt: string; readonly caption: string }[] = [
   {
     src: '/landing/heute.jpg',
-    alt: 'Der Tagesplan: Form, Fitness und Ermüdung, darunter die Einheiten für heute zur Wahl',
-    caption: 'Jeden Morgen neu: jede deiner Sportarten als Wahl, komplett oder kurz.',
+    alt: t('Der Tagesplan: Form, Fitness und Ermüdung, darunter die Einheiten für heute zur Wahl'),
+    caption: t('Jeden Morgen neu: jede deiner Sportarten als Wahl, komplett oder kurz.'),
   },
   {
     src: '/landing/soll-ist.png',
-    alt: 'Ein Lauf mit vier Intervallen über den Zielkorridoren, je Intervall die gehaltene Prozentzahl',
-    caption: 'Danach: Intervall für Intervall, ob du im Ziel warst.',
+    alt: t('Ein Lauf mit vier Intervallen über den Zielkorridoren, je Intervall die gehaltene Prozentzahl'),
+    caption: t('Danach: Intervall für Intervall, ob du im Ziel warst.'),
   },
   {
     src: '/landing/verlauf.jpg',
-    alt: 'Der Verlauf: Fitnesskurve, Saisonphasen und Wochenlast',
-    caption: 'Und über Wochen: ob du vorankommst.',
+    alt: t('Der Verlauf: Fitnesskurve, Saisonphasen und Wochenlast'),
+    caption: t('Und über Wochen: ob du vorankommst.'),
   },
 ]
 
 const STEPS: readonly { readonly title: string; readonly body: string }[] = [
   {
-    title: 'Anmelden',
-    body: 'Ein Klick über intervals.icu. Kein neues Passwort, keine API-Schlüssel zum Kopieren.',
+    title: t('Anmelden'),
+    body: t('Ein Klick über intervals.icu. Kein neues Passwort, keine API-Schlüssel zum Kopieren.'),
   },
   {
-    title: 'Einrichten',
-    body: 'Sportarten wählen, dazu wie oft und wie lange du realistisch trainierst. Ein Ziel ist optional: Wettkampf, FTP oder einfach fit bleiben.',
+    title: t('Einrichten'),
+    body: t('Sportarten wählen, dazu wie oft und wie lange du realistisch trainierst. Ein Ziel ist optional: Wettkampf, FTP oder einfach fit bleiben.'),
   },
   {
-    title: 'Loslegen',
-    body: 'Jeden Morgen stehen die nächsten drei Tage bereit. Einheit wählen, per Klick auf Uhr, Radcomputer oder Rolle.',
+    title: t('Loslegen'),
+    body: t('Jeden Morgen stehen die nächsten drei Tage bereit. Einheit wählen, per Klick auf Uhr, Radcomputer oder Rolle.'),
   },
 ]
 
 /** The sentence for each `?fehler=` the worker or a view sends back to the start page. */
 const ERRORS: Readonly<Record<string, string>> = {
-  abgelehnt: 'Zugriff wurde abgelehnt. Ohne Freigabe kann der Plan deine Daten nicht lesen.',
-  einwilligung: 'Ohne Einwilligung in die Verarbeitung deiner Gesundheitsdaten ist keine Anmeldung möglich.',
-  abgelaufen: 'Deine Anmeldung ist abgelaufen. Bitte melde dich neu an.',
+  abgelehnt: t('Zugriff wurde abgelehnt. Ohne Freigabe kann der Plan deine Daten nicht lesen.'),
+  einwilligung: t('Ohne Einwilligung in die Verarbeitung deiner Gesundheitsdaten ist keine Anmeldung möglich.'),
+  abgelaufen: t('Deine Anmeldung ist abgelaufen. Bitte melde dich neu an.'),
 }
 
 export const landingError = (code: string): string =>
-  ERRORS[code] ?? 'Die Anmeldung ist fehlgeschlagen. Bitte noch einmal versuchen.'
+  ERRORS[code] ?? t('Die Anmeldung ist fehlgeschlagen. Bitte noch einmal versuchen.')
 
 const Waitlist = () => {
   const [email, setEmail] = useState('')
@@ -103,7 +104,7 @@ const Waitlist = () => {
       await joinWaitlist(email, website)
       setState('sent')
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Das hat nicht geklappt.')
+      setError(caught instanceof Error ? caught.message : t('Das hat nicht geklappt.'))
       setState('idle')
     }
   }
@@ -111,8 +112,7 @@ const Waitlist = () => {
   if (state === 'sent') {
     return (
       <p className="waitlist__done" role="status">
-        <strong>Fast geschafft.</strong> Wir haben dir eine Mail geschickt — erst mit dem Klick
-        darin stehst du auf der Liste.
+        <strong>{t('Fast geschafft.')}</strong>{t(' Wir haben dir eine Mail geschickt — erst mit dem Klick darin stehst du auf der Liste.')}
       </p>
     )
   }
@@ -120,29 +120,28 @@ const Waitlist = () => {
   return (
     <form className="waitlist" onSubmit={(event) => void submit(event)}>
       <label className="waitlist__field">
-        <span>Sag mir Bescheid, wenn Formkurve offen ist</span>
+        <span>{t('Sag mir Bescheid, wenn Formkurve offen ist')}</span>
         <div className="waitlist__row">
           <input
             type="email"
             required
             autoComplete="email"
-            placeholder="deine@mail.de"
+            placeholder={t('deine@mail.de')}
             value={email}
             onChange={(event) => setEmail(event.target.value)}
           />
           <button type="submit" className="cta cta--button" disabled={state === 'busy'}>
-            {state === 'busy' ? 'Sende…' : 'Eintragen'}
+            {state === 'busy' ? 'Sende…' : t('Eintragen')}
           </button>
         </div>
       </label>
       <label className="waitlist__trap" aria-hidden="true">
-        Website
+        {t('Website')}
         <input tabIndex={-1} autoComplete="off" value={website} onChange={(event) => setWebsite(event.target.value)} />
       </label>
       {error && <p className="error">{error}</p>}
       <p className="landing__hint">
-        Eine Mail zum Start, sonst nichts. Du bestätigst per Link, abmelden geht jederzeit. Mehr in
-        der <a href="/datenschutz">Datenschutzerklärung</a>.
+        {t('Eine Mail zum Start, sonst nichts. Du bestätigst per Link, abmelden geht jederzeit. Mehr in der ')}<a href="/datenschutz">{t('Datenschutzerklärung')}</a>.
       </p>
     </form>
   )
@@ -166,10 +165,7 @@ const SignUp = ({ error }: { readonly error: string | null }) => {
           onChange={(event) => setConsented(event.target.checked)}
         />
         <span>
-          Ich willige ein, dass meine Trainings- und Gesundheitsdaten aus intervals.icu —
-          Herzfrequenz, Herzratenvariabilität, Ruhepuls und Schlaf — zur Berechnung meines
-          Trainingsplans verarbeitet werden (Art. 9 Abs. 2 lit. a DSGVO). Widerruf jederzeit
-          möglich. Näheres in der <a href="/datenschutz">Datenschutzerklärung</a>.
+          {t('Ich willige ein, dass meine Trainings- und Gesundheitsdaten aus intervals.icu — Herzfrequenz, Herzratenvariabilität, Ruhepuls und Schlaf — zur Berechnung meines Trainingsplans verarbeitet werden (Art. 9 Abs. 2 lit. a DSGVO). Widerruf jederzeit möglich. Näheres in der ')}<a href="/datenschutz">{t('Datenschutzerklärung')}</a>.
         </span>
       </label>
 
@@ -181,10 +177,10 @@ const SignUp = ({ error }: { readonly error: string | null }) => {
           if (!consented) event.preventDefault()
         }}
       >
-        Mit intervals.icu anmelden
+        {t('Mit intervals.icu anmelden')}
       </a>
       <p className="landing__hint">
-        Kostenlos in der Beta. Du brauchst ein intervals.icu-Konto, fürs Rad einen Wattmesser.
+        {t('Kostenlos in der Beta. Du brauchst ein intervals.icu-Konto, fürs Rad einen Wattmesser.')}
       </p>
     </>
   )
@@ -193,28 +189,24 @@ const SignUp = ({ error }: { readonly error: string | null }) => {
 export const Landing = ({ mode, error, confirmed = false }: Props) => (
   <div className="landing">
     <header className="landing__hero">
-      <p className="landing__eyebrow">Formkurve</p>
-      <h1>Wahl statt Plan: Du entscheidest spontan, der Trainingsreiz stimmt trotzdem.</h1>
+      <p className="landing__eyebrow">{t('Formkurve')}</p>
+      <h1>{t('Wahl statt Plan: Du entscheidest spontan, der Trainingsreiz stimmt trotzdem.')}</h1>
       <p className="landing__lead">
-        Formkurve liest deine Einheiten und Erholungswerte aus intervals.icu und schlägt jeden
-        Tag eine Einheit für <em>jede</em> deiner Sportarten vor – Rad, Laufen, Schwimmen –,
-        jeweils komplett und als Kurzfassung. Verpasst du einen Tag, verschiebt sich der Plan,
-        statt zu brechen.
+        {t('Formkurve liest deine Einheiten und Erholungswerte aus intervals.icu und schlägt jeden Tag eine Einheit für ')}<em>{t('jede')}</em>{t(' deiner Sportarten vor – Rad, Laufen, Schwimmen –, jeweils komplett und als Kurzfassung. Verpasst du einen Tag, verschiebt sich der Plan, statt zu brechen.')}
       </p>
 
       <ExampleDay />
 
       {confirmed && (
         <p className="waitlist__done" role="status">
-          <strong>Bestätigt.</strong> Du stehst auf der Liste und hörst von uns, sobald Formkurve
-          offen ist.
+          <strong>{t('Bestätigt.')}</strong>{t(' Du stehst auf der Liste und hörst von uns, sobald Formkurve offen ist.')}
         </p>
       )}
       {mode === 'waitlist' ? !confirmed && <Waitlist /> : <SignUp error={error} />}
     </header>
 
     <section className="landing__section">
-      <h2>So sieht es aus</h2>
+      <h2>{t('So sieht es aus')}</h2>
       <div className="shots">
         {SHOTS.map((shot) => (
           <figure key={shot.src} className="shots__item">
@@ -226,18 +218,14 @@ export const Landing = ({ mode, error, confirmed = false }: Props) => (
     </section>
 
     <section className="landing__section">
-      <h2>Warum eine Einheit pro Sportart?</h2>
+      <h2>{t('Warum eine Einheit pro Sportart?')}</h2>
       <p>
-        Weil Zeit der eigentliche Engpass ist. Mal passt die Rolle, mal sind die Laufschuhe
-        schneller angezogen, mal bleiben nur 30 Minuten. Alle Vorschläge eines Tages setzen
-        denselben Trainingsreiz – welche Sportart und welche Länge du wählst, ändert den Plan
-        nicht, nur den Weg dahin. Und fällt ein Tag aus, rechnet Formkurve am nächsten Morgen
-        einfach mit dem, was wirklich passiert ist.
+        {t('Weil Zeit der eigentliche Engpass ist. Mal passt die Rolle, mal sind die Laufschuhe schneller angezogen, mal bleiben nur 30 Minuten. Alle Vorschläge eines Tages setzen denselben Trainingsreiz – welche Sportart und welche Länge du wählst, ändert den Plan nicht, nur den Weg dahin. Und fällt ein Tag aus, rechnet Formkurve am nächsten Morgen einfach mit dem, was wirklich passiert ist.')}
       </p>
     </section>
 
     <section className="landing__section">
-      <h2>So läuft es</h2>
+      <h2>{t('So läuft es')}</h2>
       <ol className="landing__steps">
         {STEPS.map((step) => (
           <li key={step.title}>
@@ -249,41 +237,34 @@ export const Landing = ({ mode, error, confirmed = false }: Props) => (
     </section>
 
     <section className="landing__section">
-      <h2>Was der Plan berücksichtigt</h2>
+      <h2>{t('Was der Plan berücksichtigt')}</h2>
       <ul className="landing__list">
-        <li>Fitness, Ermüdung und Form aus all deinen Einheiten – Rad, Laufen und Schwimmen</li>
+        <li>{t('Fitness, Ermüdung und Form aus all deinen Einheiten – Rad, Laufen und Schwimmen')}</li>
         <li>
-          HRV, Ruhepuls und Schlaf im Vergleich zu deiner eigenen Baseline der letzten 30 Tage
+          {t('HRV, Ruhepuls und Schlaf im Vergleich zu deiner eigenen Baseline der letzten 30 Tage')}
         </li>
-        <li>Mindestens 48 Stunden zwischen zwei harten Einheiten</li>
+        <li>{t('Mindestens 48 Stunden zwischen zwei harten Einheiten')}</li>
         <li>
-          Periodisierung auf dein Zieldatum, wenn du eins hast, sonst in Blöcken – jede vierte
-          Woche ist leichter
+          {t('Periodisierung auf dein Zieldatum, wenn du eins hast, sonst in Blöcken – jede vierte Woche ist leichter')}
         </li>
-        <li>Dein Zeitbudget: keine 90-Minuten-Einheit, wenn du 45 Minuten hast</li>
+        <li>{t('Dein Zeitbudget: keine 90-Minuten-Einheit, wenn du 45 Minuten hast')}</li>
         <li>
-          Vorgaben in Watt fürs Rad, als Pace fürs Laufen und pro 100 m fürs Schwimmen. Ohne
-          Wattmesser oder Smart-Trainer lässt sich der Radplan noch nicht sinnvoll fahren.
+          {t('Vorgaben in Watt fürs Rad, als Pace fürs Laufen und pro 100 m fürs Schwimmen. Ohne Wattmesser oder Smart-Trainer lässt sich der Radplan noch nicht sinnvoll fahren.')}
         </li>
       </ul>
     </section>
 
     <section className="landing__section landing__section--muted">
-      <h2>Deine Daten</h2>
+      <h2>{t('Deine Daten')}</h2>
       <p>
-        Die Anmeldung läuft über intervals.icu. Formkurve fragt vier Berechtigungen an:
-        Aktivitäten lesen, Erholungswerte lesen, geplante Einheiten in deinen Kalender schreiben
-        und Einstellungen ändern. Über die Einstellungen liest Formkurve deine Schwellenwerte und
-        verbundenen Geräte; ändern tut es sie nur, wenn du es anklickst. Kein Zugriff auf dein
-        Passwort, und Formkurve löscht nichts. Du kannst die Freigabe jederzeit in deinen
-        intervals.icu-Einstellungen widerrufen.
+        {t('Die Anmeldung läuft über intervals.icu. Formkurve fragt vier Berechtigungen an: Aktivitäten lesen, Erholungswerte lesen, geplante Einheiten in deinen Kalender schreiben und Einstellungen ändern. Über die Einstellungen liest Formkurve deine Schwellenwerte und verbundenen Geräte; ändern tut es sie nur, wenn du es anklickst. Kein Zugriff auf dein Passwort, und Formkurve löscht nichts. Du kannst die Freigabe jederzeit in deinen intervals.icu-Einstellungen widerrufen.')}
       </p>
       <p className="landing__legal">
-        <a href="/datenschutz">Datenschutz</a> · <a href="/impressum">Impressum</a>
+        <a href="/datenschutz">{t('Datenschutz')}</a> · <a href="/impressum">{t('Impressum')}</a>
         {mode === 'waitlist' && (
           <>
             {' '}
-            · <a href="/login">Anmelden</a>
+            · <a href="/login">{t('Anmelden')}</a>
           </>
         )}
       </p>

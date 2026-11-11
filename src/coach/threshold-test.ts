@@ -2,6 +2,7 @@ import type { Fitness, Phase, Sport } from './types.ts'
 import type { Completion } from './progression.ts'
 import { diffDays } from './dates.ts'
 import { thresholdTestFor } from './library.ts'
+import { t } from './lang.ts'
 
 /**
  * When to measure a threshold instead of estimating it.
@@ -73,14 +74,14 @@ export const thresholdTestDue = (
       sport,
       templateId: template.id,
       reason:
-        'Standortbestimmung: deine Schwelle ist bisher nie gemessen worden. Aus Intervallen lässt sie sich nur nach unten begrenzen, nie nach oben — alle Vorgaben hängen aber daran.',
+        t('Standortbestimmung: deine Schwelle ist bisher nie gemessen worden. Aus Intervallen lässt sie sich nur nach unten begrenzen, nie nach oben — alle Vorgaben hängen aber daran.'),
     }
   }
   if (since >= TEST_INTERVAL_DAYS) {
     return {
       sport,
       templateId: template.id,
-      reason: `Standortbestimmung: die letzte liegt ${Math.round(since / 7)} Wochen zurück. Zeit, den Wert wieder zu belegen statt ihn fortzuschreiben.`,
+      reason: t`Standortbestimmung: die letzte liegt ${Math.round(since / 7)} Wochen zurück. Zeit, den Wert wieder zu belegen statt ihn fortzuschreiben.`,
     }
   }
   return null

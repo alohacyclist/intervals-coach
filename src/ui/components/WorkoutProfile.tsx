@@ -1,4 +1,5 @@
 import type { ProfileSegment } from '../../coach/types.ts'
+import { t } from '../../coach/lang.ts'
 
 /**
  * The workout as a shape. Drawn in viewBox units and stretched to the card's
@@ -52,8 +53,8 @@ export const WorkoutProfile = ({ profile, minutes }: Props) => {
   })
 
   const spoken =
-    `Profil über ${minutes} Minuten, ${profile.length} Abschnitte, ` +
-    `${hard === 0 ? 'keiner davon hart' : `${hard} davon hart`}, Spitze bei ${peak} Prozent der Schwelle.`
+    t`Profil über ${minutes} Minuten, ${profile.length} Abschnitte, ` +
+    t`${hard === 0 ? t('keiner davon hart') : t`${hard} davon hart`}, Spitze bei ${peak} Prozent der Schwelle.`
 
   return (
     <figure className="profile">
@@ -101,8 +102,8 @@ export const WorkoutProfile = ({ profile, minutes }: Props) => {
         />
       </svg>
       <figcaption className="profile__scale readout">
-        <span>{minutes} min</span>
-        <span>Spitze {peak} %</span>
+        <span>{minutes}{t(' min')}</span>
+        <span>{t('Spitze ')}{peak} %</span>
       </figcaption>
     </figure>
   )

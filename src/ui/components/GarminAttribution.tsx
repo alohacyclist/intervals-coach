@@ -1,4 +1,5 @@
 import type { GarminAttribution as Attribution } from '../../coach/types.ts'
+import { t } from '../../coach/lang.ts'
 
 /**
  * Required by Garmin's API brand guidelines, which intervals.icu passes on:
@@ -7,8 +8,8 @@ import type { GarminAttribution as Attribution } from '../../coach/types.ts'
  */
 export const garminText = (attribution: Attribution): string =>
   attribution.devices.length > 0
-    ? `Teilweise abgeleitet aus Daten von Garmin-Geräten: ${attribution.devices.join(', ')}`
-    : 'Teilweise abgeleitet aus Daten von Garmin-Geräten'
+    ? t`Teilweise abgeleitet aus Daten von Garmin-Geräten: ${attribution.devices.join(', ')}`
+    : t('Teilweise abgeleitet aus Daten von Garmin-Geräten')
 
 export const GarminAttribution = ({ attribution }: { readonly attribution: Attribution | null | undefined }) =>
   attribution ? <p className="hint attribution">{garminText(attribution)}</p> : null

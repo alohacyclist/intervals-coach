@@ -18,7 +18,7 @@ import type {
 } from './types.ts'
 import { ALL_SPORTS, SPORT_LABELS, STIMULUS_LABELS } from './types.ts'
 import { formNote } from './wording.ts'
-import { addDays, diffDays, startOfWeek, weekdayDe } from './dates.ts'
+import { addDays, diffDays, startOfWeek, weekdayLabel } from './dates.ts'
 import { HARD_ON_LOAD_ALONE, projectFitness } from './fitness.ts'
 import { PHASE_LABELS, goalForSport, phaseForSport, primaryGoal, weeklyHardBudget } from './phase.ts'
 import { selectedSports } from './thresholds.ts'
@@ -33,6 +33,7 @@ import { findTemplate, flattenBlocks, intensityClass, isPreferredSport, strength
 import { buildSession } from './session.ts'
 import { BASE_LOAD_PER_HOUR, MIN_SAVING_MINUTES } from './variant.ts'
 import { aroundRace, raceSession, racesAround, withRace } from './race-day.ts'
+import { locale, t } from './lang.ts'
 
 /** Minimum days between two hard sessions, regardless of sport. */
 const HARD_SPACING_DAYS = 2
@@ -102,19 +103,19 @@ const plateauFor = (state: TrainingState, config: CoachConfig, phase: Phase, dat
   if (state.loadedActivityCount < PLATEAU_MIN_SESSIONS || state.ctlGain28 >= PLATEAU_GAIN) return NO_PLATEAU
   const breakSince = addDays(date, -PLATEAU_WINDOW_DAYS)
   if (config.breaks.some((entry) => entry.until >= breakSince && entry.from <= date)) return NO_PLATEAU
-  const gain = `${state.ctlGain28 >= 0 ? '+' : ''}${state.ctlGain28.toLocaleString('de-DE')}`
+  const gain = `${state.ctlGain28 >= 0 ? '+' : ''}${state.ctlGain28.toLocaleString(locale())}`
   const promised = config.profile.weeklySessions.min
   if (state.sessionsPerWeekRecent < promised) {
     // Where the plan already plans with fewer, that note says it; a second one would only repeat it.
     if (effectiveWeeklyMin(config, state) < promised) return NO_PLATEAU
     return {
       kind: 'missing',
-      note: `Fitness in vier Wochen ${gain} — es fehlen Einheiten (${state.sessionsPerWeekRecent.toLocaleString('de-DE')} statt ${promised} pro Woche), nicht Härte`,
+      note: t`Fitness in vier Wochen ${gain} — es fehlen Einheiten (${state.sessionsPerWeekRecent.toLocaleString(locale())} statt ${promised} pro Woche), nicht Härte`,
     }
   }
   return {
     kind: 'adapted',
-    note: `Fitness in vier Wochen nur ${gain} bei vollem Pensum — die Einheiten werden mit lockerer Grundlage länger, nicht härter. Eine Einheit mehr pro Woche hilft ebenso.`,
+    note: t`Fitness in vier Wochen nur ${gain} bei vollem Pensum — die Einheiten werden mit lockerer Grundlage länger, nicht härter. Eine Einheit mehr pro Woche hilft ebenso.`,
   }
 }
 
@@ -197,7 +198,7 @@ const legsRecovering = (simulation: Simulation, sport: Sport): boolean =>
   sport === 'Run' && simulation.daysSinceHard.Run < RUN_HARD_SPACING_DAYS
 
 const legsNote = (simulation: Simulation): string =>
-  `Harter Lauf vor ${simulation.daysSinceHard.Run} Tagen — Sehnen und Knochen brauchen 72h, Kreislauf ist bereit`
+  t`Harter Lauf vor ${simulation.daysSinceHard.Run} Tagen — Sehnen und Knochen brauchen 72h, Kreislauf ist bereit`
 
 /** The load of the session that is holding the next hard day back. */
 const blockingHardLoad = (simulation: Simulation, sports: readonly Sport[]): number => {
@@ -249,7 +250,7 @@ export const effectiveWeeklyMin = (config: CoachConfig, state: TrainingState): n
 /** Past what the athlete signed up for, but supported by how they have recovered. */
 const beyondPlan = (dayType: DayType, reason: string): DayDecision => ({
   dayType,
-  reason: `${reason} Freiwillig, nicht eingeplant.`,
+  reason: t`${reason} Freiwillig, nicht eingeplant.`,
   optional: true,
 })
 
@@ -280,14 +281,14 @@ const applyWeeklyCapacity = (
   if (!restedEnough || state.readiness.score === 'red') {
     return plan(
       'REST',
-      `Wochenpensum erfüllt (${Math.min(simulation.sessionsThisWeek, max)} von ${max}) — heute ist Pause eingeplant`,
+      t`Wochenpensum erfüllt (${Math.min(simulation.sessionsThisWeek, max)} von ${max}) — heute ist Pause eingeplant`,
     )
   }
 
   return {
     ...decision,
     optional: true,
-    reason: `${simulation.consecutiveRest} Ruhetage in Folge, Wochenpensum bereits erfüllt — freiwillig, nicht eingeplant. ${decision.reason}`,
+    reason: t`${simulation.consecutiveRest} Ruhetage in Folge, Wochenpensum bereits erfüllt — freiwillig, nicht eingeplant. ${decision.reason}`,
   }
 }
 
@@ -318,7 +319,7 @@ const applyIntent = (
   if (onBreak && intent === 'hard') {
     return {
       ...decision,
-      reason: `${decision.reason} Solange die Pause eingetragen ist, gibt es keine harte Einheit — beende sie oben, wenn du wieder fit bist.`,
+      reason: t`${decision.reason} Solange die Pause eingetragen ist, gibt es keine harte Einheit — beende sie oben, wenn du wieder fit bist.`,
     }
   }
 
@@ -327,15 +328,15 @@ const applyIntent = (
     intent !== 'hard'
       ? ''
       : spacing < HARD_SPACING_DAYS
-        ? ` Achtung: erst ${spacing === 0 ? 'heute' : `vor ${spacing} Tag${spacing === 1 ? '' : 'en'}`} eine harte Einheit — zwei harte Tage hintereinander kosten mehr, als sie bringen.`
+        ? t` Achtung: erst ${spacing === 0 ? t('heute') : (spacing === 1 ? t('vor 1 Tag') : t`vor ${spacing} Tagen`)} eine harte Einheit — zwei harte Tage hintereinander kosten mehr, als sie bringen.`
         : sports.every((sport) => legsRecovering(simulation, sport))
-          ? ` Achtung: ${legsNote(simulation)}.`
+          ? t` Achtung: ${legsNote(simulation)}.`
           : ''
 
   return {
     dayType: wanted,
     optional: true,
-    reason: `Von dir gewählt: ${intent === 'hard' ? 'harte Einheit' : intent === 'easy' ? 'lockere Einheit' : 'Pause'}. Der Plan hätte vorgesehen: ${decision.reason}${warning}`,
+    reason: t`Von dir gewählt: ${intent === 'hard' ? t('harte Einheit') : intent === 'easy' ? t('lockere Einheit') : t('Pause')}. Der Plan hätte vorgesehen: ${decision.reason}${warning}`,
   }
 }
 
@@ -364,11 +365,11 @@ const decideDay = (
 
   if (readinessRed && dayIndex === 0) {
     return simulation.fitness.tsb < -25
-      ? plan('REST', 'Erholungssignale und tiefe Form — heute gar nichts')
-      : plan('RECOVERY', 'Erholungssignale sprechen gegen Belastung')
+      ? plan('REST', t('Erholungssignale und tiefe Form — heute gar nichts'))
+      : plan('RECOVERY', t('Erholungssignale sprechen gegen Belastung'))
   }
   if (simulation.fitness.tsb < -30) {
-    return plan('RECOVERY', 'Form deutlich im Minus — nur Regeneration')
+    return plan('RECOVERY', t('Form deutlich im Minus — nur Regeneration'))
   }
   if (minDaysSinceHard(simulation, sports) < HARD_SPACING_DAYS) {
     const blocking = blockingHardLoad(simulation, sports)
@@ -377,7 +378,7 @@ const decideDay = (
     if (blocking > 0 && blocking < FULL_HARD_LOAD) {
       return plan(
         'EASY',
-        `Die letzte harte Einheit war kurz (Load ${blocking}) — locker statt Pause`,
+        t`Die letzte harte Einheit war kurz (Load ${blocking}) — locker statt Pause`,
       )
     }
     // A hard day is followed by rest. The weekly minimum is reached by spreading
@@ -389,18 +390,20 @@ const decideDay = (
       return plan(
         'REST',
         planned >= min
-          ? 'Mindestpensum erfüllt und keine 48h seit der letzten harten Einheit'
-          : `Pause nach harter Einheit — für die fehlende${needed === 1 ? '' : 'n'} ${needed} Einheit${needed === 1 ? '' : 'en'} bleiben noch ${room - 1} Tage`,
+          ? t('Mindestpensum erfüllt und keine 48h seit der letzten harten Einheit')
+          : needed === 1
+            ? t`Pause nach harter Einheit — für die fehlende 1 Einheit bleiben noch ${room - 1} Tage`
+            : t`Pause nach harter Einheit — für die fehlenden ${needed} Einheiten bleiben noch ${room - 1} Tage`,
       )
     }
-    return plan('EASY', 'Keine 48h seit der letzten harten Einheit, aber die Woche läuft aus — locker statt Pause')
+    return plan('EASY', t('Keine 48h seit der letzten harten Einheit, aber die Woche läuft aus — locker statt Pause'))
   }
   // Only a runner gets here: anyone with a second sport takes the quality day there.
   if (sports.every((sport) => legsRecovering(simulation, sport))) {
-    return plan('EASY', `${legsNote(simulation)} — heute locker`)
+    return plan('EASY', t`${legsNote(simulation)} — heute locker`)
   }
   if (simulation.hardThisWeek >= budget) {
-    const spent = `Wochenbudget harter Einheiten erreicht (${simulation.hardThisWeek}/${budget})`
+    const spent = t`Wochenbudget harter Einheiten erreicht (${simulation.hardThisWeek}/${budget})`
     // The budget is a weekly count and knows nothing about recovery. Once the
     // athlete has plainly recovered, another quality session is defensible and
     // should be offered rather than waited out until the calendar rolls over.
@@ -411,15 +414,15 @@ const decideDay = (
     return restedOut && fresh
       ? beyondPlan(
           'KEY',
-          `${spent}, aber nach ${simulation.consecutiveRest} Ruhetagen und mit Form ${simulation.fitness.tsb} ist eine weitere Qualitätseinheit vertretbar.`,
+          t`${spent}, aber nach ${simulation.consecutiveRest} Ruhetagen und mit Form ${simulation.fitness.tsb} ist eine weitere Qualitätseinheit vertretbar.`,
         )
       : plan('EASY', spent)
   }
-  if (simulation.fitness.tsb < -18) return backOff('Hohe Ermüdung — locker halten')
+  if (simulation.fitness.tsb < -18) return backOff(t('Hohe Ermüdung — locker halten'))
   if (readinessRed || (state.readiness.score === 'amber' && dayIndex === 0)) {
-    return backOff('Erholungswerte unter deiner Baseline')
+    return backOff(t('Erholungswerte unter deiner Baseline'))
   }
-  return plan('KEY', 'Erholt und im Wochenbudget — heute darf es wehtun')
+  return plan('KEY', t('Erholt und im Wochenbudget — heute darf es wehtun'))
 }
 
 /** Words worth comparing: real terms and rep patterns, not units or filler. */
@@ -591,14 +594,14 @@ const levelNote = (
   if (template.family === undefined) return ''
   const own = template.level ?? 1
   const level = ceilings[template.family] ?? 1
-  if (own < level) return ` · Stufe ${own} von ${level} verfügbar — Stufe ${level} passt heute nicht in Zeit oder Phase`
-  if (chosenLevel(template.family, choices) !== null) return ` · Stufe ${own}, selbst gewählt`
+  if (own < level) return t` · Stufe ${own} von ${level} verfügbar — Stufe ${level} passt heute nicht in Zeit oder Phase`
+  if (chosenLevel(template.family, choices) !== null) return t` · Stufe ${own}, selbst gewählt`
   const next = templatesFor(template.sport).some(
     (candidate) => candidate.family === template.family && (candidate.level ?? 1) === own + 1,
   )
   return next
-    ? ` · Stufe ${own} — Stufe ${own + 1} kommt, sobald jedes Intervall voll und mindestens im Zielbereich gefahren ist`
-    : ` · Stufe ${own}`
+    ? t` · Stufe ${own} — Stufe ${own + 1} kommt, sobald jedes Intervall voll und mindestens im Zielbereich gefahren ist`
+    : t` · Stufe ${own}`
 }
 
 const reasonFor = (
@@ -612,11 +615,11 @@ const reasonFor = (
   const age = stimulusAge(simulation, template.sport, template.stimulus)
   const ageText =
     age >= STALE_STIMULUS_DAYS
-      ? 'dieser Reiz fehlt seit über vier Wochen'
-      : `${STIMULUS_LABELS[template.stimulus]} zuletzt vor ${age} Tagen`
-  if (dayType === 'KEY') return `${PHASE_LABELS[phase]}, Qualitätstag — ${ageText}${levelNote(template, ceilings, choices)}`
-  if (dayType === 'EASY') return `Lockerer Tag zwischen zwei harten Einheiten (${PHASE_LABELS[phase]})`
-  return `Regeneration hat Vorrang (${PHASE_LABELS[phase]})`
+      ? t('dieser Reiz fehlt seit über vier Wochen')
+      : t`${STIMULUS_LABELS[template.stimulus]} zuletzt vor ${age} Tagen`
+  if (dayType === 'KEY') return t`${PHASE_LABELS[phase]}, Qualitätstag — ${ageText}${levelNote(template, ceilings, choices)}`
+  if (dayType === 'EASY') return t`Lockerer Tag zwischen zwei harten Einheiten (${PHASE_LABELS[phase]})`
+  return t`Regeneration hat Vorrang (${PHASE_LABELS[phase]})`
 }
 
 const chooseRecommended = (
@@ -665,7 +668,7 @@ const notesFor = (
   notes.push(formNote(simulation.fitness))
   if (state.daysSinceAnySession >= LAYOFF_DAYS && state.daysSinceAnySession < 99) {
     notes.push(
-      `${state.daysSinceAnySession} Tage ohne Training — Wiedereinstieg über die Schwelle, VO₂max erst danach`,
+      t`${state.daysSinceAnySession} Tage ohne Training — Wiedereinstieg über die Schwelle, VO₂max erst danach`,
     )
   }
   const coming = returnWindow(config.breaks, date)
@@ -675,14 +678,14 @@ const notesFor = (
   const min = effectiveWeeklyMin(config, state)
   // A break is not a shortfall, so the weekly count stays quiet during and just after one.
   if (simulation.sessionsThisWeek < min && !breakLimit(config.breaks, date) && !coming) {
-    notes.push(`Diese Woche ${simulation.sessionsThisWeek} von mindestens ${min} Einheiten`)
+    notes.push(t`Diese Woche ${simulation.sessionsThisWeek} von mindestens ${min} Einheiten`)
   }
   if (min < promised) {
     notes.push(
-      `Vorgenommen ${promised} Einheiten/Woche, zuletzt ${state.sessionsPerWeekRecent.toLocaleString('de-DE')} — geplant wird mit ${min}`,
+      t`Vorgenommen ${promised} Einheiten/Woche, zuletzt ${state.sessionsPerWeekRecent.toLocaleString(locale())} — geplant wird mit ${min}`,
     )
   }
-  if (state.rampRate > FAST_RAMP) notes.push(`Fitness steigt schnell (+${state.rampRate}/Woche) — Verletzungsrisiko beachten`)
+  if (state.rampRate > FAST_RAMP) notes.push(t`Fitness steigt schnell (+${state.rampRate}/Woche) — Verletzungsrisiko beachten`)
   return notes
 }
 
@@ -799,15 +802,15 @@ const capacityFor = (
   fast: boolean,
 ): { readonly minutes: number; readonly why: string } => {
   const recent = state.longestRecentMinutes[sport]
-  const slowly = fast ? ' Die Fitness steigt gerade schnell — deshalb nicht über deine längste Einheit hinaus.' : ''
+  const slowly = fast ? t(' Die Fitness steigt gerade schnell — deshalb nicht über deine längste Einheit hinaus.') : ''
   if (sport === 'Run') {
     const minutes = fast ? recent : Math.max(roundDownToFive(recent * RUN_GROWTH), recent + RUN_MIN_STEP)
     return {
       minutes: recent === 0 ? 0 : minutes,
       why:
         recent === 0
-          ? 'in den letzten sechs Wochen kein Lauf, an dem sich mehr messen ließe.'
-          : `dein längster Lauf der letzten sechs Wochen waren ${recent} min, und Laufen wächst in kleinen Schritten.${slowly}`,
+          ? t('in den letzten sechs Wochen kein Lauf, an dem sich mehr messen ließe.')
+          : t`dein längster Lauf der letzten sechs Wochen waren ${recent} min, und Laufen wächst in kleinen Schritten.${slowly}`,
     }
   }
   const season = state.longestSeasonMinutes[sport]
@@ -818,7 +821,7 @@ const capacityFor = (
     : Math.max(roundDownToFive(recent * RIDE_GROWTH), season, fromFitness)
   return {
     minutes,
-    why: `mehr tragen deine Fitness (CTL ${ctl}) und deine längsten Fahrten (${season} min in zwölf Wochen) heute noch nicht.${slowly}`,
+    why: t`mehr tragen deine Fitness (CTL ${ctl}) und deine längsten Fahrten (${season} min in zwölf Wochen) heute noch nicht.${slowly}`,
   }
 }
 
@@ -836,12 +839,12 @@ const extraTimeFor = (
   const unchanged = (word: string, why: string): ExtraTime => ({
     ceilings: {},
     lead: null,
-    notes: [{ short: `Mehr Zeit: heute nicht (${word})`, long: `Mehr Zeit ändert heute nichts: ${why}` }],
+    notes: [{ short: t`Mehr Zeit: heute nicht (${word})`, long: t`Mehr Zeit ändert heute nichts: ${why}` }],
   })
-  if (raceAround) return unchanged('Rennen', 'das Rennen bestimmt den Tag.')
-  if (decision.dayType === 'REST') return unchanged('Pause', 'heute ist Pause.')
+  if (raceAround) return unchanged(t('Rennen'), t('das Rennen bestimmt den Tag.'))
+  if (decision.dayType === 'REST') return unchanged(t('Pause'), t('heute ist Pause.'))
   if (decision.dayType === 'RECOVERY' || decision.easyOnly === true) {
-    return unchanged('Erholung', 'Erholung hat Vorrang — die zusätzliche Zeit wäre Belastung, keine Grundlage.')
+    return unchanged(t('Erholung'), t('Erholung hat Vorrang — die zusätzliche Zeit wäre Belastung, keine Grundlage.'))
   }
 
   const fast = state.rampRate > FAST_RAMP
@@ -854,10 +857,10 @@ const extraTimeFor = (
       capacity.minutes >= wanted
         ? null
         : capacity.minutes === 0
-          ? { short: `${label}: lange nicht gemacht`, long: `${label} ${wanted} min wie eingestellt — Vorsicht: ${capacity.why}` }
+          ? { short: t`${label}: lange nicht gemacht`, long: t`${label} ${wanted} min wie eingestellt — Vorsicht: ${capacity.why}` }
           : {
-              short: `${label}: mehr als empfohlen (${capacity.minutes} min)`,
-              long: `${label} ${wanted} min wie eingestellt — empfohlen wären bis ${capacity.minutes} min: ${capacity.why}`,
+              short: t`${label}: mehr als empfohlen (${capacity.minutes} min)`,
+              long: t`${label} ${wanted} min wie eingestellt — empfohlen wären bis ${capacity.minutes} min: ${capacity.why}`,
             }
     return { sport, beyond }
   })
@@ -867,14 +870,14 @@ const extraTimeFor = (
       decision.dayType === 'KEY'
         ? coreAt === undefined
           ? {
-              short: 'Mehr Zeit: lockere Grundlage nach den Intervallen',
-              long: 'Mehr Zeit an einem Qualitätstag: die Intervalle bleiben, wie sie sind — die zusätzliche Zeit ist lockere Grundlage danach.',
+              short: t('Mehr Zeit: lockere Grundlage nach den Intervallen'),
+              long: t('Mehr Zeit an einem Qualitätstag: die Intervalle bleiben, wie sie sind — die zusätzliche Zeit ist lockere Grundlage danach.'),
             }
           : {
-              short: `Mehr Zeit: Intervalle ab Minute ${coreAt}`,
-              long: `Mehr Zeit an einem Qualitätstag: die Intervalle bleiben, wie sie sind — lockere Grundlage davor, bis sie ab Minute ${coreAt} beginnen, der Rest danach.`,
+              short: t`Mehr Zeit: Intervalle ab Minute ${coreAt}`,
+              long: t`Mehr Zeit an einem Qualitätstag: die Intervalle bleiben, wie sie sind — lockere Grundlage davor, bis sie ab Minute ${coreAt} beginnen, der Rest danach.`,
             }
-        : { short: 'Mehr Zeit: längere Grundlage', long: 'Mehr Zeit an einem lockeren Tag: mehr Grundlage, nicht mehr Tempo.' },
+        : { short: t('Mehr Zeit: längere Grundlage'), long: t('Mehr Zeit an einem lockeren Tag: mehr Grundlage, nicht mehr Tempo.') },
     notes: lengthened.flatMap((entry) => (entry.beyond ? [entry.beyond] : [])),
   }
 }
@@ -889,8 +892,8 @@ const extraTimeNotes = (extra: ExtraTime, options: readonly PlannedSession[]): r
   return measuring
     ? [
         {
-          short: 'Mehr Zeit: Test bleibt, wie er ist',
-          long: 'Mehr Zeit ändert heute nichts: ein Test bleibt, wie er ist — verlängert misst er etwas anderes.',
+          short: t('Mehr Zeit: Test bleibt, wie er ist'),
+          long: t('Mehr Zeit ändert heute nichts: ein Test bleibt, wie er ist — verlängert misst er etwas anderes.'),
         },
         ...extra.notes,
       ]
@@ -1049,7 +1052,7 @@ export const planDays = (
         )[0]
         if (!best) return null
         const reason = held(sport)
-          ? `${legsNote(simulation)} — die Qualität heute in der anderen Sportart, der Lauf bleibt leicht`
+          ? t`${legsNote(simulation)} — die Qualität heute in der anderen Sportart, der Lauf bleibt leicht`
           : reasonFor(best, dayType, sportPhase, simulation, ceilings, config.levelChoices)
         // On a plateau the session grows by easy base — not on a day meant to recover,
         // nor where the athlete already said how long today is.
@@ -1076,7 +1079,7 @@ export const planDays = (
 
       const day: PlannedDay = {
         date,
-        weekday: weekdayDe(date),
+        weekday: weekdayLabel(date),
         dayType,
         phase,
         recommended,

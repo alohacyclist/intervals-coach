@@ -1,5 +1,6 @@
 import type { Readiness, ReadinessScore, Wellness } from './types.ts'
 import { diffDays } from './dates.ts'
+import { t } from './lang.ts'
 
 const BASELINE_DAYS = 30
 const MIN_BASELINE_SAMPLES = 7
@@ -34,10 +35,10 @@ const hrvFlag = (todayHrv: number | null, baseline: readonly number[]): Flag | n
   const sd = stdDev(baseline)
   if (sd === 0) return null
   if (todayHrv < average - 2 * sd) {
-    return { severity: 'red', reason: `HRV ${todayHrv} deutlich unter Baseline (${Math.round(average)})` }
+    return { severity: 'red', reason: t`HRV ${todayHrv} deutlich unter Baseline (${Math.round(average)})` }
   }
   if (todayHrv < average - sd) {
-    return { severity: 'amber', reason: `HRV ${todayHrv} unter Baseline (${Math.round(average)})` }
+    return { severity: 'amber', reason: t`HRV ${todayHrv} unter Baseline (${Math.round(average)})` }
   }
   return null
 }
@@ -47,30 +48,30 @@ const restingHrFlag = (todayRhr: number | null, baseline: readonly number[]): Fl
   const average = mean(baseline)
   const sd = Math.max(stdDev(baseline), 1)
   if (todayRhr > average + 2 * sd) {
-    return { severity: 'red', reason: `Ruhepuls ${todayRhr} deutlich über Baseline (${Math.round(average)})` }
+    return { severity: 'red', reason: t`Ruhepuls ${todayRhr} deutlich über Baseline (${Math.round(average)})` }
   }
   if (todayRhr > average + sd) {
-    return { severity: 'amber', reason: `Ruhepuls ${todayRhr} über Baseline (${Math.round(average)})` }
+    return { severity: 'amber', reason: t`Ruhepuls ${todayRhr} über Baseline (${Math.round(average)})` }
   }
   return null
 }
 
 const sleepFlag = (sleepSecs: number | null): Flag | null =>
   sleepSecs !== null && sleepSecs > 0 && sleepSecs < MIN_SLEEP_SECONDS
-    ? { severity: 'amber', reason: `Nur ${(sleepSecs / 3600).toFixed(1)}h Schlaf` }
+    ? { severity: 'amber', reason: t`Nur ${(sleepSecs / 3600).toFixed(1)}h Schlaf` }
     : null
 
 const subjectiveFlag = (entry: Wellness | undefined): Flag | null => {
   if (!entry) return null
   const worst = Math.max(entry.fatigue ?? 0, entry.soreness ?? 0)
-  if (worst >= 4) return { severity: 'red', reason: 'Subjektiv sehr müde / schwere Beine' }
-  if (worst === 3) return { severity: 'amber', reason: 'Subjektiv müde' }
+  if (worst >= 4) return { severity: 'red', reason: t('Subjektiv sehr müde / schwere Beine') }
+  if (worst === 3) return { severity: 'amber', reason: t('Subjektiv müde') }
   return null
 }
 
 const formFlag = (tsb: number): Flag | null => {
-  if (tsb < -30) return { severity: 'red', reason: `Form ${tsb} — deutliche Überlastung` }
-  if (tsb < -18) return { severity: 'amber', reason: `Form ${tsb} — hohe Ermüdung` }
+  if (tsb < -30) return { severity: 'red', reason: t`Form ${tsb} — deutliche Überlastung` }
+  if (tsb < -18) return { severity: 'amber', reason: t`Form ${tsb} — hohe Ermüdung` }
   return null
 }
 
@@ -97,6 +98,6 @@ export const computeReadiness = (
 
   return {
     score: scoreFrom(flags),
-    reasons: flags.length > 0 ? flags.map((flag) => flag.reason) : ['Keine Warnsignale'],
+    reasons: flags.length > 0 ? flags.map((flag) => flag.reason) : [t('Keine Warnsignale')],
   }
 }

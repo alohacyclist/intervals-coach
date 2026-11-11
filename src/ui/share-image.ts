@@ -1,3 +1,4 @@
+import { weekdayLabel } from '../coach/dates.ts'
 import { SPORT_DONE } from '../coach/types.ts'
 import type { Execution, ExecutionTrace } from '../coach/types.ts'
 import {
@@ -15,6 +16,7 @@ import {
   linePath,
   timeTicks,
 } from './trace-geometry.ts'
+import { t } from '../coach/lang.ts'
 
 /**
  * The session as a square picture for the phone's share sheet: Strava takes no
@@ -33,20 +35,19 @@ const HIT = 'rgba(255, 166, 43, 0.45)'
 const RULE = '#1e2526'
 const RULE_LOUD = '#2f3839'
 const SHADE = '#141a1b'
-const FOOTER = 'Geplant und ausgewertet mit Formkurve · formkurve.org'
+const FOOTER = t('Geplant und ausgewertet mit Formkurve · formkurve.org')
 const MONO = "'Middot', 'Overpass', system-ui, sans-serif"
 const SANS = "'Middot', 'Overpass', system-ui, sans-serif"
 
 const PLOT = { x: MARGIN, y: 450, width: SIZE - 2 * MARGIN, height: 310 }
 const HEART = { x: MARGIN, y: 790, width: SIZE - 2 * MARGIN, height: 100 }
 
-const WEEKDAYS = ['SO', 'MO', 'DI', 'MI', 'DO', 'FR', 'SA'] as const
 
 export type ShareMeta = { readonly sport: string; readonly date: string }
 
 const dateLine = (meta: ShareMeta): string => {
   const [year, month, day] = meta.date.split('-')
-  const weekday = WEEKDAYS[new Date(`${meta.date}T12:00:00Z`).getUTCDay()]
+  const weekday = weekdayLabel(meta.date).toUpperCase()
   return `${meta.sport.toUpperCase()} · ${weekday} ${day}.${month}.${year}`
 }
 
@@ -88,7 +89,7 @@ const drawHeader = (context: CanvasRenderingContext2D, execution: Execution, met
   const figures = isCompared(execution)
     ? [
         [SPORT_DONE[execution.sport].toUpperCase(), `${done}/${planned}`, ''],
-        ['IM ZIEL', `${hit}/${planned}`, ''],
+        [t('IM ZIEL'), `${hit}/${planned}`, ''],
         ['BELASTUNG', String(execution.load.actual), 'TSS'],
       ]
     : [
@@ -197,14 +198,14 @@ export const renderShareImage = async (execution: Execution, trace: ExecutionTra
   canvas.width = SIZE
   canvas.height = SIZE
   const context = canvas.getContext('2d')
-  if (!context) throw new Error('Dieser Browser kann kein Bild zeichnen')
+  if (!context) throw new Error(t('Dieser Browser kann kein Bild zeichnen'))
   context.fillStyle = '#0a0d0e'
   context.fillRect(0, 0, SIZE, SIZE)
   drawHeader(context, execution, meta)
   drawTrace(context, execution, trace)
   drawFooter(context)
   return new Promise((resolve, reject) =>
-    canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('Bild konnte nicht erzeugt werden'))), 'image/png'),
+    canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error(t('Bild konnte nicht erzeugt werden')))), 'image/png'),
   )
 }
 

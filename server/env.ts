@@ -1,5 +1,6 @@
 import { readFileSync, existsSync } from 'node:fs'
 import { resolve } from 'node:path'
+import { t } from '../src/coach/lang.ts'
 
 const ENV_FILE = resolve(process.cwd(), '.env')
 
@@ -20,7 +21,7 @@ loadEnvFile()
 const required = (key: string): string => {
   const value = process.env[key]
   if (!value || value.startsWith('your_')) {
-    throw new Error(`Missing environment variable ${key}. Copy .env.example to .env and fill it in.`)
+    throw new Error(t`Missing environment variable ${key}. Copy .env.example to .env and fill it in.`)
   }
   return value
 }

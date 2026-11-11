@@ -7,12 +7,13 @@ import { SessionCard } from './SessionCard.tsx'
 import { SportIcon } from './SportIcon.tsx'
 import { StrengthCard } from './StrengthCard.tsx'
 import { DoneStrip } from './DoneStrip.tsx'
+import { t } from '../../coach/lang.ts'
 
 const DAY_TYPE_LABEL: Record<PlannedDay['dayType'], string> = {
-  KEY: 'Qualitätstag',
-  EASY: 'Locker',
-  RECOVERY: 'Regeneration',
-  REST: 'Ruhetag',
+  KEY: t('Qualitätstag'),
+  EASY: t('Locker'),
+  RECOVERY: t('Regeneration'),
+  REST: t('Ruhetag'),
 }
 
 type Props = {
@@ -64,7 +65,7 @@ export const DayCard = ({
   const shownVariant = (session: PlannedSession) =>
     session.variants.find((variant) => variant.tier === tiers[cardKey(session)]) ?? usualVariant(session)
 
-  const label = index === 0 ? 'Heute' : index === 1 ? 'Morgen' : day.weekday
+  const label = index === 0 ? t('Heute') : index === 1 ? t('Morgen') : day.weekday
   const date = `${day.date.slice(8, 10)}.${day.date.slice(5, 7)}.`
   const facts = [
     date,
@@ -73,12 +74,12 @@ export const DayCard = ({
     ...(day.optional ? ['freiwillig'] : []),
   ].join(' · ')
   const title = trained
-    ? day.completed.map((entry) => entry.name || 'Einheit ohne Namen').join(' · ')
+    ? day.completed.map((entry) => entry.name || t('Einheit ohne Namen')).join(' · ')
     : chosen
       ? (shownVariant(chosen)?.name ?? chosen.template.name)
       : day.recommended === 'REST'
-        ? 'Ruhetag'
-        : 'Kein Vorschlag'
+        ? t('Ruhetag')
+        : t('Kein Vorschlag')
 
   return (
     <section className="panel" data-state={dayState(day.dayType)}>
@@ -93,15 +94,14 @@ export const DayCard = ({
         {/* Every day until then moves this one, and the plan says so rather than promise it. */}
         {outlook && (
           <p className="panel__outlook">
-            Ausblick: so sieht der Tag aus, wenn bis dahin alles wie geplant läuft. Was du vorher trainierst
-            oder auslässt, verschiebt ihn.
+            {t('Ausblick: so sieht der Tag aus, wenn bis dahin alles wie geplant läuft. Was du vorher trainierst oder auslässt, verschiebt ihn.')}
           </p>
         )}
       </div>
 
       {day.notes.length > 1 && (
         <details className="disclose day__why">
-          <summary>Hintergrund</summary>
+          <summary>{t('Hintergrund')}</summary>
           <ul className="notes">
             {day.notes.slice(1).map((note) => (
               <li key={note}>{note}</li>
@@ -113,7 +113,7 @@ export const DayCard = ({
       {trained && <DoneStrip sessions={day.completed} date={day.date} />}
 
       {day.options.length > 0 && (
-        <div className="picks" role="group" aria-label="Einheit wählen">
+        <div className="picks" role="group" aria-label={t('Einheit wählen')}>
           {day.options.map((session) => {
             const variant = shownVariant(session)
             return (
@@ -124,10 +124,10 @@ export const DayCard = ({
                 onClick={() => setChoice({ forPick: pick, id: session.template.id })}
               >
                 <SportIcon sport={session.sport} />
-                <b>{variant?.minutes ?? session.template.minutes} min</b>
-                <span>{variant?.load ?? session.template.load} TSS</span>
+                <b>{variant?.minutes ?? session.template.minutes}{t(' min')}</b>
+                <span>{variant?.load ?? session.template.load}{t(' TSS')}</span>
                 {session.template.id === pick && (
-                  <span className="picks__star" role="img" aria-label="empfohlen">
+                  <span className="picks__star" role="img" aria-label={t('empfohlen')}>
                     ★
                   </span>
                 )}
@@ -139,8 +139,7 @@ export const DayCard = ({
 
       {day.recommended === 'REST' && !trained && !chosen && (
         <p className="panel__facts">
-          <strong>{index === 0 ? 'Heute ist Pause.' : 'Ruhetag.'}</strong> Tippe eine Sportart an, wenn du
-          trotzdem los willst.
+          <strong>{index === 0 ? t('Heute ist Pause.') : 'Ruhetag.'}</strong>{t(' Tippe eine Sportart an, wenn du trotzdem los willst.')}
         </p>
       )}
 

@@ -23,10 +23,11 @@ import { ALL_BREAK_KINDS, ALL_SPORTS, ZRL_FORMATS } from './types.ts'
 import type { Equipment } from './types.ts'
 import { MAX_PROPOSAL_DAYS } from './proposals.ts'
 import { ftpOf } from './thresholds.ts'
+import { t } from './lang.ts'
 
 export class ValidationError extends Error {
   constructor(readonly issues: readonly string[]) {
-    super(`Ungültige Konfiguration: ${issues.join('; ')}`)
+    super(t`Ungültige Konfiguration: ${issues.join('; ')}`)
     this.name = 'ValidationError'
   }
 }
@@ -136,7 +137,7 @@ const validateThreshold = (raw: unknown, where: string, issues: string[]): Sport
     return { metric: 'swimPace', cssSecPer100m: Number(threshold['cssSecPer100m']) }
   }
 
-  issues.push(`${where}.metric muss power, pace oder swimPace sein`)
+  issues.push(t`${where}.metric muss power, pace oder swimPace sein`)
   return { metric: 'power', ftp: 0 }
 }
 
@@ -161,12 +162,12 @@ const normaliseSports = (profile: Record<string, unknown>): readonly unknown[] =
 
 const validateSports = (raw: unknown, issues: string[]): readonly SportSetting[] => {
   const entries = Array.isArray(raw) ? raw : []
-  if (entries.length === 0) issues.push('profile.sports braucht mindestens eine Sportart')
+  if (entries.length === 0) issues.push(t('profile.sports braucht mindestens eine Sportart'))
 
   const settings = entries.map((entry, index) => {
     const setting = (entry ?? {}) as Record<string, unknown>
     const where = `profile.sports[${index}]`
-    if (!isSport(setting['sport'])) issues.push(`${where}.sport muss Ride, Run oder Swim sein`)
+    if (!isSport(setting['sport'])) issues.push(t`${where}.sport muss Ride, Run oder Swim sein`)
     return {
       sport: (isSport(setting['sport']) ? setting['sport'] : 'Ride') as Sport,
       threshold: validateThreshold(setting['threshold'], `${where}.threshold`, issues),
@@ -174,7 +175,7 @@ const validateSports = (raw: unknown, issues: string[]): readonly SportSetting[]
   })
 
   const seen = new Set(settings.map((setting) => setting.sport))
-  if (seen.size !== settings.length) issues.push('profile.sports darf jede Sportart nur einmal enthalten')
+  if (seen.size !== settings.length) issues.push(t('profile.sports darf jede Sportart nur einmal enthalten'))
   return settings
 }
 
@@ -186,7 +187,7 @@ const validateProfile = (raw: unknown, issues: string[]): AthleteProfile => {
   if (!positive(sessions['min'])) issues.push('profile.weeklySessions.min muss > 0 sein')
   if (!positive(sessions['max'])) issues.push('profile.weeklySessions.max muss > 0 sein')
   if (positive(sessions['min']) && positive(sessions['max']) && Number(sessions['min']) > Number(sessions['max'])) {
-    issues.push('profile.weeklySessions.min darf nicht über max liegen')
+    issues.push(t('profile.weeklySessions.min darf nicht über max liegen'))
   }
   const sessionMinutes = normaliseSessionMinutes(profile)
   for (const [tier, value] of Object.entries(sessionMinutes)) {
@@ -226,9 +227,9 @@ const legacyDistance = (goal: Record<string, unknown>): Record<string, unknown> 
 const validateGoal = (raw: unknown, index: number, issues: string[]): Goal => {
   const goal = legacyDistance((raw ?? {}) as Record<string, unknown>)
   const where = `goals[${index}]`
-  if (!isSport(goal['sport'])) issues.push(`${where}.sport muss Ride, Run oder Swim sein`)
-  if (goal['kind'] !== 'ftp' && goal['kind'] !== 'raceTime') issues.push(`${where}.kind muss ftp oder raceTime sein`)
-  if (goal['kind'] === 'ftp' && goal['sport'] !== 'Ride') issues.push(`${where}: ein FTP-Ziel gibt es nur fürs Rad`)
+  if (!isSport(goal['sport'])) issues.push(t`${where}.sport muss Ride, Run oder Swim sein`)
+  if (goal['kind'] !== 'ftp' && goal['kind'] !== 'raceTime') issues.push(t`${where}.kind muss ftp oder raceTime sein`)
+  if (goal['kind'] === 'ftp' && goal['sport'] !== 'Ride') issues.push(t`${where}: ein FTP-Ziel gibt es nur fürs Rad`)
   if (goal['kind'] === 'raceTime' && !positive(goal['distanceKm'])) {
     issues.push(`${where}.distanceKm muss > 0 sein`)
   }
@@ -242,7 +243,7 @@ const validateGoal = (raw: unknown, index: number, issues: string[]): Goal => {
     id: String(goal['id'] ?? `goal-${index}`),
     sport: goal['sport'] as Goal['sport'],
     kind: goal['kind'] as Goal['kind'],
-    label: String(goal['label'] ?? 'Ziel'),
+    label: String(goal['label'] ?? t('Ziel')),
     targetValue: Number(goal['targetValue']),
     currentValue: Number(goal['currentValue']),
     ...(positive(goal['distanceKm']) ? { distanceKm: Number(goal['distanceKm']) } : {}),
@@ -507,7 +508,7 @@ export const validateConfig = (raw: unknown): CoachConfig => {
 /** Raised when a user is authenticated but has not completed onboarding yet. */
 export class MissingConfigError extends Error {
   constructor() {
-    super('Onboarding noch nicht abgeschlossen')
+    super(t('Onboarding noch nicht abgeschlossen'))
     this.name = 'MissingConfigError'
   }
 }

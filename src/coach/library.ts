@@ -12,6 +12,7 @@ import type {
   WorkoutTemplate,
 } from './types.ts'
 import { REST_TARGET } from './format.ts'
+import { perLang, t } from './lang.ts'
 
 const step = (duration: string, target: string, extra: Partial<Step> = {}): Step => ({
   kind: 'step',
@@ -23,29 +24,29 @@ const step = (duration: string, target: string, extra: Partial<Step> = {}): Step
 const repeat = (times: number, steps: readonly Step[]): Repeat => ({ kind: 'repeat', times, steps })
 
 const warmupBike = (duration: string): Step =>
-  step(duration, 'ramp 50%-72%', { label: 'Einfahren' })
+  step(duration, 'ramp 50%-72%', { label: t('Einfahren') })
 
 const cooldownBike = (duration: string, target: string): Step =>
-  step(duration, target, { label: 'Ausfahren' })
+  step(duration, target, { label: t('Ausfahren') })
 
 const cooldownRun = (duration: string, target: string): Step =>
-  step(duration, target, { label: 'Auslaufen' })
+  step(duration, target, { label: t('Auslaufen') })
 
 const cooldownSwim = (duration: string, target: string): Step =>
-  step(duration, target, { label: 'Ausschwimmen' })
+  step(duration, target, { label: t('Ausschwimmen') })
 
-const BIKE: readonly WorkoutTemplate[] = [
+const BIKE: readonly WorkoutTemplate[] = perLang(() => [
   {
     id: 'bike-zrl-openers',
     sport: 'Ride',
     stimulus: 'ENDURANCE',
-    name: 'Vorbelastung vor dem Rennen',
+    name: t('Vorbelastung vor dem Rennen'),
     minutes: 50,
     load: 40,
     phases: ['BASE', 'BUILD', 'SPECIFIC', 'TAPER', 'RECOVERY'],
     occasion: 'pre-race',
     coachNote:
-      'Beine wach machen, nicht müde: die Antritte kurz und knackig, alles dazwischen wirklich locker.',
+      t('Beine wach machen, nicht müde: die Antritte kurz und knackig, alles dazwischen wirklich locker.'),
     blocks: [
       warmupBike('10m'),
       step('15m', '60-70%'),
@@ -64,7 +65,7 @@ const BIKE: readonly WorkoutTemplate[] = [
     minutes: 65,
     load: 82,
     phases: ['BUILD', 'SPECIFIC'],
-    coachNote: 'Der stärkste Hebel für die FTP, wenn die Grundlage steht. Letztes Intervall darf hart sein, aber vollständig.',
+    coachNote: t('Der stärkste Hebel für die FTP, wenn die Grundlage steht. Letztes Intervall darf hart sein, aber vollständig.'),
     blocks: [
       warmupBike('15m'),
       repeat(5, [step('4m', '110-115%', { cadence: '90-100rpm' }), step('4m', '50%')]),
@@ -79,7 +80,7 @@ const BIKE: readonly WorkoutTemplate[] = [
     minutes: 55,
     load: 72,
     phases: ['BUILD', 'SPECIFIC'],
-    coachNote: 'Hohe Zeit bei VO2max ohne die mentale Last langer Intervalle. Gut nach knappem Schlaf.',
+    coachNote: t('Hohe Zeit bei VO2max ohne die mentale Last langer Intervalle. Gut nach knappem Schlaf.'),
     blocks: [
       warmupBike('15m'),
       repeat(6, [step('40s', '125%', { cadence: '95-105rpm' }), step('20s', '50%')]),
@@ -96,11 +97,11 @@ const BIKE: readonly WorkoutTemplate[] = [
     level: 2,
     sport: 'Ride',
     stimulus: 'THRESHOLD',
-    name: 'Schwelle 3x12min',
+    name: t('Schwelle 3x12min'),
     minutes: 74,
     load: 88,
     phases: ['BASE', 'BUILD', 'SPECIFIC'],
-    coachNote: 'Brot-und-Butter für {ftp-ziel}. Zielbereich exakt halten, nicht überziehen.',
+    coachNote: t('Brot-und-Butter für {ftp-ziel}. Zielbereich exakt halten, nicht überziehen.'),
     blocks: [
       warmupBike('15m'),
       repeat(3, [step('12m', '97-102%', { cadence: '85-95rpm' }), step('5m', '50%')]),
@@ -113,11 +114,11 @@ const BIKE: readonly WorkoutTemplate[] = [
     level: 3,
     sport: 'Ride',
     stimulus: 'THRESHOLD',
-    name: 'Schwelle 2x20min',
+    name: t('Schwelle 2x20min'),
     minutes: 78,
     load: 95,
     phases: ['BUILD', 'SPECIFIC'],
-    coachNote: 'Der klassische FTP-Test-Vorbereiter. Schaffst du 2x20 bei 100%, ist die FTP reif für ein Update.',
+    coachNote: t('Der klassische FTP-Test-Vorbereiter. Schaffst du 2x20 bei 100%, ist die FTP reif für ein Update.'),
     blocks: [
       warmupBike('15m'),
       repeat(2, [step('20m', '96-100%', { cadence: '85-95rpm' }), step('8m', '50%')]),
@@ -132,7 +133,7 @@ const BIKE: readonly WorkoutTemplate[] = [
     minutes: 75,
     load: 92,
     phases: ['SPECIFIC'],
-    coachNote: 'Laktat-Toleranz an der Schwelle. Die Unders sind Erholung, nicht Pause — Druck halten.',
+    coachNote: t('Laktat-Toleranz an der Schwelle. Die Unders sind Erholung, nicht Pause — Druck halten.'),
     blocks: [
       warmupBike('15m'),
       repeat(3, [step('2m', '105%'), step('1m', '88%')]),
@@ -153,7 +154,7 @@ const BIKE: readonly WorkoutTemplate[] = [
     minutes: 71,
     load: 78,
     phases: ['BASE', 'BUILD'],
-    coachNote: 'Viel aerober Reiz bei geringen Kosten. Die Basis, auf der VO2max später greift.',
+    coachNote: t('Viel aerober Reiz bei geringen Kosten. Die Basis, auf der VO2max später greift.'),
     blocks: [
       warmupBike('12m'),
       repeat(3, [step('12m', '88-93%', { cadence: '85-95rpm' }), step('5m', '55%')]),
@@ -168,7 +169,7 @@ const BIKE: readonly WorkoutTemplate[] = [
     minutes: 60,
     load: 62,
     phases: ['BASE', 'RECOVERY', 'TAPER'],
-    coachNote: 'Aerober Reiz, der am nächsten Tag nicht in den Beinen sitzt.',
+    coachNote: t('Aerober Reiz, der am nächsten Tag nicht in den Beinen sitzt.'),
     blocks: [
       warmupBike('10m'),
       repeat(2, [step('20m', '76-82%', { cadence: '85-95rpm' }), step('5m', '55%')]),
@@ -181,11 +182,11 @@ const BIKE: readonly WorkoutTemplate[] = [
     level: 1,
     sport: 'Ride',
     stimulus: 'THRESHOLD',
-    name: 'Schwelle kompakt 3x8min',
+    name: t('Schwelle kompakt 3x8min'),
     minutes: 49,
     load: 62,
     phases: ['BASE', 'BUILD', 'SPECIFIC', 'TAPER'],
-    coachNote: 'Der Einstieg in die Schwelle: drei kurze Blöcke an der FTP. Sauber durchgezogen, gibt sie 3x12 frei.',
+    coachNote: t('Der Einstieg in die Schwelle: drei kurze Blöcke an der FTP. Sauber durchgezogen, gibt sie 3x12 frei.'),
     blocks: [
       warmupBike('10m'),
       repeat(3, [step('8m', '98-103%'), step('3m', '50%')]),
@@ -198,11 +199,11 @@ const BIKE: readonly WorkoutTemplate[] = [
     level: 1,
     sport: 'Ride',
     stimulus: 'VO2',
-    name: 'VO2max kompakt 4x3min',
+    name: t('VO2max kompakt 4x3min'),
     minutes: 42,
     load: 58,
     phases: ['BUILD', 'SPECIFIC', 'TAPER'],
-    coachNote: 'Kurz und scharf. Auch in der Taperwoche einsetzbar, um spritzig zu bleiben.',
+    coachNote: t('Kurz und scharf. Auch in der Taperwoche einsetzbar, um spritzig zu bleiben.'),
     blocks: [
       warmupBike('12m'),
       repeat(4, [step('3m', '112-118%', { cadence: '95-105rpm' }), step('3m', '50%')]),
@@ -213,13 +214,13 @@ const BIKE: readonly WorkoutTemplate[] = [
     id: 'bike-endurance-75',
     sport: 'Ride',
     stimulus: 'ENDURANCE',
-    name: 'Grundlage 75min',
+    name: t('Grundlage 75min'),
     minutes: 75,
     load: 55,
     phases: ['BASE', 'BUILD', 'SPECIFIC', 'RECOVERY'],
-    coachNote: 'Fettstoffwechsel und Kapillarisierung. Auf der Rolle bewusst locker bleiben.',
+    coachNote: t('Fettstoffwechsel und Kapillarisierung. Auf der Rolle bewusst locker bleiben.'),
     blocks: [
-      step('10m', '55%', { label: 'Einfahren' }),
+      step('10m', '55%', { label: t('Einfahren') }),
       step('55m', '65-72%', { cadence: '85-95rpm' }),
       cooldownBike('10m', '55%'),
     ],
@@ -228,11 +229,11 @@ const BIKE: readonly WorkoutTemplate[] = [
     id: 'bike-recovery-40',
     sport: 'Ride',
     stimulus: 'RECOVERY',
-    name: 'Regeneration 40min',
+    name: t('Regeneration 40min'),
     minutes: 40,
     load: 22,
     phases: ['BASE', 'BUILD', 'SPECIFIC', 'TAPER', 'RECOVERY'],
-    coachNote: 'Durchblutung ohne Reiz. Wenn es sich anstrengend anfühlt, ist es zu hart.',
+    coachNote: t('Durchblutung ohne Reiz. Wenn es sich anstrengend anfühlt, ist es zu hart.'),
     blocks: [step('40m', '50-58%', { cadence: '85-95rpm' })],
   },
   {
@@ -241,11 +242,11 @@ const BIKE: readonly WorkoutTemplate[] = [
     level: 1,
     sport: 'Ride',
     stimulus: 'LONG',
-    name: 'Lange Ausfahrt 90min',
+    name: t('Lange Ausfahrt 90min'),
     minutes: 90,
     load: 70,
     phases: ['BASE', 'BUILD', 'SPECIFIC'],
-    coachNote: 'Die Basis, auf der alles andere steht. Durchgehend locker — wer hier drückt, verliert die Einheit am Dienstag.',
+    coachNote: t('Die Basis, auf der alles andere steht. Durchgehend locker — wer hier drückt, verliert die Einheit am Dienstag.'),
     blocks: [warmupBike('10m'), step('70m', '60-70%'), cooldownBike('10m', '55%')],
   },
   {
@@ -254,11 +255,11 @@ const BIKE: readonly WorkoutTemplate[] = [
     level: 2,
     sport: 'Ride',
     stimulus: 'LONG',
-    name: 'Lange Ausfahrt 2h',
+    name: t('Lange Ausfahrt 2h'),
     minutes: 120,
     load: 95,
     phases: ['BASE', 'BUILD', 'SPECIFIC'],
-    coachNote: 'Zwei Stunden verlangen eine Verpflegungsstrategie. Trinken und essen ab der ersten halben Stunde, nicht erst bei Hunger.',
+    coachNote: t('Zwei Stunden verlangen eine Verpflegungsstrategie. Trinken und essen ab der ersten halben Stunde, nicht erst bei Hunger.'),
     blocks: [warmupBike('10m'), step('100m', '60-72%'), cooldownBike('10m', '55%')],
   },
   {
@@ -267,35 +268,35 @@ const BIKE: readonly WorkoutTemplate[] = [
     level: 3,
     sport: 'Ride',
     stimulus: 'LONG',
-    name: 'Lange Ausfahrt 2,5h mit Schlussteil',
+    name: t('Lange Ausfahrt 2,5h mit Schlussteil'),
     minutes: 150,
     load: 120,
     // Ten minutes, not more: at fifteen the session files itself as tempo work.
     phases: ['BASE', 'BUILD', 'SPECIFIC'],
-    coachNote: 'Der Schlussteil auf müden Beinen ist der eigentliche Reiz — genau dort entscheidet sich ein langes Rennen.',
+    coachNote: t('Der Schlussteil auf müden Beinen ist der eigentliche Reiz — genau dort entscheidet sich ein langes Rennen.'),
     blocks: [
       warmupBike('10m'),
       step('120m', '60-72%'),
-      step('10m', '76-84%', { label: 'Schlussteil auf müden Beinen' }),
+      step('10m', '76-84%', { label: t('Schlussteil auf müden Beinen') }),
       cooldownBike('10m', '55%'),
     ],
   },
-]
+])
 
-const RUN: readonly WorkoutTemplate[] = [
+const RUN: readonly WorkoutTemplate[] = perLang(() => [
   {
     id: 'run-thr-5x1k',
     family: 'run-threshold',
     level: 2,
     sport: 'Run',
     stimulus: 'THRESHOLD',
-    name: 'Schwelle 5x1km',
+    name: t('Schwelle 5x1km'),
     minutes: 50,
     load: 65,
     phases: ['BASE', 'BUILD', 'SPECIFIC'],
-    coachNote: 'Die wichtigste Einheit für 10k. Kontrolliert schnell, nicht am Limit.',
+    coachNote: t('Die wichtigste Einheit für 10k. Kontrolliert schnell, nicht am Limit.'),
     blocks: [
-      step('12m', '72-78% Pace', { label: 'Einlaufen' }),
+      step('12m', '72-78% Pace', { label: t('Einlaufen') }),
       repeat(5, [step('1km', '100-104% Pace'), step('2m', '62-68% Pace')]),
       cooldownRun('8m', '72% Pace'),
     ],
@@ -310,9 +311,9 @@ const RUN: readonly WorkoutTemplate[] = [
     minutes: 62,
     load: 78,
     phases: ['BUILD', 'SPECIFIC'],
-    coachNote: 'Lange Schwellenintervalle. Direkt übertragbar auf 10k-Renntempo.',
+    coachNote: t('Lange Schwellenintervalle. Direkt übertragbar auf 10k-Renntempo.'),
     blocks: [
-      step('12m', '72-78% Pace', { label: 'Einlaufen' }),
+      step('12m', '72-78% Pace', { label: t('Einlaufen') }),
       repeat(4, [step('2km', '96-100% Pace'), step('3m', '62% Pace')]),
       cooldownRun('8m', '72% Pace'),
     ],
@@ -327,9 +328,9 @@ const RUN: readonly WorkoutTemplate[] = [
     minutes: 55,
     load: 72,
     phases: ['BUILD', 'SPECIFIC'],
-    coachNote: 'Hebt die Decke über dem Renntempo. Erste zwei Wiederholungen bewusst zurückhalten.',
+    coachNote: t('Hebt die Decke über dem Renntempo. Erste zwei Wiederholungen bewusst zurückhalten.'),
     blocks: [
-      step('15m', '72-78% Pace', { label: 'Einlaufen' }),
+      step('15m', '72-78% Pace', { label: t('Einlaufen') }),
       repeat(4, [step('20s', '120% Pace'), step('40s', '50% Pace')]),
       repeat(8, [step('800mtr', '110-115% Pace'), step('2m', '58-64% Pace')]),
       cooldownRun('8m', '72% Pace'),
@@ -345,9 +346,9 @@ const RUN: readonly WorkoutTemplate[] = [
     minutes: 45,
     load: 60,
     phases: ['BUILD', 'SPECIFIC', 'TAPER'],
-    coachNote: 'Kurze, schnelle Reize bei geringer Ermüdung. Ideal in der letzten Woche vor einem Wettkampf.',
+    coachNote: t('Kurze, schnelle Reize bei geringer Ermüdung. Ideal in der letzten Woche vor einem Wettkampf.'),
     blocks: [
-      step('12m', '72-78% Pace', { label: 'Einlaufen' }),
+      step('12m', '72-78% Pace', { label: t('Einlaufen') }),
       repeat(10, [step('400mtr', '118-124% Pace'), step('90s', '58% Pace')]),
       cooldownRun('8m', '72% Pace'),
     ],
@@ -356,13 +357,13 @@ const RUN: readonly WorkoutTemplate[] = [
     id: 'run-tempo-25',
     sport: 'Run',
     stimulus: 'TEMPO',
-    name: 'Tempodauerlauf 25min',
+    name: t('Tempodauerlauf 25min'),
     minutes: 48,
     load: 58,
     phases: ['BASE', 'BUILD', 'SPECIFIC'],
-    coachNote: 'Komfortabel hart, durchgehend. Baut die Schwelle ohne die Kosten von Intervallen.',
+    coachNote: t('Komfortabel hart, durchgehend. Baut die Schwelle ohne die Kosten von Intervallen.'),
     blocks: [
-      step('12m', '72-78% Pace', { label: 'Einlaufen' }),
+      step('12m', '72-78% Pace', { label: t('Einlaufen') }),
       step('25m', '92-95% Pace'),
       cooldownRun('8m', '72% Pace'),
     ],
@@ -371,11 +372,11 @@ const RUN: readonly WorkoutTemplate[] = [
     id: 'run-progression-50',
     sport: 'Run',
     stimulus: 'TEMPO',
-    name: 'Steigerungslauf 48min',
+    name: t('Steigerungslauf 48min'),
     minutes: 48,
     load: 60,
     phases: ['BASE', 'BUILD'],
-    coachNote: 'Drei Blöcke, jeder schneller. Trainiert das Gefühl für gleichmäßig hartes Tempo.',
+    coachNote: t('Drei Blöcke, jeder schneller. Trainiert das Gefühl für gleichmäßig hartes Tempo.'),
     blocks: [
       step('15m', '76% Pace'),
       step('15m', '84% Pace'),
@@ -387,13 +388,13 @@ const RUN: readonly WorkoutTemplate[] = [
     id: 'run-hills-8x20',
     sport: 'Run',
     stimulus: 'NEURO',
-    name: 'Hügelsprints 8x20s',
+    name: t('Hügelsprints 8x20s'),
     minutes: 45,
     load: 45,
     phases: ['BASE', 'BUILD', 'TAPER', 'RECOVERY'],
-    coachNote: 'Kraft und Laufökonomie bei minimaler Ermüdung — der günstigste Weg zu schnellerem 10k-Tempo.',
+    coachNote: t('Kraft und Laufökonomie bei minimaler Ermüdung — der günstigste Weg zu schnellerem 10k-Tempo.'),
     blocks: [
-      step('15m', '72-78% Pace', { label: 'Einlaufen' }),
+      step('15m', '72-78% Pace', { label: t('Einlaufen') }),
       repeat(8, [step('20s', '128-135% Pace'), step('2m', '45-50% Pace')]),
       cooldownRun('10m', '72% Pace'),
     ],
@@ -404,22 +405,22 @@ const RUN: readonly WorkoutTemplate[] = [
     level: 1,
     sport: 'Run',
     stimulus: 'LONG',
-    name: 'Langer Lauf 80min',
+    name: t('Langer Lauf 80min'),
     minutes: 80,
     load: 78,
     phases: ['BASE', 'BUILD', 'SPECIFIC'],
-    coachNote: 'Aerobe Basis. Bei zwei bis drei Einheiten pro Woche die einzige echte Volumenquelle.',
+    coachNote: t('Aerobe Basis. Bei zwei bis drei Einheiten pro Woche die einzige echte Volumenquelle.'),
     blocks: [step('80m', '76-84% Pace')],
   },
   {
     id: 'run-easy-strides',
     sport: 'Run',
     stimulus: 'ENDURANCE',
-    name: 'Locker 40min + Steigerungen',
+    name: t('Locker 40min + Steigerungen'),
     minutes: 46,
     load: 40,
     phases: ['BASE', 'BUILD', 'SPECIFIC', 'TAPER', 'RECOVERY'],
-    coachNote: 'Locker heißt locker. Die Steigerungen am Ende halten die Beine schnell.',
+    coachNote: t('Locker heißt locker. Die Steigerungen am Ende halten die Beine schnell.'),
     blocks: [
       step('40m', '74-80% Pace'),
       repeat(6, [step('20s', '125-130% Pace'), step('60s', '55% Pace')]),
@@ -431,13 +432,13 @@ const RUN: readonly WorkoutTemplate[] = [
     level: 1,
     sport: 'Run',
     stimulus: 'THRESHOLD',
-    name: 'Schwelle kompakt 3x1km',
+    name: t('Schwelle kompakt 3x1km'),
     minutes: 40,
     load: 48,
     phases: ['BASE', 'BUILD', 'SPECIFIC', 'TAPER'],
-    coachNote: 'Die 40-Minuten-Version, wenn der Tag eng ist. Reiz bleibt, Umfang fällt.',
+    coachNote: t('Die 40-Minuten-Version, wenn der Tag eng ist. Reiz bleibt, Umfang fällt.'),
     blocks: [
-      step('10m', '72-78% Pace', { label: 'Einlaufen' }),
+      step('10m', '72-78% Pace', { label: t('Einlaufen') }),
       repeat(3, [step('1km', '100-104% Pace'), step('2m', '62-68% Pace')]),
       cooldownRun('6m', '72% Pace'),
     ],
@@ -446,11 +447,11 @@ const RUN: readonly WorkoutTemplate[] = [
     id: 'run-recovery-30',
     sport: 'Run',
     stimulus: 'RECOVERY',
-    name: 'Regenerationslauf 30min',
+    name: t('Regenerationslauf 30min'),
     minutes: 30,
     load: 20,
     phases: ['BASE', 'BUILD', 'SPECIFIC', 'TAPER', 'RECOVERY'],
-    coachNote: 'Ganz locker, gerne auf weichem Untergrund. Kein Blick auf die Uhr.',
+    coachNote: t('Ganz locker, gerne auf weichem Untergrund. Kein Blick auf die Uhr.'),
     blocks: [step('30m', '68-75% Pace')],
   },
   {
@@ -459,11 +460,11 @@ const RUN: readonly WorkoutTemplate[] = [
     level: 2,
     sport: 'Run',
     stimulus: 'LONG',
-    name: 'Langer Lauf 100min',
+    name: t('Langer Lauf 100min'),
     minutes: 100,
     load: 98,
     phases: ['BASE', 'BUILD', 'SPECIFIC'],
-    coachNote: 'Zwanzig Minuten mehr als die Stufe davor. Das Tempo bleibt, die Zeit macht die Arbeit.',
+    coachNote: t('Zwanzig Minuten mehr als die Stufe davor. Das Tempo bleibt, die Zeit macht die Arbeit.'),
     blocks: [step('100m', '76-84% Pace')],
   },
   {
@@ -472,14 +473,14 @@ const RUN: readonly WorkoutTemplate[] = [
     level: 3,
     sport: 'Run',
     stimulus: 'LONG',
-    name: 'Langer Lauf 2h mit schnellem Ende',
+    name: t('Langer Lauf 2h mit schnellem Ende'),
     minutes: 120,
     load: 118,
     phases: ['BASE', 'BUILD', 'SPECIFIC'],
-    coachNote: 'Die letzten zehn Minuten zügig, nicht schnell. Wer sie nicht mehr laufen kann, war vorher zu schnell unterwegs.',
+    coachNote: t('Die letzten zehn Minuten zügig, nicht schnell. Wer sie nicht mehr laufen kann, war vorher zu schnell unterwegs.'),
     blocks: [
       step('110m', '76-84% Pace'),
-      step('10m', '88-92% Pace', { label: 'Schnelleres Ende' }),
+      step('10m', '88-92% Pace', { label: t('Schnelleres Ende') }),
     ],
   },
   {
@@ -489,13 +490,13 @@ const RUN: readonly WorkoutTemplate[] = [
     sport: 'Run',
     stimulus: 'THRESHOLD',
     goalKind: 'raceTime',
-    name: 'Renntempo 4x1,5km',
+    name: t('Renntempo 4x1,5km'),
     minutes: 48,
     load: 62,
     phases: ['BUILD', 'SPECIFIC'],
-    coachNote: 'Das Tempo, das am Wettkampftag zählt — einen Tick über der Schwelle, mit kurzen Pausen, damit es sich anfühlt wie das Rennen.',
+    coachNote: t('Das Tempo, das am Wettkampftag zählt — einen Tick über der Schwelle, mit kurzen Pausen, damit es sich anfühlt wie das Rennen.'),
     blocks: [
-      step('12m', '72-78% Pace', { label: 'Einlaufen' }),
+      step('12m', '72-78% Pace', { label: t('Einlaufen') }),
       repeat(4, [step('1.5km', '103-106% Pace'), step('90s', '60-66% Pace')]),
       cooldownRun('8m', '72% Pace'),
     ],
@@ -507,31 +508,31 @@ const RUN: readonly WorkoutTemplate[] = [
     sport: 'Run',
     stimulus: 'THRESHOLD',
     goalKind: 'raceTime',
-    name: 'Renntempo 3x2,5km',
+    name: t('Renntempo 3x2,5km'),
     minutes: 53,
     load: 70,
     phases: ['BUILD', 'SPECIFIC'],
-    coachNote: 'Längere Stücke bei gleichem Tempo. Wenn das dritte noch sitzt, sitzt auch das Rennen.',
+    coachNote: t('Längere Stücke bei gleichem Tempo. Wenn das dritte noch sitzt, sitzt auch das Rennen.'),
     blocks: [
-      step('12m', '72-78% Pace', { label: 'Einlaufen' }),
+      step('12m', '72-78% Pace', { label: t('Einlaufen') }),
       repeat(3, [step('2.5km', '103-106% Pace'), step('2m', '60-66% Pace')]),
       cooldownRun('8m', '72% Pace'),
     ],
   },
-]
+])
 
 /** Pool rests are spent at the wall, not swum slowly: a rest step, not a pace. */
 const wallRest = (duration: string): Step => step(duration, REST_TARGET)
 
 const warmupSwim = (duration: string): Step =>
-  step(duration, '60-68% Pace', { label: 'Einschwimmen' })
+  step(duration, '60-68% Pace', { label: t('Einschwimmen') })
 
 /**
  * Swim targets are percentages of critical swim speed, the pace an athlete can
  * hold for roughly 30 minutes. Technique work carries as much of the adaptation
  * as the intervals do, so every set keeps a drill block.
  */
-const SWIM: readonly WorkoutTemplate[] = [
+const SWIM: readonly WorkoutTemplate[] = perLang(() => [
   {
     id: 'swim-thr-10x100',
     family: 'swim-threshold',
@@ -542,10 +543,10 @@ const SWIM: readonly WorkoutTemplate[] = [
     minutes: 50,
     load: 62,
     phases: ['BASE', 'BUILD', 'SPECIFIC'],
-    coachNote: 'Die Standardeinheit an der kritischen Schwimmgeschwindigkeit. Gleichmäßig, letzte 100 nicht schneller als die erste.',
+    coachNote: t('Die Standardeinheit an der kritischen Schwimmgeschwindigkeit. Gleichmäßig, letzte 100 nicht schneller als die erste.'),
     blocks: [
       warmupSwim('300mtr'),
-      repeat(4, [step('50mtr', '55-62% Pace', { label: 'Technik' }), wallRest('20s')]),
+      repeat(4, [step('50mtr', '55-62% Pace', { label: t('Technik') }), wallRest('20s')]),
       repeat(10, [step('100mtr', '98-102% Pace'), wallRest('20s')]),
       cooldownSwim('200mtr', '60% Pace'),
     ],
@@ -560,10 +561,10 @@ const SWIM: readonly WorkoutTemplate[] = [
     minutes: 55,
     load: 70,
     phases: ['BUILD', 'SPECIFIC'],
-    coachNote: 'Längere Intervalle, gleicher Reiz. Näher am Renntempo für alles ab 750 m.',
+    coachNote: t('Längere Intervalle, gleicher Reiz. Näher am Renntempo für alles ab 750 m.'),
     blocks: [
       warmupSwim('300mtr'),
-      repeat(4, [step('50mtr', '55-62% Pace', { label: 'Technik' }), wallRest('20s')]),
+      repeat(4, [step('50mtr', '55-62% Pace', { label: t('Technik') }), wallRest('20s')]),
       repeat(5, [step('200mtr', '96-100% Pace'), wallRest('30s')]),
       cooldownSwim('200mtr', '60% Pace'),
     ],
@@ -576,10 +577,10 @@ const SWIM: readonly WorkoutTemplate[] = [
     minutes: 45,
     load: 58,
     phases: ['BUILD', 'SPECIFIC'],
-    coachNote: 'Kurz und schnell bei sauberer Technik. Sobald der Zug zerfällt, ist die Serie zu Ende — egal wie viele übrig sind.',
+    coachNote: t('Kurz und schnell bei sauberer Technik. Sobald der Zug zerfällt, ist die Serie zu Ende — egal wie viele übrig sind.'),
     blocks: [
       warmupSwim('300mtr'),
-      repeat(4, [step('50mtr', '55-62% Pace', { label: 'Technik' }), wallRest('20s')]),
+      repeat(4, [step('50mtr', '55-62% Pace', { label: t('Technik') }), wallRest('20s')]),
       repeat(16, [step('50mtr', '110-118% Pace'), wallRest('20s')]),
       cooldownSwim('200mtr', '60% Pace'),
     ],
@@ -592,7 +593,7 @@ const SWIM: readonly WorkoutTemplate[] = [
     minutes: 50,
     load: 55,
     phases: ['BASE', 'BUILD'],
-    coachNote: 'Aerober Block ohne die Kosten harter Intervalle. Gut am Tag nach einer harten Lauf- oder Radeinheit.',
+    coachNote: t('Aerober Block ohne die Kosten harter Intervalle. Gut am Tag nach einer harten Lauf- oder Radeinheit.'),
     blocks: [
       warmupSwim('300mtr'),
       repeat(3, [step('400mtr', '88-93% Pace'), wallRest('45s')]),
@@ -603,15 +604,15 @@ const SWIM: readonly WorkoutTemplate[] = [
     id: 'swim-technique',
     sport: 'Swim',
     stimulus: 'NEURO',
-    name: 'Technik 40min',
+    name: t('Technik 40min'),
     minutes: 40,
     load: 30,
     phases: ['BASE', 'BUILD', 'SPECIFIC', 'TAPER', 'RECOVERY'],
-    coachNote: 'Im Schwimmen kommt der Fortschritt aus dem Wasserwiderstand, nicht aus der Kraft. Technik ist hier keine Zusatzeinheit, sondern die eigentliche Arbeit.',
+    coachNote: t('Im Schwimmen kommt der Fortschritt aus dem Wasserwiderstand, nicht aus der Kraft. Technik ist hier keine Zusatzeinheit, sondern die eigentliche Arbeit.'),
     blocks: [
       warmupSwim('300mtr'),
-      repeat(8, [step('50mtr', '55-62% Pace', { label: 'Technik' }), wallRest('20s')]),
-      repeat(8, [step('50mtr', '95-100% Pace', { label: 'Umsetzen' }), wallRest('30s')]),
+      repeat(8, [step('50mtr', '55-62% Pace', { label: t('Technik') }), wallRest('20s')]),
+      repeat(8, [step('50mtr', '95-100% Pace', { label: t('Umsetzen') }), wallRest('30s')]),
       cooldownSwim('200mtr', '60% Pace'),
     ],
   },
@@ -619,11 +620,11 @@ const SWIM: readonly WorkoutTemplate[] = [
     id: 'swim-endurance-1500',
     sport: 'Swim',
     stimulus: 'ENDURANCE',
-    name: 'Grundlage 1500m',
+    name: t('Grundlage 1500m'),
     minutes: 45,
     load: 40,
     phases: ['BASE', 'BUILD', 'SPECIFIC', 'RECOVERY'],
-    coachNote: 'Durchgehend locker. Auf gleichmäßige Zugfrequenz achten, nicht auf die Uhr.',
+    coachNote: t('Durchgehend locker. Auf gleichmäßige Zugfrequenz achten, nicht auf die Uhr.'),
     blocks: [warmupSwim('200mtr'), step('1500mtr', '78-85% Pace'), cooldownSwim('200mtr', '60% Pace')],
   },
   {
@@ -632,11 +633,11 @@ const SWIM: readonly WorkoutTemplate[] = [
     level: 1,
     sport: 'Swim',
     stimulus: 'THRESHOLD',
-    name: 'CSS kompakt 6x100m',
+    name: t('CSS kompakt 6x100m'),
     minutes: 35,
     load: 45,
     phases: ['BASE', 'BUILD', 'SPECIFIC', 'TAPER'],
-    coachNote: 'Die 35-Minuten-Version, wenn die Bahn nur kurz frei ist.',
+    coachNote: t('Die 35-Minuten-Version, wenn die Bahn nur kurz frei ist.'),
     blocks: [
       warmupSwim('200mtr'),
       repeat(6, [step('100mtr', '98-102% Pace'), wallRest('20s')]),
@@ -647,38 +648,38 @@ const SWIM: readonly WorkoutTemplate[] = [
     id: 'swim-recovery-800',
     sport: 'Swim',
     stimulus: 'RECOVERY',
-    name: 'Lockeres Schwimmen 800m',
+    name: t('Lockeres Schwimmen 800m'),
     minutes: 25,
     load: 18,
     phases: ['BASE', 'BUILD', 'SPECIFIC', 'TAPER', 'RECOVERY'],
-    coachNote: 'Regeneration im Wasser entlastet die Beine vollständig — nach harten Lauftagen oft die bessere Wahl als ein Regenerationslauf.',
+    coachNote: t('Regeneration im Wasser entlastet die Beine vollständig — nach harten Lauftagen oft die bessere Wahl als ein Regenerationslauf.'),
     blocks: [step('800mtr', '58-66% Pace')],
   },
-]
+])
 
 /**
  * Reference sessions. They never change and never progress, because their whole
  * value is comparability: same work, same targets, and the heart rate needed to
  * hold them tells you more than a fresh threshold test would.
  */
-const BENCHMARKS: readonly WorkoutTemplate[] = [
+const BENCHMARKS: readonly WorkoutTemplate[] = perLang(() => [
   {
     id: 'test-bike-ftp20',
     sport: 'Ride',
     stimulus: 'THRESHOLD',
-    name: 'Standortbestimmung FTP 20min',
+    name: t('Standortbestimmung FTP 20min'),
     minutes: 47,
     load: 72,
     benchmark: true,
     measures: 'threshold',
     phases: ['BASE', 'BUILD', 'SPECIFIC', 'TAPER', 'RECOVERY'],
     coachNote:
-      'Ein einziger maximaler Block, gleichmäßig gefahren — nicht die ersten fünf Minuten verheizen. Die FTP sind 95 % der Durchschnittsleistung über die 20 Minuten. Nur so ein Wert nach oben begrenzt die Schätzung; Intervalle können das nicht.',
+      t('Ein einziger maximaler Block, gleichmäßig gefahren — nicht die ersten fünf Minuten verheizen. Die FTP sind 95 % der Durchschnittsleistung über die 20 Minuten. Nur so ein Wert nach oben begrenzt die Schätzung; Intervalle können das nicht.'),
     blocks: [
       warmupBike('12m'),
       repeat(3, [step('1m', '105%', { cadence: '95-105rpm' }), step('1m', '50%')]),
       step('3m', '50%'),
-      step('20m', '100-108%', { label: 'Maximal, gleichmäßig' }),
+      step('20m', '100-108%', { label: t('Maximal, gleichmäßig') }),
       cooldownBike('6m', '55%'),
     ],
   },
@@ -686,19 +687,19 @@ const BENCHMARKS: readonly WorkoutTemplate[] = [
     id: 'test-run-thr20',
     sport: 'Run',
     stimulus: 'THRESHOLD',
-    name: 'Standortbestimmung Schwelle 20min',
+    name: t('Standortbestimmung Schwelle 20min'),
     minutes: 46,
     load: 70,
     benchmark: true,
     measures: 'threshold',
     phases: ['BASE', 'BUILD', 'SPECIFIC', 'TAPER', 'RECOVERY'],
     coachNote:
-      'Flache Runde, gleichmäßig laufen, nicht die ersten Minuten verschenken. Deine Schwellenpace liegt etwa 5 % über der Durchschnittszeit dieser 20 Minuten — schneller gelaufen heißt also auch: neue Zielpaces für alles danach.',
+      t('Flache Runde, gleichmäßig laufen, nicht die ersten Minuten verschenken. Deine Schwellenpace liegt etwa 5 % über der Durchschnittszeit dieser 20 Minuten — schneller gelaufen heißt also auch: neue Zielpaces für alles danach.'),
     blocks: [
-      step('12m', '72-78% Pace', { label: 'Einlaufen' }),
+      step('12m', '72-78% Pace', { label: t('Einlaufen') }),
       repeat(3, [step('1m', '105% Pace'), step('1m', '60% Pace')]),
       step('2m', '60% Pace'),
-      step('20m', '100-106% Pace', { label: 'Maximal, gleichmäßig' }),
+      step('20m', '100-106% Pace', { label: t('Maximal, gleichmäßig') }),
       cooldownRun('6m', '72% Pace'),
     ],
   },
@@ -706,20 +707,20 @@ const BENCHMARKS: readonly WorkoutTemplate[] = [
     id: 'test-swim-css',
     sport: 'Swim',
     stimulus: 'THRESHOLD',
-    name: 'Standortbestimmung CSS 400/200',
+    name: t('Standortbestimmung CSS 400/200'),
     minutes: 40,
     load: 50,
     benchmark: true,
     measures: 'threshold',
     phases: ['BASE', 'BUILD', 'SPECIFIC', 'TAPER', 'RECOVERY'],
     coachNote:
-      'Zwei maximale Strecken: erst 400 m, dann nach lockerem Schwimmen 200 m, beide gleichmäßig und so schnell wie möglich. Aus der Zeitdifferenz ergibt sich deine CSS: (Zeit 400 − Zeit 200) ÷ 2 pro 100 m.',
+      t('Zwei maximale Strecken: erst 400 m, dann nach lockerem Schwimmen 200 m, beide gleichmäßig und so schnell wie möglich. Aus der Zeitdifferenz ergibt sich deine CSS: (Zeit 400 − Zeit 200) ÷ 2 pro 100 m.'),
     blocks: [
       warmupSwim('400mtr'),
-      repeat(4, [step('50mtr', '90-100% Pace', { label: 'Steigern' }), wallRest('20s')]),
-      step('400mtr', '103-110% Pace', { label: 'Maximal, gleichmäßig' }),
-      step('200mtr', '58-66% Pace', { label: 'Locker' }),
-      step('200mtr', '106-114% Pace', { label: 'Maximal, gleichmäßig' }),
+      repeat(4, [step('50mtr', '90-100% Pace', { label: t('Steigern') }), wallRest('20s')]),
+      step('400mtr', '103-110% Pace', { label: t('Maximal, gleichmäßig') }),
+      step('200mtr', '58-66% Pace', { label: t('Locker') }),
+      step('200mtr', '106-114% Pace', { label: t('Maximal, gleichmäßig') }),
       cooldownSwim('200mtr', '60% Pace'),
     ],
   },
@@ -727,13 +728,13 @@ const BENCHMARKS: readonly WorkoutTemplate[] = [
     id: 'bench-bike-4x4',
     sport: 'Ride',
     stimulus: 'VO2',
-    name: 'Formkontrolle Rad 4x4min',
+    name: t('Formkontrolle Rad 4x4min'),
     minutes: 52,
     load: 68,
     benchmark: true,
     measures: 'vo2',
     phases: ['BASE', 'BUILD', 'SPECIFIC', 'TAPER', 'RECOVERY'],
-    coachNote: 'Vergleichseinheit. Immer identisch fahren — gleiche Watt, gleiche Trittfrequenz. Sinkt die Herzfrequenz bei gleicher Leistung, bist du besser geworden.',
+    coachNote: t('Vergleichseinheit. Immer identisch fahren — gleiche Watt, gleiche Trittfrequenz. Sinkt die Herzfrequenz bei gleicher Leistung, bist du besser geworden.'),
     blocks: [
       warmupBike('15m'),
       repeat(4, [step('4m', '105-110%', { cadence: '90-100rpm' }), step('4m', '50%')]),
@@ -744,15 +745,15 @@ const BENCHMARKS: readonly WorkoutTemplate[] = [
     id: 'bench-run-4x4',
     sport: 'Run',
     stimulus: 'VO2',
-    name: 'Formkontrolle Lauf 4x4min',
+    name: t('Formkontrolle Lauf 4x4min'),
     measures: 'vo2',
     minutes: 48,
     load: 62,
     benchmark: true,
     phases: ['BASE', 'BUILD', 'SPECIFIC', 'TAPER', 'RECOVERY'],
-    coachNote: 'Vergleichseinheit. Gleiche Pace wie beim letzten Mal, nicht schneller. Die Herzfrequenz ist das Ergebnis, nicht die Zeit.',
+    coachNote: t('Vergleichseinheit. Gleiche Pace wie beim letzten Mal, nicht schneller. Die Herzfrequenz ist das Ergebnis, nicht die Zeit.'),
     blocks: [
-      step('12m', '72-78% Pace', { label: 'Einlaufen' }),
+      step('12m', '72-78% Pace', { label: t('Einlaufen') }),
       repeat(4, [step('4m', '104-108% Pace'), step('3m', '62-68% Pace')]),
       cooldownRun('8m', '72% Pace'),
     ],
@@ -761,21 +762,21 @@ const BENCHMARKS: readonly WorkoutTemplate[] = [
     id: 'bench-swim-400',
     sport: 'Swim',
     stimulus: 'THRESHOLD',
-    name: 'Formkontrolle Schwimmen 400m',
+    name: t('Formkontrolle Schwimmen 400m'),
     minutes: 35,
     load: 45,
     benchmark: true,
     phases: ['BASE', 'BUILD', 'SPECIFIC', 'TAPER', 'RECOVERY'],
-    coachNote: 'Vergleichseinheit. 400 m gleichmäßig auf CSS-Tempo, danach dieselbe Auswertung wie bei Rad und Lauf.',
+    coachNote: t('Vergleichseinheit. 400 m gleichmäßig auf CSS-Tempo, danach dieselbe Auswertung wie bei Rad und Lauf.'),
     blocks: [
       warmupSwim('300mtr'),
       step('400mtr', '98-102% Pace'),
       cooldownSwim('200mtr', '60% Pace'),
     ],
   },
-]
+])
 
-export const LIBRARY: readonly WorkoutTemplate[] = [...BIKE, ...RUN, ...SWIM, ...BENCHMARKS]
+export const LIBRARY: readonly WorkoutTemplate[] = perLang(() => [...BIKE, ...RUN, ...SWIM, ...BENCHMARKS])
 
 export const templatesFor = (sport: Sport): readonly WorkoutTemplate[] =>
   LIBRARY.filter((template) => template.sport === sport)
@@ -831,50 +832,50 @@ export const isPreferredSport = (stimulus: Stimulus, sport: Sport): boolean =>
  * and plyometrics carry the best evidence for running economy — which is why
  * jumps move from optional extra to core work once weights run out.
  */
-const EXERCISES: Readonly<Record<Equipment, { core: readonly StrengthExercise[]; extra: readonly StrengthExercise[] }>> = {
+const EXERCISES: Readonly<Record<Equipment, { core: readonly StrengthExercise[]; extra: readonly StrengthExercise[] }>> = perLang(() => ({
   gym: {
     core: [
-      { name: 'Kniebeuge / Beinpresse', sets: '4 × 5', load: '~85 % 1RM' },
-      { name: 'Rumänisches Kreuzheben', sets: '3 × 6', load: 'schwer' },
+      { name: t('Kniebeuge / Beinpresse'), sets: '4 × 5', load: t('~85 % 1RM') },
+      { name: t('Rumänisches Kreuzheben'), sets: '3 × 6', load: 'schwer' },
     ],
     extra: [
-      { name: 'Bulgarian Split Squat', sets: '3 × 6 je Seite', load: 'schwer' },
-      { name: 'Einbeiniges Wadenheben', sets: '3 × 8', load: 'schwer' },
-      { name: 'Rumpf (Plank, Pallof Press)', sets: '2 Sätze', load: '—' },
-      { name: 'Vorweg: Hops / Drop Jumps', sets: '3 × 10', load: 'Körpergewicht' },
+      { name: 'Bulgarian Split Squat', sets: t('3 × 6 je Seite'), load: 'schwer' },
+      { name: t('Einbeiniges Wadenheben'), sets: '3 × 8', load: 'schwer' },
+      { name: t('Rumpf (Plank, Pallof Press)'), sets: t('2 Sätze'), load: '—' },
+      { name: t('Vorweg: Hops / Drop Jumps'), sets: '3 × 10', load: t('Körpergewicht') },
     ],
   },
   dumbbells: {
     core: [
-      { name: 'Bulgarian Split Squat', sets: '4 × 6 je Seite', load: '2 × 10 kg' },
-      { name: 'Einbeiniges Kreuzheben', sets: '3 × 8 je Seite', load: '2 × 10 kg' },
+      { name: 'Bulgarian Split Squat', sets: t('4 × 6 je Seite'), load: '2 × 10 kg' },
+      { name: t('Einbeiniges Kreuzheben'), sets: t('3 × 8 je Seite'), load: '2 × 10 kg' },
     ],
     extra: [
-      { name: 'Wadenheben einbeinig, Ferse erhöht', sets: '4 × 10 je Seite', load: '1 × 10 kg' },
-      { name: 'Step-up auf hohe Stufe', sets: '3 × 8 je Seite', load: '2 × 10 kg' },
-      { name: 'Rumpf (Plank, Pallof Press)', sets: '2 Sätze', load: '—' },
-      { name: 'Vorweg: Drop Jumps / Bounding', sets: '3 × 10', load: 'Körpergewicht' },
+      { name: t('Wadenheben einbeinig, Ferse erhöht'), sets: t('4 × 10 je Seite'), load: '1 × 10 kg' },
+      { name: t('Step-up auf hohe Stufe'), sets: t('3 × 8 je Seite'), load: '2 × 10 kg' },
+      { name: t('Rumpf (Plank, Pallof Press)'), sets: t('2 Sätze'), load: '—' },
+      { name: t('Vorweg: Drop Jumps / Bounding'), sets: '3 × 10', load: t('Körpergewicht') },
     ],
   },
   bodyweight: {
     core: [
-      { name: 'Einbeinige Kniebeuge zum Stuhl', sets: '4 × 6 je Seite', load: '3s abwärts' },
-      { name: 'Nordic Hamstring Curl (Füße fixiert)', sets: '3 × 5', load: 'so langsam wie möglich' },
+      { name: t('Einbeinige Kniebeuge zum Stuhl'), sets: t('4 × 6 je Seite'), load: t('3s abwärts') },
+      { name: t('Nordic Hamstring Curl (Füße fixiert)'), sets: '3 × 5', load: t('so langsam wie möglich') },
     ],
     extra: [
-      { name: 'Wadenheben einbeinig, Ferse erhöht', sets: '4 × 15 je Seite', load: '3s abwärts' },
-      { name: 'Split-Squat-Isometrie', sets: '3 × 30s je Seite', load: 'tiefe Position halten' },
-      { name: 'Rumpf (Plank, Pallof Press mit Band)', sets: '2 Sätze', load: '—' },
-      { name: 'Vorweg: Drop Jumps / Bounding', sets: '4 × 10', load: 'Körpergewicht' },
+      { name: t('Wadenheben einbeinig, Ferse erhöht'), sets: t('4 × 15 je Seite'), load: t('3s abwärts') },
+      { name: 'Split-Squat-Isometrie', sets: t('3 × 30s je Seite'), load: t('tiefe Position halten') },
+      { name: t('Rumpf (Plank, Pallof Press mit Band)'), sets: t('2 Sätze'), load: '—' },
+      { name: t('Vorweg: Drop Jumps / Bounding'), sets: '4 × 10', load: t('Körpergewicht') },
     ],
   },
-}
+}))
 
-const EQUIPMENT_NOTE: Readonly<Record<Equipment, string>> = {
+const EQUIPMENT_NOTE: Readonly<Record<Equipment, string>> = perLang(() => ({
   gym: '',
-  dumbbells: ' Bei leichten Hanteln entsteht der Reiz durch die einbeinige Ausführung — die letzte Wiederholung muss hart sein, sonst geht das Gewicht hoch oder die Stufe höher.',
-  bodyweight: ' Ohne Zusatzgewicht tragen die langsame Absenkphase und die Sprünge den Reiz. Sprünge immer ausgeruht zu Beginn, nie am Ende der Einheit.',
-}
+  dumbbells: t(' Bei leichten Hanteln entsteht der Reiz durch die einbeinige Ausführung — die letzte Wiederholung muss hart sein, sonst geht das Gewicht hoch oder die Stufe höher.'),
+  bodyweight: t(' Ohne Zusatzgewicht tragen die langsame Absenkphase und die Sprünge den Reiz. Sprünge immer ausgeruht zu Beginn, nie am Ende der Einheit.'),
+}))
 
 const INTRO_SESSIONS = 6
 const FULL_SESSIONS = 20
@@ -882,20 +883,20 @@ const FULL_SESSIONS = 20
 export const strengthPhaseFor = (completed: number): StrengthPhase =>
   completed < INTRO_SESSIONS ? 'intro' : completed < FULL_SESSIONS ? 'full' : 'maintain'
 
-const PHASE_NOTE: Readonly<Record<StrengthPhase, string>> = {
-  intro: 'Einstieg: nur zwei Übungen, moderate Last. Muskelkater darf die nächste Qualitätseinheit nicht treffen.',
-  full: 'Volles Programm, zweimal pro Woche. 2 Wiederholungen in Reserve, kein Muskelversagen — Ziel ist neuromuskuläre Anpassung, nicht Masse.',
-  maintain: 'Erhalt: einmal pro Woche genügt jetzt. Die frei werdende Zeit gehört wieder der Ausdauer.',
-}
+const PHASE_NOTE: Readonly<Record<StrengthPhase, string>> = perLang(() => ({
+  intro: t('Einstieg: nur zwei Übungen, moderate Last. Muskelkater darf die nächste Qualitätseinheit nicht treffen.'),
+  full: t('Volles Programm, zweimal pro Woche. 2 Wiederholungen in Reserve, kein Muskelversagen — Ziel ist neuromuskuläre Anpassung, nicht Masse.'),
+  maintain: t('Erhalt: einmal pro Woche genügt jetzt. Die frei werdende Zeit gehört wieder der Ausdauer.'),
+}))
 
 export const strengthSession = (completed: number, equipment: Equipment): StrengthSuggestion => {
   const phase = strengthPhaseFor(completed)
   const { core, extra } = EXERCISES[equipment]
   return {
-    name: 'Krafttraining',
+    name: t('Krafttraining'),
     phase,
     minutes: phase === 'intro' ? 20 : 28,
-    note: `${PHASE_NOTE[phase]}${EQUIPMENT_NOTE[equipment]} Am selben Tag wie die harte Ausdauereinheit — direkt danach oder mindestens 6h später, nie am Tag davor.`,
+    note: t`${PHASE_NOTE[phase]}${EQUIPMENT_NOTE[equipment]} Am selben Tag wie die harte Ausdauereinheit — direkt danach oder mindestens 6h später, nie am Tag davor.`,
     exercises: phase === 'intro' ? core : [...core, ...extra],
     completed,
     perWeek: phase === 'maintain' ? 1 : 2,

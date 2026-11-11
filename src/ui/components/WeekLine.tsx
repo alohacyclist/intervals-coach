@@ -7,6 +7,7 @@ import { pastRows, planRow } from '../week-line.ts'
 import { SportIcon } from './SportIcon.tsx'
 import { LONG_HORIZON, SHORT_HORIZON } from '../plan-horizon.ts'
 import type { PlanHorizon } from '../plan-horizon.ts'
+import { t } from '../../coach/lang.ts'
 
 type Props = {
   readonly history: readonly AdherenceDay[]
@@ -96,7 +97,7 @@ export const WeekLine = ({ history, days, selected, onSelect, panel, horizon, bu
           disabled={busy}
           onClick={() => onHorizon(horizon === LONG_HORIZON ? SHORT_HORIZON : LONG_HORIZON)}
         >
-          {horizon === LONG_HORIZON ? '− Nur die nächsten drei Tage' : '+ Ganze Woche zeigen'}
+          {horizon === LONG_HORIZON ? t('− Nur die nächsten drei Tage') : t('+ Ganze Woche zeigen')}
         </button>
       </li>
     </ol>

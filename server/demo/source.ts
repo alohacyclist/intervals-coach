@@ -3,8 +3,9 @@ import { SourceReadOnlyError } from '../source.ts'
 import { IntervalsError } from '../intervals.ts'
 import type { DemoData } from './fixtures.ts'
 import { DEMO_ATHLETE_ID, generateDemo, intervalsOf, streamsOf } from './fixtures.ts'
+import { t } from '../../src/coach/lang.ts'
 
-const NOT_SENT = 'Demo mit Beispieldaten: hier wird nichts an intervals.icu gesendet.'
+const notSent = (): string => t('Demo mit Beispieldaten: hier wird nichts an intervals.icu gesendet.')
 
 const within = <T extends { readonly date: string }>(items: readonly T[], oldest: string, newest: string): readonly T[] =>
   items.filter((item) => item.date >= oldest && item.date <= newest)
@@ -19,7 +20,7 @@ export const fixtureSource = (data: DemoData): IntervalsSource => {
   const session = (activityId: string) => {
     const found = data.sessions.get(activityId)
     // As intervals.icu would answer an unknown activity.
-    if (!found) throw new IntervalsError('intervals.icu 404: Anfrage abgelehnt.', 404)
+    if (!found) throw new IntervalsError(t('intervals.icu 404: Anfrage abgelehnt.'), 404)
     return found
   }
   const source: IntervalsSource = {
@@ -38,19 +39,19 @@ export const fixtureSource = (data: DemoData): IntervalsSource => {
     sportSettings: async () => data.sportSettings,
     destinations: async () => data.destinations,
     applyDestinations: async () => {
-      throw new SourceReadOnlyError(NOT_SENT)
+      throw new SourceReadOnlyError(notSent())
     },
     createWorkout: async () => {
-      throw new SourceReadOnlyError(NOT_SENT)
+      throw new SourceReadOnlyError(notSent())
     },
     updateThreshold: async () => {
-      throw new SourceReadOnlyError(NOT_SENT)
+      throw new SourceReadOnlyError(notSent())
     },
     replaceHeartRate: async () => {
-      throw new SourceReadOnlyError(NOT_SENT)
+      throw new SourceReadOnlyError(notSent())
     },
     addActivityNote: async () => {
-      throw new SourceReadOnlyError(NOT_SENT)
+      throw new SourceReadOnlyError(notSent())
     },
     // Nothing is cached, so asking again is asking the same fixtures.
     fresh: () => source,
