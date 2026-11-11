@@ -25,7 +25,8 @@
   "linter": {
     "enabled": true,
     "domains": {
-      "react": "recommended"
+      "react": "recommended",
+      "playwright": "none"
     },
     "rules": {
       "recommended": true,

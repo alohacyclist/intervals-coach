@@ -302,6 +302,52 @@ nie kurz im falschen Modus aufblitzt. Die Schrift (Overpass)
 ist mit ausgeliefert und wird nicht von Google geladen — bei Gesundheitsdaten auf der
 Seite wäre die Übertragung der Besucher-IP an Dritte nicht vertretbar.
 
+## Ganze Woche
+
+Der Plan steht für drei Tage. „+ Ganze Woche zeigen“ unter der Linie zeigt sieben; die
+Wahl merkt sich der Browser. Die Tage ab dem vierten sind als **Ausblick** markiert: sie
+werden mit denselben Regeln gerechnet (nie zwei harte Tage hintereinander, nie drei
+Ruhetage am Stück), setzen aber voraus, dass bis dahin alles wie geplant läuft. Was vorher
+trainiert oder ausgelassen wird, verschiebt sie.
+
+## Sprache
+
+Die App gibt es deutsch und englisch. Ohne Wahl entscheidet die Sprache des Browsers
+(deutsch für deutsche Browser, sonst englisch), der Schalter DE/EN in der Kopfzeile
+überschreibt das und wird im Browser gemerkt.
+
+- **Ein Satz, eine Stelle.** Jeder Satz steht deutsch im Code und geht durch `t()`; die
+  englische Fassung liegt in `src/coach/i18n/en.ts` unter genau diesem deutschen Satz als
+  Schlüssel. Die Logik und ihre Tests lesen sich dadurch wie vorher. Fehlt eine
+  Übersetzung, bleibt der Satz deutsch, und `tests/i18n-catalogue.test.ts` schlägt fehl,
+  bis sie ergänzt ist (`npx tsx scripts/i18n-keys.ts` listet, was fehlt).
+- **Sprache je Anfrage.** Auch der Server schreibt Sätze (Begründungen, Hinweise, Namen der
+  Einheiten). Der Browser schickt seine Sprache im Header `X-Formkurve-Lang` mit; sie gilt
+  über `AsyncLocalStorage` für genau diese Anfrage (`server/lang.ts`, im Worker über das
+  Flag `nodejs_als`). `tests/i18n-plan.test.ts` prüft, dass der Plan in beiden Sprachen
+  dasselbe entscheidet.
+- **Namen der Einheiten.** Eine Einheit landet in der Sprache im Kalender, in der sie
+  gesendet wurde. Erkannt wird sie in beiden (`namesOf` in `library.ts`), ein Wechsel der
+  Sprache bricht also nichts.
+- **Nicht übersetzt:** Datenschutzerklärung und Impressum (die deutsche Fassung gilt, die
+  englische Ansicht sagt das dazu) und die Zusammenfassung, die der Cron auf Strava
+  schreibt — dort gibt es keine Anfrage und damit keine Sprache; sie bleibt deutsch.
+
+## Als App installieren, offline
+
+Ein Service Worker (`src/sw/`) hält die Programmdateien: Skript, Styles, Schriften und die
+Seite selbst. Die App öffnet dadurch sofort und lässt sich installieren. Ohne Verbindung
+öffnet sie aus diesen Dateien, sagt, dass sie offline ist, und macht von selbst weiter,
+sobald das Netz zurück ist. **Trainings- und Gesundheitsdaten werden nie gehalten:**
+`/api/`, `/auth/` und `/healthz` gehen immer an den Server (`src/sw/strategy.ts`, getestet).
+
+## Tests und Lint
+
+`npm test` (Vitest), `npm run lint` (Biome, nur Lint, kein Formatter) und `npm run e2e`
+(Playwright). Die Browser-Tests bauen die App, starten den Demo-Worker lokal und prüfen
+Anmeldung, Plan, ganze Woche, Sprachwechsel und Offline-Verhalten. Im Workflow laufen sie
+als eigener Job und halten das Deployment nicht auf.
+
 ## Warteliste (Brevo)
 
 Solange die App im Einzelbetrieb läuft, zeigt `formkurve.org` Besuchern die Landingpage mit
@@ -533,9 +579,15 @@ worker/        Cloudflare-Worker-Entry
 src/ui/        React-Oberfläche
   styles/      Designrichtung „Messgerät“, Tokens für hell und dunkel
   theme.ts     Moduswahl, gespeichert je Browser
+  language.ts  Sprache des Browsers, vor dem ersten Rendern gesetzt
+src/coach/lang.ts     t(): jeder Satz steht deutsch im Code, das Englische im Katalog
+src/coach/i18n/en.ts  der englische Katalog, Schlüssel ist der deutsche Satz
+src/sw/        Service Worker: hält nur die Programmdateien, nie Daten
+server/lang.ts Sprache je Anfrage (AsyncLocalStorage)
 tests/         Vitest (npm test)
-scripts/demo.ts  Plan aus synthetischen Daten, läuft ohne API-Zugang
+e2e/           Playwright gegen den lokalen Demo-Worker (npm run e2e)
 scripts/demo-preview.ts  was der Demo-Zugang an einem Tag zeigt, durch die echten Routen
+scripts/i18n-keys.ts     listet Sätze ohne englische Fassung
 ```
 
 ## Konfiguration

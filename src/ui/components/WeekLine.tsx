@@ -36,7 +36,7 @@ const RowBody = ({ row, nextWeek }: { readonly row: LineRow; readonly nextWeek: 
     </span>
     <span className={row.mark === 'rest' ? 'line__title line__title--rest' : 'line__title'}>
       {row.title}
-      {nextWeek !== null && `, KW ${nextWeek}`}
+      {nextWeek !== null && `, ${t('KW')} ${nextWeek}`}
     </span>
     <span className="line__side">
       {row.load !== null && <b>{row.load}</b>} {row.note}

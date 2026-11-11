@@ -11,9 +11,11 @@ Worker are still called `intervals-coach`.
 
 ## Screenshots
 
-<!-- SCREENSHOT: three-day plan with sport alternatives and the recommendation -->
-<!-- SCREENSHOT: planned vs. actual card with the power/pace curve over the target zones -->
-<!-- SCREENSHOT: settings (thresholds, time budgets, goals), light and dark mode -->
+| Plan | Progress | Settings |
+|---|---|---|
+| ![The week as a line of days: today with one session per sport, the days ahead as an outlook](docs/screenshots/plan.png) | ![Fitness and fatigue, the season's phases, weekly load and progression levels](docs/screenshots/progress.png) | ![Sports with thresholds, time budgets and goals, in dark mode](docs/screenshots/settings-dark.png) |
+
+Taken from the demo, which runs on synthetic data for a fictional athlete.
 
 ## What it does
 
@@ -35,12 +37,20 @@ Worker are still called `intervals-coach`.
   was paired with — marked as an estimate, never enough on its own to unlock a level.
 - **Sends workouts** to the intervals.icu calendar and on to Zwift, Wahoo or Garmin, and
   optionally writes a summary to the matching Strava activity.
+- **The whole week on request.** The plan stands for three days; one tap shows seven,
+  with the days past the third marked as an outlook that shifts with what is trained
+  until then.
+- **German and English.** The interface and everything the coach writes — reasons, notes,
+  workout names, the text sent to the calendar — follow the browser's language or the
+  switch at the top. The legal pages are German only.
+- **Installs as an app.** A service worker keeps the program files, so it opens at once
+  and says so when it is offline. Training and health data are never cached.
 - **Single-user and multi-user mode:** a password-protected personal deployment, or
   "Sign in with intervals.icu" via OAuth.
 
 ## Stack
 
-React 19 · TypeScript · Vite · Hono · Cloudflare Workers + KV · Vitest · GitHub Actions
+React 19 · TypeScript · Vite · Hono · Cloudflare Workers + KV · Vitest · Playwright · Biome · GitHub Actions
 
 ## Getting started
 
@@ -49,7 +59,9 @@ cp .env.example .env        # intervals.icu API key + athlete ID
 npm install
 npm run dev                 # API on :8787, UI on :5173
 npm test                    # Vitest
-npx tsx scripts/demo.ts     # plan from synthetic data, no API access needed
+npm run lint                # Biome
+npm run e2e                 # Playwright against the local demo Worker
+npm run demo:preview        # plan from synthetic data, no API access needed
 ```
 
 Deployment to Cloudflare Workers (`npm run deploy`), the GitHub Actions workflow and the
@@ -66,7 +78,8 @@ their own sandbox that expires after two hours. Details (German): [docs/demo.md]
 ## What mattered to me
 
 - **Testable domain logic.** All training logic lives in `src/coach/` without any I/O.
-  It is covered by around 70 Vitest files, and a failing test blocks the deployment.
+  It is covered by around 85 Vitest files, and a failing test blocks the deployment.
+  Browser tests drive the demo Worker end to end.
 - **Honest UX.** Estimated values are marked as such, optional sessions are labelled
   optional, and nothing is written back to intervals.icu without an explicit
   confirmation that says what will change.
