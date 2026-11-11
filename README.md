@@ -17,6 +17,11 @@ Worker are still called `intervals-coach`.
 
 Taken from the demo, which runs on synthetic data for a fictional athlete.
 
+After a session, planned and actual are compared interval by interval; the comparison can
+be shared as a picture (German shown):
+
+<img src="public/landing/soll-ist.png" alt="Planned versus actual for a run with four intervals: the pace held over the target corridors, heart rate below" width="420" />
+
 ## What it does
 
 - **Plans from what actually happened.** Fitness and fatigue (CTL/ATL/TSB), a readiness
@@ -42,7 +47,8 @@ Taken from the demo, which runs on synthetic data for a fictional athlete.
   until then.
 - **German and English.** The interface and everything the coach writes — reasons, notes,
   workout names, the text sent to the calendar — follow the browser's language or the
-  switch at the top. The legal pages are German only.
+  switch at the top, and so does the summary written to Strava. The legal pages are
+  German only.
 - **Installs as an app.** A service worker keeps the program files, so it opens at once
   and says so when it is offline. Training and health data are never cached.
 - **Single-user and multi-user mode:** a password-protected personal deployment, or

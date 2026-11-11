@@ -1,4 +1,5 @@
 import { Hono } from 'hono'
+import { LANG_HEADER } from '../server/lang.ts'
 import type { Context } from 'hono'
 import type { RouteDeps } from '../server/routes.ts'
 import { isIsoDate } from '../src/coach/config-schema.ts'
@@ -10,7 +11,7 @@ import type { StravaApp } from './strava.ts'
 import { StravaError, authorizeUrl, exchangeCode, grantedEnough, withdraw } from './strava.ts'
 import { deleteLink, loadLink, saveLink } from './strava-store.ts'
 import { postSession } from './strava-sync.ts'
-import { t } from '../src/coach/lang.ts'
+import { t, isLang } from '../src/coach/lang.ts'
 
 /** What these routes need from the Worker around them: who is asking, and with which secrets. */
 export type StravaRouteHelpers = {
@@ -78,6 +79,11 @@ export const createStravaRoutes = (helpers: StravaRouteHelpers): Hono<{ Bindings
   app.get('/api/strava', async (context) => {
     const subject = await helpers.subjectOf(context)
     const link = subject ? await loadLink(context.env.COACH_CONFIG, helpers.secretOf(context.env), subject) : null
+    // The summaries the cron writes at night follow the language the athlete reads here.
+    const wanted = context.req.header(LANG_HEADER)
+    if (link && isLang(wanted) && link.lang !== wanted) {
+      await saveLink(context.env.COACH_CONFIG, helpers.secretOf(context.env), { ...link, lang: wanted })
+    }
     return context.json({
       available: hasStrava(context.env),
       connected: link !== null,

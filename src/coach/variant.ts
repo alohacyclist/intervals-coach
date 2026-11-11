@@ -1,5 +1,5 @@
 import type { Block, Repeat, Sport, SportThreshold, Step, Stimulus, WorkoutTemplate } from './types.ts'
-import { t } from './lang.ts'
+import { locale, t } from './lang.ts'
 
 /**
  * Every session also exists as a short version, so a day with less time than
@@ -234,13 +234,13 @@ export const shorten = (
 }
 
 const minutesLabel = (minutes: number): string =>
-  `${Number.isInteger(minutes) ? minutes : minutes.toLocaleString('de-DE', { maximumFractionDigits: 1 })}min`
+  `${Number.isInteger(minutes) ? minutes : minutes.toLocaleString(locale(), { maximumFractionDigits: 1 })}min`
 
 const escape = (text: string): string => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
 /** Replaces the first count the name gives as `<from>x`, but not the 4 of "14x". */
 const replaceCount = (name: string, from: string, to: string): string =>
-  name.replace(new RegExp(`(?<![\\d,])${escape(from)}x`), `${to}x`)
+  name.replace(new RegExp(`(?<![\\d,.])${escape(from)}x`), `${to}x`)
 
 /**
  * The counts in a name follow the repeats: "3x6x40/20" with two intervals less
@@ -266,13 +266,14 @@ const renameRepeats = (
     if (current.includes(nested)) return current.replace(nested, `${sets.length}x${after.times}x`)
     const rep = repSeconds(block, threshold) / 60
     return current.replace(
-      new RegExp(`(?<![\\d,])${sets.length}x${escape(minutesLabel(block.times * rep))}`),
+      new RegExp(`(?<![\\d,.])${sets.length}x${escape(minutesLabel(block.times * rep))}`),
       `${sets.length}x${minutesLabel(after.times * rep)}`,
     )
   }, name)
 }
 
-const DURATION_PATTERN = /(?<![\d,])(\d+(?:,\d+)?)(min|h)(?![a-z])/i
+// A decimal is written with a comma in German and a point in English; a name may carry either.
+const DURATION_PATTERN = /(?<![\d,.])(\d+(?:[,.]\d+)?)(min|h)(?![a-z])/i
 
 const nameMinutes = (value: string, unit: string): number => {
   const amount = Number(value.replace(',', '.'))

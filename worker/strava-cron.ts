@@ -7,6 +7,7 @@ import { stravaApp } from './strava-routes.ts'
 import { linkExists, linkedSubjects, loadLink, saveLink } from './strava-store.ts'
 import { pendingDates, shouldCheck } from './strava-schedule.ts'
 import { postRecent } from './strava-sync.ts'
+import { withLang } from '../server/lang.ts'
 import { RETENTION_SECONDS } from './users.ts'
 
 /** KV refuses an absolute expiry less than a minute ahead. */
@@ -58,7 +59,9 @@ const syncOne = async (env: Bindings, setup: CronSetup, { subject, expiration }:
     setup.keepExpiry && expiration !== null
       ? { expiration: Math.max(expiration, seconds + KV_MIN_EXPIRY_SECONDS) }
       : { expirationTtl: RETENTION_SECONDS }
-  await postRecent(
+  // No request, so no language of its own: the one the athlete last read the app in.
+  await withLang(link.lang ?? 'de', async () =>
+    postRecent(
     {
       deps: await setup.depsFor(subject),
       app: stravaApp(env, link.appUrl),
@@ -69,6 +72,7 @@ const syncOne = async (env: Bindings, setup: CronSetup, { subject, expiration }:
       now: () => now,
     },
     today,
+    ),
   )
 }
 

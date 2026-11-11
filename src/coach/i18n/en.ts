@@ -305,7 +305,7 @@ export const EN: Readonly<Record<string, string>> = {
   "Lange Ausfahrt 2h": "Long ride 2h",
   "Zwei Stunden verlangen eine Verpflegungsstrategie. Trinken und essen ab der ersten halben Stunde, nicht erst bei Hunger.":
     "Two hours call for a fuelling strategy. Drink and eat from the first half hour, not only when hungry.",
-  "Lange Ausfahrt 2,5h mit Schlussteil": "Long ride 2,5h with a hard finish",
+  "Lange Ausfahrt 2,5h mit Schlussteil": "Long ride 2.5h with a hard finish",
   "Der Schlussteil auf müden Beinen ist der eigentliche Reiz — genau dort entscheidet sich ein langes Rennen.":
     "The finish on tired legs is the real stimulus — that is exactly where a long race is decided.",
   "Schlussteil auf müden Beinen": "Finish on tired legs",
@@ -347,10 +347,10 @@ export const EN: Readonly<Record<string, string>> = {
   "Die letzten zehn Minuten zügig, nicht schnell. Wer sie nicht mehr laufen kann, war vorher zu schnell unterwegs.":
     "The last ten minutes brisk, not fast. If you can no longer run them, you went too fast before.",
   "Schnelleres Ende": "Faster finish",
-  "Renntempo 4x1,5km": "Race pace 4x1,5km",
+  "Renntempo 4x1,5km": "Race pace 4x1.5km",
   "Das Tempo, das am Wettkampftag zählt — einen Tick über der Schwelle, mit kurzen Pausen, damit es sich anfühlt wie das Rennen.":
     "The pace that counts on race day — a touch above threshold, with short rests so it feels like the race.",
-  "Renntempo 3x2,5km": "Race pace 3x2,5km",
+  "Renntempo 3x2,5km": "Race pace 3x2.5km",
   "Längere Stücke bei gleichem Tempo. Wenn das dritte noch sitzt, sitzt auch das Rennen.":
     "Longer pieces at the same pace. If the third still holds, so will the race.",
   "Einschwimmen": "Warm-up",

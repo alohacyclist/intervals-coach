@@ -329,9 +329,12 @@ Die App gibt es deutsch und englisch. Ohne Wahl entscheidet die Sprache des Brow
 - **Namen der Einheiten.** Eine Einheit landet in der Sprache im Kalender, in der sie
   gesendet wurde. Erkannt wird sie in beiden (`namesOf` in `library.ts`), ein Wechsel der
   Sprache bricht also nichts.
-- **Nicht übersetzt:** Datenschutzerklärung und Impressum (die deutsche Fassung gilt, die
-  englische Ansicht sagt das dazu) und die Zusammenfassung, die der Cron auf Strava
-  schreibt — dort gibt es keine Anfrage und damit keine Sprache; sie bleibt deutsch.
+- **Strava-Zusammenfassung.** Der Cron hat keine Anfrage und damit keine Sprache. Er
+  schreibt in der Sprache, in der die App zuletzt gelesen wurde: sie wird an der
+  Strava-Verbindung gemerkt (`lang` in `worker/strava-store.ts`), ohne Eintrag deutsch.
+  Ein Absatz der App wird in beiden Sprachen als ihrer erkannt und ersetzt.
+- **Nicht übersetzt:** Datenschutzerklärung und Impressum — die deutsche Fassung gilt, die
+  englische Ansicht sagt das dazu.
 
 ## Als App installieren, offline
 
