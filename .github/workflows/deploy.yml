@@ -31,6 +31,21 @@ jobs:
       - run: npm test
       - run: npm run build
 
+  # Der Demo-Worker lokal, von einem Browser bedient: Anmeldung, Plan, Woche, Sprache, offline.
+  # Hält das Deployment nicht auf – ein Browser-Test darf wackeln, ohne die App zu blockieren.
+  e2e:
+    name: Browser-Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run e2e
+
   deploy:
     name: Cloudflare Worker
     # Ein roter Test hält das Deployment auf; Pull Requests deployen nie.
