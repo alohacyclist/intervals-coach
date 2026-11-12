@@ -61,7 +61,7 @@ export const WorkoutProfile = ({ profile, minutes }: Props) => {
     t`${hard === 0 ? t('keiner davon hart') : t`${hard} davon hart`}, Spitze bei ${peak} Prozent der Schwelle.`
 
   const labels = blockLabels(profile)
-  const ticks = axisTicks(total)
+  const ticks = axisTicks(profile)
 
   return (
     <figure className="profile">
@@ -121,10 +121,10 @@ export const WorkoutProfile = ({ profile, minutes }: Props) => {
         />
       </svg>
       </div>
-      {/* Minutes along the bottom; the end of the axis is the length of the session. */}
+      {/* Minutes where the blocks begin and end; the end of the axis is the length of the session. */}
       <figcaption className="profile__axis readout">
         {ticks.map((tick) => (
-          <span key={tick.minutes} style={{ left: `${tick.at}%` }} aria-hidden="true">
+          <span key={tick.at} style={{ left: `${tick.at}%` }} aria-hidden="true">
             {tick.minutes}
           </span>
         ))}

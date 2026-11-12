@@ -75,18 +75,36 @@ export const blockLabels = (profile: readonly ProfileSegment[]): readonly BlockL
   ].sort((left, right) => left.at - right.at)
 }
 
-const STEPS_MIN = [5, 10, 15, 20, 30, 60, 120] as const
-const MOST_TICKS = 6
+/** Two numbers closer than this, in percent of the width, would touch on a phone. */
+const TICK_GAP = 7.5
 /** Past this a number would run into the total at the right end of the axis. */
-const LAST_AT = 80
+const LAST_AT = 84
 
-/** Round minutes along the bottom, few enough to read on a phone. */
-export const axisTicks = (totalSeconds: number): readonly AxisTick[] => {
-  const totalMinutes = totalSeconds / 60
-  if (totalMinutes <= 0) return []
-  const step = STEPS_MIN.find((candidate) => totalMinutes / candidate <= MOST_TICKS) ?? 120
-  return Array.from({ length: Math.floor(totalMinutes / step) + 1 }, (_unused, index) => ({
-    minutes: index * step,
-    at: ((index * step) / totalMinutes) * 100,
-  })).filter((tick) => tick.at <= LAST_AT)
+/**
+ * Minutes along the bottom, where the session changes: the start, then where each
+ * block of work begins, where it ends, and the other seams — in that order of
+ * importance, each kept only while there is room for it. So "2 × 20 min" reads
+ * 15 · 35 · 43 · 63 under its blocks, where a fixed grid of 20 · 40 · 60 says
+ * nothing about them.
+ */
+export const axisTicks = (profile: readonly ProfileSegment[]): readonly AxisTick[] => {
+  const placed = place(profile)
+  const total = profile.reduce((sum, segment) => sum + segment.seconds, 0)
+  if (total === 0) return []
+  const tick = (fraction: number): AxisTick => ({ at: fraction * 100, minutes: Math.round((fraction * total) / 60) })
+  const work = placed.filter((entry) => entry.segment.intensity !== 'easy')
+  const candidates = [
+    tick(0),
+    ...work.map((entry) => tick(entry.from)),
+    ...work.map((entry) => tick(entry.to)),
+    ...placed.map((entry) => tick(entry.from)),
+  ]
+  const kept = candidates.reduce<readonly AxisTick[]>(
+    (chosen, candidate) =>
+      candidate.at > LAST_AT || chosen.some((other) => Math.abs(other.at - candidate.at) < TICK_GAP)
+        ? chosen
+        : [...chosen, candidate],
+    [],
+  )
+  return [...kept].sort((left, right) => left.at - right.at)
 }

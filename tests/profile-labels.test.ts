@@ -53,21 +53,37 @@ describe('numbers on the drawn workout', () => {
 })
 
 describe('minutes along the bottom', () => {
-  it('uses round steps, few enough for a phone', () => {
-    expect(axisTicks(78 * 60).map((tick) => tick.minutes)).toEqual([0, 15, 30, 45, 60])
-    expect(axisTicks(40 * 60).map((tick) => tick.minutes)).toEqual([0, 10, 20, 30])
-    expect(axisTicks(150 * 60).map((tick) => tick.minutes)).toEqual([0, 30, 60, 90, 120])
+  const minutes = (profile: readonly ProfileSegment[]) => axisTicks(profile).map((tick) => tick.minutes)
+
+  it('stand where the blocks of work begin and end', () => {
+    // 15 warm-up, 2 × 20 with 8 between, 7 to finish: 78 minutes.
+    const session = [warm, segment(20, 100, '277–289 W'), rest(8), segment(20, 100, '277–289 W'), rest(8), segment(7, 55, '138 W')]
+    expect(minutes(session)).toEqual([0, 15, 35, 43, 63])
+    expect(axisTicks(session)[1]?.at).toBeCloseTo((15 / 78) * 100, 5)
   })
 
-  it('stops short of the end, where the length of the session stands', () => {
-    for (const minutes of [25, 30, 45, 60, 65, 90, 120, 300]) {
-      const ticks = axisTicks(minutes * 60)
-      expect(ticks.length).toBeLessThanOrEqual(7)
-      expect(Math.max(...ticks.map((tick) => tick.at))).toBeLessThanOrEqual(80)
-    }
+  it('prefer the start of each interval where both ends do not fit', () => {
+    const work = Array.from({ length: 5 }, () => [segment(4, 112, '275–288 W'), rest(4)]).flat()
+    expect(minutes([warm, ...work, segment(10, 55, '138 W')])).toEqual([0, 15, 23, 31, 39, 47])
   })
 
-  it('has nothing to say about a session without length', () => {
-    expect(axisTicks(0)).toEqual([])
+  it('never stand closer than a number is wide, however many blocks there are', () => {
+    const many = Array.from({ length: 16 }, () => [segment(1, 115, '1:33/100m'), rest(0.5)]).flat()
+    const ticks = axisTicks([warm, ...many, cool])
+    ticks.slice(1).forEach((tick, index) => expect(tick.at - (ticks[index]?.at ?? 0)).toBeGreaterThanOrEqual(7.5))
+    expect(ticks[0]?.minutes).toBe(0)
+  })
+
+  it('stop short of the end, where the length of the session stands', () => {
+    const session = [warm, segment(20, 100, '277–289 W'), segment(3, 55, '138 W')]
+    expect(Math.max(...axisTicks(session).map((tick) => tick.at))).toBeLessThanOrEqual(84)
+  })
+
+  it('mark the seams of a session without hard work', () => {
+    expect(minutes([segment(10, 60, '150 W'), segment(40, 68, '163–180 W'), segment(10, 55, '138 W')])).toEqual([0, 10, 50])
+  })
+
+  it('have nothing to say about a session without length', () => {
+    expect(axisTicks([])).toEqual([])
   })
 })
