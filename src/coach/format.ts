@@ -65,6 +65,13 @@ const humanTarget = (target: string, threshold: SportThreshold): string => {
   return `${powers.join(isRamp ? '→' : '–')} W${isRamp ? t(' (Rampe)') : ''}`
 }
 
+/**
+ * The target as it fits on a drawn block: the watts or the pace, nothing around it.
+ * A ramp has no one value to print, and a step without a percentage has none at all.
+ */
+export const blockTarget = (target: string, threshold: SportThreshold): string | null =>
+  percentages(target).length === 0 || /ramp/i.test(target) ? null : humanTarget(target, threshold)
+
 const humanDuration = (duration: string): string => {
   const metres = /^(\d+(?:\.\d+)?)mtr$/i.exec(duration)
   if (metres) return `${metres[1]} m`

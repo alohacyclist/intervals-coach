@@ -1012,7 +1012,6 @@ export const EN: Readonly<Record<string, string>> = {
   "{0}, Spitze bei {1} Prozent der Schwelle.": "{0}, peak at {1} percent of threshold.",
   "keiner davon hart": "none of them hard",
   "{0} davon hart": "{0} of them hard",
-  "Spitze": "Peak",
   "Routenliste nicht erreichbar — Routen lassen sich gerade nicht eintragen.":
     "Route list unreachable — routes cannot be entered right now.",
   "Zwift Racing League": "Zwift Racing League",
