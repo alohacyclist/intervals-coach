@@ -24,7 +24,7 @@ const send = async (path: string, init?: RequestInit): Promise<Response> => {
     return await fetch(path, {
       ...init,
       // The server writes its sentences in the language this browser reads.
-      headers: { 'Content-Type': 'application/json', 'X-Formkurve-Lang': LANGUAGE, ...init?.headers },
+      headers: { 'Content-Type': 'application/json', 'X-Etmal-Lang': LANGUAGE, ...init?.headers },
     })
   } catch {
     throw new ApiError(humanError(OFFLINE), OFFLINE)

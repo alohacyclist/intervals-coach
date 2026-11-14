@@ -713,7 +713,7 @@ export const correctedHeartRate = (
 
 /** The note left under the activity on intervals.icu, so the edit is never mistaken for the recording. */
 export const correctionNote = (note: HeartNote): string =>
-  t`Puls von Formkurve korrigiert: ${minute(note.faultySeconds)} min (${where(note.spans)}) passten nicht zur Arbeit ` +
+  t`Puls von Etmal korrigiert: ${minute(note.faultySeconds)} min (${where(note.spans)}) passten nicht zur Arbeit ` +
   t`und sind aus der sauberen Messung geschätzt.` +
   (note.measuredAverage !== null && note.correctedAverage !== null
     ? t` Ø aufgezeichnet ${note.measuredAverage} bpm, korrigiert ${note.correctedAverage} bpm.`

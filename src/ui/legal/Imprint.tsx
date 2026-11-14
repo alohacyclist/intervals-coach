@@ -34,7 +34,7 @@ export const Imprint = () => (
 
     <h2>Art des Angebots</h2>
     <p>
-      Formkurve ist ein privates, nicht kommerzielles Projekt. Die Nutzung ist kostenlos, es
+      Etmal ist ein privates, nicht kommerzielles Projekt. Die Nutzung ist kostenlos, es
       werden keine Verträge über entgeltliche Leistungen geschlossen und keine Werbung ausgespielt.
     </p>
 

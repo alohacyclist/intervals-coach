@@ -28,9 +28,9 @@ const env = (brevo = true): Bindings => ({
 })
 
 const signUp = (bindings: Bindings, body: Record<string, unknown>) =>
-  app.request('https://formkurve.test/api/waitlist', { method: 'POST', body: JSON.stringify(body) }, bindings)
+  app.request('https://etmal.test/api/waitlist', { method: 'POST', body: JSON.stringify(body) }, bindings)
 
-const config = { apiKey: 'k', listId: 7, templateId: 3, redirectionUrl: 'https://formkurve.test/warteliste/bestaetigt' }
+const config = { apiKey: 'k', listId: 7, templateId: 3, redirectionUrl: 'https://etmal.test/warteliste/bestaetigt' }
 
 afterEach(() => {
   vi.restoreAllMocks()
@@ -47,7 +47,7 @@ describe('the confirmation request', () => {
       email: 'a@b.de',
       includeListIds: [7],
       templateId: 3,
-      redirectionUrl: 'https://formkurve.test/warteliste/bestaetigt',
+      redirectionUrl: 'https://etmal.test/warteliste/bestaetigt',
     })
   })
 
@@ -76,7 +76,7 @@ describe('the waitlist route', () => {
 
   it('takes the ids as Brevo shows them, with or without the hash', () => {
     const ids = (list: string, template: string) =>
-      brevoConfig({ ...env(), BREVO_LIST_ID: list, BREVO_DOI_TEMPLATE_ID: template }, 'https://formkurve.test')
+      brevoConfig({ ...env(), BREVO_LIST_ID: list, BREVO_DOI_TEMPLATE_ID: template }, 'https://etmal.test')
     expect(ids('#7', ' #3 ')).toMatchObject({ listId: 7, templateId: 3 })
     expect(ids('7', '3')).toMatchObject({ listId: 7, templateId: 3 })
     expect(ids('#', '3')).toBeNull()

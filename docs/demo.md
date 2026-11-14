@@ -1,6 +1,6 @@
 # Demo-Zugang
 
-Formkurve mit Beispieldaten, zum Zeigen in Bewerbungen und Gesprächen. Eine erfundene
+Etmal mit Beispieldaten, zum Zeigen in Bewerbungen und Gesprächen. Eine erfundene
 Athletin (Rad, Lauf, Schwimmen) mit einem Jahr Training: ruhige Grundlage, danach zwölf
 strukturierte Wochen im 3:1-Rhythmus mit Schwellentests, Formkontrolle, einer Erkältung
 als eingetragener Pause und einer ausgefallenen Qualitätseinheit kurz vor heute. Am
@@ -13,7 +13,7 @@ und braucht keinen API-Key.
 
 ## Wie sie gebaut ist
 
-- **Eigener Worker** (`formkurve-demo`, Umgebung `demo` in `wrangler.jsonc`) mit eigenem
+- **Eigener Worker** (`etmal-demo`, Umgebung `demo` in `wrangler.jsonc`) mit eigenem
   KV-Namespace. Mit dem echten Worker teilt er nichts.
 - **Dieselben Routen, andere Datenquelle.** Plan, Verlauf und Soll/Ist laufen durch
   `server/routes.ts` wie bei echten Nutzern. Statt `httpSource` (intervals.icu) steckt
@@ -41,10 +41,10 @@ Den KV-Namespace legt Wrangler beim ersten Deploy selbst an (automatisches Provi
 deshalb steht in `wrangler.jsonc` keine id). Bis `DEMO_PASSWORD` gesetzt ist, antwortet
 die Demo mit „Nicht konfiguriert“. Das Secret wirkt sofort, ein zweiter Deploy ist nicht nötig.
 
-Die Demo läuft unter **https://demo.formkurve.org/**; ohne eigene Adresse liegt sie unter
-`https://formkurve-demo.<dein-subdomain>.workers.dev`. Für eine
-eigene Adresse (z. B. `demo.formkurve.org`) im Cloudflare-Dashboard beim Worker
-`formkurve-demo` unter *Settings → Domains & Routes* eine Custom Domain hinzufügen.
+Die Demo läuft unter **https://demo.etmal.coach/**; ohne eigene Adresse liegt sie unter
+`https://etmal-demo.<dein-subdomain>.workers.dev`. Für eine
+eigene Adresse (z. B. `demo.etmal.coach`) im Cloudflare-Dashboard beim Worker
+`etmal-demo` unter *Settings → Domains & Routes* eine Custom Domain hinzufügen.
 
 Der GitHub-Workflow deployt bei jedem Push auf `main` auch die Demo (Job *Demo-Worker*),
 mit demselben Cloudflare-Token wie die Produktion; sie bleibt damit auf dem Stand der App.
@@ -59,7 +59,7 @@ Passwortwechsel beendet sie nicht mehr.
 
 Adresse und Demo-Passwort, zum Beispiel im Anschreiben:
 
-> Formkurve lässt sich mit Beispieldaten ausprobieren: demo.formkurve.org, Passwort `…`
+> Etmal lässt sich mit Beispieldaten ausprobieren: demo.etmal.coach, Passwort `…`
 
 Jeder, der sich anmeldet, landet in seiner eigenen Sandbox. Ein Passwort für alle reicht
 also. Pro Bewerbungsrunde ein eigenes Passwort zu nehmen, schadet aber nicht.

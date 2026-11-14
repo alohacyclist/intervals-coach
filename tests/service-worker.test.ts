@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { cacheVersion, isPrivate, precacheList, strategyFor } from '../src/sw/strategy.ts'
 
-const origin = 'https://formkurve.org'
+const origin = 'https://etmal.coach'
 const get = (path: string, mode = 'cors') => strategyFor({ method: 'GET', url: `${origin}${path}`, mode, origin })
 
 describe('service worker strategy', () => {

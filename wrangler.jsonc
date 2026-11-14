@@ -45,7 +45,7 @@
   // refuses to start if intervals.icu or Strava credentials are set. See docs/demo.md.
   "env": {
     "demo": {
-      "name": "formkurve-demo",
+      "name": "etmal-demo",
       "workers_dev": true,
       "vars": { "DEMO_MODE": "on" },
       // No id on purpose: the first `npm run deploy:demo` creates the namespace

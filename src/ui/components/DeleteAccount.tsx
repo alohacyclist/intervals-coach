@@ -29,7 +29,7 @@ export const DeleteAccount = () => {
       {confirming ? (
         <>
           <p className="hint">
-            {t('Gelöscht werden dein Zugangs-Token, deine Ziele und Einstellungen sowie das Protokoll deiner Krafteinheiten, und Formkurve gibt die Freigabe bei intervals.icu zurück. Deine Daten bei intervals.icu bleiben unberührt — auch bereits in den Kalender geschriebene Einheiten. Das lässt sich nicht rückgängig machen.')}
+            {t('Gelöscht werden dein Zugangs-Token, deine Ziele und Einstellungen sowie das Protokoll deiner Krafteinheiten, und Etmal gibt die Freigabe bei intervals.icu zurück. Deine Daten bei intervals.icu bleiben unberührt — auch bereits in den Kalender geschriebene Einheiten. Das lässt sich nicht rückgängig machen.')}
           </p>
           <div className="settings__actions">
             <button type="button" className="danger__go" disabled={busy} onClick={() => void remove()}>
