@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { joinWaitlist } from './api.ts'
-import { pick, t } from '../coach/lang.ts'
+import { lang, pick, t } from '../coach/lang.ts'
 
 /**
  * The page a shared picture leads to. It says what the app does in the first
@@ -46,19 +46,20 @@ const ExampleDay = () => (
   </figure>
 )
 
-const SHOTS: readonly { readonly src: string; readonly alt: string; readonly caption: string }[] = [
+/** Taken from the demo once per language; the folder is the language the page speaks. */
+const SHOTS: readonly { readonly file: string; readonly alt: string; readonly caption: string }[] = [
   {
-    src: '/landing/heute.jpg',
-    alt: t('Der Tagesplan: Form, Fitness und Ermüdung, darunter die Einheiten für heute zur Wahl'),
+    file: 'heute.jpg',
+    alt: t('Der Tagesplan: die Woche bisher, darunter die Einheiten für heute zur Wahl'),
     caption: t('Jeden Morgen neu: jede deiner Sportarten als Wahl, komplett oder kurz.'),
   },
   {
-    src: '/landing/soll-ist.png',
-    alt: t('Ein Lauf mit vier Intervallen über den Zielkorridoren, je Intervall die gehaltene Prozentzahl'),
+    file: 'soll-ist.png',
+    alt: t('Eine Radeinheit mit drei Intervallen über den Zielkorridoren, je Intervall die gehaltene Prozentzahl'),
     caption: t('Danach: Intervall für Intervall, ob du im Ziel warst.'),
   },
   {
-    src: '/landing/verlauf.jpg',
+    file: 'verlauf.jpg',
     alt: t('Der Verlauf: Fitnesskurve, Saisonphasen und Wochenlast'),
     caption: t('Und über Wochen: ob du vorankommst.'),
   },
@@ -209,8 +210,8 @@ export const Landing = ({ mode, error, confirmed = false }: Props) => (
       <h2>{t('So sieht es aus')}</h2>
       <div className="shots">
         {SHOTS.map((shot) => (
-          <figure key={shot.src} className="shots__item">
-            <img src={shot.src} alt={shot.alt} loading="lazy" />
+          <figure key={shot.file} className="shots__item">
+            <img src={`/landing/${lang()}/${shot.file}`} alt={shot.alt} loading="lazy" />
             <figcaption>{shot.caption}</figcaption>
           </figure>
         ))}

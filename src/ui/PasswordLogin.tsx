@@ -43,7 +43,7 @@ export const PasswordLogin = ({ onDone, demo = false }: { readonly onDone: () =>
       {error && <p className="error error--block" role="alert">{error}</p>}
 
       <label className="login__field">
-        <span>{demo ? 'Demo-Passwort' : t('Passwort')}</span>
+        <span>{demo ? t('Demo-Passwort') : t('Passwort')}</span>
         <input
           type="password"
           name="password"

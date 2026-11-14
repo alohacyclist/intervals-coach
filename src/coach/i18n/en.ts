@@ -563,12 +563,12 @@ export const EN: Readonly<Record<string, string>> = {
   "Qualitätstag": "Quality day",
   "oder": "or",
   "Derselbe Reiz, egal welche du nimmst.": "The same stimulus, whichever you take.",
-  "Der Tagesplan: Form, Fitness und Ermüdung, darunter die Einheiten für heute zur Wahl":
-    "The daily plan: form, fitness and fatigue, below them today's sessions to choose from",
+  "Der Tagesplan: die Woche bisher, darunter die Einheiten für heute zur Wahl":
+    "The daily plan: the week so far, below it today's sessions to choose from",
   "Jeden Morgen neu: jede deiner Sportarten als Wahl, komplett oder kurz.":
     "New every morning: each of your sports as a choice, complete or short.",
-  "Ein Lauf mit vier Intervallen über den Zielkorridoren, je Intervall die gehaltene Prozentzahl":
-    "A run with four intervals over the target corridors, with the percentage held for each interval",
+  "Eine Radeinheit mit drei Intervallen über den Zielkorridoren, je Intervall die gehaltene Prozentzahl":
+    "A ride with three intervals over the target corridors, with the percentage held for each interval",
   "Danach: Intervall für Intervall, ob du im Ziel warst.":
     "Afterwards: interval by interval, whether you were on target.",
   "Der Verlauf: Fitnesskurve, Saisonphasen und Wochenlast":
@@ -673,6 +673,7 @@ export const EN: Readonly<Record<string, string>> = {
     "You stay signed in for 30 days. Every visit extends that — after a month without use the coach asks again.",
   "Passwort": "Password",
   "Demo öffnen": "Open demo",
+  "Demo-Passwort": "Demo password",
   "Wie geplant": "As planned",
   "Hart": "Hard",
   "Lade Daten von intervals.icu…": "Loading data from intervals.icu…",
@@ -1092,6 +1093,8 @@ export const EN: Readonly<Record<string, string>> = {
   "Geplant und ausgewertet mit Etmal · etmal.coach":
     "Planned and analysed with Etmal · etmal.coach",
   "IM ZIEL": "ON TARGET",
+  "BELASTUNG": "LOAD",
+  "DAUER": "DURATION",
   "Dieser Browser kann kein Bild zeichnen": "This browser cannot draw an image",
   "Bild konnte nicht erzeugt werden": "The image could not be created",
   "Hell": "Light",
@@ -1165,6 +1168,11 @@ export const EN: Readonly<Record<string, string>> = {
   "{0} eingetragen, {1} — höchstens locker, freiwillig. {2}": "{0} entered, {1} — easy at most, optional. {2}",
   "Ruhetag": "Rest day",
   "Sende…": "Sending…",
+  "Speichert…": "Saving…",
+  "Beendet…": "Ending…",
+  "Schreibt…": "Writing…",
+  "Trennt…": "Disconnecting…",
+  "Zeichnet…": "Drawing…",
   "realistisch": "realistic",
   "ambitioniert": "ambitious",
 }

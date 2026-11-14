@@ -70,7 +70,7 @@ export const HeartCorrection = ({ heart, activityId, templateId, date }: Props) 
         </p>
         <div className="exec__actions">
           <button type="button" disabled={step.kind === 'busy'} onClick={() => void write()}>
-            {step.kind === 'busy' ? 'Schreibt…' : t('Überschreiben')}
+            {step.kind === 'busy' ? t('Schreibt…') : t('Überschreiben')}
           </button>
           <button type="button" disabled={step.kind === 'busy'} onClick={() => setStep({ kind: 'offer' })}>
             {t('Abbrechen')}

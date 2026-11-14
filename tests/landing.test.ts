@@ -3,6 +3,7 @@ import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { Landing, landingError } from '../src/ui/Landing.tsx'
 import { EXPIRED_SESSION_URL } from '../src/ui/api.ts'
+import { inLang } from '../src/coach/lang.ts'
 
 describe('landing copy', () => {
   const html = renderToStaticMarkup(createElement(Landing, { mode: 'signup', error: null }))
@@ -36,6 +37,14 @@ describe('landing copy', () => {
     expect(html).toContain('vier Berechtigungen')
     expect(html).toContain('Einstellungen ändern')
     expect(html).not.toContain('genau drei')
+  })
+
+  it('shows the pictures in the language the page speaks', () => {
+    const shots = (language: 'de' | 'en') =>
+      inLang(language, () => renderToStaticMarkup(createElement(Landing, { mode: 'signup', error: null })))
+        .match(/src="[^"]+"/g)
+    expect(shots('de')).toEqual(['src="/landing/de/heute.jpg"', 'src="/landing/de/soll-ist.png"', 'src="/landing/de/verlauf.jpg"'])
+    expect(shots('en')).toEqual(['src="/landing/en/heute.jpg"', 'src="/landing/en/soll-ist.png"', 'src="/landing/en/verlauf.jpg"'])
   })
 
   it('keeps sign-in locked until consent is given', () => {

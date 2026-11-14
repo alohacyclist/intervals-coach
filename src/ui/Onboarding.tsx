@@ -234,7 +234,7 @@ export const Onboarding = ({ onDone }: { readonly onDone: () => void }) => {
       {error && <p className="error" role="alert">{error}</p>}
 
       <button type="button" className="cta cta--button" disabled={busy} onClick={() => void submit()}>
-        {busy ? 'Speichert…' : t('Plan erstellen')}
+        {busy ? t('Speichert…') : t('Plan erstellen')}
       </button>
     </section>
   )

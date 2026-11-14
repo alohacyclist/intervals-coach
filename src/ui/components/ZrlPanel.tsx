@@ -202,7 +202,7 @@ export const ZrlPanel = ({ config, today, onSaved }: Props) => {
       {error && <p className="error" role="alert">{error}</p>}
       <div className="settings__actions">
         <button type="button" disabled={busy} onClick={() => void save()}>
-          {busy ? 'Speichert…' : saved ? t('✓ Gespeichert') : t('Runde speichern')}
+          {busy ? t('Speichert…') : saved ? t('✓ Gespeichert') : t('Runde speichern')}
         </button>
       </div>
     </section>
