@@ -13,7 +13,7 @@ und braucht keinen API-Key.
 
 ## Wie sie gebaut ist
 
-- **Eigener Worker** (`etmal-demo`, Umgebung `demo` in `wrangler.jsonc`) mit eigenem
+- **Eigener Worker** (`formkurve-demo`, Umgebung `demo` in `wrangler.jsonc`) mit eigenem
   KV-Namespace. Mit dem echten Worker teilt er nichts.
 - **Dieselben Routen, andere Datenquelle.** Plan, Verlauf und Soll/Ist laufen durch
   `server/routes.ts` wie bei echten Nutzern. Statt `httpSource` (intervals.icu) steckt
@@ -42,9 +42,9 @@ deshalb steht in `wrangler.jsonc` keine id). Bis `DEMO_PASSWORD` gesetzt ist, an
 die Demo mit „Nicht konfiguriert“. Das Secret wirkt sofort, ein zweiter Deploy ist nicht nötig.
 
 Die Demo läuft unter **https://demo.etmal.coach/**; ohne eigene Adresse liegt sie unter
-`https://etmal-demo.<dein-subdomain>.workers.dev`. Für eine
+`https://formkurve-demo.<dein-subdomain>.workers.dev`. Für eine
 eigene Adresse (z. B. `demo.etmal.coach`) im Cloudflare-Dashboard beim Worker
-`etmal-demo` unter *Settings → Domains & Routes* eine Custom Domain hinzufügen.
+`formkurve-demo` unter *Settings → Domains & Routes* eine Custom Domain hinzufügen.
 
 Der GitHub-Workflow deployt bei jedem Push auf `main` auch die Demo (Job *Demo-Worker*),
 mit demselben Cloudflare-Token wie die Produktion; sie bleibt damit auf dem Stand der App.

@@ -77,7 +77,7 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
-  # Die Demo mit Beispieldaten: eigener Worker (etmal-demo), eigener KV-Namespace, nichts
+  # Die Demo mit Beispieldaten: eigener Worker (formkurve-demo), eigener KV-Namespace, nichts
   # geteilt mit der Produktion. Läuft neben dem Deployment der App und hält es nicht auf.
   deploy-demo:
     name: Demo-Worker
