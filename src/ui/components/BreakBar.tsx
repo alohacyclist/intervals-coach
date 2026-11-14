@@ -51,7 +51,7 @@ export const BreakBar = ({ config, today, onChanged }: Props) => {
             {running.until.slice(8, 10)}.{running.until.slice(5, 7)}.
           </span>
           <button type="button" disabled={busy} onClick={() => void run(endBreak)}>
-            {busy ? 'Beendet…' : t('Pause beenden')}
+            {busy ? t('Beendet…') : t('Pause beenden')}
           </button>
         </div>
         <p className="pause__note">{limit.reason}</p>

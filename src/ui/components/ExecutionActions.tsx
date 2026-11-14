@@ -84,12 +84,12 @@ export const ExecutionActions = ({ execution, activityId, templateId, date }: Pr
     <div className="exec__actions">
       {trace && (
         <button type="button" disabled={!image} onClick={share}>
-          {image ? t('Bild teilen') : 'Zeichnet…'}
+          {image ? t('Bild teilen') : t('Zeichnet…')}
         </button>
       )}
       {strava?.connected && (
         <button type="button" disabled={sending === 'busy'} onClick={() => void send()}>
-          {sending === 'busy' ? 'Schreibt…' : posted ? t('Auf Strava erneuern') : t('Auf Strava ergänzen')}
+          {sending === 'busy' ? t('Schreibt…') : posted ? t('Auf Strava erneuern') : t('Auf Strava ergänzen')}
         </button>
       )}
       {posted && sending !== 'posted' && <span className="exec__sent readout">{t('Auf Strava ✓')}</span>}

@@ -673,6 +673,7 @@ export const EN: Readonly<Record<string, string>> = {
     "You stay signed in for 30 days. Every visit extends that — after a month without use the coach asks again.",
   "Passwort": "Password",
   "Demo öffnen": "Open demo",
+  "Demo-Passwort": "Demo password",
   "Wie geplant": "As planned",
   "Hart": "Hard",
   "Lade Daten von intervals.icu…": "Loading data from intervals.icu…",
@@ -1092,6 +1093,8 @@ export const EN: Readonly<Record<string, string>> = {
   "Geplant und ausgewertet mit Etmal · etmal.coach":
     "Planned and analysed with Etmal · etmal.coach",
   "IM ZIEL": "ON TARGET",
+  "BELASTUNG": "LOAD",
+  "DAUER": "DURATION",
   "Dieser Browser kann kein Bild zeichnen": "This browser cannot draw an image",
   "Bild konnte nicht erzeugt werden": "The image could not be created",
   "Hell": "Light",
@@ -1165,6 +1168,11 @@ export const EN: Readonly<Record<string, string>> = {
   "{0} eingetragen, {1} — höchstens locker, freiwillig. {2}": "{0} entered, {1} — easy at most, optional. {2}",
   "Ruhetag": "Rest day",
   "Sende…": "Sending…",
+  "Speichert…": "Saving…",
+  "Beendet…": "Ending…",
+  "Schreibt…": "Writing…",
+  "Trennt…": "Disconnecting…",
+  "Zeichnet…": "Drawing…",
   "realistisch": "realistic",
   "ambitioniert": "ambitious",
 }
