@@ -41,7 +41,8 @@ Den KV-Namespace legt Wrangler beim ersten Deploy selbst an (automatisches Provi
 deshalb steht in `wrangler.jsonc` keine id). Bis `DEMO_PASSWORD` gesetzt ist, antwortet
 die Demo mit „Nicht konfiguriert“. Das Secret wirkt sofort, ein zweiter Deploy ist nicht nötig.
 
-Danach liegt die Demo unter `https://formkurve-demo.<dein-subdomain>.workers.dev`. Für eine
+Die Demo läuft unter **https://demo.formkurve.org/**; ohne eigene Adresse liegt sie unter
+`https://formkurve-demo.<dein-subdomain>.workers.dev`. Für eine
 eigene Adresse (z. B. `demo.formkurve.org`) im Cloudflare-Dashboard beim Worker
 `formkurve-demo` unter *Settings → Domains & Routes* eine Custom Domain hinzufügen.
 

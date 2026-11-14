@@ -74,11 +74,11 @@ Deployment to Cloudflare Workers (`npm run deploy`), the GitHub Actions workflow
 multi-user setup are described in the full documentation (German):
 [docs/README.de.md](docs/README.de.md).
 
-**Demo:** a separate Worker (`npm run deploy:demo`) runs the app on synthetic data for a
+**Demo:** a separate Worker, deployed with every push to `main`, runs the app on synthetic data for a
 fictional athlete, without intervals.icu and without any real data. Every visitor gets
 their own sandbox that expires after two hours. Details (German): [docs/demo.md](docs/demo.md).
 
-<!-- DEMO LINK: add the URL of the demo Worker here -->
+**Try it: [demo.formkurve.org](https://demo.formkurve.org/)** (password on request).
 
 
 ## What mattered to me

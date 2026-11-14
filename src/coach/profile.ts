@@ -1,6 +1,6 @@
 import type { Block, IntensityClass, ProfileSegment, SportThreshold } from './types.ts'
 import { flattenBlocks } from './library.ts'
-import { percentages, REST_TARGET } from './format.ts'
+import { blockTarget, percentages, REST_TARGET } from './format.ts'
 import { estimateSeconds } from './variant.ts'
 
 /**
@@ -40,6 +40,7 @@ export const profileOf = (
         percent,
         intensity: intensityOfPercent(percent),
         label: step.label ?? null,
+        target: blockTarget(step.target, threshold),
       }
     })
     // A step of zero length cannot be drawn and would only add a seam.

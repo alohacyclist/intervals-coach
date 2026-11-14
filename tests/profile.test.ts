@@ -27,9 +27,9 @@ describe('profileOf', () => {
       BIKE_THRESHOLD,
     )
     expect(profile).toEqual([
-      { seconds: 720, percent: 55, intensity: 'easy', label: 'Einfahren' },
-      { seconds: 480, percent: 100, intensity: 'hard', label: null },
-      { seconds: 300, percent: 50, intensity: 'easy', label: 'Ausfahren' },
+      { seconds: 720, percent: 55, intensity: 'easy', label: 'Einfahren', target: '154 W' },
+      { seconds: 480, percent: 100, intensity: 'hard', label: null, target: '280 W' },
+      { seconds: 300, percent: 50, intensity: 'easy', label: 'Ausfahren', target: '140 W' },
     ])
   })
 

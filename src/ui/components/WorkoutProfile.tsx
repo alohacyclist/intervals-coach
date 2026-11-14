@@ -1,5 +1,6 @@
 import type { ProfileSegment } from '../../coach/types.ts'
 import { t } from '../../coach/lang.ts'
+import { axisTicks, blockLabels } from '../profile-labels.ts'
 
 /**
  * The workout as a shape. Drawn in viewBox units and stretched to the card's
@@ -20,6 +21,9 @@ const GAP = 1.1
  */
 const SCALE_TOP = 130
 
+/** How high a block of this intensity is drawn, in viewBox units. */
+const heightOf = (percent: number, ceiling: number): number => Math.max(1.5, (percent / ceiling) * (BASE - TOP))
+
 type Props = {
   readonly profile: readonly ProfileSegment[]
   readonly minutes: number
@@ -36,7 +40,7 @@ export const WorkoutProfile = ({ profile, minutes }: Props) => {
   let cursor = 0
   const bars = profile.map((segment, index) => {
     const width = (segment.seconds / total) * WIDTH
-    const height = Math.max(1.5, (segment.percent / ceiling) * (BASE - TOP))
+    const height = heightOf(segment.percent, ceiling)
     const bar = {
       key: `${index}-${segment.seconds}`,
       x: cursor,
@@ -56,8 +60,23 @@ export const WorkoutProfile = ({ profile, minutes }: Props) => {
     t`Profil über ${minutes} Minuten, ${profile.length} Abschnitte, ` +
     t`${hard === 0 ? t('keiner davon hart') : t`${hard} davon hart`}, Spitze bei ${peak} Prozent der Schwelle.`
 
+  const labels = blockLabels(profile)
+  const ticks = axisTicks(profile)
+
   return (
     <figure className="profile">
+      <div className="profile__stage">
+        {/* What to hold, on top of the block it belongs to; the table below says the same in full. */}
+        {labels.map((label) => (
+          <span
+            key={`${label.at}-${label.text}`}
+            className="profile__target readout"
+            aria-hidden="true"
+            style={{ left: `${label.at}%`, bottom: `calc(${heightOf(label.percent, ceiling) / (BASE + 1)} * var(--plot-height))` }}
+          >
+            {label.text}
+          </span>
+        ))}
       <svg
         className="profile__plot"
         viewBox={`0 0 ${WIDTH} ${BASE + 1}`}
@@ -101,9 +120,15 @@ export const WorkoutProfile = ({ profile, minutes }: Props) => {
           vectorEffect="non-scaling-stroke"
         />
       </svg>
-      <figcaption className="profile__scale readout">
-        <span>{minutes}{t(' min')}</span>
-        <span>{t('Spitze ')}{peak} %</span>
+      </div>
+      {/* Minutes where the blocks begin and end; the end of the axis is the length of the session. */}
+      <figcaption className="profile__axis readout">
+        {ticks.map((tick) => (
+          <span key={tick.at} style={{ left: `${tick.at}%` }} aria-hidden="true">
+            {tick.minutes}
+          </span>
+        ))}
+        <span className="profile__end">{minutes}{t(' min')}</span>
       </figcaption>
     </figure>
   )
