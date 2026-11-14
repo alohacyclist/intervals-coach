@@ -563,12 +563,12 @@ export const EN: Readonly<Record<string, string>> = {
   "Qualitätstag": "Quality day",
   "oder": "or",
   "Derselbe Reiz, egal welche du nimmst.": "The same stimulus, whichever you take.",
-  "Der Tagesplan: Form, Fitness und Ermüdung, darunter die Einheiten für heute zur Wahl":
-    "The daily plan: form, fitness and fatigue, below them today's sessions to choose from",
+  "Der Tagesplan: die Woche bisher, darunter die Einheiten für heute zur Wahl":
+    "The daily plan: the week so far, below it today's sessions to choose from",
   "Jeden Morgen neu: jede deiner Sportarten als Wahl, komplett oder kurz.":
     "New every morning: each of your sports as a choice, complete or short.",
-  "Ein Lauf mit vier Intervallen über den Zielkorridoren, je Intervall die gehaltene Prozentzahl":
-    "A run with four intervals over the target corridors, with the percentage held for each interval",
+  "Eine Radeinheit mit drei Intervallen über den Zielkorridoren, je Intervall die gehaltene Prozentzahl":
+    "A ride with three intervals over the target corridors, with the percentage held for each interval",
   "Danach: Intervall für Intervall, ob du im Ziel warst.":
     "Afterwards: interval by interval, whether you were on target.",
   "Der Verlauf: Fitnesskurve, Saisonphasen und Wochenlast":
