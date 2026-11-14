@@ -55,8 +55,8 @@ describe('the text under a session on Strava', () => {
   })
 
   it('marks the link as coming from Strava, and leaves out an unusable one', () => {
-    expect(referralUrl('https://formkurve.org')).toBe('https://formkurve.org/?ref=strava')
-    expect(referralUrl('https://formkurve.org/app?x=1')).toBe('https://formkurve.org/app?x=1&ref=strava')
+    expect(referralUrl('https://etmal.coach')).toBe('https://etmal.coach/?ref=strava')
+    expect(referralUrl('https://etmal.coach/app?x=1')).toBe('https://etmal.coach/app?x=1&ref=strava')
     expect(referralUrl('javascript:alert(1)')).toBeNull()
     expect(referralUrl('not a url')).toBeNull()
     expect(referralUrl(null)).toBeNull()
@@ -93,9 +93,15 @@ describe('writing it into the description', () => {
     expect(withSummary(before, summary)).toBe(`Gut gelaufen.\n\n${summary}`)
   })
 
-  it('also replaces a paragraph written under the earlier name', () => {
-    const before = 'Gut gelaufen.\n\nAlt · 1 von 3 im Ziel\n— geplant und ausgewertet mit intervals-coach'
-    expect(withSummary(before, summary)).toBe(`Gut gelaufen.\n\n${summary}`)
+  it('also replaces a paragraph written under an earlier name, in either language', () => {
+    for (const earlier of [
+      'geplant und ausgewertet mit intervals-coach',
+      'geplant und ausgewertet mit Formkurve · https://formkurve.org/?ref=strava',
+      'planned and analysed with Formkurve',
+    ]) {
+      const before = `Gut gelaufen.\n\nAlt · 1 von 3 im Ziel\n— ${earlier}`
+      expect(withSummary(before, summary), earlier).toBe(`Gut gelaufen.\n\n${summary}`)
+    }
   })
 })
 

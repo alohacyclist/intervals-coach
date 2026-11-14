@@ -17,7 +17,7 @@ const start = (): void => {
   }
 
   serve({ fetch: app.fetch, port: env.port }, ({ port }) => {
-    console.log(`formkurve api → http://localhost:${port}`)
+    console.log(`etmal api → http://localhost:${port}`)
   })
 }
 

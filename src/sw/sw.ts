@@ -1,5 +1,5 @@
 /**
- * The service worker: keeps the program files so Formkurve opens instantly and installs
+ * The service worker: keeps the program files so Etmal opens instantly and installs
  * as an app, and answers a page view without a connection with the kept shell — which
  * then says that it is offline. No plan, no wellness value and no session is ever kept;
  * `strategyFor` is the single place that decides, and it is tested.
@@ -25,7 +25,9 @@ type WorkerScope = {
 }
 
 const worker = self as unknown as WorkerScope
-const PREFIX = 'formkurve-'
+const PREFIX = 'etmal-'
+/** Caches kept under the app's earlier name: cleared too, or they would stay for good. */
+const EARLIER_PREFIX = 'formkurve-'
 const CACHE = `${PREFIX}${__CACHE_VERSION__}`
 /** The page itself; asked for as `/`, because the asset server redirects `/index.html` there. */
 const SHELL = '/'
@@ -45,7 +47,9 @@ worker.addEventListener('activate', (event) => {
     caches
       .keys()
       .then((names) =>
-        Promise.all(names.filter((name) => name.startsWith(PREFIX) && name !== CACHE).map((name) => caches.delete(name))),
+        Promise.all(names
+            .filter((name) => (name.startsWith(PREFIX) || name.startsWith(EARLIER_PREFIX)) && name !== CACHE)
+            .map((name) => caches.delete(name))),
       )
       .then(() => worker.clients.claim()),
   )

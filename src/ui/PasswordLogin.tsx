@@ -29,7 +29,7 @@ export const PasswordLogin = ({ onDone, demo = false }: { readonly onDone: () =>
 
   return (
     <form className="login" onSubmit={(event) => void submit(event)}>
-      <h1>{t('Formkurve')}</h1>
+      <h1>{t('Etmal')}</h1>
       {demo ? (
         <p className="login__lead">
           {t('Ein Trainingsplaner, der die nächsten drei Tage aus dem plant, was wirklich trainiert wurde. Die Demo zeigt ihn an einer erfundenen Athletin mit einem Jahr Beispieldaten. Was du änderst, siehst nur du, und nach zwei Stunden ist es wieder vergessen.')}

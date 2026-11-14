@@ -35,7 +35,7 @@ const HIT = 'rgba(255, 166, 43, 0.45)'
 const RULE = '#1e2526'
 const RULE_LOUD = '#2f3839'
 const SHADE = '#141a1b'
-const FOOTER = t('Geplant und ausgewertet mit Formkurve · formkurve.org')
+const FOOTER = t('Geplant und ausgewertet mit Etmal · etmal.coach')
 const MONO = "'Middot', 'Overpass', system-ui, sans-serif"
 const SANS = "'Middot', 'Overpass', system-ui, sans-serif"
 

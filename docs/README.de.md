@@ -1,6 +1,6 @@
-# Formkurve
+# Etmal
 
-Repository und Worker heißen weiterhin `intervals-coach`; die App selbst heißt Formkurve.
+Repository und Worker heißen weiterhin `intervals-coach`; die App selbst heißt Etmal.
 
 Browser-App, die auf Basis der letzten Trainingseinheiten aus intervals.icu die nächsten
 drei Tage plant. Jeder Tag zeigt **jede gewählte Sportart** (Rad, Lauf, Schwimmen) als
@@ -322,7 +322,7 @@ Die App gibt es deutsch und englisch. Ohne Wahl entscheidet die Sprache des Brow
   Übersetzung, bleibt der Satz deutsch, und `tests/i18n-catalogue.test.ts` schlägt fehl,
   bis sie ergänzt ist (`npx tsx scripts/i18n-keys.ts` listet, was fehlt).
 - **Sprache je Anfrage.** Auch der Server schreibt Sätze (Begründungen, Hinweise, Namen der
-  Einheiten). Der Browser schickt seine Sprache im Header `X-Formkurve-Lang` mit; sie gilt
+  Einheiten). Der Browser schickt seine Sprache im Header `X-Etmal-Lang` mit; sie gilt
   über `AsyncLocalStorage` für genau diese Anfrage (`server/lang.ts`, im Worker über das
   Flag `nodejs_als`). `tests/i18n-plan.test.ts` prüft, dass der Plan in beiden Sprachen
   dasselbe entscheidet.
@@ -353,7 +353,7 @@ als eigener Job und halten das Deployment nicht auf.
 
 ## Warteliste (Brevo)
 
-Solange die App im Einzelbetrieb läuft, zeigt `formkurve.org` Besuchern die Landingpage mit
+Solange die App im Einzelbetrieb läuft, zeigt `etmal.coach` Besuchern die Landingpage mit
 einer Warteliste; der Betreiber meldet sich unter `/login` an. Im Mehrbenutzer-Betrieb steht
 dort stattdessen „Mit intervals.icu anmelden".
 

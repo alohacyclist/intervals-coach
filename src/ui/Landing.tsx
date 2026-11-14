@@ -26,7 +26,7 @@ const EXAMPLE: readonly { readonly sport: string; readonly css: string; readonly
 ]
 
 const ExampleDay = () => (
-  <figure className="example" aria-label={t('Beispiel: so sieht ein Tag in Formkurve aus')}>
+  <figure className="example" aria-label={t('Beispiel: so sieht ein Tag in Etmal aus')}>
     <figcaption className="example__head">
       <span>{t('Heute · Beispiel')}</span>
       <span className="badge badge--key">{t('Qualitätstag')}</span>
@@ -120,7 +120,7 @@ const Waitlist = () => {
   return (
     <form className="waitlist" onSubmit={(event) => void submit(event)}>
       <label className="waitlist__field">
-        <span>{t('Sag mir Bescheid, wenn Formkurve offen ist')}</span>
+        <span>{t('Sag mir Bescheid, wenn Etmal offen ist')}</span>
         <div className="waitlist__row">
           <input
             type="email"
@@ -189,17 +189,17 @@ const SignUp = ({ error }: { readonly error: string | null }) => {
 export const Landing = ({ mode, error, confirmed = false }: Props) => (
   <div className="landing">
     <header className="landing__hero">
-      <p className="landing__eyebrow">{t('Formkurve')}</p>
+      <p className="landing__eyebrow">{t('Etmal')}</p>
       <h1>{t('Wahl statt Plan: Du entscheidest spontan, der Trainingsreiz stimmt trotzdem.')}</h1>
       <p className="landing__lead">
-        {t('Formkurve liest deine Einheiten und Erholungswerte aus intervals.icu und schlägt jeden Tag eine Einheit für ')}<em>{t('jede')}</em>{t(' deiner Sportarten vor – Rad, Laufen, Schwimmen –, jeweils komplett und als Kurzfassung. Verpasst du einen Tag, verschiebt sich der Plan, statt zu brechen.')}
+        {t('Etmal liest deine Einheiten und Erholungswerte aus intervals.icu und schlägt jeden Tag eine Einheit für ')}<em>{t('jede')}</em>{t(' deiner Sportarten vor – Rad, Laufen, Schwimmen –, jeweils komplett und als Kurzfassung. Verpasst du einen Tag, verschiebt sich der Plan, statt zu brechen.')}
       </p>
 
       <ExampleDay />
 
       {confirmed && (
         <p className="waitlist__done" role="status">
-          <strong>{t('Bestätigt.')}</strong>{t(' Du stehst auf der Liste und hörst von uns, sobald Formkurve offen ist.')}
+          <strong>{t('Bestätigt.')}</strong>{t(' Du stehst auf der Liste und hörst von uns, sobald Etmal offen ist.')}
         </p>
       )}
       {mode === 'waitlist' ? !confirmed && <Waitlist /> : <SignUp error={error} />}
@@ -220,7 +220,7 @@ export const Landing = ({ mode, error, confirmed = false }: Props) => (
     <section className="landing__section">
       <h2>{t('Warum eine Einheit pro Sportart?')}</h2>
       <p>
-        {t('Weil Zeit der eigentliche Engpass ist. Mal passt die Rolle, mal sind die Laufschuhe schneller angezogen, mal bleiben nur 30 Minuten. Alle Vorschläge eines Tages setzen denselben Trainingsreiz – welche Sportart und welche Länge du wählst, ändert den Plan nicht, nur den Weg dahin. Und fällt ein Tag aus, rechnet Formkurve am nächsten Morgen einfach mit dem, was wirklich passiert ist.')}
+        {t('Weil Zeit der eigentliche Engpass ist. Mal passt die Rolle, mal sind die Laufschuhe schneller angezogen, mal bleiben nur 30 Minuten. Alle Vorschläge eines Tages setzen denselben Trainingsreiz – welche Sportart und welche Länge du wählst, ändert den Plan nicht, nur den Weg dahin. Und fällt ein Tag aus, rechnet Etmal am nächsten Morgen einfach mit dem, was wirklich passiert ist.')}
       </p>
     </section>
 
@@ -257,7 +257,7 @@ export const Landing = ({ mode, error, confirmed = false }: Props) => (
     <section className="landing__section landing__section--muted">
       <h2>{t('Deine Daten')}</h2>
       <p>
-        {t('Die Anmeldung läuft über intervals.icu. Formkurve fragt vier Berechtigungen an: Aktivitäten lesen, Erholungswerte lesen, geplante Einheiten in deinen Kalender schreiben und Einstellungen ändern. Über die Einstellungen liest Formkurve deine Schwellenwerte und verbundenen Geräte; ändern tut es sie nur, wenn du es anklickst. Kein Zugriff auf dein Passwort, und Formkurve löscht nichts. Du kannst die Freigabe jederzeit in deinen intervals.icu-Einstellungen widerrufen.')}
+        {t('Die Anmeldung läuft über intervals.icu. Etmal fragt vier Berechtigungen an: Aktivitäten lesen, Erholungswerte lesen, geplante Einheiten in deinen Kalender schreiben und Einstellungen ändern. Über die Einstellungen liest Etmal deine Schwellenwerte und verbundenen Geräte; ändern tut es sie nur, wenn du es anklickst. Kein Zugriff auf dein Passwort, und Etmal löscht nichts. Du kannst die Freigabe jederzeit in deinen intervals.icu-Einstellungen widerrufen.')}
       </p>
       <p className="landing__legal">
         <a href="/datenschutz">{t('Datenschutz')}</a> · <a href="/impressum">{t('Impressum')}</a>

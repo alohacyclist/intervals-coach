@@ -1,4 +1,4 @@
-# Formkurve
+# Etmal
 
 A training planner for endurance athletes. It reads the last months of training and
 wellness data from [intervals.icu](https://intervals.icu) and plans the next three days
@@ -78,7 +78,7 @@ multi-user setup are described in the full documentation (German):
 fictional athlete, without intervals.icu and without any real data. Every visitor gets
 their own sandbox that expires after two hours. Details (German): [docs/demo.md](docs/demo.md).
 
-**Try it: [demo.formkurve.org](https://demo.formkurve.org/)** (password on request).
+**Try it: [demo.etmal.coach](https://demo.etmal.coach/)** (password on request).
 
 
 ## What mattered to me

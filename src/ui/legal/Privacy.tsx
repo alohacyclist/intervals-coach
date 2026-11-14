@@ -12,7 +12,7 @@ export const Privacy = () => (
     )}
 
     <p>
-      Formkurve verarbeitet Gesundheitsdaten. Diese Erklärung sagt in einfacher Sprache, was
+      Etmal verarbeitet Gesundheitsdaten. Diese Erklärung sagt in einfacher Sprache, was
       damit passiert, warum, wie lange und wie du es wieder rückgängig machst.
     </p>
 
@@ -134,7 +134,7 @@ export const Privacy = () => (
     <h2>Warteliste</h2>
     <p>
       Wenn du dich auf der Startseite für die Warteliste einträgst, verarbeiten wir deine
-      E-Mail-Adresse, um dich einmal zu benachrichtigen, sobald Formkurve für alle offen ist.
+      E-Mail-Adresse, um dich einmal zu benachrichtigen, sobald Etmal für alle offen ist.
       Rechtsgrundlage ist deine Einwilligung nach <strong>Art. 6 Abs. 1 lit. a DSGVO</strong>. Sie
       wird erst wirksam, wenn du den Link in der Bestätigungsmail anklickst (Double-Opt-In); dabei
       werden Zeitpunkt und IP-Adresse der Anmeldung und der Bestätigung als Nachweis gespeichert.
@@ -145,7 +145,7 @@ export const Privacy = () => (
       die Mails verschickt. Die Daten bleiben in der EU. Jede Mail enthält einen Link zum Abmelden;
       du kannst die Einwilligung auch jederzeit per Mail an{' '}
       <a href={`mailto:${OPERATOR.email}`}>{OPERATOR.email}</a> widerrufen. Gelöscht wird deine
-      Adresse, sobald du dich abmeldest, spätestens aber sechs Monate nach dem Start von Formkurve.
+      Adresse, sobald du dich abmeldest, spätestens aber sechs Monate nach dem Start von Etmal.
     </p>
 
     <h2>Empfänger</h2>

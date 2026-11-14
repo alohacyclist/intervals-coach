@@ -234,8 +234,8 @@ export const EN: Readonly<Record<string, string>> = {
     "{0} in {1} weeks = {2} s/week needed (realistic ~{3} s/week).{4}",
   "(Rampe)": "(ramp)",
   "{0} @ Pause am Rand": "{0} @ rest at the wall",
-  "{0}\n\n{1}\n\nWarum heute: {2}\n\n(automatisch erstellt von Formkurve)":
-    "{0}\n\n{1}\n\nWhy today: {2}\n\n(created automatically by Formkurve)",
+  "{0}\n\n{1}\n\nWarum heute: {2}\n\n(automatisch erstellt von Etmal)":
+    "{0}\n\n{1}\n\nWhy today: {2}\n\n(created automatically by Etmal)",
   "{0}.–{1}. min": "min {0}–{1}",
   "{0} und {1} weitere": "{0} and {1} more",
   "zu hoch für die Leistung": "too high for the power",
@@ -260,8 +260,8 @@ export const EN: Readonly<Record<string, string>> = {
     "Nothing can be estimated from that — heart rate is hidden for this session.",
   "Zu wenig saubere Messung für eine Schätzung — der Puls ist dort ausgeblendet.":
     "Too few clean readings for an estimate — heart rate is hidden there.",
-  "Puls von Formkurve korrigiert: {0} min ({1}) passten nicht zur Arbeit":
-    "Heart rate corrected by Formkurve: {0} min ({1}) did not match the work",
+  "Puls von Etmal korrigiert: {0} min ({1}) passten nicht zur Arbeit":
+    "Heart rate corrected by Etmal: {0} min ({1}) did not match the work",
   "und sind aus der sauberen Messung geschätzt.": "and are estimated from the clean readings.",
   "Ø aufgezeichnet {0} bpm, korrigiert {1} bpm.": "Avg recorded {0} bpm, corrected {1} bpm.",
   "Einfahren": "Warm-up",
@@ -557,8 +557,8 @@ export const EN: Readonly<Record<string, string>> = {
   "Einen Moment…": "One moment…",
   "Schwelle 4 × 6′": "Threshold 4 × 6′",
   "Sweetspot 2 × 10′ · Kurzfassung": "Sweetspot 2 × 10′ · short version",
-  "Beispiel: so sieht ein Tag in Formkurve aus":
-    "Example: this is what a day in Formkurve looks like",
+  "Beispiel: so sieht ein Tag in Etmal aus":
+    "Example: this is what a day in Etmal looks like",
   "Heute · Beispiel": "Today · example",
   "Qualitätstag": "Quality day",
   "oder": "or",
@@ -595,7 +595,7 @@ export const EN: Readonly<Record<string, string>> = {
   "Fast geschafft.": "Almost there.",
   "Wir haben dir eine Mail geschickt — erst mit dem Klick darin stehst du auf der Liste.":
     "We have sent you an email — only the click in it puts you on the list.",
-  "Sag mir Bescheid, wenn Formkurve offen ist": "Tell me when Formkurve opens",
+  "Sag mir Bescheid, wenn Etmal offen ist": "Tell me when Etmal opens",
   "deine@mail.de": "you@mail.com",
   "Eintragen": "Enter",
   "Website": "Website",
@@ -607,21 +607,21 @@ export const EN: Readonly<Record<string, string>> = {
   "Mit intervals.icu anmelden": "Sign in with intervals.icu",
   "Kostenlos in der Beta. Du brauchst ein intervals.icu-Konto, fürs Rad einen Wattmesser.":
     "Free during the beta. You need an intervals.icu account, and a power meter for the bike.",
-  "Formkurve": "Formkurve",
+  "Etmal": "Etmal",
   "Wahl statt Plan: Du entscheidest spontan, der Trainingsreiz stimmt trotzdem.":
     "Choice instead of a plan: you decide on the spot, and the training stimulus is still right.",
-  "Formkurve liest deine Einheiten und Erholungswerte aus intervals.icu und schlägt jeden Tag eine Einheit für":
-    "Formkurve reads your sessions and recovery values from intervals.icu and proposes one session a day for",
+  "Etmal liest deine Einheiten und Erholungswerte aus intervals.icu und schlägt jeden Tag eine Einheit für":
+    "Etmal reads your sessions and recovery values from intervals.icu and proposes one session a day for",
   "jede": "each",
   "deiner Sportarten vor – Rad, Laufen, Schwimmen –, jeweils komplett und als Kurzfassung. Verpasst du einen Tag, verschiebt sich der Plan, statt zu brechen.":
     "of your sports – bike, run, swim – each complete and as a short version. Miss a day and the plan shifts instead of breaking.",
   "Bestätigt.": "Confirmed.",
-  "Du stehst auf der Liste und hörst von uns, sobald Formkurve offen ist.":
-    "You are on the list and will hear from us as soon as Formkurve opens.",
+  "Du stehst auf der Liste und hörst von uns, sobald Etmal offen ist.":
+    "You are on the list and will hear from us as soon as Etmal opens.",
   "So sieht es aus": "What it looks like",
   "Warum eine Einheit pro Sportart?": "Why one session per sport?",
-  "Weil Zeit der eigentliche Engpass ist. Mal passt die Rolle, mal sind die Laufschuhe schneller angezogen, mal bleiben nur 30 Minuten. Alle Vorschläge eines Tages setzen denselben Trainingsreiz – welche Sportart und welche Länge du wählst, ändert den Plan nicht, nur den Weg dahin. Und fällt ein Tag aus, rechnet Formkurve am nächsten Morgen einfach mit dem, was wirklich passiert ist.":
-    "Because time is the real bottleneck. Sometimes the trainer fits, sometimes the running shoes are on faster, sometimes only 30 minutes are left. All of a day's proposals set the same training stimulus – which sport and which length you choose does not change the plan, only the way there. And if a day falls through, Formkurve simply works the next morning with what really happened.",
+  "Weil Zeit der eigentliche Engpass ist. Mal passt die Rolle, mal sind die Laufschuhe schneller angezogen, mal bleiben nur 30 Minuten. Alle Vorschläge eines Tages setzen denselben Trainingsreiz – welche Sportart und welche Länge du wählst, ändert den Plan nicht, nur den Weg dahin. Und fällt ein Tag aus, rechnet Etmal am nächsten Morgen einfach mit dem, was wirklich passiert ist.":
+    "Because time is the real bottleneck. Sometimes the trainer fits, sometimes the running shoes are on faster, sometimes only 30 minutes are left. All of a day's proposals set the same training stimulus – which sport and which length you choose does not change the plan, only the way there. And if a day falls through, Etmal simply works the next morning with what really happened.",
   "So läuft es": "How it works",
   "Was der Plan berücksichtigt": "What the plan takes into account",
   "Fitness, Ermüdung und Form aus all deinen Einheiten – Rad, Laufen und Schwimmen":
@@ -637,8 +637,8 @@ export const EN: Readonly<Record<string, string>> = {
   "Vorgaben in Watt fürs Rad, als Pace fürs Laufen und pro 100 m fürs Schwimmen. Ohne Wattmesser oder Smart-Trainer lässt sich der Radplan noch nicht sinnvoll fahren.":
     "Targets in watts for the bike, as pace for running and per 100 m for swimming. Without a power meter or smart trainer the bike plan cannot yet be ridden sensibly.",
   "Deine Daten": "Your data",
-  "Die Anmeldung läuft über intervals.icu. Formkurve fragt vier Berechtigungen an: Aktivitäten lesen, Erholungswerte lesen, geplante Einheiten in deinen Kalender schreiben und Einstellungen ändern. Über die Einstellungen liest Formkurve deine Schwellenwerte und verbundenen Geräte; ändern tut es sie nur, wenn du es anklickst. Kein Zugriff auf dein Passwort, und Formkurve löscht nichts. Du kannst die Freigabe jederzeit in deinen intervals.icu-Einstellungen widerrufen.":
-    "Sign-in runs through intervals.icu. Formkurve asks for four permissions: read activities, read recovery values, write planned sessions to your calendar and change settings. Through the settings Formkurve reads your thresholds and connected devices; it changes them only when you click to. No access to your password, and Formkurve deletes nothing. You can withdraw the permission at any time in your intervals.icu settings.",
+  "Die Anmeldung läuft über intervals.icu. Etmal fragt vier Berechtigungen an: Aktivitäten lesen, Erholungswerte lesen, geplante Einheiten in deinen Kalender schreiben und Einstellungen ändern. Über die Einstellungen liest Etmal deine Schwellenwerte und verbundenen Geräte; ändern tut es sie nur, wenn du es anklickst. Kein Zugriff auf dein Passwort, und Etmal löscht nichts. Du kannst die Freigabe jederzeit in deinen intervals.icu-Einstellungen widerrufen.":
+    "Sign-in runs through intervals.icu. Etmal asks for four permissions: read activities, read recovery values, write planned sessions to your calendar and change settings. Through the settings Etmal reads your thresholds and connected devices; it changes them only when you click to. No access to your password, and Etmal deletes nothing. You can withdraw the permission at any time in your intervals.icu settings.",
   "Datenschutz": "Privacy",
   "Impressum": "Imprint",
   "Kein konkretes Ziel – fit bleiben": "No specific goal – stay fit",
@@ -740,8 +740,8 @@ export const EN: Readonly<Record<string, string>> = {
   "Tippe eine Sportart an, wenn du trotzdem los willst.": "Tap a sport if you want to go anyway.",
   "Löschen fehlgeschlagen": "Deleting failed",
   "Konto": "Account",
-  "Gelöscht werden dein Zugangs-Token, deine Ziele und Einstellungen sowie das Protokoll deiner Krafteinheiten, und Formkurve gibt die Freigabe bei intervals.icu zurück. Deine Daten bei intervals.icu bleiben unberührt — auch bereits in den Kalender geschriebene Einheiten. Das lässt sich nicht rückgängig machen.":
-    "Deleted are your access token, your goals and settings and the log of your strength sessions, and Formkurve returns its permission at intervals.icu. Your data at intervals.icu stays untouched — including sessions already written to the calendar. This cannot be undone.",
+  "Gelöscht werden dein Zugangs-Token, deine Ziele und Einstellungen sowie das Protokoll deiner Krafteinheiten, und Etmal gibt die Freigabe bei intervals.icu zurück. Deine Daten bei intervals.icu bleiben unberührt — auch bereits in den Kalender geschriebene Einheiten. Das lässt sich nicht rückgängig machen.":
+    "Deleted are your access token, your goals and settings and the log of your strength sessions, and Etmal returns its permission at intervals.icu. Your data at intervals.icu stays untouched — including sessions already written to the calendar. This cannot be undone.",
   "Löscht…": "Deleting…",
   "Endgültig löschen": "Delete for good",
   "Löscht alles, was diese App über dich gespeichert hat, und widerruft damit deine Einwilligung. Ohne Löschung geschieht das automatisch zwölf Monate nach deinem letzten Besuch.":
@@ -1089,8 +1089,8 @@ export const EN: Readonly<Record<string, string>> = {
   "FTP-Ziel in Watt, z. B. 300": "FTP goal in watts, e.g. 300",
   "Bitte die Distanz in {0} eintragen": "Please enter the distance in {0}",
   "{0} {1} in {2}": "{0} {1} in {2}",
-  "Geplant und ausgewertet mit Formkurve · formkurve.org":
-    "Planned and analysed with Formkurve · formkurve.org",
+  "Geplant und ausgewertet mit Etmal · etmal.coach":
+    "Planned and analysed with Etmal · etmal.coach",
   "IM ZIEL": "ON TARGET",
   "Dieser Browser kann kein Bild zeichnen": "This browser cannot draw an image",
   "Bild konnte nicht erzeugt werden": "The image could not be created",
