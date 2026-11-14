@@ -8,11 +8,15 @@ import { pick, t } from './lang.ts'
  */
 
 /** Marks the paragraph as this app's, so a second run replaces it instead of adding another. */
-export const SIGNATURE = 'geplant und ausgewertet mit Formkurve'
+export const SIGNATURE = 'geplant und ausgewertet mit Etmal'
 /** The same line for an athlete who reads English. */
-const SIGNATURE_EN = 'planned and analysed with Formkurve'
-/** Written before the app was named Formkurve; still this app's paragraph to replace. */
-const EARLIER_SIGNATURES = ['geplant und ausgewertet mit intervals-coach']
+const SIGNATURE_EN = 'planned and analysed with Etmal'
+/** Written under the app's earlier names; still this app's paragraphs to replace. */
+const EARLIER_SIGNATURES = [
+  'geplant und ausgewertet mit Formkurve',
+  'planned and analysed with Formkurve',
+  'geplant und ausgewertet mit intervals-coach',
+]
 /** Whatever language a paragraph was written in, it is this app's to replace. */
 const isOurs = (paragraph: string): boolean =>
   [SIGNATURE, SIGNATURE_EN, ...EARLIER_SIGNATURES].some((signature) => paragraph.includes(signature))

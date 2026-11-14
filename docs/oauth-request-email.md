@@ -7,8 +7,8 @@ are available right away. Use the text below as the form's content, and send it 
 email only if the form has no room for it
 ([guide, post 1](https://forum.intervals.icu/t/intervals-icu-oauth-support/2759)).
 
-Before sending: open `https://formkurve.org/logo.png` (must load, square, ≥128 px — the
-source is 512 × 512) and `https://formkurve.org/datenschutz` (must carry real contact
+Before sending: open `https://etmal.coach/logo.png` (must load, square, ≥128 px — the
+source is 512 × 512) and `https://etmal.coach/datenschutz` (must carry real contact
 details, not the draft placeholders). Attach two or three screenshots made from demo
 data, never from a real account: the site sits behind a password until the OAuth client
 exists, so they are the only way David can see the app.
@@ -16,7 +16,7 @@ exists, so they are the only way David can see the app.
 ---
 
 **To:** david@intervals.icu
-**Subject:** OAuth application request — Formkurve
+**Subject:** OAuth application request — Etmal
 
 Hi David,
 
@@ -25,7 +25,7 @@ details from the API guide are below; a few screenshots made with demo data are
 attached, since the site is behind a password until OAuth is in place.
 
 **App name**
-Formkurve
+Etmal
 
 **Description**
 A training planner for athletes whose time is short and unpredictable. Each morning it
@@ -46,16 +46,16 @@ and the pairing between a planned workout and the activity that fulfilled it is 
 so progression follows what was actually completed.
 
 **Website URL**
-https://formkurve.org
+https://etmal.coach
 
 **Logo image URL**
-https://formkurve.org/logo.png
+https://etmal.coach/logo.png
 
 **Privacy policy URL**
-https://formkurve.org/datenschutz
+https://etmal.coach/datenschutz
 
 **Redirect URIs**
-- https://formkurve.org/auth/callback
+- https://etmal.coach/auth/callback
 - http://localhost:8787/auth/callback
 
 **Scopes**
@@ -82,7 +82,7 @@ https://formkurve.org/datenschutz
     `SETTINGS:READ` only.
 
 No write access to activities or wellness, and the app never deletes training data. Its only
-DELETE is `/api/v1/disconnect-app`, called when an athlete deletes their Formkurve account, as
+DELETE is `/api/v1/disconnect-app`, called when an athlete deletes their Etmal account, as
 your guide asks.
 
 **Scale and business model**

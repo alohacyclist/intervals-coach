@@ -62,7 +62,7 @@ describe('the landing page before the app is open to everyone', () => {
 
 describe('the reason a sign-in page gives', () => {
   it('says the session ran out when a view sent the athlete back after a 401', () => {
-    const reason = new URL(EXPIRED_SESSION_URL, 'https://formkurve.org').searchParams.get('fehler')
+    const reason = new URL(EXPIRED_SESSION_URL, 'https://etmal.coach').searchParams.get('fehler')
     expect(reason).toBe('abgelaufen')
     expect(landingError('abgelaufen')).toBe('Deine Anmeldung ist abgelaufen. Bitte melde dich neu an.')
     expect(renderToStaticMarkup(createElement(Landing, { mode: 'signup', error: 'abgelaufen' }))).toContain(

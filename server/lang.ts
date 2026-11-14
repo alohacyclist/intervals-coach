@@ -14,7 +14,7 @@ const current = new AsyncLocalStorage<Lang>()
 setLangResolver(() => current.getStore() ?? 'de')
 
 /** The header the app sends with every request; anything else leaves the answer German. */
-export const LANG_HEADER = 'X-Formkurve-Lang'
+export const LANG_HEADER = 'X-Etmal-Lang'
 
 export const withLang = <T>(language: Lang, work: () => T): T => current.run(language, work)
 

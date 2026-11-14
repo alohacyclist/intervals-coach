@@ -8,7 +8,7 @@ import { cacheVersion, precacheList } from './src/sw/strategy.ts'
  * hash, so the list can only be known once the bundle exists.
  */
 const serviceWorkerManifest = (): Plugin => ({
-  name: 'formkurve-sw-manifest',
+  name: 'etmal-sw-manifest',
   apply: 'build',
   generateBundle(_options, bundle) {
     const worker = bundle['sw.js']

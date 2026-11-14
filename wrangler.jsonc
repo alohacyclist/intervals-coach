@@ -45,6 +45,7 @@
   // refuses to start if intervals.icu or Strava credentials are set. See docs/demo.md.
   "env": {
     "demo": {
+      // Kept from the earlier name: demo.etmal.coach and the demo KV namespace hang on this Worker.
       "name": "formkurve-demo",
       "workers_dev": true,
       "vars": { "DEMO_MODE": "on" },
