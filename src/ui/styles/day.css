@@ -302,13 +302,50 @@
   width: 100%;
   height: 52px;
 }
-.profile__scale {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  margin: 0;
-  font-size: 12px;
+/* Numbers are not part of the stretched drawing: they are laid over it, placed in
+   percent of its width and height, so they keep their shape at any width. */
+.profile__stage {
+  position: relative;
+  --plot-height: 52px;
+  /* Room for the number on the tallest block. */
+  padding-top: 14px;
+}
+.profile__stage .profile__plot {
+  height: var(--plot-height);
+}
+.profile__target {
+  position: absolute;
+  transform: translateX(-50%);
+  /* The stage's bottom is the baseline; the padding above is not part of the plot. */
+  margin-bottom: 2px;
+  font-size: 11.5px;
+  line-height: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+  pointer-events: none;
+}
+.profile__axis {
+  position: relative;
+  height: 15px;
+  margin: -2px 0 0;
+  font-size: 11.5px;
+  line-height: 15px;
   color: var(--faint);
+  white-space: nowrap;
+}
+.profile__axis span {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+}
+.profile__axis span:first-child {
+  transform: none;
+}
+.profile__axis .profile__end {
+  left: auto;
+  right: 0;
+  transform: none;
 }
 
 /* The shape leads; the table and the coaching prose sit one line behind it. */

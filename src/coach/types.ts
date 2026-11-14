@@ -536,6 +536,8 @@ export type ProfileSegment = {
   readonly percent: number
   readonly intensity: IntensityClass
   readonly label: string | null
+  /** The watts or pace to hold, as printed on the block: "277–289 W"; null where there is no one value. */
+  readonly target: string | null
 }
 
 export type SessionVariant = {
@@ -767,7 +769,7 @@ export type ExecutionTrace = {
 }
 
 /** A planned step as drawn in the execution strip. */
-export type ExecutionSegment = ProfileSegment & {
+export type ExecutionSegment = Omit<ProfileSegment, 'target'> & {
   readonly state: 'rest' | 'on' | 'off' | 'missing'
   /** Share of the planned duration actually ridden or run, 0 to 1. */
   readonly done: number
