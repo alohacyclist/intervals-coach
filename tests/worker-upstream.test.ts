@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { DEFAULT_CONFIG } from '../src/coach/config-schema.ts'
+import { defaultConfig } from '../src/coach/config-schema.ts'
 import { loadUser, saveUser } from '../worker/users.ts'
 import type { User } from '../worker/users.ts'
 import type { Bindings } from '../worker/bindings.ts'
@@ -42,7 +42,7 @@ const userOf = (athleteId: string, overrides: Partial<User['tokens']> = {}): Use
 
 const signedUp = async (env: Bindings, user: User): Promise<string> => {
   await saveUser(env.COACH_CONFIG, SESSION_SECRET, user)
-  await env.COACH_CONFIG.put(`config:${user.athleteId}`, JSON.stringify(DEFAULT_CONFIG))
+  await env.COACH_CONFIG.put(`config:${user.athleteId}`, JSON.stringify(defaultConfig()))
   return sessionFor(user.athleteId)
 }
 
@@ -157,7 +157,7 @@ describe('refreshing an access token', () => {
 describe('what reaches the browser when intervals.icu fails', () => {
   it('keeps the API key hint in single user mode, without the upstream body', async () => {
     const env = singleUserEnv(fakeKv())
-    await env.COACH_CONFIG.put('athlete-config', JSON.stringify(DEFAULT_CONFIG))
+    await env.COACH_CONFIG.put('athlete-config', JSON.stringify(defaultConfig()))
     const login = await call('/api/login', { method: 'POST', body: JSON.stringify({ passwort: 'ein-langes-testpasswort' }) }, env)
     const cookie = (login.headers.get('Set-Cookie') ?? '').split(';')[0] ?? ''
     stubUpstream({ api: () => new Response(SECRET_BODY, { status: 401 }) })

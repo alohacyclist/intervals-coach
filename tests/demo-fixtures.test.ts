@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { addDays, startOfWeek } from '../src/coach/dates.ts'
-import { DEFAULT_CONFIG, validateConfig } from '../src/coach/config-schema.ts'
+import { defaultConfig, validateConfig } from '../src/coach/config-schema.ts'
 import { isHardActivity } from '../src/coach/fitness.ts'
 import { DEMO_ATHLETE_ID, demoConfig, generateDemo, intervalsOf, streamsOf } from '../server/demo/fixtures.ts'
 import { demoData, fixtureSource } from '../server/demo/source.ts'
@@ -104,8 +104,8 @@ describe('demo fixtures', () => {
   it('carry an invented athlete with a valid configuration, unlike the operator defaults', () => {
     const config = demoConfig(TODAY)
     expect(validateConfig(config)).toEqual(config)
-    expect(config.profile).not.toEqual(DEFAULT_CONFIG.profile)
-    expect(config.goals.map((goal) => goal.id)).not.toEqual(DEFAULT_CONFIG.goals.map((goal) => goal.id))
+    expect(config.profile).not.toEqual(defaultConfig().profile)
+    expect(config.goals.map((goal) => goal.id)).not.toEqual(defaultConfig().goals.map((goal) => goal.id))
     expect(generateDemo(TODAY).activities.every((activity) => activity.source === 'DEMO')).toBe(true)
   })
 })

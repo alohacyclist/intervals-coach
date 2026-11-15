@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
-import { validateConfig, ValidationError, DEFAULT_CONFIG } from '../src/coach/config-schema.ts'
+import { describe, expect, it, vi } from 'vitest'
+import { validateConfig, ValidationError, defaultConfig } from '../src/coach/config-schema.ts'
 import { config } from './fixtures.ts'
 
 describe('config validation', () => {
@@ -16,14 +16,14 @@ describe('config validation', () => {
   })
 
   it('accepts the default configuration', () => {
-    expect(validateConfig(DEFAULT_CONFIG).profile.sports).toHaveLength(2)
+    expect(validateConfig(defaultConfig()).profile.sports).toHaveLength(2)
   })
 
   it('rejects a sport without a usable threshold', () => {
     const broken = {
-      ...DEFAULT_CONFIG,
+      ...defaultConfig(),
       profile: {
-        ...DEFAULT_CONFIG.profile,
+        ...defaultConfig().profile,
         sports: [{ sport: 'Ride', threshold: { metric: 'power', ftp: 0 } }],
       },
     }
@@ -31,15 +31,15 @@ describe('config validation', () => {
   })
 
   it('rejects a profile without any sport', () => {
-    const broken = { ...DEFAULT_CONFIG, profile: { ...DEFAULT_CONFIG.profile, sports: [] } }
+    const broken = { ...defaultConfig(), profile: { ...defaultConfig().profile, sports: [] } }
     expect(() => validateConfig(broken)).toThrow(/mindestens eine Sportart/)
   })
 
   it('rejects the same sport twice', () => {
     const broken = {
-      ...DEFAULT_CONFIG,
+      ...defaultConfig(),
       profile: {
-        ...DEFAULT_CONFIG.profile,
+        ...defaultConfig().profile,
         sports: [
           { sport: 'Run', threshold: { metric: 'pace', thresholdSecPerKm: 240 } },
           { sport: 'Run', threshold: { metric: 'pace', thresholdSecPerKm: 250 } },
@@ -51,7 +51,7 @@ describe('config validation', () => {
 
   it('migrates a legacy flat profile into per-sport thresholds', () => {
     const legacy = {
-      ...DEFAULT_CONFIG,
+      ...defaultConfig(),
       profile: {
         weightKg: 71,
         maxHr: null,
@@ -69,7 +69,7 @@ describe('config validation', () => {
   })
 
   it('accepts a configuration without goals', () => {
-    expect(validateConfig({ ...DEFAULT_CONFIG, goals: [] }).goals).toEqual([])
+    expect(validateConfig({ ...defaultConfig(), goals: [] }).goals).toEqual([])
   })
 
   it('saves a swim goal, which onboarding offers', () => {
@@ -83,51 +83,51 @@ describe('config validation', () => {
       distanceKm: 1.5,
       priority: 'A',
     }
-    expect(validateConfig({ ...DEFAULT_CONFIG, goals: [swim] }).goals[0]?.sport).toBe('Swim')
+    expect(validateConfig({ ...defaultConfig(), goals: [swim] }).goals[0]?.sport).toBe('Swim')
   })
 
   it('rejects a race goal without a distance instead of assuming 10 km', () => {
-    const race = { ...DEFAULT_CONFIG.goals[1]!, sport: 'Swim', distanceKm: undefined }
-    expect(() => validateConfig({ ...DEFAULT_CONFIG, goals: [race] })).toThrow(/distanceKm/)
-    expect(() => validateConfig({ ...DEFAULT_CONFIG, goals: [{ ...race, distanceKm: 0 }] })).toThrow(/distanceKm/)
+    const race = { ...defaultConfig().goals[1]!, sport: 'Swim', distanceKm: undefined }
+    expect(() => validateConfig({ ...defaultConfig(), goals: [race] })).toThrow(/distanceKm/)
+    expect(() => validateConfig({ ...defaultConfig(), goals: [{ ...race, distanceKm: 0 }] })).toThrow(/distanceKm/)
   })
 
   it('keeps a stored running goal from before distances were required at the 10 km it was shown as', () => {
-    const stored = { ...DEFAULT_CONFIG.goals[1]!, distanceKm: undefined }
-    expect(validateConfig({ ...DEFAULT_CONFIG, goals: [stored] }).goals[0]?.distanceKm).toBe(10)
+    const stored = { ...defaultConfig().goals[1]!, distanceKm: undefined }
+    expect(validateConfig({ ...defaultConfig(), goals: [stored] }).goals[0]?.distanceKm).toBe(10)
   })
 
   it('rejects an FTP goal for a sport without FTP', () => {
-    const broken = { ...DEFAULT_CONFIG.goals[0]!, sport: 'Run' }
-    expect(() => validateConfig({ ...DEFAULT_CONFIG, goals: [broken] })).toThrow(/FTP-Ziel/)
+    const broken = { ...defaultConfig().goals[0]!, sport: 'Run' }
+    expect(() => validateConfig({ ...defaultConfig(), goals: [broken] })).toThrow(/FTP-Ziel/)
   })
 
   it('rejects a malformed target date', () => {
     const broken = {
-      ...DEFAULT_CONFIG,
-      goals: [{ ...DEFAULT_CONFIG.goals[0]!, targetDate: '30.11.2026' }],
+      ...defaultConfig(),
+      goals: [{ ...defaultConfig().goals[0]!, targetDate: '30.11.2026' }],
     }
     expect(() => validateConfig(broken)).toThrow(/YYYY-MM-DD/)
   })
 
   it('drops an optional target date instead of failing', () => {
     const open = {
-      ...DEFAULT_CONFIG,
-      goals: [{ ...DEFAULT_CONFIG.goals[0]!, targetDate: undefined }],
+      ...defaultConfig(),
+      goals: [{ ...defaultConfig().goals[0]!, targetDate: undefined }],
     }
     expect(validateConfig(open).goals[0]?.targetDate).toBeUndefined()
   })
 
   it('rejects a weekly session range with min above max', () => {
     const broken = {
-      ...DEFAULT_CONFIG,
-      profile: { ...DEFAULT_CONFIG.profile, weeklySessions: { min: 5, max: 3 } },
+      ...defaultConfig(),
+      profile: { ...defaultConfig().profile, weeklySessions: { min: 5, max: 3 } },
     }
     expect(() => validateConfig(broken)).toThrow(/min darf nicht über max/)
   })
 
   it('rejects a missing weekly session range', () => {
-    const broken = { ...DEFAULT_CONFIG, profile: { ...DEFAULT_CONFIG.profile, weeklySessions: {} } }
+    const broken = { ...defaultConfig(), profile: { ...defaultConfig().profile, weeklySessions: {} } }
     expect(() => validateConfig(broken)).toThrow(ValidationError)
   })
 
@@ -144,30 +144,30 @@ describe('config validation', () => {
 describe('configuration migration', () => {
   it('migrates a legacy weeklySessions number into a range', () => {
     const legacy = {
-      ...DEFAULT_CONFIG,
-      profile: { ...DEFAULT_CONFIG.profile, weeklySessions: 3 },
+      ...defaultConfig(),
+      profile: { ...defaultConfig().profile, weeklySessions: 3 },
     }
     expect(validateConfig(legacy).profile.weeklySessions).toEqual({ min: 2, max: 3 })
   })
 
   it('never migrates below one session', () => {
     const legacy = {
-      ...DEFAULT_CONFIG,
-      profile: { ...DEFAULT_CONFIG.profile, weeklySessions: 1 },
+      ...defaultConfig(),
+      profile: { ...defaultConfig().profile, weeklySessions: 1 },
     }
     expect(validateConfig(legacy).profile.weeklySessions).toEqual({ min: 1, max: 1 })
   })
 
   it('leaves a range untouched', () => {
     const current = {
-      ...DEFAULT_CONFIG,
-      profile: { ...DEFAULT_CONFIG.profile, weeklySessions: { min: 3, max: 5 } },
+      ...defaultConfig(),
+      profile: { ...defaultConfig().profile, weeklySessions: { min: 3, max: 5 } },
     }
     expect(validateConfig(current).profile.weeklySessions).toEqual({ min: 3, max: 5 })
   })
 
   it('still rejects a zero or negative legacy value', () => {
-    const broken = { ...DEFAULT_CONFIG, profile: { ...DEFAULT_CONFIG.profile, weeklySessions: 0 } }
+    const broken = { ...defaultConfig(), profile: { ...defaultConfig().profile, weeklySessions: 0 } }
     expect(() => validateConfig(broken)).toThrow(ValidationError)
   })
 })
@@ -195,7 +195,7 @@ describe('migrating the time budget', () => {
       { date: '2026-02-30', format: 'ttt', laps: 1, route: null },
       { date: '2026-09-22', format: 'ttt', laps: 1, route: null },
     ]
-    expect(validateConfig({ ...DEFAULT_CONFIG, zrlRaces: races }).zrlRaces.map((race) => race.date)).toEqual([
+    expect(validateConfig({ ...defaultConfig(), zrlRaces: races }).zrlRaces.map((race) => race.date)).toEqual([
       '2026-09-22',
     ])
   })
@@ -203,10 +203,10 @@ describe('migrating the time budget', () => {
 
 describe('FTP goal', () => {
   const withFtp = (ftp: number) => ({
-    ...DEFAULT_CONFIG,
+    ...defaultConfig(),
     profile: {
-      ...DEFAULT_CONFIG.profile,
-      sports: DEFAULT_CONFIG.profile.sports.map((setting) =>
+      ...defaultConfig().profile,
+      sports: defaultConfig().profile.sports.map((setting) =>
         setting.sport === 'Ride' ? { ...setting, threshold: { metric: 'power' as const, ftp } } : setting,
       ),
     },
@@ -218,8 +218,24 @@ describe('FTP goal', () => {
   })
 
   it('leaves a race time as the athlete entered it', () => {
-    const before = DEFAULT_CONFIG.goals.find((entry) => entry.kind === 'raceTime')
+    const before = defaultConfig().goals.find((entry) => entry.kind === 'raceTime')
     const after = validateConfig(withFtp(289)).goals.find((entry) => entry.kind === 'raceTime')
     expect(after?.currentValue).toBe(before?.currentValue)
+  })
+})
+
+describe('the starting config', () => {
+  /** Read at module load, a Cloudflare Worker's clock gave every new athlete 1 January 1970. */
+  it('starts the plan on the day it is asked for', () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    try {
+      vi.setSystemTime(new Date('2026-11-15T09:00:00Z'))
+      expect(defaultConfig().planStart).toBe('2026-11-15')
+      expect(validateConfig({ ...defaultConfig(), planStart: undefined }).planStart).toBe('2026-11-15')
+      vi.setSystemTime(new Date('2026-12-01T09:00:00Z'))
+      expect(defaultConfig().planStart).toBe('2026-12-01')
+    } finally {
+      vi.useRealTimers()
+    }
   })
 })

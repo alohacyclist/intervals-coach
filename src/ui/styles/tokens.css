@@ -253,7 +253,29 @@ select {
   padding: 7px 9px;
   font-family: var(--mono);
   font-size: 13px;
+  line-height: 1.25;
   width: 100%;
+}
+/*
+ * Safari on the iPhone draws a date field by its own rules: wider than its
+ * column, taller than the fields beside it, the date centred. In a two-column
+ * grid it ran into the next field. Same height, same alignment, never wider
+ * than its cell.
+ */
+input[type='date'],
+select {
+  min-width: 0;
+  height: calc(13px * 1.25 + 16px);
+}
+input[type='date']::-webkit-date-and-time-value {
+  margin: 0;
+  text-align: left;
+}
+@supports (-webkit-touch-callout: none) {
+  input[type='date'] {
+    -webkit-appearance: none;
+    appearance: none;
+  }
 }
 input:focus,
 select:focus {
