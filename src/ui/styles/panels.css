@@ -46,12 +46,21 @@
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 10px;
 }
+/* A cell may not grow past its column for content that will not shrink, a date field above all. */
+.grid > * {
+  min-width: 0;
+}
 .grid--goal {
   border-top: 1px solid var(--rule);
   padding-top: 12px;
 }
 .goal__taper {
   grid-column: 1 / -1;
+}
+/* On a row of its own, at its own size: beside the priority it grew to the height of the row. */
+.goal__remove {
+  grid-column: 1 / -1;
+  justify-self: start;
 }
 
 .goal {

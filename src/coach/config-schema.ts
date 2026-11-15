@@ -32,7 +32,7 @@ export class ValidationError extends Error {
   }
 }
 
-const DEFAULT_CONFIG: CoachConfig = {
+const STARTER_CONFIG: Omit<CoachConfig, 'planStart'> = {
   profile: {
     equipment: 'dumbbells',
     sports: [
@@ -74,8 +74,17 @@ const DEFAULT_CONFIG: CoachConfig = {
   zrlRaces: [],
   zrl: { enabled: false, taper: true },
   destinations: {},
-  planStart: new Date().toISOString().slice(0, 10),
 }
+
+/**
+ * Today, read when it is asked for. Read once at module load, a Cloudflare
+ * Worker gets the epoch — its clock stands still outside a request — and every
+ * new athlete started their plan on 1 January 1970.
+ */
+const todayIso = (): string => new Date().toISOString().slice(0, 10)
+
+/** The config a new athlete starts from, with the plan starting today. */
+export const defaultConfig = (): CoachConfig => ({ ...STARTER_CONFIG, planStart: todayIso() })
 
 /** Shape and calendar both: "2026-02-30" looks like a date and would break every weekday lookup. */
 export const isIsoDate = (value: unknown): value is string =>
@@ -102,7 +111,7 @@ const normaliseSessionMinutes = (profile: Record<string, unknown>): SessionMinut
     }
   }
   const legacy = Number(profile['maxSessionMinutes'])
-  if (!Number.isFinite(legacy) || legacy <= 0) return DEFAULT_CONFIG.profile.sessionMinutes
+  if (!Number.isFinite(legacy) || legacy <= 0) return STARTER_CONFIG.profile.sessionMinutes
   return { min: Math.max(30, Math.round(legacy * 0.7)), normal: legacy, max: legacy }
 }
 
@@ -493,7 +502,7 @@ export const validateConfig = (raw: unknown): CoachConfig => {
     zrlRaces: validateZrlRaces(input['zrlRaces']),
     zrl: validateZrlSettings(input['zrl'], validateZrlRaces(input['zrlRaces'])),
     destinations: validateDestinations(input['destinations']),
-    planStart: isIsoDate(input['planStart']) ? input['planStart'] : DEFAULT_CONFIG.planStart,
+    planStart: isIsoDate(input['planStart']) ? input['planStart'] : todayIso(),
     // Only once there is one, so a config without rides to estimate reads back as it was written.
     ...(Array.isArray(input['rideEstimates']) ? { rideEstimates: validateRideEstimates(input['rideEstimates']) } : {}),
     // Likewise only once a level was chosen.
@@ -520,4 +529,3 @@ export type ConfigStore = {
   readonly save: (config: CoachConfig) => Promise<CoachConfig>
 }
 
-export { DEFAULT_CONFIG }

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { DEFAULT_CONFIG } from '../src/coach/config-schema.ts'
+import { defaultConfig } from '../src/coach/config-schema.ts'
 import { loadUser } from '../worker/users.ts'
 import { loadLink } from '../worker/strava-store.ts'
 import { SESSION_SECRET, call, fakeKv, json, multiUserEnv, sessionFor } from './worker-fakes.ts'
@@ -54,7 +54,7 @@ describe('the intervals.icu sign-in callback', () => {
     stubUpstream()
     await callback(env)
     const firstConsent = (await loadUser(env.COACH_CONFIG, SESSION_SECRET, 'i42'))?.consentAt
-    await env.COACH_CONFIG.put('config:i42', JSON.stringify(DEFAULT_CONFIG))
+    await env.COACH_CONFIG.put('config:i42', JSON.stringify(defaultConfig()))
 
     const again = await callback(env)
     expect(again.headers.get('Location')).toBe('/app')

@@ -139,7 +139,7 @@ export const GoalEditor = ({ draft, onChange, errors, showMissing, profile, deta
         </label>
       )}
       {onRemove && (
-        <button type="button" onClick={onRemove}>
+        <button type="button" className="goal__remove" onClick={onRemove}>
           {t('Ziel entfernen')}
         </button>
       )}

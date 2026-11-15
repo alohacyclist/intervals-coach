@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { DEFAULT_CONFIG } from '../src/coach/config-schema.ts'
+import { defaultConfig } from '../src/coach/config-schema.ts'
 import { bypassingReads, fetchSportSettings, updateSportThreshold } from '../server/intervals.ts'
 import type { IntervalsAuth } from '../server/intervals.ts'
 import { TTL_SECONDS, responseCache } from '../worker/response-cache.ts'
@@ -112,7 +112,7 @@ describe('the plan with the cache in the Worker', () => {
       consentAt: '2026-09-01T00:00:00Z',
       lastSeenAt: new Date().toISOString(),
     })
-    await env.COACH_CONFIG.put('config:iA', JSON.stringify(DEFAULT_CONFIG))
+    await env.COACH_CONFIG.put('config:iA', JSON.stringify(defaultConfig()))
     return { env, cookie: await sessionFor('iA') }
   }
 

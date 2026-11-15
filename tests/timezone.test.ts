@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { DEFAULT_CONFIG } from '../src/coach/config-schema.ts'
+import { defaultConfig } from '../src/coach/config-schema.ts'
 import { localHour, localToday, validTimeZone } from '../server/routes.ts'
 import { httpSource } from '../server/source.ts'
 import { loadUser, saveUser } from '../worker/users.ts'
@@ -67,7 +67,7 @@ describe('the timezone from the intervals.icu profile', () => {
         lastSeenAt: new Date().toISOString(),
         ...(timezone ? { timezone } : {}),
       })
-      await env.COACH_CONFIG.put('config:i7', JSON.stringify(DEFAULT_CONFIG))
+      await env.COACH_CONFIG.put('config:i7', JSON.stringify(defaultConfig()))
       const plan = (await (await call('/api/plan', { headers: { Cookie: await sessionFor('i7') } }, env)).json()) as {
         days: { date: string }[]
       }
@@ -90,7 +90,7 @@ describe('the timezone from the intervals.icu profile', () => {
       const kv = fakeKv()
       const env = singleUserEnv(kv, { STRAVA_CLIENT_ID: '1', STRAVA_CLIENT_SECRET: 's' })
       const store = kvConfigStore(env.COACH_CONFIG)
-      await store.save({ ...DEFAULT_CONFIG, proposals: [{ date: '2026-09-24', recommended: 'x', templateIds: ['x'] }] })
+      await store.save({ ...defaultConfig(), proposals: [{ date: '2026-09-24', recommended: 'x', templateIds: ['x'] }] })
       await saveLink(env.COACH_CONFIG, PASSWORD, {
         subject: 'einzelbetrieb',
         stravaAthleteId: '1',
