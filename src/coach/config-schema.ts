@@ -249,6 +249,7 @@ const validateGoal = (raw: unknown, index: number, issues: string[]): Goal => {
     ...(positive(goal['distanceKm']) ? { distanceKm: Number(goal['distanceKm']) } : {}),
     ...(isIsoDate(goal['targetDate']) ? { targetDate: goal['targetDate'] } : {}),
     priority: goal['priority'] === 'B' ? 'B' : 'A',
+    ...(goal['taper'] === false ? { taper: false } : {}),
   }
 }
 

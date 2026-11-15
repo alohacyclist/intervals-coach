@@ -121,6 +121,12 @@ export type Goal = {
   /** ISO date (YYYY-MM-DD). Absent for open-ended goals. */
   readonly targetDate?: string
   readonly priority: 'A' | 'B'
+  /**
+   * Whether the days before it are kept fresh. Absent means yes. For a main goal
+   * that is the taper week in every sport; for a side goal, which gets no block
+   * of its own, the two days before the race stay easy in every sport.
+   */
+  readonly taper?: boolean
 }
 
 /** Why training is on hold. Each kind recovers differently — see coach/breaks.ts. */

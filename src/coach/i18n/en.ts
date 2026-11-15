@@ -1175,4 +1175,17 @@ export const EN: Readonly<Record<string, string>> = {
   "Zeichnet…": "Drawing…",
   "realistisch": "realistic",
   "ambitioniert": "ambitious",
+  "{0} — Wettkampftag. Heute zählt nur das Rennen.": "{0} — race day. Today only the race counts.",
+  "{0} — Wettkampftag.": "{0} — race day.",
+  "Morgen {0} — heute locker mit kurzen Steigerungen, in keiner Sportart etwas Hartes":
+    "{0} tomorrow — easy today with a few short strides, nothing hard in any sport",
+  "In zwei Tagen {0} — ab jetzt keine harte Einheit mehr, auch nicht in der anderen Sportart":
+    "{0} in two days — no more hard sessions from here, not in the other sport either",
+  "{0}Zielzeit {1}, aus deiner Form geschätzt {2}. Den Anfang bewusst nicht schneller als die Zielpace angehen.":
+    "{0}Target {1}, estimated from your form at {2}. Start no faster than target pace.",
+  "Vorbelastung vor dem Wettkampf": "Openers before the race",
+  "Kurz und locker, die Steigerungen nur so schnell wie das Renntempo. Danach sollen sich die Beine frisch anfühlen, nicht müde.":
+    "Short and easy, the strides no faster than race pace. Afterwards the legs should feel fresh, not tired.",
+  "Tapern: die Woche davor reduziert, in allen Sportarten": "Taper: the week before is reduced, in every sport",
+  "Tapern: die zwei Tage davor locker, in allen Sportarten": "Taper: the two days before are easy, in every sport",
 }
