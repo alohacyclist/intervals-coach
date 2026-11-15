@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { DEFAULT_CONFIG } from '../src/coach/config-schema.ts'
+import { defaultConfig } from '../src/coach/config-schema.ts'
 import { saveUser } from '../worker/users.ts'
 import type { User } from '../worker/users.ts'
 import { saveLink } from '../worker/strava-store.ts'
@@ -45,8 +45,8 @@ describe('two athletes on one deployment', () => {
     const { a, b } = await twoAthletes(env)
     stubIntervals()
 
-    expect((await putConfig(env, a, DEFAULT_CONFIG)).status).toBe(200)
-    expect((await putConfig(env, b, { ...DEFAULT_CONFIG, strengthLog: ['2026-09-01'] })).status).toBe(200)
+    expect((await putConfig(env, a, defaultConfig())).status).toBe(200)
+    expect((await putConfig(env, b, { ...defaultConfig(), strengthLog: ['2026-09-01'] })).status).toBe(200)
 
     const configOf = async (cookie: string) =>
       (await (await call('/api/config', { headers: { Cookie: cookie } }, env)).json()) as { strengthLog: string[] }
@@ -97,8 +97,8 @@ describe('deleting an account', () => {
     const env = multiUserEnv(kv, { STRAVA_CLIENT_ID: '1', STRAVA_CLIENT_SECRET: 's' })
     const { a, b } = await twoAthletes(env)
     const seen = stubIntervals()
-    await putConfig(env, a, DEFAULT_CONFIG)
-    await putConfig(env, b, DEFAULT_CONFIG)
+    await putConfig(env, a, defaultConfig())
+    await putConfig(env, b, defaultConfig())
     await saveLink(env.COACH_CONFIG, SESSION_SECRET, {
       subject: 'iA',
       stravaAthleteId: '9',

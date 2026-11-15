@@ -6,7 +6,7 @@ import { loadLink, saveLink } from '../worker/strava-store.ts'
 import { syncStrava } from '../worker/strava-cron.ts'
 import { kvConfigStore } from '../worker/config-store-kv.ts'
 import type { StravaLink } from '../worker/strava-store.ts'
-import { DEFAULT_CONFIG } from '../src/coach/config-schema.ts'
+import { defaultConfig } from '../src/coach/config-schema.ts'
 import { SIGNATURE } from '../src/coach/strava-summary.ts'
 
 type Stored = { readonly value: string; readonly options: KVPutOptions | undefined }
@@ -33,7 +33,7 @@ const PASSWORD = 'ein-langes-testpasswort'
 const SUBJECT = 'einzelbetrieb'
 
 /** The app proposed the ride for that day, so the cron has a reason to look. */
-const PROPOSED = { ...DEFAULT_CONFIG, proposals: [{ date: '2026-09-24', recommended: 'bike-thr-3x12', templateIds: ['bike-thr-3x12'] }] }
+const PROPOSED = { ...defaultConfig(), proposals: [{ date: '2026-09-24', recommended: 'bike-thr-3x12', templateIds: ['bike-thr-3x12'] }] }
 
 const setup = () => {
   const kv = fakeKv()
@@ -57,7 +57,7 @@ const signIn = async (env: Bindings): Promise<string> => {
   return (response.headers.get('Set-Cookie') ?? '').split(';')[0] ?? ''
 }
 
-const ftp = DEFAULT_CONFIG.profile.sports.find((setting) => setting.sport === 'Ride')?.threshold
+const ftp = defaultConfig().profile.sports.find((setting) => setting.sport === 'Ride')?.threshold
 const watts = (percent: number) => Math.round(((ftp?.metric === 'power' ? ftp.ftp : 250) * percent) / 100)
 
 const START = '2026-09-24T16:00:00Z'
@@ -409,7 +409,7 @@ describe('what the cron spends on intervals.icu', () => {
   it('asks nothing for an athlete the app proposed nothing to', async () => {
     atEvening()
     const { env, kv } = setup()
-    kv.store.set('athlete-config', { value: JSON.stringify(DEFAULT_CONFIG), options: undefined })
+    kv.store.set('athlete-config', { value: JSON.stringify(defaultConfig()), options: undefined })
     const { calls } = platforms()
     await connected(env)
     await runCron(env)
