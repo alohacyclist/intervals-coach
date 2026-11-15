@@ -77,6 +77,22 @@ const fittedTitle = (context: CanvasRenderingContext2D, title: string, start: nu
   )
 }
 
+/** The figures under the title, as label, value and unit. */
+export const figuresOf = (execution: Execution): readonly (readonly [string, string, string])[] => {
+  const { done, hit, planned } = hitCount(execution)
+  // Done and in the target apart: "1/5" alone reads as one of five run.
+  return isCompared(execution)
+    ? [
+        [SPORT_DONE[execution.sport].toUpperCase(), `${done}/${planned}`, ''],
+        [t('IM ZIEL'), `${hit}/${planned}`, ''],
+        [t('BELASTUNG'), String(execution.load.actual), 'TSS'],
+      ]
+    : [
+        [t('DAUER'), String(Math.round(execution.duration.actual / 60)), 'min'],
+        [t('BELASTUNG'), String(execution.load.actual), 'TSS'],
+      ]
+}
+
 const drawHeader = (context: CanvasRenderingContext2D, execution: Execution, meta: ShareMeta) => {
   text(context, dateLine(meta), MARGIN, 96, `500 24px ${MONO}`, FAINT)
   // Garmin's terms: the device stays named in every picture made from its data.
@@ -84,24 +100,12 @@ const drawHeader = (context: CanvasRenderingContext2D, execution: Execution, met
   const size = fittedTitle(context, execution.templateName, 66)
   text(context, execution.templateName, MARGIN, 172, `600 ${size}px ${SANS}`, INK)
 
-  const { done, hit, planned } = hitCount(execution)
-  // Done and in the target apart: "1/5" alone reads as one of five run.
-  const figures = isCompared(execution)
-    ? [
-        [SPORT_DONE[execution.sport].toUpperCase(), `${done}/${planned}`, ''],
-        [t('IM ZIEL'), `${hit}/${planned}`, ''],
-        ['BELASTUNG', String(execution.load.actual), 'TSS'],
-      ]
-    : [
-        ['DAUER', String(Math.round(execution.duration.actual / 60)), 'min'],
-        ['BELASTUNG', String(execution.load.actual), 'TSS'],
-      ]
-  figures.forEach(([label, value, unit], index) => {
+  figuresOf(execution).forEach(([label, value, unit], index) => {
     const x = MARGIN + index * 330
-    text(context, label!, x, 262, `500 22px ${MONO}`, FAINT)
-    text(context, value!, x, 324, `600 58px ${SANS}`, INK)
-    const width = context.measureText(value!).width
-    text(context, unit!, x + width + 10, 324, `400 28px ${SANS}`, DIM)
+    text(context, label, x, 262, `500 22px ${MONO}`, FAINT)
+    text(context, value, x, 324, `600 58px ${SANS}`, INK)
+    const width = context.measureText(value).width
+    text(context, unit, x + width + 10, 324, `400 28px ${SANS}`, DIM)
   })
 
   context.fillStyle = RULE_LOUD

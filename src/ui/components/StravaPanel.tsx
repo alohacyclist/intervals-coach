@@ -67,7 +67,7 @@ export const StravaPanel = () => {
             {t('Verbunden als ')}{status.name}{t('. Nach jeder erkannten Einheit steht der Soll-Ist-Vergleich in ihrer Beschreibung auf Strava; dein eigener Text bleibt stehen. Hochladen tut weiter dein Gerät.')}
           </p>
           <button type="button" disabled={busy} onClick={() => void disconnect()}>
-            {busy ? 'Trennt…' : t('Strava trennen')}
+            {busy ? t('Trennt…') : t('Strava trennen')}
           </button>
         </>
       ) : (

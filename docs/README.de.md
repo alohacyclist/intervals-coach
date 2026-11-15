@@ -373,7 +373,8 @@ npx wrangler secret put BREVO_DOI_TEMPLATE_ID   # Zahl, Vorlage mit Double-Opt-I
 Alternativ als gleichnamige Secrets im GitHub-Repository: der Deploy-Workflow gibt gesetzte
 `BREVO_*`-Secrets mit jedem Deployment an den Worker weiter.
 
-Die Bilder der Landingpage (`public/landing/`) sind aus synthetischen Daten erzeugt, nie aus
+Die Bilder der Landingpage (`public/landing/de/` und `public/landing/en/`, je Sprache dieselben drei
+Dateien) sind aus synthetischen Daten der Demo erzeugt, nie aus
 einem echten Konto.
 
 ## Mehrbenutzer-Betrieb
