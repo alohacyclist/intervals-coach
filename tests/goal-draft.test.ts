@@ -92,3 +92,16 @@ describe('an existing goal in the settings', () => {
     expect(goalFromDraft(draft, config.profile, TODAY)?.priority).toBe('B')
   })
 })
+
+describe('the taper switch', () => {
+  it('is on for a new goal and stores nothing while it stays on', () => {
+    const goal = goalFromDraft(race({ distance: '10', target: '36:00' }), tri, TODAY)
+    expect(goal).not.toHaveProperty('taper')
+  })
+
+  it('keeps a goal switched off, and reads it back', () => {
+    const goal = goalFromDraft(race({ distance: '10', target: '36:00', taper: false }), tri, TODAY)
+    expect(goal?.taper).toBe(false)
+    expect(draftFromGoal(goal!).taper).toBe(false)
+  })
+})

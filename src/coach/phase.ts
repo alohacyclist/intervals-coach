@@ -6,26 +6,52 @@ import { perLang, pick, t } from './lang.ts'
 export const weeksToGoal = (goal: Goal, today: string): number | null =>
   goal.targetDate ? Math.ceil(diffDays(today, goal.targetDate) / 7) : null
 
-const byUrgency = (today: string) => (left: Goal, right: Goal): number => {
+/**
+ * A main goal comes before a side goal whatever the dates: a B race three weeks
+ * out must not take the season over from the A race in spring. Between goals of
+ * the same priority, the nearer one leads.
+ */
+const byPriorityThenUrgency = (today: string) => (left: Goal, right: Goal): number => {
+  if (left.priority !== right.priority) return left.priority === 'A' ? -1 : 1
   const leftWeeks = weeksToGoal(left, today) ?? Number.POSITIVE_INFINITY
   const rightWeeks = weeksToGoal(right, today) ?? Number.POSITIVE_INFINITY
-  if (leftWeeks !== rightWeeks) return leftWeeks - rightWeeks
-  return left.priority === right.priority ? 0 : left.priority === 'A' ? -1 : 1
+  return leftWeeks - rightWeeks
 }
 
-/** Goals whose date has passed no longer steer the plan. */
+/**
+ * Goals whose date has passed no longer steer the plan. Counted in days: the
+ * rounded weeks of the six days after a goal read as "0 weeks left", which kept
+ * a finished goal in its taper for almost another week.
+ */
 const active = (goals: readonly Goal[], today: string): readonly Goal[] =>
-  goals.filter((goal) => (weeksToGoal(goal, today) ?? 1) >= 0)
+  goals.filter((goal) => goal.targetDate === undefined || diffDays(today, goal.targetDate) >= 0)
 
 export const primaryGoal = (goals: readonly Goal[], today: string): Goal | undefined =>
-  [...active(goals, today)].sort(byUrgency(today))[0]
+  [...active(goals, today)].sort(byPriorityThenUrgency(today))[0]
 
 export const goalForSport = (
   goals: readonly Goal[],
   sport: Sport,
   today: string,
 ): Goal | undefined =>
-  [...active(goals, today)].filter((goal) => goal.sport === sport).sort(byUrgency(today))[0]
+  [...active(goals, today)].filter((goal) => goal.sport === sport).sort(byPriorityThenUrgency(today))[0]
+
+/** Absent means yes: a goal is tapered for unless the athlete says otherwise. */
+export const tapers = (goal: Goal): boolean => goal.taper !== false
+
+const TAPER_WEEKS = 1
+
+/**
+ * A taper is for the whole body, not for one sport: the legs that run on Sunday
+ * are the legs that ride on Friday. So the week before any main goal that is
+ * tapered for is a taper week in every sport.
+ */
+const taperingFor = (goals: readonly Goal[], today: string): Goal | undefined =>
+  active(goals, today).find((goal) => {
+    if (goal.priority !== 'A' || !tapers(goal)) return false
+    const weeks = weeksToGoal(goal, today)
+    return weeks !== null && weeks <= TAPER_WEEKS
+  })
 
 /** Whole calendar weeks between the week the plan started and the week of `today`. */
 const weekIndex = (planStart: string, today: string): number =>
@@ -45,8 +71,8 @@ const weekIndex = (planStart: string, today: string): number =>
 export const isRecoveryWeek = (planStart: string, today: string): boolean =>
   weekIndex(planStart, today) % 4 === 3
 
-const datedPhase = (weeksLeft: number): Phase => {
-  if (weeksLeft <= 1) return 'TAPER'
+const datedPhase = (weeksLeft: number, taper: boolean): Phase => {
+  if (weeksLeft <= TAPER_WEEKS) return taper ? 'TAPER' : 'SPECIFIC'
   if (weeksLeft <= 4) return 'SPECIFIC'
   if (weeksLeft <= 10) return 'BUILD'
   return 'BASE'
@@ -58,11 +84,23 @@ const openEndedPhase = (planStart: string, today: string): Phase => {
   return block % 2 === 0 ? 'BASE' : 'BUILD'
 }
 
-/** The phase the block is in, before the recovery week is laid over it. */
+/**
+ * The phase the block is in, before the recovery week is laid over it.
+ *
+ * A main goal is what a sport is periodised towards. A side goal is raced out of
+ * training: it gets its race day and, with taper, the easy days before it
+ * (coach/goal-race.ts), but takes no block from a main goal in the same sport.
+ * Only where a sport has nothing but side goals does the nearest one set its
+ * blocks — still without a taper week of its own. goalForSport already puts
+ * main goals first, so it is the goal that steers.
+ */
 const basePhaseForSport = (config: CoachConfig, sport: Sport, today: string): Phase => {
+  if (taperingFor(config.goals, today)) return 'TAPER'
   const goal = goalForSport(config.goals, sport, today)
   const weeksLeft = goal ? weeksToGoal(goal, today) : null
-  return weeksLeft === null ? openEndedPhase(config.planStart, today) : datedPhase(weeksLeft)
+  return goal === undefined || weeksLeft === null
+    ? openEndedPhase(config.planStart, today)
+    : datedPhase(weeksLeft, goal.priority === 'A' && tapers(goal))
 }
 
 export const phaseForSport = (config: CoachConfig, sport: Sport, today: string): Phase => {
@@ -81,8 +119,13 @@ export const seasonBand = (
   today: string,
   maxWeeks = 16,
 ): readonly SeasonWeek[] => {
-  const sport = primaryGoal(config.goals, today)?.sport ?? config.profile.sports[0]?.sport ?? 'Ride'
-  const goal = primaryGoal(config.goals, today)
+  // The band runs to the main goal; a side goal only where there is no main one.
+  const goal =
+    primaryGoal(
+      config.goals.filter((entry) => entry.priority === 'A'),
+      today,
+    ) ?? primaryGoal(config.goals, today)
+  const sport = goal?.sport ?? config.profile.sports[0]?.sport ?? 'Ride'
   const thisWeek = startOfWeek(today)
   const weeksToTarget = goal?.targetDate
     ? weeksBetween(thisWeek, startOfWeek(goal.targetDate)) + 1

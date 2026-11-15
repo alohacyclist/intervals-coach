@@ -285,6 +285,22 @@ const BIKE: readonly WorkoutTemplate[] = perLang(() => [
 
 const RUN: readonly WorkoutTemplate[] = perLang(() => [
   {
+    id: 'run-race-openers',
+    sport: 'Run',
+    stimulus: 'ENDURANCE',
+    name: t('Vorbelastung vor dem Wettkampf'),
+    minutes: 30,
+    load: 26,
+    phases: ['BASE', 'BUILD', 'SPECIFIC', 'TAPER', 'RECOVERY'],
+    occasion: 'pre-race',
+    coachNote: t('Kurz und locker, die Steigerungen nur so schnell wie das Renntempo. Danach sollen sich die Beine frisch anfühlen, nicht müde.'),
+    blocks: [
+      step('15m', '68-76% Pace', { label: t('Einlaufen') }),
+      repeat(4, [step('20s', '100-105% Pace'), step('90s', '60-66% Pace')]),
+      cooldownRun('7m', '68% Pace'),
+    ],
+  },
+  {
     id: 'run-thr-5x1k',
     family: 'run-threshold',
     level: 2,

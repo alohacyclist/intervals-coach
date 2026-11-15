@@ -42,6 +42,8 @@ export const GoalEditor = ({ draft, onChange, errors, showMissing, profile, deta
   const sports = profile.sports.map((setting) => setting.sport)
   const ftp = ftpOf(profile)
   const predicted = draft.kind === 'raceTime' ? predictedTime(draft, profile) : null
+  // A side goal that is no race has no days around it to keep fresh.
+  const taperable = draft.targetDate !== '' && (draft.priority === 'A' || draft.kind === 'raceTime')
 
   return (
     <div className="grid grid--goal">
@@ -126,6 +128,14 @@ export const GoalEditor = ({ draft, onChange, errors, showMissing, profile, deta
             <option value="A">{t('A – Hauptziel')}</option>
             <option value="B">{t('B – Nebenziel')}</option>
           </select>
+        </label>
+      )}
+      {detailed && taperable && (
+        <label className="zrl__toggle goal__taper">
+          <input type="checkbox" checked={draft.taper} onChange={(event) => set({ taper: event.target.checked })} />
+          {draft.priority === 'A'
+            ? t('Tapern: die Woche davor reduziert, in allen Sportarten')
+            : t('Tapern: die zwei Tage davor locker, in allen Sportarten')}
         </label>
       )}
       {onRemove && (

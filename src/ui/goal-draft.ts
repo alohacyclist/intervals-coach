@@ -21,6 +21,8 @@ export type GoalDraft = {
   readonly target: string
   readonly targetDate: string
   readonly priority: 'A' | 'B'
+  /** Whether the days before the goal are kept fresh, in every sport. */
+  readonly taper: boolean
 }
 
 export type GoalField = 'distance' | 'current' | 'target' | 'targetDate'
@@ -43,6 +45,7 @@ export const emptyGoalDraft = (id: string, kind: GoalKind, sport: Sport): GoalDr
   target: '',
   targetDate: '',
   priority: 'A',
+  taper: true,
 })
 
 const distanceText = (sport: Sport, distanceKm: number | undefined): string => {
@@ -60,6 +63,7 @@ export const draftFromGoal = (goal: Goal): GoalDraft => ({
   target: goal.kind === 'ftp' ? String(goal.targetValue) : formatClock(goal.targetValue),
   targetDate: goal.targetDate ?? '',
   priority: goal.priority,
+  taper: goal.taper !== false,
 })
 
 const positiveNumber = (value: string): number | null => {
@@ -123,7 +127,9 @@ const autoLabel = (draft: GoalDraft, distanceKm: number, target: number): string
 export const goalFromDraft = (draft: GoalDraft, profile: AthleteProfile, earliest: string | null): Goal | null => {
   if (hasErrors(goalErrors(draft, profile, earliest))) return null
   const dated = draft.targetDate === '' ? {} : { targetDate: draft.targetDate }
-  const common = { id: draft.id, sport: draft.sport, kind: draft.kind, priority: draft.priority, ...dated }
+  // Stored only when switched off, so a goal without the field keeps meaning "taper".
+  const taper = draft.taper ? {} : { taper: false }
+  const common = { id: draft.id, sport: draft.sport, kind: draft.kind, priority: draft.priority, ...dated, ...taper }
 
   if (draft.kind === 'ftp') {
     const target = Math.round(positiveNumber(draft.target) ?? 0)
