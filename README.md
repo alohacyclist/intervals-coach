@@ -18,9 +18,9 @@ Worker are still called `intervals-coach`.
 Taken from the demo, which runs on synthetic data for a fictional athlete.
 
 After a session, planned and actual are compared interval by interval; the comparison can
-be shared as a picture (German shown):
+be shared as a picture:
 
-<img src="public/landing/soll-ist.png" alt="Planned versus actual for a run with four intervals: the pace held over the target corridors, heart rate below" width="420" />
+<img src="public/landing/en/soll-ist.png" alt="Planned versus actual for a ride with three intervals: the power held over the target corridors" width="420" />
 
 ## What it does
 

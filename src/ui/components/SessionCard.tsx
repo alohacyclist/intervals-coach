@@ -192,7 +192,7 @@ export const SessionCard = ({
       ) : (
         <button type="button" className="session__push" onClick={onPush} disabled={push.status === 'busy'}>
           {push.status === 'busy'
-            ? 'Sende…'
+            ? t('Sende…')
             : destinations.length > 0
               ? t`→ Kalender + ${destinations.join(', ')}`
               : t('→ Kalender')}
