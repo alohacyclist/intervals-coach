@@ -50,6 +50,9 @@
   border-top: 1px solid var(--rule);
   padding-top: 12px;
 }
+.goal__taper {
+  grid-column: 1 / -1;
+}
 
 .goal {
   border-left: 2px solid var(--rule-loud);

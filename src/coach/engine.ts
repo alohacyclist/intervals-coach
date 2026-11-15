@@ -33,7 +33,11 @@ import { findTemplate, flattenBlocks, intensityClass, isPreferredSport, strength
 import { buildSession } from './session.ts'
 import { BASE_LOAD_PER_HOUR, MIN_SAVING_MINUTES } from './variant.ts'
 import { aroundRace, raceSession, racesAround, withRace } from './race-day.ts'
+import { aroundGoalRace, goalRaceSession, goalRacesAround } from './goal-race.ts'
 import { locale, t } from './lang.ts'
+
+/** The openers the day before a race, in the race's own sport. */
+const OPENERS: Readonly<Partial<Record<Sport, string>>> = { Ride: 'bike-zrl-openers', Run: 'run-race-openers' }
 
 /** Minimum days between two hard sessions, regardless of sport. */
 const HARD_SPACING_DAYS = 2
@@ -950,20 +954,27 @@ export const planDays = (
       const phase = phases[primarySport]
       const budget = weeklyHardBudget(phase, config.profile)
       const around = racesAround(config, sports, date)
+      const goalAround = goalRacesAround(config, sports, date)
+      // Any race today or tomorrow, the league's or the athlete's own goal.
+      const raceDay = around.race !== null || goalAround.race !== null
+      const raceEve = around.raceTomorrow !== null || goalAround.raceTomorrow !== null
       const exhausted =
         (state.readiness.score === 'red' && isToday) || simulation.fitness.tsb < -30
       const decision = applyIntent(
-        aroundRace(
-          applyWeeklyCapacity(
-            decideDay(simulation, state, config, budget, dayIndex, date, sports),
-            simulation,
-            state,
-            config,
+        aroundGoalRace(
+          aroundRace(
+            applyWeeklyCapacity(
+              decideDay(simulation, state, config, budget, dayIndex, date, sports),
+              simulation,
+              state,
+              config,
+            ),
+            around,
+            phases.Ride === 'RECOVERY',
+            exhausted,
+            minDaysSinceHard(simulation, sports) < HARD_SPACING_DAYS,
           ),
-          around,
-          phases.Ride === 'RECOVERY',
-          exhausted,
-          minDaysSinceHard(simulation, sports) < HARD_SPACING_DAYS,
+          goalAround,
         ),
         // A wish applies to today only; the days after follow from what it costs.
         dayIndex === 0 ? intent : undefined,
@@ -973,18 +984,21 @@ export const planDays = (
       )
       const { dayType } = decision
       const extra = isToday
-        ? extraTimeFor(minutesToday, decision, state, config, sports, around.race !== null || around.raceTomorrow !== null, coreAt)
+        ? extraTimeFor(minutesToday, decision, state, config, sports, raceDay || raceEve, coreAt)
         : NO_EXTRA
 
       const returning = returnWindow(config.breaks, date) !== null
       // Read from the morning's curve: the days ahead have not happened yet.
-      const plateau = around.race || around.raceTomorrow ? NO_PLATEAU : plateauFor(state, config, phase, date)
+      const plateau = raceDay || raceEve ? NO_PLATEAU : plateauFor(state, config, phase, date)
+      // The athlete's own race outranks a league race on the same days.
+      const eveSport: Sport | null = goalAround.raceTomorrow?.sport ?? (around.raceTomorrow ? 'Ride' : null)
       const openers =
-        around.raceTomorrow && dayType === 'EASY' ? findTemplate('bike-zrl-openers') : undefined
+        eveSport !== null && dayType === 'EASY' ? findTemplate(OPENERS[eveSport] ?? '') : undefined
       // On race day the race is the plan; the day before, the openers are.
-      const recommended =
-        (around.race && dayType === 'KEY') || openers
-          ? 'Ride'
+      const recommended: Sport | 'REST' = goalAround.race
+        ? goalAround.race.sport
+        : (around.race && dayType === 'KEY') || openers
+          ? (openers?.sport ?? 'Ride')
           : chooseRecommended(dayType, simulation, config, date, sports)
 
       // A quality day is the only slot a maximal test can have, and the plan
@@ -992,7 +1006,7 @@ export const planDays = (
       // that is due gets its own, because which one to test is the athlete's
       // choice exactly as which one to train is.
       const testable =
-        dayType === 'KEY' && !simulation.testedThisWeek && !around.race && !around.raceTomorrow
+        dayType === 'KEY' && !simulation.testedThisWeek && !raceDay && !raceEve
 
       // While the legs recover, a quality day's run is a light one — unless running
       // is all there is, which on a quality day means the athlete asked for it.
@@ -1028,7 +1042,7 @@ export const planDays = (
           const template = findTemplate(reference.templateId)
           if (template) return buildSession(template, config, reference.reason, date)
         }
-        if (openers && sport === 'Ride') return buildSession(openers, config, decision.reason, date)
+        if (openers && sport === openers.sport) return buildSession(openers, config, decision.reason, date)
         const goalKind = goalForSport(config.goals, sport, date)?.kind
         // Legs held back from a hard run may still run longer: what is added is easy.
         const stretchTo = extra.ceilings[sport]
@@ -1068,13 +1082,17 @@ export const planDays = (
         const length = grows ? plateauStretch(best, config, view) : stretchTo
         return buildSession(best, config, reason, date, length, isToday ? coreAt : undefined)
       }).filter((session): session is PlannedSession => session !== null)
-      const options = withRace(
-        regular,
-        around.race ? raceSession(around.race, state, config, dayType) : null,
-        dayType,
-      )
+      // A race the athlete set as a goal is the one session of its day; a league
+      // race keeps its alternative, since whether to ride it is decided on the day.
+      const options = goalAround.race
+        ? [goalRaceSession(goalAround.race, config, date)]
+        : withRace(
+            regular,
+            around.race ? raceSession(around.race, state, config, dayType) : null,
+            dayType,
+          )
       // The race is the one session of its day.
-      const strength = around.race ? null : strengthFor(dayType, simulation, isToday ? morningConfig : config)
+      const strength = raceDay ? null : strengthFor(dayType, simulation, isToday ? morningConfig : config)
       const chosen = options.find((session) => session.sport === recommended) ?? null
       const timeNotes = extraTimeNotes(extra, options)
 
