@@ -148,7 +148,12 @@ export const ProgressView = ({ onNeedsOnboarding }: Props) => {
       <GarminAttribution attribution={progress.garmin} />
 
       {/* Where the athlete stands opens the page: it is what the page is asked first. */}
-      <StandingCard standing={progress.standing} />
+      <StandingCard
+        standing={progress.standing}
+        goals={config?.goals ?? []}
+        options={progress.goalOptions}
+        onAdjusted={() => void load()}
+      />
 
       {early && (
         <section className="totals early">
@@ -221,7 +226,12 @@ export const ProgressView = ({ onNeedsOnboarding }: Props) => {
 
       {/* Goals the standing already shows with their trend are not told a second time, from older numbers. */}
       {config && (config.goals.length === 0 || openGoals.length > 0) && (
-        <GoalsPanel goals={openGoals} feasibility={progress.feasibility} />
+        <GoalsPanel
+          goals={openGoals}
+          feasibility={progress.feasibility}
+          options={progress.goalOptions}
+          onAdjusted={() => void load()}
+        />
       )}
     </>
   )

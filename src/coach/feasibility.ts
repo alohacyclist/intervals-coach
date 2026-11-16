@@ -23,6 +23,13 @@ const ANCHOR_SECONDS: Readonly<Partial<Record<Sport, number>>> = { Run: 3600, Sw
  */
 const RIEGEL: Readonly<Partial<Record<Sport, number>>> = { Run: 1.06, Swim: 1.03 }
 
+/**
+ * What a goal typically moves by in a week, for a trained athlete on two to three
+ * sessions: watts for an FTP, seconds for a race time. Always positive.
+ */
+export const typicalGainPerWeek = (goal: Goal, current: number): number =>
+  (current * (goal.kind === 'ftp' ? FTP_PERCENT_PER_MONTH : RACE_PERCENT_PER_MONTH)) / 100 / WEEKS_PER_MONTH
+
 const number = (value: number, digits = 1): string =>
   value.toLocaleString(locale(), { minimumFractionDigits: digits, maximumFractionDigits: digits })
 

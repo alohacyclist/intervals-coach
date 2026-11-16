@@ -268,6 +268,17 @@ geschätzt aus dem Training, und als Schätzung gekennzeichnet:
 
 Ziele, die der Leistungsstand schon zeigt, stehen darunter nicht ein zweites Mal.
 
+**Ziele anpassen.** Ein Ziel, das so nicht klappt — der Trend kommt zu spät an, zeigt nicht
+zum Ziel, oder ohne Trend sagt es der Realismus-Check —, bekommt zwei Auswege, einen Tipp
+entfernt: der Wert, den das Datum hergibt („270 W bis 24.01.“), oder das Datum, das der Wert
+braucht („300 W bis ~14.03.“). Gerechnet wird mit dem eigenen Fortschritt der letzten acht
+Wochen, höchstens mit dem Doppelten des typischen (ein kurzer Aufschwung hält nicht ewig);
+steigt der Trend nicht, mit dem typischen Fortschritt, und die Karte sagt das. Watt werden
+auf Fünfer abgerundet, Zeiten auf Viertelminuten aufgerundet — immer zur erreichbaren Seite.
+Ein Ausweg hebt die Latte nie, und ein Datum über zwei Jahre hinaus wird nicht angeboten.
+Nennt der Name des Ziels den Wert („FTP 300 W“, „10 km unter 36:00“), zieht er mit.
+Ein Ziel ohne Datum bekommt das realistische Datum als Vorschlag.
+
 ## Zwift Racing League
 
 Eine Runde wird einmal eingetragen (Einstellungen → Zwift Racing League): pro Dienstag
@@ -588,6 +599,7 @@ src/coach/     reine Trainingslogik, ohne IO — hier liegt die gesamte Fachlich
   config-schema.ts    Validierung und Migration der gespeicherten Konfiguration
   feasibility.ts  Realismus-Check der Ziele
   standing.ts     Leistungsstand: eFTP und Laufzeit aus Tempo und Puls, Trend zum Ziel
+  goal-options.ts Auswege für Ziele, die so nicht klappen: anderer Wert oder anderes Datum
 server/        intervals.icu-Client, HTTP-Routen, Node-Entry für die Entwicklung
   source.ts    IntervalsSource: was die Routen lesen und schreiben, ohne das Wie
   demo/        Beispieldaten für die Demo und ihre Quelle hinter derselben Schnittstelle

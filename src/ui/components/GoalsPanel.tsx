@@ -1,7 +1,8 @@
-import type { Feasibility, Goal } from '../../coach/types.ts'
+import type { Feasibility, Goal, GoalOption } from '../../coach/types.ts'
 import { formatClock } from '../../coach/dates.ts'
 import { formatDistance } from '../../coach/format.ts'
 import { t } from '../../coach/lang.ts'
+import { GoalAdjust } from './GoalAdjust.tsx'
 
 const VERDICT_LABEL: Record<Feasibility['verdict'], string> = {
   'on-track': t('realistisch'),
@@ -25,9 +26,11 @@ const remaining = (goal: Goal, weeksLeft: number | null): string => {
 type Props = {
   readonly goals: readonly Goal[]
   readonly feasibility: readonly Feasibility[]
+  readonly options: readonly GoalOption[]
+  readonly onAdjusted: () => void
 }
 
-export const GoalsPanel = ({ goals, feasibility }: Props) => (
+export const GoalsPanel = ({ goals, feasibility, options, onAdjusted }: Props) => (
   <section className="goals">
     <h2>{t('Ziele')}</h2>
     {goals.length === 0 && (
@@ -52,6 +55,11 @@ export const GoalsPanel = ({ goals, feasibility }: Props) => (
             {remaining(goal, assessment?.weeksLeft ?? null)}
           </p>
           {assessment && <p className="goal__message">{assessment.message}</p>}
+          {options
+            .filter((option) => option.goalId === goal.id)
+            .map((option) => (
+              <GoalAdjust key={option.goalId} goal={goal} option={option} onAdjusted={onAdjusted} />
+            ))}
         </article>
       )
     })}

@@ -114,6 +114,29 @@ describe('planner on demo data', () => {
     expect(odd['days']).toEqual(usual['days'])
   })
 
+  it('takes a way out for a goal and keeps the plan in step with it', async () => {
+    const { app, data, get } = routesOn('2026-10-21')
+    const goal = data.config.goals.find((entry) => entry.kind === 'ftp')!
+    const response = await app.request('/api/goal-adjust', {
+      method: 'POST',
+      body: JSON.stringify({ goalId: goal.id, targetValue: goal.targetValue - 10, targetDate: '2027-03-01' }),
+    })
+    expect(response.status).toBe(200)
+    const config = await get('/api/config')
+    const saved = config['goals'].find((entry: { id: string }) => entry.id === goal.id)
+    expect(saved).toMatchObject({ targetValue: goal.targetValue - 10, targetDate: '2027-03-01' })
+    expect(saved.label).toBe(goal.label.replace(String(goal.targetValue), String(goal.targetValue - 10)))
+  })
+
+  it('refuses a date in the past for a goal', async () => {
+    const { app, data } = routesOn('2026-10-21')
+    const response = await app.request('/api/goal-adjust', {
+      method: 'POST',
+      body: JSON.stringify({ goalId: data.config.goals[0]!.id, targetDate: '2026-01-01' }),
+    })
+    expect(response.status).toBe(400)
+  })
+
   it('keeps a declared break in the plan, as the real app does', async () => {
     const { app, get } = routesOn('2026-10-21')
     const response = await app.request('/api/break', { method: 'POST', body: JSON.stringify({ kind: 'illness', days: 3 }) })

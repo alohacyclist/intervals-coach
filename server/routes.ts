@@ -28,6 +28,7 @@ import type { WorkReading } from '../src/coach/efficiency.ts'
 import { workReading } from '../src/coach/efficiency.ts'
 import { executionSuggestions, readHeld, readWork, readWorkMany } from './work-readings.ts'
 import { buildStanding } from '../src/coach/standing.ts'
+import { goalOptions, relabel } from '../src/coach/goal-options.ts'
 import {
   buildProgress,
   DEFAULT_PROGRESS_SPAN,
@@ -226,25 +227,28 @@ const buildProgressView = async (deps: RouteDeps, span: ProgressSpan): Promise<P
   const readings = await readWorkMany(deps.source, config.profile, references, activities).catch(
     () => new Map<string, WorkReading>(),
   )
+  const feasibility = assessGoals(config.goals, config.profile, today)
+  const standing = buildStanding(
+    activities,
+    wellness,
+    {
+      ...config.profile,
+      maxHr: config.profile.maxHr ?? settings?.maxHr ?? null,
+      lthr: config.profile.lthr ?? settings?.lthr ?? null,
+    },
+    config.goals,
+    config.profile.sports.map((setting) => setting.sport),
+    today,
+    span,
+  )
   const progress = buildProgress(activities, completions, today, span, weeksFor(span), {
     benchmark: benchmarkStatus(config, completions, activities, today, readings),
-    feasibility: assessGoals(config.goals, config.profile, today),
+    feasibility,
     sports: config.profile.sports.map((setting) => setting.sport),
     season: seasonBand(config, today),
     levelChoices: config.levelChoices,
-    standing: buildStanding(
-      activities,
-      wellness,
-      {
-        ...config.profile,
-        maxHr: config.profile.maxHr ?? settings?.maxHr ?? null,
-        lthr: config.profile.lthr ?? settings?.lthr ?? null,
-      },
-      config.goals,
-      config.profile.sports.map((setting) => setting.sport),
-      today,
-      span,
-    ),
+    standing,
+    goalOptions: goalOptions(config.goals, standing, feasibility, today),
   })
   return { ...progress, garmin: garminAttribution(activities) }
 }
@@ -699,6 +703,34 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
         ? config.strengthLog.filter((entry) => entry !== body.date)
         : [...config.strengthLog, body.date]
     return context.json(await store.save(validateConfig({ ...config, strengthLog })))
+  })
+
+  /** Takes one of the ways out the progress page offered for a goal: another target, or another date. */
+  app.post('/api/goal-adjust', async (context) => {
+    const body = (await context.req.json()) as { goalId?: string; targetValue?: number; targetDate?: string }
+    const deps = await resolve(context)
+    const value = body.targetValue === undefined ? undefined : Number(body.targetValue)
+    if (value !== undefined && !(Number.isFinite(value) && value > 0)) {
+      return context.json({ error: 'targetValue muss eine positive Zahl sein' }, 400)
+    }
+    if (body.targetDate !== undefined && !(isIsoDate(body.targetDate) && body.targetDate >= todayFor(deps))) {
+      return context.json({ error: 'targetDate muss ein Datum ab heute sein (YYYY-MM-DD)' }, 400)
+    }
+    if (value === undefined && body.targetDate === undefined) {
+      return context.json({ error: 'targetValue oder targetDate fehlt' }, 400)
+    }
+    const config = await deps.store.load()
+    const goal = config.goals.find((entry) => entry.id === body.goalId)
+    if (!goal) return context.json({ error: t`Unbekanntes Ziel: ${body.goalId ?? ''}` }, 404)
+    const target = value === undefined ? goal.targetValue : Math.round(value)
+    const adjusted = {
+      ...goal,
+      targetValue: target,
+      label: relabel(goal, target),
+      ...(body.targetDate === undefined ? {} : { targetDate: body.targetDate }),
+    }
+    const goals = config.goals.map((entry) => (entry.id === goal.id ? adjusted : entry))
+    return context.json(await deps.store.save(validateConfig({ ...config, goals })))
   })
 
   /** Declares a break: illness, a vaccination, an injury, or plain absence. */

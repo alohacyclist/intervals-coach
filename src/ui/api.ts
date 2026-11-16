@@ -135,6 +135,13 @@ export const syncSettings = (): Promise<{ config: CoachConfig }> =>
 export const adoptThreshold = (sport: string, observed: number): Promise<unknown> =>
   request('/api/threshold', { method: 'POST', body: JSON.stringify({ sport, observed }) })
 
+/** Takes one of the ways out the progress page offered: another target, or another date. */
+export const adjustGoal = (
+  goalId: string,
+  change: { readonly targetValue?: number; readonly targetDate?: string },
+): Promise<CoachConfig> =>
+  request<CoachConfig>('/api/goal-adjust', { method: 'POST', body: JSON.stringify({ goalId, ...change }) })
+
 export const logStrength = (date: string, done: boolean): Promise<unknown> =>
   request('/api/strength', { method: 'POST', body: JSON.stringify({ date, done }) })
 
