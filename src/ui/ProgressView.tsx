@@ -7,6 +7,7 @@ import { SeasonBand } from './components/SeasonBand.tsx'
 import { LevelLadder } from './components/LevelLadder.tsx'
 import { BenchmarkCard } from './components/BenchmarkCard.tsx'
 import { GoalsPanel } from './components/GoalsPanel.tsx'
+import { StandingCard } from './components/StandingCard.tsx'
 import { SPORT_LABELS } from '../coach/types.ts'
 import { DEFAULT_PROGRESS_SPAN, EARLY_DAYS, isProgressSpan, PROGRESS_SPANS, trackedDays } from '../coach/progress.ts'
 import type { ProgressSpan } from '../coach/progress.ts'
@@ -121,6 +122,9 @@ export const ProgressView = ({ onNeedsOnboarding }: Props) => {
     .map(([sport, count]) => ({ sport: sport as Sport, count }))
     .sort((left, right) => right.count - left.count)
   const mostSessions = sports[0]?.count ?? 1
+  const openGoals = (config?.goals ?? []).filter(
+    (goal) => !progress.standing.some((entry) => entry.goal?.id === goal.id),
+  )
 
   return (
     <>
@@ -142,6 +146,9 @@ export const ProgressView = ({ onNeedsOnboarding }: Props) => {
         </div>
       </div>
       <GarminAttribution attribution={progress.garmin} />
+
+      {/* Where the athlete stands opens the page: it is what the page is asked first. */}
+      <StandingCard standing={progress.standing} />
 
       {early && (
         <section className="totals early">
@@ -212,7 +219,10 @@ export const ProgressView = ({ onNeedsOnboarding }: Props) => {
         <BenchmarkCard status={progress.benchmark} />
       )}
 
-      {config && <GoalsPanel goals={config.goals} feasibility={progress.feasibility} />}
+      {/* Goals the standing already shows with their trend are not told a second time, from older numbers. */}
+      {config && (config.goals.length === 0 || openGoals.length > 0) && (
+        <GoalsPanel goals={openGoals} feasibility={progress.feasibility} />
+      )}
     </>
   )
 }

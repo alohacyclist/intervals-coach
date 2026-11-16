@@ -21,6 +21,7 @@
 }
 
 .totals,
+.standing,
 .chart,
 .ladder {
   /* .chart is a figure, which carries a 40px user-agent margin of its own. */
@@ -133,6 +134,132 @@
   height: 9px;
   border: 1px solid var(--data);
   background: transparent;
+}
+
+/* --------------------------------------------------------------- standing */
+
+/* What could be done today: the number reads first, the line behind it second. */
+.standing__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+.standing__sport {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 0 12px;
+  border-bottom: 1px solid var(--rule);
+}
+.standing__sport + .standing__sport {
+  border-left: 1px solid var(--rule);
+}
+@media (max-width: 560px) {
+  .standing__sport + .standing__sport {
+    border-left: 0;
+  }
+}
+.standing__label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--dim);
+}
+.standing__value {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin: 0;
+  padding: 0 14px;
+  font-size: 30px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.standing__target {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--faint);
+}
+.standing__change {
+  margin: 0;
+  padding: 0 14px;
+  font-size: 13px;
+  color: var(--dim);
+}
+.standing__plot {
+  height: 110px;
+  margin-top: 10px;
+  touch-action: pan-y;
+}
+.standing__axis span:nth-child(2) {
+  margin-left: auto;
+}
+.standing__goal-tick {
+  color: var(--dim);
+}
+.standing__dot {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--data);
+  box-shadow: 0 0 0 2px var(--bg);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.standing__dot--hover {
+  background: var(--bg);
+  border: 2px solid var(--data);
+}
+.standing__tip {
+  display: flex;
+  gap: 8px;
+  position: absolute;
+  top: -6px;
+  padding: 2px 6px;
+  font-size: 12px;
+  color: var(--ink);
+  background: var(--bg);
+  border: 1px solid var(--rule);
+  white-space: nowrap;
+  pointer-events: none;
+}
+.standing__verdict {
+  margin: 6px 0 0;
+  padding: 0 14px;
+  font-size: 13px;
+  color: var(--ink);
+}
+.standing__verdict span {
+  display: inline-block;
+  width: 1.2em;
+  font-weight: 700;
+}
+.standing__verdict--reached span,
+.standing__verdict--on-track span {
+  color: var(--good);
+}
+.standing__verdict--late span,
+.standing__verdict--stalled span {
+  color: var(--warn);
+}
+.standing__source {
+  margin: 0;
+  padding: 0 14px;
+  font-size: 12px;
+  color: var(--faint);
+}
+.standing__note {
+  margin: 0;
+  padding: 10px 14px;
+  font-size: 12px;
+  color: var(--faint);
 }
 
 /* ------------------------------------------------------------------ weeks */

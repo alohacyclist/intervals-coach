@@ -250,6 +250,24 @@ Riegel (`T = 3600 × (D / D₆₀)^1,06`) hochgerechnet. Daraus folgt, was pro W
 Monat, 0,8 % Rennzeit pro Monat. Zu viel verlangt heißt „ambitioniert", das Doppelte davon
 „nicht realistisch". Für 10 km kommt die Laufhäufigkeit als eigener Engpass dazu.
 
+**Leistungsstand.** Oben auf der Verlauf-Seite steht, was heute ginge, wenn es darauf ankäme —
+geschätzt aus dem Training, und als Schätzung gekennzeichnet:
+
+- **Rad:** die geschätzte FTP (eFTP), die intervals.icu täglich aus den Leistungsdaten
+  rechnet, Woche für Woche über den gewählten Zeitraum. Ohne eFTP die eingetragene FTP.
+- **Laufen:** die Zeit über die Distanz des Laufziels (ohne Ziel 10 km). Jeder Lauf ab 20
+  Minuten und 3 km verrät aus Tempo und Puls die Leistungsfähigkeit: der Anteil an der
+  Pulsreserve ist der Anteil an der Sauerstoffreserve (Swain), der Sauerstoffbedarf des Tempos
+  kommt aus Daniels' Formel. Gezählt wird das obere Viertel der Läufe der letzten sechs
+  Wochen — Hitze, Pulsdrift und müde Beine lassen einen Lauf nur schlechter aussehen, nie
+  besser. Was ein Lauf tatsächlich bewiesen hat (ein Rennen, ein durchgezogener Tempolauf),
+  ist die Untergrenze. Hügelige Läufe (über 20 Höhenmeter/km) bleiben draußen, weil die
+  Formel den Anstieg nicht kennt. Ohne Puls, Maximal- und Ruhepuls: aus der Schwellenpace.
+- **Trend:** eine Gerade durch die letzten acht Wochen sagt, wann das Ziel bei diesem Tempo
+  erreicht wäre — rechtzeitig, zu spät, oder gar nicht, wenn sie nicht zum Ziel zeigt.
+
+Ziele, die der Leistungsstand schon zeigt, stehen darunter nicht ein zweites Mal.
+
 ## Zwift Racing League
 
 Eine Runde wird einmal eingetragen (Einstellungen → Zwift Racing League): pro Dienstag
@@ -569,6 +587,7 @@ src/coach/     reine Trainingslogik, ohne IO — hier liegt die gesamte Fachlich
   threshold-drift.ts  Abgleich der Schwellenwerte mit intervals.icu
   config-schema.ts    Validierung und Migration der gespeicherten Konfiguration
   feasibility.ts  Realismus-Check der Ziele
+  standing.ts     Leistungsstand: eFTP und Laufzeit aus Tempo und Puls, Trend zum Ziel
 server/        intervals.icu-Client, HTTP-Routen, Node-Entry für die Entwicklung
   source.ts    IntervalsSource: was die Routen lesen und schreiben, ohne das Wie
   demo/        Beispieldaten für die Demo und ihre Quelle hinter derselben Schnittstelle
