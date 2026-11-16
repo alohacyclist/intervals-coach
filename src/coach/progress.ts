@@ -4,6 +4,7 @@ import type {
   FamilyLevel,
   Feasibility,
   FitnessPoint,
+  GoalOption,
   Progress,
   SeasonWeek,
   SportStanding,
@@ -151,6 +152,8 @@ type Achievements = {
   readonly season?: readonly SeasonWeek[]
   /** Needs wellness and the profile, which only the route holds. */
   readonly standing?: readonly SportStanding[]
+  /** Worked out from the goals and the standing, which only the route holds. */
+  readonly goalOptions?: readonly GoalOption[]
   /** Levels the athlete chose, per family. */
   readonly levelChoices?: Readonly<Record<string, number>>
 }
@@ -180,6 +183,7 @@ export const buildProgress = (
     benchmark: achieved.benchmark,
     feasibility: achieved.feasibility,
     standing: achieved.standing ?? [],
+    goalOptions: achieved.goalOptions ?? [],
     // The band comes from the calendar, not from activities; the route fills it.
     season: achieved.season ?? [],
     totals: {

@@ -230,6 +230,7 @@ const rideStanding = (
   const current = series.at(-1)?.value ?? setting
   if (current === null) return null
   const goal = goalForSport(goals.filter((entry) => entry.kind === 'ftp'), 'Ride', today) ?? null
+  const slope = slopePerDay(series, today)
   return {
     sport: 'Ride',
     measure: 'ftp',
@@ -239,7 +240,8 @@ const rideStanding = (
     series,
     goal: goalOf(goal),
     source: series.length > 0 ? 'eftp' : 'setting',
-    ...forecast(current, slopePerDay(series, today), goal, today, 1),
+    trendPerWeek: slope === null ? null : slope * 7,
+    ...forecast(current, slope, goal, today, 1),
   }
 }
 
@@ -265,6 +267,7 @@ const runStanding = (
   const fallback = vdotFromThreshold(profile)
   const current = series.at(-1)?.value ?? (fallback === null ? null : raceSeconds(fallback, metres))
   if (current === null) return null
+  const slope = slopePerDay(series, today)
   return {
     sport: 'Run',
     measure: 'race',
@@ -274,7 +277,8 @@ const runStanding = (
     series,
     goal: goalOf(goal),
     source: series.length > 0 ? 'runs' : 'setting',
-    ...forecast(current, slopePerDay(series, today), goal, today, -1),
+    trendPerWeek: slope === null ? null : slope * 7,
+    ...forecast(current, slope, goal, today, -1),
   }
 }
 

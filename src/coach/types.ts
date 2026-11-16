@@ -859,11 +859,30 @@ export type SportStanding = {
   /** Weekly, oldest first, the last one today. Empty where only the setting is known. */
   readonly series: readonly StandingPoint[]
   readonly goal: { readonly id: string; readonly value: number; readonly date: string | null } | null
+  /** The line through the last eight weeks, per week in the measure's unit; null with too few readings. */
+  readonly trendPerWeek: number | null
   /** When the trend of the last eight weeks reaches the goal. */
   readonly reachBy: string | null
   readonly verdict: StandingVerdict | null
   /** eftp: intervals.icu's estimate; runs: pace and heart rate of the runs; setting: the athlete's own value. */
   readonly source: 'eftp' | 'runs' | 'setting'
+}
+
+/**
+ * Two ways out for a goal that will not happen as set, worked out from the
+ * athlete's own trend where there is one: a target the date allows, or a date
+ * the target needs. Either may be missing where it would say nothing.
+ */
+export type GoalOption = {
+  readonly goalId: string
+  /** trend: the athlete's last eight weeks; typical: what training usually brings, where the trend does not rise. */
+  readonly basis: 'trend' | 'typical'
+  /** The gain per week the options assume, in the goal's unit (watts, or seconds faster). */
+  readonly perWeek: number
+  /** Where the options start from. */
+  readonly current: number
+  readonly value: { readonly targetValue: number; readonly label: string } | null
+  readonly date: { readonly targetDate: string } | null
 }
 
 export type Progress = {
@@ -876,6 +895,8 @@ export type Progress = {
   readonly feasibility: readonly Feasibility[]
   /** What the athlete could do today, per sport, and how it has moved. */
   readonly standing: readonly SportStanding[]
+  /** Ways to make the goals that will not happen as set realistic again. */
+  readonly goalOptions: readonly GoalOption[]
   readonly season: readonly SeasonWeek[]
   readonly totals: {
     readonly sessions: number

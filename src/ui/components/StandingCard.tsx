@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import type { SportStanding, StandingVerdict } from '../../coach/types.ts'
+import type { Goal, GoalOption, SportStanding, StandingVerdict } from '../../coach/types.ts'
 import { SPORT_LABELS } from '../../coach/types.ts'
 import { addDays, diffDays, formatClock } from '../../coach/dates.ts'
 import { formatDistance } from '../../coach/format.ts'
 import { t } from '../../coach/lang.ts'
 import { SportIcon } from './SportIcon.tsx'
+import { GoalAdjust } from './GoalAdjust.tsx'
 
 /**
  * What the athlete could do today if it counted, per sport: the number first,
@@ -225,7 +226,15 @@ const Trend = ({ standing }: { readonly standing: SportStanding }) => {
   )
 }
 
-const SportPanel = ({ standing }: { readonly standing: SportStanding }) => {
+type PanelProps = {
+  readonly standing: SportStanding
+  /** The goal shown, with its ways out where it will not happen as set. */
+  readonly goal: Goal | undefined
+  readonly option: GoalOption | undefined
+  readonly onAdjusted: () => void
+}
+
+const SportPanel = ({ standing, goal, option, onAdjusted }: PanelProps) => {
   const change = changeText(standing)
   const verdict = verdictText(standing)
   const measure =
@@ -255,6 +264,7 @@ const SportPanel = ({ standing }: { readonly standing: SportStanding }) => {
           <span aria-hidden="true">{VERDICT_MARK[standing.verdict]}</span> {verdict}
         </p>
       )}
+      {goal && option && <GoalAdjust goal={goal} option={option} onAdjusted={onAdjusted} />}
       <p className="standing__source">{sourceText(standing)}</p>
     </article>
   )
@@ -262,9 +272,12 @@ const SportPanel = ({ standing }: { readonly standing: SportStanding }) => {
 
 type Props = {
   readonly standing: readonly SportStanding[]
+  readonly goals: readonly Goal[]
+  readonly options: readonly GoalOption[]
+  readonly onAdjusted: () => void
 }
 
-export const StandingCard = ({ standing }: Props) => {
+export const StandingCard = ({ standing, goals, options, onAdjusted }: Props) => {
   if (standing.length === 0) return null
   return (
     <section className="standing">
@@ -274,7 +287,13 @@ export const StandingCard = ({ standing }: Props) => {
       </div>
       <div className="standing__grid">
         {standing.map((entry) => (
-          <SportPanel key={entry.sport} standing={entry} />
+          <SportPanel
+            key={entry.sport}
+            standing={entry}
+            goal={goals.find((goal) => goal.id === entry.goal?.id)}
+            option={options.find((option) => option.goalId === entry.goal?.id)}
+            onAdjusted={onAdjusted}
+          />
         ))}
       </div>
       <p className="standing__note">
