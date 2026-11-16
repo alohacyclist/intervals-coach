@@ -35,6 +35,8 @@ be shared as a picture:
   recent long sessions suggest. A second slider sets the minute the intervals begin.
 - **Recognises completed sessions** from time in zones, unlocks the next progression
   level, schedules a benchmark session every eight weeks and suggests threshold updates.
+- **Shows where you stand:** estimated FTP and the race time over the goal distance, read
+  from pace and heart rate of every run, with the trend of the last weeks towards the goal.
 - **Checks heart-rate recordings** against the work done, flags wrist-sensor artefacts
   and estimates the affected segments, clearly marked as estimates.
 - **Reads rides recorded without power or heart rate** from speed and the elevation

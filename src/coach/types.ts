@@ -834,6 +834,38 @@ export type WeekOutlook = {
   readonly openStimuli: readonly StimulusRecency[]
 }
 
+/** One weekly reading of what the athlete could do: watts for a ride, seconds over a distance for a run. */
+export type StandingPoint = {
+  readonly date: string
+  readonly value: number
+}
+
+/** Where the line through the last weeks puts the goal. */
+export type StandingVerdict = 'reached' | 'on-track' | 'late' | 'stalled'
+
+/**
+ * What the athlete could do today if it counted, estimated from training: FTP on
+ * the bike, a race time over the goal distance on foot.
+ */
+export type SportStanding = {
+  readonly sport: Sport
+  readonly measure: 'ftp' | 'race'
+  /** The race distance for `race`; null for `ftp`. */
+  readonly distanceKm: number | null
+  /** Watts for `ftp`, seconds for `race`. */
+  readonly current: number
+  /** Against four weeks ago, in the same unit; null without a reading that old. */
+  readonly change: number | null
+  /** Weekly, oldest first, the last one today. Empty where only the setting is known. */
+  readonly series: readonly StandingPoint[]
+  readonly goal: { readonly id: string; readonly value: number; readonly date: string | null } | null
+  /** When the trend of the last eight weeks reaches the goal. */
+  readonly reachBy: string | null
+  readonly verdict: StandingVerdict | null
+  /** eftp: intervals.icu's estimate; runs: pace and heart rate of the runs; setting: the athlete's own value. */
+  readonly source: 'eftp' | 'runs' | 'setting'
+}
+
 export type Progress = {
   readonly today: string
   readonly historyDays: number
@@ -842,6 +874,8 @@ export type Progress = {
   readonly levels: readonly FamilyLevel[]
   readonly benchmark: BenchmarkStatus
   readonly feasibility: readonly Feasibility[]
+  /** What the athlete could do today, per sport, and how it has moved. */
+  readonly standing: readonly SportStanding[]
   readonly season: readonly SeasonWeek[]
   readonly totals: {
     readonly sessions: number

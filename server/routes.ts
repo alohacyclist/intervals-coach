@@ -27,6 +27,7 @@ import { benchmarkCompletions, benchmarkStatus, compareBenchmarks } from '../src
 import type { WorkReading } from '../src/coach/efficiency.ts'
 import { workReading } from '../src/coach/efficiency.ts'
 import { executionSuggestions, readHeld, readWork, readWorkMany } from './work-readings.ts'
+import { buildStanding } from '../src/coach/standing.ts'
 import {
   buildProgress,
   DEFAULT_PROGRESS_SPAN,
@@ -185,18 +186,25 @@ const referenceResult = async (
   )
 }
 
+/** The first weekly reading of a run needs six weeks of runs before it. */
+const STANDING_WARMUP_DAYS = 42
+
 /**
  * The development view. Deliberately lighter than the plan: it needs the same
- * activity history the plan already reads, but neither wellness nor the
- * calendar ahead, because nothing here is about today.
+ * activity history the plan already reads, and wellness only for the standing,
+ * but not the calendar ahead, because nothing here is about today.
  */
 const buildProgressView = async (deps: RouteDeps, span: ProgressSpan): Promise<Progress> => {
   const today = todayFor(deps)
   const config = await deps.store.load()
-  const [recorded, events] = await Promise.all([
+  const [recorded, events, wellness, settings] = await Promise.all([
     // Levels and benchmarks judge the same history as the plan, whatever span is shown.
     deps.source.activities(addDays(today, -Math.max(ACTIVITY_HISTORY_DAYS, span + FITNESS_WARMUP_DAYS)), today),
     deps.source.events(addDays(today, -PROGRESSION_DAYS), today),
+    // The estimated FTP over the span, and resting heart rate for reading the runs. Optional:
+    // without it the standing falls back to the athlete's own values rather than taking the page down.
+    deps.source.wellness(addDays(today, -span - STANDING_WARMUP_DAYS), today).catch(() => []),
+    deps.source.sportSettings().catch(() => null),
   ])
   // Rides without power are read by the plan; here what it kept stands in.
   const activities = withRideEstimates(recorded, config.rideEstimates ?? [])
@@ -224,6 +232,19 @@ const buildProgressView = async (deps: RouteDeps, span: ProgressSpan): Promise<P
     sports: config.profile.sports.map((setting) => setting.sport),
     season: seasonBand(config, today),
     levelChoices: config.levelChoices,
+    standing: buildStanding(
+      activities,
+      wellness,
+      {
+        ...config.profile,
+        maxHr: config.profile.maxHr ?? settings?.maxHr ?? null,
+        lthr: config.profile.lthr ?? settings?.lthr ?? null,
+      },
+      config.goals,
+      config.profile.sports.map((setting) => setting.sport),
+      today,
+      span,
+    ),
   })
   return { ...progress, garmin: garminAttribution(activities) }
 }

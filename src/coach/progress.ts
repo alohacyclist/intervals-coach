@@ -6,6 +6,7 @@ import type {
   FitnessPoint,
   Progress,
   SeasonWeek,
+  SportStanding,
   Sport,
   WeekLoad,
 } from './types.ts'
@@ -148,6 +149,8 @@ type Achievements = {
   /** The athlete's own sports; empty means every family in the library. */
   readonly sports: readonly Sport[]
   readonly season?: readonly SeasonWeek[]
+  /** Needs wellness and the profile, which only the route holds. */
+  readonly standing?: readonly SportStanding[]
   /** Levels the athlete chose, per family. */
   readonly levelChoices?: Readonly<Record<string, number>>
 }
@@ -176,6 +179,7 @@ export const buildProgress = (
     levels: familyLevels(completions, achieved.sports, achieved.levelChoices),
     benchmark: achieved.benchmark,
     feasibility: achieved.feasibility,
+    standing: achieved.standing ?? [],
     // The band comes from the calendar, not from activities; the route fills it.
     season: achieved.season ?? [],
     totals: {
