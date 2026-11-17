@@ -22,6 +22,8 @@ const betterOf = (goal: Goal): 1 | -1 => (goal.kind === 'ftp' ? 1 : -1)
 /** Whether the goal as set needs another look: the trend misses it, or no trend says it and the maths does. */
 const needsAnotherLook = (goal: Goal, standing: SportStanding | undefined, feasibility: Feasibility | undefined): boolean => {
   if (goal.targetDate === undefined) return true
+  // Beyond the best case on its own day: no trend line needed to see it.
+  if (standing?.goal?.id === goal.id && standing.forecast?.goalChance === 'out-of-reach') return true
   if (standing?.goal?.id === goal.id && standing.verdict !== null) {
     return standing.verdict === 'late' || standing.verdict === 'stalled'
   }
@@ -75,7 +77,12 @@ const optionFor = (
   const date = reachedOn === goal.targetDate ? null : reachedOn
 
   const weeksToDate = goal.targetDate === undefined ? null : diffDays(today, goal.targetDate) / 7
-  const reachable = weeksToDate === null || weeksToDate <= 0 ? null : roundTarget(goal, current + better * perWeek * weeksToDate)
+  // The forecast for the goal's own day already weighs trend, taper and endurance: its likely value is the target.
+  const forecast = own?.forecast && own.forecast.date === goal.targetDate ? own.forecast.likely : null
+  const reachable =
+    weeksToDate === null || weeksToDate <= 0
+      ? null
+      : roundTarget(goal, forecast ?? current + better * perWeek * weeksToDate)
   // Only a target that is still a step forward, and short of the one set: a way out never raises the bar.
   const value =
     reachable !== null && better * (reachable - current) > 0 && better * (goal.targetValue - reachable) > 0
@@ -85,7 +92,7 @@ const optionFor = (
   if (value === null && date === null) return null
   return {
     goalId: goal.id,
-    basis: fromTrend ? 'trend' : 'typical',
+    basis: forecast !== null && value !== null ? 'forecast' : fromTrend ? 'trend' : 'typical',
     perWeek: Math.round(perWeek * 10) / 10,
     current: Math.round(current),
     value,

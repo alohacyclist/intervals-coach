@@ -1085,7 +1085,7 @@ export const planDays = (
       // A race the athlete set as a goal is the one session of its day; a league
       // race keeps its alternative, since whether to ride it is decided on the day.
       const options = goalAround.race
-        ? [goalRaceSession(goalAround.race, config, date)]
+        ? [goalRaceSession(goalAround.race, config, date, state.raceForecasts?.[goalAround.race.id] ?? null)]
         : withRace(
             regular,
             around.race ? raceSession(around.race, state, config, dayType) : null,

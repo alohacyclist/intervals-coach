@@ -45,9 +45,11 @@ export const GoalAdjust = ({ goal, option, onAdjusted }: Props) => {
   return (
     <div className="goal-adjust">
       <p className="goal-adjust__basis">
-        {option.basis === 'trend'
-          ? t`Realistisch mit deinem Trend (${paceText(goal, option)}):`
-          : t`Dein Trend zeigt gerade nicht nach oben. Mit typischem Fortschritt (${paceText(goal, option)}):`}
+        {option.basis === 'forecast'
+          ? t`Was die Prognose für den Tag hergibt, oder ein späteres Datum bei ${paceText(goal, option)}:`
+          : option.basis === 'trend'
+            ? t`Realistisch mit deinem Trend (${paceText(goal, option)}):`
+            : t`Dein Trend zeigt gerade nicht nach oben. Mit typischem Fortschritt (${paceText(goal, option)}):`}
       </p>
       <div className="goal-adjust__choices">
         {option.value && goal.targetDate && (

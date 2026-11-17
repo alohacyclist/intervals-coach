@@ -55,7 +55,8 @@ const renderPace = (
 
 const humanTarget = (target: string, threshold: SportThreshold): string => {
   const values = percentages(target)
-  if (values.length === 0) return target
+  // An absolute pace, as race day is paced: already what the athlete reads, but for the keyword.
+  if (values.length === 0) return target.replace(/\/km Pace$/, '/km')
   const isRamp = /ramp/i.test(target)
 
   if (threshold.metric === 'pace') return renderPace(values, threshold.thresholdSecPerKm, '/km')

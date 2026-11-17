@@ -163,6 +163,13 @@ export const pushWorkout = (
     body: JSON.stringify({ date, templateId, variant, intent, minutes, coreAt }),
   })
 
+/** The race goal with its pacing onto the calendar, and from there onto the watch. */
+export const pushRacePlan = (goalId: string): Promise<{ date: string; name: string; alreadyScheduled: boolean }> =>
+  request<{ date: string; name: string; alreadyScheduled: boolean }>('/api/race-plan', {
+    method: 'POST',
+    body: JSON.stringify({ goalId }),
+  })
+
 export const deleteAccount = (): Promise<{ ok: boolean }> =>
   request<{ ok: boolean }>('/api/account', { method: 'DELETE' })
 

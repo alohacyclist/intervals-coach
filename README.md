@@ -36,7 +36,12 @@ be shared as a picture:
 - **Recognises completed sessions** from time in zones, unlocks the next progression
   level, schedules a benchmark session every eight weeks and suggests threshold updates.
 - **Shows where you stand:** estimated FTP and the race time over the goal distance, read
-  from pace and heart rate of every run, with the trend of the last weeks towards the goal.
+  from pace and heart rate of every run, with the trend of the last weeks towards the goal,
+  how far it can be leaned on, and what it rests on. A forecast for race day as a range
+  (trend, taper, endurance for the long races), drawn as a corridor, and every distance
+  from 5 km to the marathon with a taper from today.
+- **Paces running races** on the goal or the likely time, and sends the plan as a race-day
+  session with pace ranges by distance to intervals.icu and on to the watch.
 - **Checks heart-rate recordings** against the work done, flags wrist-sensor artefacts
   and estimates the affected segments, clearly marked as estimates.
 - **Reads rides recorded without power or heart rate** from speed and the elevation

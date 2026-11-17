@@ -263,13 +263,45 @@ geschätzt aus dem Training, und als Schätzung gekennzeichnet:
   besser. Was ein Lauf tatsächlich bewiesen hat (ein Rennen, ein durchgezogener Tempolauf),
   ist die Untergrenze. Hügelige Läufe (über 20 Höhenmeter/km) bleiben draußen, weil die
   Formel den Anstieg nicht kennt. Ohne Puls, Maximal- und Ruhepuls: aus der Schwellenpace.
+  Maximalpuls und Schwellen-HF kommen aus den Lauf-Einstellungen auf intervals.icu, erst
+  ohne sie aus dem Profil: am Rad liegt der Puls tiefer.
 - **Trend:** eine Gerade durch die letzten acht Wochen sagt, wann das Ziel bei diesem Tempo
-  erreicht wäre — rechtzeitig, zu spät, oder gar nicht, wenn sie nicht zum Ziel zeigt.
+  erreicht wäre — rechtzeitig, zu spät, oder gar nicht, wenn sie nicht zum Ziel zeigt. Ohne
+  Trend (nur die eingetragene Schwelle, zu wenige Werte) sagt die Seite darüber nichts.
+- **Aussagekraft:** belastbar, eingeschränkt oder noch kein Trend. Laufen ist belastbar ab
+  sechs ausgewerteten Läufen in sechs Wochen und sechs Wochenwerten; die eFTP braucht dazu
+  eine harte Einheit in den letzten vier Wochen, weil sie nur mit harten Anstrengungen steigt.
+- **Worauf beruht das?** Aufklappbar: Quelle, wie viele Läufe zählten und warum andere nicht
+  (zu hügelig, ohne Puls, zu kurz, zu locker), fehlender Ruhe- oder Maximalpuls, keine harte
+  Einheit am Rad, die Fitness (CTL) im Vergleich zur Schätzung, Umfang, längster Lauf. Dazu
+  Watt pro Herzschlag auf ruhigen Fahrten, vier Wochen gegen die vier davor: Am Rad sagt der
+  Puls nichts über eine Laufzeit, aber steigt er dort, wächst der Motor. Wo Läufe fehlen,
+  stützt das die Prognose.
+- **Prognose** (`forecast.ts`): für den Tag des Ziels — ohne Laufziel „mit Taper ab heute“ in
+  zehn Tagen, ohne FTP-Ziel in acht Wochen — immer als Spanne: bester Fall, wahrscheinlich,
+  schlechtester Fall, mit dem Weg dahin zum Aufklappen (Stand heute, Trend bis dahin, Taper,
+  Ausdauer). Wahrscheinlich ist der Trend, höchstens so schnell wie üblich (Laufen etwa ein
+  VDOT-Punkt in sechs bis sieben Wochen, Rad 2,5 % im Monat), ohne belastbaren Trend weniger;
+  der beste Fall ein Block, der anschlägt; der schlechteste ein fallender Trend, der halb so
+  steil weiterläuft. Gewinne zählen bis 16 Wochen voraus. Taper 1/2/3 % (Bosquet 2007), außer er
+  ist beim Ziel abgeschaltet. Halbmarathon und Marathon kosten ohne Wochenkilometer und langen
+  Lauf bis zu 2 bzw. 10 %. Dazu ±1,5–4 % Unsicherheit der heutigen Schätzung. Im Diagramm
+  läuft der Verlauf als Linie, die Wochen bis zum Ziel als Korridor mit dem wahrscheinlichen
+  Weg darin; das Ziel liegt im wahrscheinlichen Bereich, ist möglich, oder jenseits des
+  besten Falls. Für Laufen dazu alle Distanzen von 5 km bis Marathon mit Taper ab heute.
+- **Pacing-Plan** (`pacing.ts`): für ein Laufziel mit Distanz und Datum. Gepaced wird auf das
+  Ziel, wenn die Prognose es für möglich hält, sonst auf die wahrscheinliche Zeit. Ein Fünftel
+  der Strecke kontrolliert (1,5 % langsamer, im Marathon 5 km und 1 %), dann gleichmäßig in
+  Abschnitten bis 10 km, die letzten ein bis drei Kilometer schneller. „Auf die Uhr schicken“
+  legt den Renntag als Einheit mit Pace-Spannen (±4 s/km) nach Distanz in den Kalender auf
+  intervals.icu; von dort geht er wie jede Einheit auf die Garmin. Der Renntag im Plan trägt
+  denselben Pacing-Plan.
 
 Ziele, die der Leistungsstand schon zeigt, stehen darunter nicht ein zweites Mal.
 
 **Ziele anpassen.** Ein Ziel, das so nicht klappt — der Trend kommt zu spät an, zeigt nicht
-zum Ziel, oder ohne Trend sagt es der Realismus-Check —, bekommt zwei Auswege, einen Tipp
+zum Ziel, die Prognose für seinen Tag hält es für außer Reichweite, oder ohne Trend sagt es der
+Realismus-Check —, bekommt zwei Auswege, einen Tipp
 entfernt: der Wert, den das Datum hergibt („270 W bis 24.01.“), oder das Datum, das der Wert
 braucht („300 W bis ~14.03.“). Gerechnet wird mit dem eigenen Fortschritt der letzten acht
 Wochen, höchstens mit dem Doppelten des typischen (ein kurzer Aufschwung hält nicht ewig);
@@ -598,7 +630,10 @@ src/coach/     reine Trainingslogik, ohne IO — hier liegt die gesamte Fachlich
   threshold-drift.ts  Abgleich der Schwellenwerte mit intervals.icu
   config-schema.ts    Validierung und Migration der gespeicherten Konfiguration
   feasibility.ts  Realismus-Check der Ziele
-  standing.ts     Leistungsstand: eFTP und Laufzeit aus Tempo und Puls, Trend zum Ziel
+  standing.ts     Leistungsstand: eFTP und Laufzeit aus Tempo und Puls, Trend, Aussagekraft, Einflüsse
+  forecast.ts     Prognose als Spanne: Trend, Taper, Ausdauer, Korridor bis zum Zieltag
+  pacing.ts       Pacing-Plan für Laufziele und seine Schritte für die Uhr
+  vdot.ts         Laufleistung nach Daniels & Gilbert: VDOT und Zeit über eine Distanz
   goal-options.ts Auswege für Ziele, die so nicht klappen: anderer Wert oder anderes Datum
 server/        intervals.icu-Client, HTTP-Routen, Node-Entry für die Entwicklung
   source.ts    IntervalsSource: was die Routen lesen und schreiben, ohne das Wie

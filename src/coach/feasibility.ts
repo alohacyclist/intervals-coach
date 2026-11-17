@@ -30,6 +30,9 @@ const RIEGEL: Readonly<Partial<Record<Sport, number>>> = { Run: 1.06, Swim: 1.03
 export const typicalGainPerWeek = (goal: Goal, current: number): number =>
   (current * (goal.kind === 'ftp' ? FTP_PERCENT_PER_MONTH : RACE_PERCENT_PER_MONTH)) / 100 / WEEKS_PER_MONTH
 
+/** The same for an FTP without a goal to ask: watts a week. */
+export const typicalFtpGainPerWeek = (ftp: number): number => (ftp * FTP_PERCENT_PER_MONTH) / 100 / WEEKS_PER_MONTH
+
 const number = (value: number, digits = 1): string =>
   value.toLocaleString(locale(), { minimumFractionDigits: digits, maximumFractionDigits: digits })
 

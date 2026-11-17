@@ -1216,4 +1216,140 @@ export const EN: Readonly<Record<string, string>> = {
   "Ziel bleibt, Datum verschieben": "Keep the goal, move the date",
   "als Zieldatum setzen": "set as goal date",
   "Unbekanntes Ziel: {0}": "Unknown goal: {0}",
+  "Prognose {0}–{1}.":
+    "Forecast {0}–{1}.",
+  "Pacing auf {0} statt auf dein Ziel {1}: das liegt jenseits dessen, was dein Training gerade hergibt — zu schnell angegangen, kostet es hinten mehr, als es vorne bringt.":
+    "Paced on {0} instead of your goal {1}: that is beyond what your training gives right now — started too fast, it costs more at the end than it gains at the start.",
+  "Pacing auf {0}: dein Ziel {1} ist damit sicher drin.":
+    "Paced on {0}: your goal {1} is safely within it.",
+  "Pacing auf dein Ziel {0}.":
+    "Paced on your goal {0}.",
+  "{0} · {1}{2} Die ersten Kilometer bewusst kontrolliert, dann gleichmäßig, zum Schluss, was übrig ist. Die Uhr misst meist etwas mehr als die Strecke: im Zweifel am schnellen Rand der Spanne laufen.":
+    "{0} · {1}{2} The first kilometres deliberately controlled, then even, and at the end whatever is left. The watch usually measures a little more than the course: when in doubt, run at the fast edge of the range.",
+  "Start kontrolliert":
+    "Controlled start",
+  "Finish: was übrig ist":
+    "Finish: whatever is left",
+  "Gleichmäßig":
+    "Even",
+  "Aussagekraft: belastbar":
+    "Reliability: solid",
+  "Aussagekraft: eingeschränkt":
+    "Reliability: limited",
+  "Aussagekraft: noch kein Trend messbar":
+    "Reliability: no trend measurable yet",
+  "{0} von {1} Läufen der letzten 6 Wochen ausgewertet, {2} Wochenwerte im Trend.":
+    "{0} of {1} runs of the last 6 weeks read, {2} weekly values in the trend.",
+  "{0} Wochenwerte der eFTP in den letzten 8 Wochen.":
+    "{0} weekly eFTP values over the last 8 weeks.",
+  "Kein Ruhepuls in intervals.icu (Wellness): ohne ihn lässt sich kein Lauf über den Puls lesen.":
+    "No resting heart rate in intervals.icu (wellness): without it no run can be read by heart rate.",
+  "Weder Maximalpuls noch Schwellen-HF hinterlegt: ohne sie lässt sich kein Lauf über den Puls lesen.":
+    "Neither max heart rate nor threshold heart rate set: without them no run can be read by heart rate.",
+  "Maximalpuls aus der Schwellen-HF geschätzt. Ein Maximalpuls im Lauf-Profil auf intervals.icu macht die Schätzung genauer.":
+    "Max heart rate estimated from threshold heart rate. A max heart rate in the run settings on intervals.icu makes the estimate more accurate.",
+  "{0} Läufe zu hügelig (über 20 Hm/km) — bleiben außen vor, der Anstieg würde sie langsamer aussehen lassen.":
+    "{0} runs too hilly (over 20 m climb per km) — left out, the climbing would make them look slower.",
+  "{0} Läufe ohne Puls.":
+    "{0} runs without heart rate.",
+  "{0} Läufe kürzer als 20 min oder 3 km.":
+    "{0} runs shorter than 20 min or 3 km.",
+  "{0} Läufe so locker (unter 50 % der Pulsreserve), dass der Puls wenig über die Form sagt.":
+    "{0} runs so easy (below 50 % of heart rate reserve) that heart rate says little about fitness.",
+  "Keine harte Einheit auf dem Rad in den letzten Wochen: ohne harte Anstrengungen kann die eFTP nur stehen bleiben oder sinken. Das ist kein Formverlust.":
+    "No hard ride in recent weeks: without hard efforts the eFTP can only hold or drop. That is not a loss of fitness.",
+  "Seit {0} Tagen keine harte Einheit auf dem Rad: ohne harte Anstrengungen kann die eFTP nur stehen bleiben oder sinken. Das ist kein Formverlust.":
+    "No hard ride for {0} days: without hard efforts the eFTP can only hold or drop. That is not a loss of fitness.",
+  "Deine Fitness (CTL) ist in 8 Wochen um {0} gestiegen. Die Schätzung folgt dem mit Verzögerung.":
+    "Your fitness (CTL) has risen by {0} in 8 weeks. The estimate follows with a delay.",
+  "Deine Fitness (CTL) ist in 8 Wochen um {0} gesunken — weniger Training oder eine Pause.":
+    "Your fitness (CTL) has dropped by {0} in 8 weeks — less training or a break.",
+  "Am Rad bringst du auf ruhigen Fahrten {0} % mehr Watt pro Herzschlag als vor vier Wochen: die Ausdauer wächst. Wo Läufe fehlen, stützt das die Prognose.":
+    "On steady rides you put out {0} % more watts per heartbeat than four weeks ago: your endurance is growing. Where runs are missing, this supports the forecast.",
+  "Am Rad {0} % weniger Watt pro Herzschlag als vor vier Wochen — Müdigkeit, Hitze oder weniger Grundlage.":
+    "{0} % fewer watts per heartbeat on the bike than four weeks ago — fatigue, heat or less base.",
+  "Fitness (CTL) {0} ({1} in 8 Wochen) · {2} km und {3} h pro Woche · längster Lauf {4} km · {5} harte Einheiten in 4 Wochen":
+    "Fitness (CTL) {0} ({1} in 8 weeks) · {2} km and {3} h per week · longest run {4} km · {5} hard sessions in 4 weeks",
+  "Fitness (CTL) {0} ({1} in 8 Wochen) · {2} h pro Woche · {3} harte Einheiten in 4 Wochen":
+    "Fitness (CTL) {0} ({1} in 8 weeks) · {2} h per week · {3} hard sessions in 4 weeks",
+  "Die eFTP schätzt intervals.icu aus deinen härtesten Anstrengungen. Sie steigt nur mit harten Einheiten oder Tests; in einer ruhigen Phase bleibt sie stehen oder sinkt, auch wenn die Ausdauer wächst. Belastbar mit einer harten Einheit in den letzten vier Wochen und sechs Wochenwerten.":
+    "intervals.icu estimates the eFTP from your hardest efforts. It only rises with hard sessions or tests; in a quiet phase it holds or drops even while your endurance grows. Solid with a hard session in the last four weeks and six weekly values.",
+  "Belastbar ab sechs ausgewerteten Läufen in sechs Wochen und sechs Wochenwerten. Jeder Wert liest die Läufe der sechs Wochen davor, deshalb zeigt er Fortschritt erst mit Verzögerung. Hitze, Pulsanstieg im Lauf und müde Beine lassen einen Lauf langsamer aussehen — darum zählt das obere Viertel der Läufe, nicht der Durchschnitt.":
+    "Solid from six runs read in six weeks and six weekly values. Each value reads the six weeks of runs before it, so progress shows with a delay. Heat, heart rate drift and tired legs make a run look slower — which is why the upper quarter of the runs counts, not the average.",
+  "Prognose für den {0}":
+    "Forecast for {0}",
+  "Prognose Renntag {0}, mit Taper":
+    "Race day forecast {0}, with taper",
+  "Prognose Renntag {0}, ohne Taper":
+    "Race day forecast {0}, without taper",
+  "Mit Taper ab heute, am {0}":
+    "With a taper from today, on {0}",
+  "Dein Ziel liegt im wahrscheinlichen Bereich.":
+    "Your goal is within the likely range.",
+  "Dein Ziel ist möglich — mit einem Block, der anschlägt, und einem guten Tag.":
+    "Your goal is possible — with a training block that works and a good day.",
+  "Dein Ziel liegt jenseits des besten Falls.":
+    "Your goal is beyond the best case.",
+  "Bester Fall: ein Block, der anschlägt. Wahrscheinlich: dein Trend, höchstens so schnell wie üblich (etwa 2,5 % im Monat); ohne belastbaren Trend weniger. Schlechtester Fall: ein fallender Trend läuft halb so steil weiter. Dazu die Unsicherheit der heutigen Schätzung.":
+    "Best case: a training block that works. Likely: your trend, no faster than usual (about 2.5 % a month); less without a solid trend. Worst case: a falling trend carries on at half the slope. On top, the uncertainty of today's estimate.",
+  "Bester Fall: ein Block, der anschlägt, und 3 % durch den Taper. Wahrscheinlich: dein Trend, höchstens so schnell wie üblich (etwa ein VDOT-Punkt in sechs Wochen), und 2 % durch den Taper. Schlechtester Fall: ein fallender Trend läuft halb so steil weiter, 1 % durch den Taper. Dazu die Unsicherheit der heutigen Schätzung (1,5–4 % je nach Aussagekraft). Für Halbmarathon und Marathon zählen Wochenkilometer und der längste Lauf: fehlen sie, kostet das bis zu 2 bzw. 10 %.":
+    "Best case: a training block that works, and 3 % from the taper. Likely: your trend, no faster than usual (about one VDOT point in six weeks), and 2 % from the taper. Worst case: a falling trend carries on at half the slope, 1 % from the taper. On top, the uncertainty of today's estimate (1.5–4 % depending on reliability). For the half and the marathon, weekly kilometres and the longest run count: where they are missing, that costs up to 2 or 10 %.",
+  "{0} ({1}–{2})":
+    "{0} ({1}–{2})",
+  "{0}: heute {1}, am {2} wahrscheinlich {3}, zwischen {4}.":
+    "{0}: {1} today, likely {3} on {2}, between {4}.",
+  "wahrscheinlich {0}":
+    "likely {0}",
+  "So kommt die Prognose zustande":
+    "How the forecast comes about",
+  "Stand heute":
+    "Today",
+  "Trend bis dahin":
+    "Trend until then",
+  "Taper":
+    "Taper",
+  "Ausdauer (Wochenkilometer, langer Lauf)":
+    "Endurance (weekly kilometres, long run)",
+  "Wahrscheinlich":
+    "Likely",
+  "Marathon":
+    "Marathon",
+  "Halbmarathon":
+    "Half marathon",
+  "Alle Distanzen, mit Taper ab heute":
+    "All distances, with a taper from today",
+  "Dieselbe Form über jede Distanz. Halbmarathon und Marathon tragen den Abzug für fehlende Wochenkilometer und lange Läufe — der Marathon fällt deshalb oft langsamer aus, als die kurzen Zeiten versprechen.":
+    "The same fitness over every distance. The half and the marathon carry the deduction for missing weekly kilometres and long runs — which is why the marathon often comes out slower than the short times promise.",
+  "Gepaced auf die wahrscheinliche Zeit statt auf dein Ziel{0}: zu schnell angegangen, kostet es hinten mehr, als es vorne bringt.":
+    "Paced on the likely time instead of your goal{0}: started too fast, it costs more at the end than it gains at the start.",
+  "Gepaced auf die wahrscheinliche Zeit — dein Ziel{0} ist damit sicher drin.":
+    "Paced on the likely time — your goal{0} is safely within it.",
+  "Gepaced auf dein Ziel.":
+    "Paced on your goal.",
+  "Nicht gesendet":
+    "Not sent",
+  "Pacing-Plan · {0}":
+    "Pacing plan · {0}",
+  "km {0}–{1}":
+    "km {0}–{1}",
+  "Auf die Uhr schicken":
+    "Send to the watch",
+  "Steht am {0} im Kalender auf intervals.icu, von dort geht es mit der Garmin-Verbindung auf die Uhr.":
+    "On the intervals.icu calendar for {0}; from there the Garmin connection takes it to the watch.",
+  "Dieser Plan steht schon im Kalender.":
+    "This plan is already on the calendar.",
+  "Als Einheit am Renntag: jeder Abschnitt mit seiner Pace-Spanne, die Uhr zählt die Kilometer.":
+    "As a session on race day: every stretch with its pace range, the watch counts the kilometres.",
+  "Worauf beruht das?":
+    "What is this based on?",
+  "Training:":
+    "Training:",
+  "Wann ist das aussagekräftig?":
+    "When does it hold?",
+  "Für dieses Ziel gibt es keinen Wettkampftag, der noch kommt":
+    "This goal has no race day still ahead",
+  "An diesem Tag steht kein Wettkampf an":
+    "There is no race on this day",
+  "Was die Prognose für den Tag hergibt, oder ein späteres Datum bei {0}:":
+    "What the forecast gives for the day, or a later date at {0}:",
 }

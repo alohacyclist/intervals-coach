@@ -249,11 +249,150 @@
 .standing__verdict--stalled span {
   color: var(--warn);
 }
-.standing__source {
+.standing__chance--likely span {
+  color: var(--good);
+}
+.standing__chance--possible span {
+  color: var(--data);
+}
+.standing__chance--out-of-reach span {
+  color: var(--warn);
+}
+/* How far the number can be leaned on, right under it. */
+.standing__quality {
   margin: 0;
   padding: 0 14px;
   font-size: 12px;
+  color: var(--dim);
+}
+.standing__quality::before {
+  content: '';
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: var(--good);
+}
+.standing__quality--limited::before {
+  background: var(--warn);
+}
+.standing__quality--none::before {
+  background: transparent;
+  border: 1px solid var(--faint);
+}
+/* The weeks ahead: from worst to best case, the likely way dotted through it. */
+.standing__corridor {
+  fill: var(--data);
+  fill-opacity: 0.14;
+  stroke: none;
+}
+.standing__forecast {
+  margin-top: 8px;
+  padding: 8px 14px 0;
+  border-top: 1px solid var(--rule-soft);
+}
+.standing__forecast .standing__verdict {
+  padding: 0;
+}
+.standing__forecast-title {
+  margin: 0;
+  font-size: 12px;
+  color: var(--dim);
+}
+.standing__forecast-range {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin: 2px 0 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.standing__forecast-range span {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--dim);
+}
+.standing__more {
+  padding: 0 14px;
+  font-size: 13px;
+}
+.standing__forecast .standing__more {
+  padding: 0;
+}
+.standing__more > summary {
+  padding: 6px 0;
+  color: var(--dim);
+}
+.standing__explain {
+  margin: 0 0 6px;
+  font-size: 12px;
+  line-height: 1.45;
   color: var(--faint);
+}
+.standing__explain strong {
+  color: var(--dim);
+  font-weight: 600;
+}
+.standing__parts {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 12px;
+  margin: 0 0 8px;
+  font-size: 13px;
+}
+.standing__parts dt {
+  color: var(--dim);
+}
+.standing__parts dd {
+  margin: 0;
+  text-align: right;
+  color: var(--ink);
+}
+.standing__parts dt:last-of-type,
+.standing__parts dd:last-of-type {
+  padding-top: 3px;
+  border-top: 1px solid var(--rule-soft);
+  font-weight: 600;
+}
+.standing__distances {
+  width: 100%;
+  margin: 0 0 8px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.standing__distances th,
+.standing__distances td {
+  padding: 3px 0;
+  text-align: left;
+  font-weight: 400;
+  border-bottom: 1px solid var(--rule-soft);
+}
+.standing__distances th {
+  color: var(--dim);
+}
+.standing__distances td {
+  color: var(--ink);
+}
+.standing__distances td + td {
+  padding-left: 10px;
+  color: var(--faint);
+}
+.standing__influences {
+  margin: 0 0 6px;
+  padding-left: 18px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--dim);
+}
+.standing__send {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  margin-bottom: 8px;
 }
 .standing__note {
   margin: 0;

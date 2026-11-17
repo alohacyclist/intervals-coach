@@ -1,4 +1,4 @@
-import type { Activity, CoachConfig, Intent, PlannedDay, Wellness } from './types.ts'
+import type { Activity, CoachConfig, ForecastRange, Intent, PlannedDay, Wellness } from './types.ts'
 import type { Completion } from './progression.ts'
 import { buildState } from './state.ts'
 import { planDays } from './engine.ts'
@@ -22,12 +22,14 @@ export const planFromMorning = (
   minutesToday?: number,
   /** The minute the work of a lengthened session should begin. */
   coreAt?: number,
+  /** Where the forecast puts each running race goal: what race day is paced on. */
+  raceForecasts?: Readonly<Record<string, ForecastRange>>,
 ): readonly PlannedDay[] => {
   const earlier = activities.filter((activity) => activity.date < today)
   const doneToday = activities.filter((activity) => activity.date === today)
   const earlierRaces = raceActivities.filter((activity) => activity.date < today)
   return planDays(
-    buildState(earlier, wellness, today, earlierRaces),
+    { ...buildState(earlier, wellness, today, earlierRaces), ...(raceForecasts ? { raceForecasts } : {}) },
     config,
     days,
     completions,

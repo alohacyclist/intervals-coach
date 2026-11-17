@@ -265,6 +265,8 @@ export type Activity = {
   /** Percentage match against the planned workout, 0–100. */
   readonly compliance: number | null
   readonly averageHr: number | null
+  /** Average power where a meter recorded it; what a ride's heart rate is set against. */
+  readonly averageWatts?: number | null
   /** Seconds per training zone, keyed Z1..Z7 and SS, from power or heart rate. */
   readonly zoneSeconds: Readonly<Record<string, number>>
   /** The recording device as intervals.icu names it, e.g. "Garmin Edge 530". */
@@ -440,6 +442,8 @@ export type TrainingState = {
   readonly rampRate: number
   /** CTL change over the last 28 days: one full 3:1 cycle, so a recovery week does not read as a plateau. */
   readonly ctlGain28: number
+  /** Running race goals by id: where the forecast puts race day, for the pacing on the day. */
+  readonly raceForecasts?: Readonly<Record<string, ForecastRange>>
   readonly readiness: Readiness
   readonly recency: readonly StimulusRecency[]
   /** The newest activity the plan was built from — makes stale data visible. */
@@ -844,6 +848,110 @@ export type StandingPoint = {
 export type StandingVerdict = 'reached' | 'on-track' | 'late' | 'stalled'
 
 /**
+ * How far the number can be leaned on. solid: enough readings and a trend;
+ * limited: a trend, but on thin or one-sided data; none: no trend at all, only
+ * a setting or too few readings — then nothing is said about where it is heading.
+ */
+export type StandingQuality = 'solid' | 'limited' | 'none'
+
+/** What the reading rests on, counted, so the page can say it in a sentence. */
+export type StandingBasis = {
+  /** runs: runs that counted in the last six weeks; eftp: weekly readings in the trend window. */
+  readonly used: number
+  /** runs: every run of the last six weeks; eftp: the weeks of the trend window. */
+  readonly considered: number
+  /** Weekly points the trend line goes through. */
+  readonly trendPoints: number
+}
+
+/** Something that bends the reading, and how much of it there was. */
+export type StandingInfluence = {
+  readonly kind:
+    | 'no-resting-hr'
+    | 'no-max-hr'
+    | 'max-hr-from-lthr'
+    | 'hilly-runs'
+    | 'runs-without-hr'
+    | 'short-runs'
+    | 'easy-runs'
+    | 'no-hard-rides'
+    | 'load-rising'
+    | 'load-falling'
+    | 'bike-aerobic-up'
+    | 'bike-aerobic-down'
+  /** Runs, days, CTL points or percent, as the kind says. */
+  readonly amount?: number
+}
+
+/** The training behind the number, per sport: what it was actually built on. */
+export type StandingTraining = {
+  /** Fitness (CTL) in this sport today. */
+  readonly ctl: number
+  /** Its change over the last eight weeks. */
+  readonly ctlChange: number
+  /** Average over the last six weeks. */
+  readonly weeklyHours: number
+  /** Running only: kilometres per week and the longest run, both over six weeks. */
+  readonly weeklyKm: number | null
+  readonly longestKm: number | null
+  /** Hard sessions in this sport over the last four weeks. */
+  readonly hardSessions: number
+}
+
+/** Best case, likely, worst case — in the measure's unit. */
+export type ForecastRange = {
+  readonly best: number
+  readonly likely: number
+  readonly worst: number
+}
+
+/** One week of the corridor ahead: where the measure can be, from worst to best. */
+export type CorridorPoint = ForecastRange & { readonly date: string }
+
+/**
+ * Where the measure can be on a day ahead — the race day of a goal, or a taper
+ * from today without one. A range, never one number: an estimate from training
+ * is a few percent either way, and more the further out it is.
+ */
+export type StandingForecast = ForecastRange & {
+  readonly date: string
+  /** Whether a taper is counted in: a race goal that keeps its taper, or the "if you tapered now" case. */
+  readonly tapered: boolean
+  /** The way to the likely value, step by step, in the measure's unit; zero where a step does not apply. */
+  readonly parts: {
+    readonly today: number
+    readonly trend: number
+    readonly taper: number
+    readonly endurance: number
+  }
+  /** Where the goal sits in the range: inside, beyond the best case, or safely within reach. */
+  readonly goalChance: 'likely' | 'possible' | 'out-of-reach' | null
+  /** Weekly from today to the date. */
+  readonly corridor: readonly CorridorPoint[]
+}
+
+/** Running: what the same fitness says over the distances a runner races, with a taper from today. */
+export type DistanceForecast = ForecastRange & { readonly km: number }
+
+/** How a race goal is run: the time it is paced on, and the stretches with their pace. */
+export type RacePacing = {
+  readonly distanceKm: number
+  readonly targetSeconds: number
+  /**
+   * goal: the goal, which the forecast holds possible (or there is none);
+   * forecast-goal-out-of-reach: the likely time, the goal being beyond the best case;
+   * forecast-goal-safe: the likely time, the goal being slower than even the worst case.
+   */
+  readonly basis: 'goal' | 'forecast-goal-out-of-reach' | 'forecast-goal-safe'
+  readonly segments: readonly {
+    readonly fromKm: number
+    readonly toKm: number
+    readonly kind: 'start' | 'steady' | 'finish'
+    readonly secPerKm: number
+  }[]
+}
+
+/**
  * What the athlete could do today if it counted, estimated from training: FTP on
  * the bike, a race time over the goal distance on foot.
  */
@@ -866,6 +974,17 @@ export type SportStanding = {
   readonly verdict: StandingVerdict | null
   /** eftp: intervals.icu's estimate; runs: pace and heart rate of the runs; setting: the athlete's own value. */
   readonly source: 'eftp' | 'runs' | 'setting'
+  readonly quality: StandingQuality
+  readonly basis: StandingBasis
+  /** What bends the reading right now, most telling first. */
+  readonly influences: readonly StandingInfluence[]
+  readonly training: StandingTraining
+  /** Where it can be on race day, or after a taper from today. */
+  readonly forecast: StandingForecast | null
+  /** Running only: 5 km to the marathon, with a taper from today. */
+  readonly distances: readonly DistanceForecast[]
+  /** Running only, for a race goal with a distance and a date ahead: how to run it. */
+  readonly pacing: RacePacing | null
 }
 
 /**
@@ -875,8 +994,11 @@ export type SportStanding = {
  */
 export type GoalOption = {
   readonly goalId: string
-  /** trend: the athlete's last eight weeks; typical: what training usually brings, where the trend does not rise. */
-  readonly basis: 'trend' | 'typical'
+  /**
+   * forecast: the target is the likely value of the forecast for the goal's day, the date from the gain per week;
+   * trend: the athlete's last eight weeks; typical: what training usually brings, where the trend does not rise.
+   */
+  readonly basis: 'forecast' | 'trend' | 'typical'
   /** The gain per week the options assume, in the goal's unit (watts, or seconds faster). */
   readonly perWeek: number
   /** Where the options start from. */

@@ -1,4 +1,5 @@
-import type { CoachConfig, DayType, Goal, PlannedSession, Sport, Step, WorkoutTemplate } from './types.ts'
+import type { CoachConfig, DayType, ForecastRange, Goal, PlannedSession, RacePacing, Sport, Step, WorkoutTemplate } from './types.ts'
+import { pacingSteps, racePacing } from './pacing.ts'
 import { addDays, formatClock } from './dates.ts'
 import { breakLimit } from './breaks.ts'
 import { projectedRaceTime } from './feasibility.ts'
@@ -102,14 +103,16 @@ const stimulusFor = (raceMinutes: number): WorkoutTemplate['stimulus'] => {
 
 export const GOAL_RACE_TEMPLATE_ID = 'goal-race'
 
-/** The race as a session: the time it should take, and the load it will cost. */
-export const goalRaceTemplate = (goal: Goal, config: CoachConfig): WorkoutTemplate => {
+/** The race as a session: the time it should take, the load it will cost, and for a run how to pace it. */
+export const goalRaceTemplate = (goal: Goal, config: CoachConfig, forecast: ForecastRange | null = null): WorkoutTemplate => {
   const projected = projectedRaceTime(config.profile, goal.sport, goal.distanceKm)
-  const raceSeconds = projected ?? goal.currentValue
+  const pacing = racePacing(goal, forecast)
+  const raceSeconds = pacing?.targetSeconds ?? projected ?? goal.currentValue
   const raceMinutes = Math.max(1, Math.round(raceSeconds / 60))
   const intensity = (60 / raceMinutes) ** RIEGEL_EXPONENT
   const load = Math.round((raceMinutes / 60) * 100 * intensity ** 2 + (WARMUP_MINUTES / 60) * 100 * 0.6 ** 2)
   const distance = goal.distanceKm === undefined ? '' : `${formatDistance(goal.sport, goal.distanceKm)} · `
+  const estimated = forecast ? forecast.likely : raceSeconds
   return {
     id: GOAL_RACE_TEMPLATE_ID,
     sport: goal.sport,
@@ -119,10 +122,33 @@ export const goalRaceTemplate = (goal: Goal, config: CoachConfig): WorkoutTempla
     load,
     phases: ['BASE', 'BUILD', 'SPECIFIC', 'TAPER', 'RECOVERY'],
     occasion: 'race',
-    coachNote: t`${distance}Zielzeit ${formatClock(goal.targetValue)}, aus deiner Form geschätzt ${formatClock(raceSeconds)}. Den Anfang bewusst nicht schneller als die Zielpace angehen.`,
-    blocks: [warmup(goal.sport), { kind: 'step', duration: `${raceMinutes}m`, target: t('Rennen') }],
+    coachNote: pacing
+      ? pacingNote(goal, pacing, forecast)
+      : t`${distance}Zielzeit ${formatClock(goal.targetValue)}, aus deiner Form geschätzt ${formatClock(estimated)}. Den Anfang bewusst nicht schneller als die Zielpace angehen.`,
+    blocks: [
+      warmup(goal.sport),
+      ...(pacing ? pacingSteps(pacing) : [{ kind: 'step' as const, duration: `${raceMinutes}m`, target: t('Rennen') }]),
+    ],
   }
 }
 
-export const goalRaceSession = (goal: Goal, config: CoachConfig, date: string): PlannedSession =>
-  buildSession(goalRaceTemplate(goal, config), config, t`${goal.label} — Wettkampftag.`, date)
+/** What the pacing is set on and why, then how to read the watch. */
+const pacingNote = (goal: Goal, pacing: RacePacing, forecast: ForecastRange | null): string => {
+  const distance = formatDistance(goal.sport, pacing.distanceKm)
+  const target = formatClock(pacing.targetSeconds)
+  const range = forecast ? t` Prognose ${formatClock(forecast.best)}–${formatClock(forecast.worst)}.` : ''
+  const why =
+    pacing.basis === 'forecast-goal-out-of-reach'
+      ? t`Pacing auf ${target} statt auf dein Ziel ${formatClock(goal.targetValue)}: das liegt jenseits dessen, was dein Training gerade hergibt — zu schnell angegangen, kostet es hinten mehr, als es vorne bringt.`
+      : pacing.basis === 'forecast-goal-safe'
+        ? t`Pacing auf ${target}: dein Ziel ${formatClock(goal.targetValue)} ist damit sicher drin.`
+        : t`Pacing auf dein Ziel ${target}.`
+  return t`${distance} · ${why}${range} Die ersten Kilometer bewusst kontrolliert, dann gleichmäßig, zum Schluss, was übrig ist. Die Uhr misst meist etwas mehr als die Strecke: im Zweifel am schnellen Rand der Spanne laufen.`
+}
+
+export const goalRaceSession = (
+  goal: Goal,
+  config: CoachConfig,
+  date: string,
+  forecast: ForecastRange | null = null,
+): PlannedSession => buildSession(goalRaceTemplate(goal, config, forecast), config, t`${goal.label} — Wettkampftag.`, date)

@@ -27,7 +27,8 @@ import { benchmarkCompletions, benchmarkStatus, compareBenchmarks } from '../src
 import type { WorkReading } from '../src/coach/efficiency.ts'
 import { workReading } from '../src/coach/efficiency.ts'
 import { executionSuggestions, readHeld, readWork, readWorkMany } from './work-readings.ts'
-import { buildStanding } from '../src/coach/standing.ts'
+import { buildStanding, raceForecasts } from '../src/coach/standing.ts'
+import { GOAL_RACE_TEMPLATE_ID, goalRaceSession } from '../src/coach/goal-race.ts'
 import { goalOptions, relabel } from '../src/coach/goal-options.ts'
 import {
   buildProgress,
@@ -41,7 +42,7 @@ import { adoptThreshold, thresholdSuggestions } from '../src/coach/threshold-dri
 import type { ObservedThresholds } from '../src/coach/threshold-drift.ts'
 import { matchedCompletions, mergeCompletions, withScheduled } from '../src/coach/matching.ts'
 import { withProposal } from '../src/coach/proposals.ts'
-import type { BenchmarkResult, CoachConfig, DayProposal, Execution, PlannedDay, Sport, WorkoutTemplate } from '../src/coach/types.ts'
+import type { BenchmarkResult, CoachConfig, DayProposal, Execution, Goal, PlannedDay, Sport, WorkoutTemplate } from '../src/coach/types.ts'
 import { readThresholdTests } from './threshold-tests.ts'
 import { garminAttribution } from '../src/coach/attribution.ts'
 import { ZWIFT_ROUTES, findRoute } from './zwift-routes.ts'
@@ -187,6 +188,59 @@ const referenceResult = async (
   )
 }
 
+/**
+ * The heart values running is read against. A runner's heart goes higher than
+ * a cyclist's, so the run settings on intervals.icu come first; the profile's
+ * values, which follow the ride settings, only where the run has none.
+ */
+const runningHeart = (
+  config: CoachConfig,
+  settings: { readonly maxHr: number | null; readonly lthr: number | null; readonly runMaxHr?: number | null; readonly runLthr?: number | null } | null,
+): CoachConfig['profile'] => ({
+  ...config.profile,
+  maxHr: settings?.runMaxHr ?? config.profile.maxHr ?? settings?.maxHr ?? null,
+  lthr: settings?.runLthr ?? config.profile.lthr ?? settings?.lthr ?? null,
+})
+
+/**
+ * A race goal as a session on its day, paced on where the forecast puts it: on
+ * intervals.icu, and from there on the watch, like any other session. A pacing
+ * that has moved since goes on as another version beside the first.
+ */
+const pushGoalRace = async (
+  deps: RouteDeps,
+  goal: Goal,
+): Promise<{ readonly ok: true; readonly date: string; readonly name: string; readonly alreadyScheduled: boolean }> => {
+  const today = todayFor(deps)
+  const date = goal.targetDate ?? today
+  const config = await deps.store.load()
+  const [activities, wellness, events, settings] = await Promise.all([
+    deps.source.activities(addDays(today, -ACTIVITY_HISTORY_DAYS), today),
+    deps.source.wellness(addDays(today, -WELLNESS_HISTORY_DAYS), today).catch(() => []),
+    deps.source.events(date, date),
+    deps.source.sportSettings().catch(() => null),
+  ])
+  const forecast = raceForecasts(activities, wellness, runningHeart(config, settings), config.goals, today)[goal.id] ?? null
+  const session = goalRaceSession(goal, config, date, forecast)
+  const { minutes } = session.template
+  const alreadyScheduled = scheduledFrom(events).some(
+    (entry) => entry.date === date && entry.templateId === GOAL_RACE_TEMPLATE_ID && entry.minutes === minutes,
+  )
+  if (!alreadyScheduled) {
+    const wanted = config.destinations[goal.sport]
+    if (wanted) await deps.source.applyDestinations(wanted)
+    await deps.source.createWorkout({
+      date,
+      sport: goal.sport,
+      templateId: GOAL_RACE_TEMPLATE_ID,
+      name: goal.label,
+      description: session.description,
+      minutes,
+    })
+  }
+  return { ok: true, date, name: goal.label, alreadyScheduled }
+}
+
 /** The first weekly reading of a run needs six weeks of runs before it. */
 const STANDING_WARMUP_DAYS = 42
 
@@ -231,11 +285,7 @@ const buildProgressView = async (deps: RouteDeps, span: ProgressSpan): Promise<P
   const standing = buildStanding(
     activities,
     wellness,
-    {
-      ...config.profile,
-      maxHr: config.profile.maxHr ?? settings?.maxHr ?? null,
-      lthr: config.profile.lthr ?? settings?.lthr ?? null,
-    },
+    runningHeart(config, settings),
     config.goals,
     config.profile.sports.map((setting) => setting.sport),
     today,
@@ -305,7 +355,9 @@ const buildPlan = async (
           () => [],
         )
   const raceActivities = [...olderRaces, ...activities]
-  const state = buildState(activities, wellness, today, raceActivities)
+  // Race day is paced on where the forecast puts it, not on the goal alone.
+  const forecasts = raceForecasts(activities, wellness, runningHeart(config, settings), config.goals, today)
+  const state = { ...buildState(activities, wellness, today, raceActivities), raceForecasts: forecasts }
   const calendar = completionsFrom(events, activities)
   const scheduled = scheduledFrom(events)
   // Levels are earned by the intervals: read once, for the newest sessions of every family and level.
@@ -345,6 +397,7 @@ const buildPlan = async (
     raceActivities,
     minutesToday,
     coreAt,
+    forecasts,
   )
   const proposals = morning ? withProposal(config.proposals, morning) : config.proposals
 
@@ -370,6 +423,7 @@ const buildPlan = async (
     raceActivities,
     minutesToday,
     coreAt,
+    forecasts,
   )
   // The days ahead are kept too: training on a day the app was not opened is still recognised.
   if (planned.reduce(withProposal, proposals) !== config.proposals) {
@@ -770,6 +824,19 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
     return context.json(await store.save(validateConfig({ ...config, breaks })))
   })
 
+  /** The race goal with its pacing on the calendar, and from there on the watch. */
+  app.post('/api/race-plan', async (context) => {
+    const body = (await context.req.json()) as { goalId?: unknown }
+    const deps = await resolve(context)
+    const today = todayFor(deps)
+    const goal = (await deps.store.load()).goals.find((entry) => entry.id === body.goalId)
+    if (!goal || goal.kind !== 'raceTime' || goal.targetDate === undefined || goal.targetDate < today) {
+      return context.json({ error: t('Für dieses Ziel gibt es keinen Wettkampftag, der noch kommt') }, 400)
+    }
+    // Whether it is already on the calendar must come from the calendar as it is now.
+    return context.json(await pushGoalRace({ ...deps, source: deps.source.fresh() }, goal))
+  })
+
   app.post('/api/push', async (context) => {
     const body = (await context.req.json()) as {
       date?: string
@@ -782,6 +849,15 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
     const template = body.templateId ? findTemplate(body.templateId) : undefined
     if (!body.date || !/^\d{4}-\d{2}-\d{2}$/.test(body.date)) {
       return context.json({ error: 'date muss YYYY-MM-DD sein' }, 400)
+    }
+    // Race day is no template of the library: it is built from the goal of that day.
+    if (body.templateId === GOAL_RACE_TEMPLATE_ID) {
+      const deps = await resolve(context)
+      const goal = (await deps.store.load()).goals.find(
+        (entry) => entry.kind === 'raceTime' && entry.targetDate === body.date,
+      )
+      if (!goal) return context.json({ error: t('An diesem Tag steht kein Wettkampf an') }, 400)
+      return context.json(await pushGoalRace({ ...deps, source: deps.source.fresh() }, goal))
     }
     if (!template) return context.json({ error: t`Unbekanntes Workout: ${body.templateId}` }, 400)
     if (body.variant !== undefined && !TIERS.includes(body.variant as SessionTier)) {

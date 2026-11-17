@@ -42,6 +42,13 @@ const standingFor = (goal: Goal, overrides: Partial<SportStanding> = {}): SportS
   reachBy: null,
   verdict: 'late',
   source: 'eftp',
+  quality: 'solid',
+  basis: { used: 9, considered: 9, trendPoints: 9 },
+  influences: [],
+  training: { ctl: 50, ctlChange: 0, weeklyHours: 5, weeklyKm: null, longestKm: null, hardSessions: 4 },
+  forecast: null,
+  distances: [],
+  pacing: null,
   ...overrides,
 })
 
@@ -68,6 +75,24 @@ describe('ways out for a goal that will not happen as set', () => {
     const [option] = goalOptions([goal], [standingFor(goal, { trendPerWeek: -0.5, verdict: 'stalled' })], [], TODAY)
     expect(option?.basis).toBe('typical')
     expect(option?.perWeek).toBeCloseTo(typicalGainPerWeek(goal, 260), 1)
+  })
+
+  it('offers the likely value of the forecast for the goal’s day as the target', () => {
+    const goal = tenK()
+    const forecast = {
+      date: goal.targetDate!,
+      tapered: true,
+      best: 2260,
+      likely: 2330,
+      worst: 2410,
+      parts: { today: 2400, trend: -20, taper: -50, endurance: 0 },
+      goalChance: 'out-of-reach' as const,
+      corridor: [],
+    }
+    const [option] = goalOptions([goal], [standingFor(goal, { verdict: null, forecast })], [], TODAY)
+    expect(option?.basis).toBe('forecast')
+    // 38:50, offered in quarter minutes towards what is reachable.
+    expect(option?.value?.targetValue).toBe(2340)
   })
 
   it('leaves a goal on track alone', () => {

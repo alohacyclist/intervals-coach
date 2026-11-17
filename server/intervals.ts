@@ -175,6 +175,7 @@ const mapActivity = (raw: RawActivity): Activity => ({
   pairedEventId: raw['paired_event_id'] == null ? null : String(raw['paired_event_id']),
   compliance: nullableNum(raw['compliance']),
   averageHr: nullableNum(raw['average_heartrate']),
+  averageWatts: nullableNum(raw['icu_average_watts'] ?? raw['average_watts']),
   zoneSeconds: zoneSecondsOf(raw),
   device: typeof raw['device_name'] === 'string' && raw['device_name'].length > 0 ? raw['device_name'] : null,
   indoor: raw['trainer'] === true || raw['type'] === 'VirtualRide' || raw['type'] === 'VirtualRun' || raw['type'] === 'Treadmill',
@@ -325,6 +326,8 @@ export type SportSettings = {
   readonly cssSecPer100m: number | null
   readonly lthr: number | null
   readonly maxHr: number | null
+  readonly runLthr?: number | null
+  readonly runMaxHr?: number | null
 }
 
 /** Reads FTP and threshold pace straight from intervals.icu so the plan uses the same numbers. */
@@ -353,6 +356,9 @@ export const fetchSportSettings = async (auth: IntervalsAuth): Promise<SportSett
     cssSecPer100m: swimSpeed && swimSpeed > 0 ? Math.round(100 / swimSpeed) : null,
     lthr: nullableNum(ride?.['lthr']),
     maxHr: nullableNum(ride?.['max_hr']),
+    // A runner's heart goes higher than a cyclist's: running is read against its own values.
+    runLthr: nullableNum(run?.['lthr']),
+    runMaxHr: nullableNum(run?.['max_hr']),
   }
 }
 
