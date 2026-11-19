@@ -640,6 +640,19 @@ export type ThresholdSuggestion = {
   readonly message: string
 }
 
+/** What a completed threshold test measured, and whether the targets should follow it. */
+export type TestOutcome = {
+  readonly sport: Sport
+  readonly metric: SportThreshold['metric']
+  /** The threshold set now, in the sport's own unit. */
+  readonly configured: number
+  /** The threshold the test gives; null when the block was not held and nothing is read from it. */
+  readonly measured: number | null
+  /** Only a value that differs after rounding is worth adopting. */
+  readonly adoptable: boolean
+  readonly message: string
+}
+
 export type BenchmarkResult = {
   readonly sport: Sport
   readonly date: string
@@ -799,6 +812,10 @@ export type Execution = {
   readonly unavailable: string | null
   /** For the reference session: how it compares with the one before. Only the card asks for it. */
   readonly benchmark?: BenchmarkResult | null
+  /** For a threshold test: what it measured and what follows, right under the session. */
+  readonly test?: TestOutcome | null
+  /** A few sentences on what the session means and what follows from it; empty when nothing is worth saying. */
+  readonly feedback?: readonly string[]
   /** Null without a usable stream: pool swims, or a ride without a meter. */
   readonly trace: ExecutionTrace | null
   /** "Garmin <device>" when the session was recorded on a Garmin; the card and the picture name it. */

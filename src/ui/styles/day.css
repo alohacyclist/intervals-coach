@@ -689,3 +689,7 @@
     font-size: 11px;
   }
 }
+/* A test's result and the button that adopts it, under the session it came from. */
+.exec__test .exec__actions {
+  margin-top: 8px;
+}

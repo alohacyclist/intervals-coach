@@ -1,4 +1,5 @@
 import type { Sport, SportThreshold } from './types.ts'
+import type { ActivityStreams } from './trace.ts'
 
 /**
  * Turning a maximal block into a threshold.
@@ -118,6 +119,110 @@ export const cssFromTest = (efforts: readonly MeasuredEffort[]): number | null =
   if (short.seconds / 200 >= long.seconds / 400) return null
   const css = (long.seconds - short.seconds) / 2
   return css >= MIN_CSS_SEC_PER_100M && css <= MAX_CSS_SEC_PER_100M ? Math.round(css) : null
+}
+
+/** The maximal block of the ride and the run test. */
+const TEST_BLOCK_SECONDS = 20 * 60
+/**
+ * Below this share of the current threshold the best twenty minutes were not a
+ * test held to the end — a stop, a cramp, a test given up — and a value read off
+ * them would only drag the targets down.
+ */
+export const HELD_PERCENT = 90
+
+type Sample = { readonly time: number; readonly total: number }
+
+const isNumber = (value: number | null | undefined): value is number =>
+  typeof value === 'number' && Number.isFinite(value)
+
+/** A stream as a running total over time: watts become joules, speed becomes metres. */
+const integrated = (time: readonly (number | null)[], values: readonly (number | null)[]): readonly Sample[] => {
+  const samples: Sample[] = []
+  let total = 0
+  let previous: { readonly time: number; readonly value: number } | null = null
+  for (let index = 0; index < time.length; index++) {
+    const at = time[index]
+    if (!isNumber(at)) continue
+    if (previous !== null) total += previous.value * (at - previous.time)
+    samples.push({ time: at, total })
+    const value = values[index]
+    // A hole in the recording counts as nothing done, never as the last value held on.
+    previous = { time: at, value: isNumber(value) && value > 0 ? value : 0 }
+  }
+  return samples
+}
+
+/** The distance stream is already a running total; only the samples with both values count. */
+const along = (time: readonly (number | null)[], distance: readonly (number | null)[]): readonly Sample[] =>
+  time.flatMap((at, index) => {
+    const metres = distance[index]
+    return isNumber(at) && isNumber(metres) ? [{ time: at, total: metres }] : []
+  })
+
+/** The highest average over any stretch of at least `seconds`, the shortest such stretch at each end. */
+const bestWindow = (samples: readonly Sample[], seconds: number): number | null => {
+  let best: number | null = null
+  let start = 0
+  for (let end = 0; end < samples.length; end++) {
+    const last = samples[end]!
+    while (start + 1 < end && last.time - samples[start + 1]!.time >= seconds) start += 1
+    const first = samples[start]!
+    const span = last.time - first.time
+    if (span < seconds) continue
+    const average = (last.total - first.total) / span
+    if (best === null || average > best) best = average
+  }
+  return best
+}
+
+export type StreamTest = {
+  readonly metric: 'power' | 'pace'
+  /** The best twenty minutes as they were: watts, or seconds per kilometre. */
+  readonly average: number
+  /** The threshold they give, in the same unit. */
+  readonly value: number
+  /** The best twenty minutes against the threshold set now, faster or stronger above 100. */
+  readonly percent: number
+}
+
+/**
+ * The ride and the run test read off the recording itself: the best twenty
+ * minutes of it. intervals.icu's detected intervals may cut the block into
+ * pieces and lose some of it on the way — the recording does not.
+ */
+export const thresholdFromStreams = (
+  sport: Sport,
+  streams: ActivityStreams,
+  threshold: SportThreshold,
+): StreamTest | null => {
+  if (sport === 'Ride' && threshold.metric === 'power') {
+    if (!streams.watts?.some(isNumber)) return null
+    const watts = bestWindow(integrated(streams.time, streams.watts), TEST_BLOCK_SECONDS)
+    if (watts === null || watts <= 0) return null
+    return {
+      metric: 'power',
+      average: Math.round(watts),
+      value: Math.round(watts * POWER_FACTOR),
+      percent: Math.round((watts / threshold.ftp) * 100),
+    }
+  }
+  if (sport === 'Run' && threshold.metric === 'pace') {
+    const samples = streams.distance?.some(isNumber)
+      ? along(streams.time, streams.distance)
+      : streams.speed?.some(isNumber)
+        ? integrated(streams.time, streams.speed)
+        : null
+    const speed = samples === null ? null : bestWindow(samples, TEST_BLOCK_SECONDS)
+    if (speed === null || speed <= 0) return null
+    const secondsPerKm = 1000 / speed
+    return {
+      metric: 'pace',
+      average: Math.round(secondsPerKm),
+      value: Math.round(secondsPerKm * PACE_FACTOR),
+      percent: Math.round((threshold.thresholdSecPerKm / secondsPerKm) * 100),
+    }
+  }
+  return null
 }
 
 /**

@@ -690,7 +690,7 @@ const BENCHMARKS: readonly WorkoutTemplate[] = perLang(() => [
     measures: 'threshold',
     phases: ['BASE', 'BUILD', 'SPECIFIC', 'TAPER', 'RECOVERY'],
     coachNote:
-      t('Ein einziger maximaler Block, gleichmäßig gefahren — nicht die ersten fünf Minuten verheizen. Die FTP sind 95 % der Durchschnittsleistung über die 20 Minuten. Nur so ein Wert nach oben begrenzt die Schätzung; Intervalle können das nicht.'),
+      t('So hart, wie du 20 min gleichmäßig halten kannst. Der Bereich in der Grafik ist nur eine Orientierung. Nicht die ersten fünf Minuten verheizen. Die FTP sind 95 % der Durchschnittsleistung über die 20 Minuten. Nur so ein Wert nach oben begrenzt die Schätzung; Intervalle können das nicht.'),
     blocks: [
       warmupBike('12m'),
       repeat(3, [step('1m', '105%', { cadence: '95-105rpm' }), step('1m', '50%')]),
@@ -710,7 +710,7 @@ const BENCHMARKS: readonly WorkoutTemplate[] = perLang(() => [
     measures: 'threshold',
     phases: ['BASE', 'BUILD', 'SPECIFIC', 'TAPER', 'RECOVERY'],
     coachNote:
-      t('Flache Runde, gleichmäßig laufen, nicht die ersten Minuten verschenken. Deine Schwellenpace liegt etwa 5 % über der Durchschnittszeit dieser 20 Minuten — schneller gelaufen heißt also auch: neue Zielpaces für alles danach.'),
+      t('So schnell, wie du 20 min gleichmäßig halten kannst. Der Bereich in der Grafik ist nur eine Orientierung. Flache Runde, nicht die ersten Minuten verschenken. Deine Schwellenpace liegt etwa 5 % über der Durchschnittszeit dieser 20 Minuten — schneller gelaufen heißt also auch: neue Zielpaces für alles danach.'),
     blocks: [
       step('12m', '72-78% Pace', { label: t('Einlaufen') }),
       repeat(3, [step('1m', '105% Pace'), step('1m', '60% Pace')]),
@@ -730,7 +730,7 @@ const BENCHMARKS: readonly WorkoutTemplate[] = perLang(() => [
     measures: 'threshold',
     phases: ['BASE', 'BUILD', 'SPECIFIC', 'TAPER', 'RECOVERY'],
     coachNote:
-      t('Zwei maximale Strecken: erst 400 m, dann nach lockerem Schwimmen 200 m, beide gleichmäßig und so schnell wie möglich. Aus der Zeitdifferenz ergibt sich deine CSS: (Zeit 400 − Zeit 200) ÷ 2 pro 100 m.'),
+      t('Zwei maximale Strecken: erst 400 m, dann nach lockerem Schwimmen 200 m, beide gleichmäßig und so schnell wie möglich. Die Bereiche in der Grafik sind nur eine Orientierung. Aus der Zeitdifferenz ergibt sich deine CSS: (Zeit 400 − Zeit 200) ÷ 2 pro 100 m.'),
     blocks: [
       warmupSwim('400mtr'),
       repeat(4, [step('50mtr', '90-100% Pace', { label: t('Steigern') }), wallRest('20s')]),

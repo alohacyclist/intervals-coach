@@ -4,7 +4,8 @@ import type { CoachConfig, Sport, ThresholdSuggestion } from '../src/coach/types
 import { diffDays } from '../src/coach/dates.ts'
 import { findTemplate } from '../src/coach/library.ts'
 import { TEST_INTERVAL_WEEKS } from '../src/coach/threshold-test.ts'
-import { thresholdFromTest } from '../src/coach/test-result.ts'
+import { HELD_PERCENT, thresholdFromStreams, thresholdFromTest } from '../src/coach/test-result.ts'
+import { thresholdFor } from '../src/coach/thresholds.ts'
 import { measuredSuggestion } from '../src/coach/threshold-drift.ts'
 
 /** How long a completed test still speaks for itself before the estimate takes over. */
@@ -47,9 +48,15 @@ const read = async (
   completion: Completion,
   sport: Sport,
 ): Promise<Reading> => {
-  // One extra call, only for a test that was actually done.
-  const efforts = await source.workIntervals(completion.activityId).catch(() => [])
-  const result = thresholdFromTest(sport, efforts)
+  // One extra call, only for a test that was actually done: the recording for a
+  // ride or a run, as under the session itself; the detected intervals for the pool.
+  const threshold = thresholdFor(config.profile, sport)
+  const streams =
+    threshold && sport !== 'Swim' ? await source.streams(completion.activityId, sport).catch(() => null) : null
+  const recorded = streams && threshold ? thresholdFromStreams(sport, streams, threshold) : null
+  if (recorded && recorded.percent < HELD_PERCENT) return { completion, sport, value: null }
+  const result =
+    recorded ?? thresholdFromTest(sport, await source.workIntervals(completion.activityId).catch(() => []))
   if (!result) return { completion, sport, value: null }
   const drift = measuredSuggestion(config.profile, sport, result.value)?.driftPercent ?? 0
   const believed = completion.evidence === 'calendar' || drift >= -MAX_RECOGNISED_DROP_PERCENT

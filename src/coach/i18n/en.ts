@@ -377,15 +377,15 @@ export const EN: Readonly<Record<string, string>> = {
   "Regeneration im Wasser entlastet die Beine vollständig — nach harten Lauftagen oft die bessere Wahl als ein Regenerationslauf.":
     "Recovery in the water takes the load off the legs completely — after hard run days often the better choice than a recovery run.",
   "Standortbestimmung FTP 20min": "Threshold test FTP 20min",
-  "Ein einziger maximaler Block, gleichmäßig gefahren — nicht die ersten fünf Minuten verheizen. Die FTP sind 95 % der Durchschnittsleistung über die 20 Minuten. Nur so ein Wert nach oben begrenzt die Schätzung; Intervalle können das nicht.":
-    "One single maximal block, ridden evenly — don't burn the first five minutes. FTP is 95 % of the average power over the 20 minutes. Only a value like this bounds the estimate from above; intervals cannot.",
+  "So hart, wie du 20 min gleichmäßig halten kannst. Der Bereich in der Grafik ist nur eine Orientierung. Nicht die ersten fünf Minuten verheizen. Die FTP sind 95 % der Durchschnittsleistung über die 20 Minuten. Nur so ein Wert nach oben begrenzt die Schätzung; Intervalle können das nicht.":
+    "As hard as you can hold evenly for 20 min. The range in the chart is only a guide. Don't burn the first five minutes. FTP is 95 % of the average power over the 20 minutes. Only a value like this bounds the estimate from above; intervals cannot.",
   "Maximal, gleichmäßig": "Maximal, even",
   "Standortbestimmung Schwelle 20min": "Threshold test run 20min",
-  "Flache Runde, gleichmäßig laufen, nicht die ersten Minuten verschenken. Deine Schwellenpace liegt etwa 5 % über der Durchschnittszeit dieser 20 Minuten — schneller gelaufen heißt also auch: neue Zielpaces für alles danach.":
-    "Flat loop, run evenly, don't give away the first minutes. Your threshold pace is about 5 % above the average time of these 20 minutes — running faster therefore also means: new target paces for everything after.",
+  "So schnell, wie du 20 min gleichmäßig halten kannst. Der Bereich in der Grafik ist nur eine Orientierung. Flache Runde, nicht die ersten Minuten verschenken. Deine Schwellenpace liegt etwa 5 % über der Durchschnittszeit dieser 20 Minuten — schneller gelaufen heißt also auch: neue Zielpaces für alles danach.":
+    "As fast as you can hold evenly for 20 min. The range in the chart is only a guide. Flat loop, don't give away the first minutes. Your threshold pace is about 5 % above the average time of these 20 minutes — running faster therefore also means: new target paces for everything after.",
   "Standortbestimmung CSS 400/200": "Threshold test CSS 400/200",
-  "Zwei maximale Strecken: erst 400 m, dann nach lockerem Schwimmen 200 m, beide gleichmäßig und so schnell wie möglich. Aus der Zeitdifferenz ergibt sich deine CSS: (Zeit 400 − Zeit 200) ÷ 2 pro 100 m.":
-    "Two maximal efforts: first 400 m, then after easy swimming 200 m, both even and as fast as possible. The time difference gives your CSS: (time 400 − time 200) ÷ 2 per 100 m.",
+  "Zwei maximale Strecken: erst 400 m, dann nach lockerem Schwimmen 200 m, beide gleichmäßig und so schnell wie möglich. Die Bereiche in der Grafik sind nur eine Orientierung. Aus der Zeitdifferenz ergibt sich deine CSS: (Zeit 400 − Zeit 200) ÷ 2 pro 100 m.":
+    "Two maximal efforts: first 400 m, then after easy swimming 200 m, both even and as fast as possible. The ranges in the chart are only a guide. The time difference gives your CSS: (time 400 − time 200) ÷ 2 per 100 m.",
   "Steigern": "Build",
   "Locker": "Easy",
   "Formkontrolle Rad 4x4min": "Form check bike 4x4min",
@@ -478,6 +478,74 @@ export const EN: Readonly<Record<string, string>> = {
   "Aus deiner Standortbestimmung: {0} statt {1}.": "From your threshold test: {0} instead of {1}.",
   "Das ist gemessen, nicht geschätzt — alle Vorgaben sollten jetzt darauf stehen.":
     "That is measured, not estimated — all targets should now be based on it.",
+  "Weniger als 1 % Unterschied: deine Vorgaben passen, spürbar ändert sich nichts.":
+    "Less than 1 % apart: your targets fit, nothing changes noticeably.",
+  "{0} % besser. Übernimm den Wert, sonst sind deine Vorgaben ab jetzt zu leicht.":
+    "{0} % better. Adopt the value, or your targets are too easy from now on.",
+  "{0} % schwächer. Ein Test kann an einem schlechten Tag liegen: warst du frisch, übernimm ihn, sonst wiederhole ihn in zwei, drei Wochen.":
+    "{0} % weaker. A test can fall on a bad day: if you were fresh, adopt it; otherwise repeat it in two or three weeks.",
+  "400 m und 200 m ergeben eine CSS von {0}, eingestellt sind {1}.":
+    "The 400 m and the 200 m give a CSS of {0}; the setting is {1}.",
+  "Deine besten 20 Minuten lagen bei {0} % der Schwelle. Das war kein durchgezogener Test, daraus lese ich keinen neuen Wert ab.":
+    "Your best 20 minutes were at {0} % of threshold. That was not a test held to the end, so no new value is read from it.",
+  "20 min im Schnitt {0}, das ergibt eine FTP von {1}. Eingestellt sind {2}.":
+    "20 min at {0} on average, which gives an FTP of {1}. The setting is {2}.",
+  "20 min im Schnitt {0}, das ergibt eine Schwellenpace von {1}. Eingestellt sind {2}.":
+    "20 min at {0} on average, which gives a threshold pace of {1}. The setting is {2}.",
+  "Ergebnis:":
+    "Result:",
+  "{0} übernehmen":
+    "Adopt {0}",
+  "✓ Übernommen: deine Vorgaben stehen ab jetzt auf {0}, auch in intervals.icu.":
+    "✓ Adopted: your targets are set to {0} from now on, in intervals.icu too.",
+  "Fazit:":
+    "Verdict:",
+  "Intervall {0} nach {1} von {2} min beendet.":
+    "Interval {0} ended after {1} of {2} min.",
+  "Intervall {0} vorzeitig beendet.":
+    "Interval {0} ended early.",
+  "Intervall {0} nicht {1}.":
+    "Interval {0} not {1}.",
+  "Intervall {0} unter dem Korridor.":
+    "Interval {0} below the target range.",
+  "Der Puls lag schon in Intervall {0} bei {1} % deiner HFmax.":
+    "Your heart rate was already at {1} % of your max HR in interval {0}.",
+  "Die Stufe bleibt: aufgestiegen wird erst, wenn alle Intervalle halten.":
+    "The level stays: you move up once every interval holds.",
+  "Liegt auch die nächste Intervalleinheit so weit darunter, schlägt der Plan vor, deine Schwelle mit der Standortbestimmung zu prüfen.":
+    "If the next interval session sits this far below as well, the plan suggests checking your threshold with the threshold test.",
+  "Die Intervalle lagen im Schnitt {0} Punkte über dem Korridor. Liegt auch die nächste Intervalleinheit so weit darüber, schlägt der Plan dir eine höhere Schwelle vor.":
+    "The intervals sat {0} points above the target range on average. If the next interval session sits this far above as well, the plan suggests a higher threshold.",
+  "Intervall {0} etwas über dem Korridor, das passt.":
+    "Interval {0} a little above the target range, that is fine.",
+  "Alle Intervalle im Korridor.":
+    "Every interval in the target range.",
+  "Für die nächste Stufe zählt nur die volle Fassung der Einheit.":
+    "Only the full version of the session counts towards the next level.",
+  "Als Nächstes in dieser Reihe: {0}.":
+    "Next in this series: {0}.",
+  "Das ist die höchste Stufe dieser Reihe.":
+    "This is the top level of this series.",
+  "Locker geblieben, wie geplant.":
+    "Stayed easy, as planned.",
+  "Locker geplant, aber {0} min über {1}. Das kostet Erholung für die nächste harte Einheit; nächstes Mal unter {2} bleiben.":
+    "Planned easy, but {0} min above {1}. That costs recovery for the next hard session; next time stay below {2}.",
+  "Locker geplant, aber {0} min schneller als {1}. Das kostet Erholung für die nächste harte Einheit; nächstes Mal langsamer als {2} bleiben.":
+    "Planned easy, but {0} min faster than {1}. That costs recovery for the next hard session; next time stay slower than {2}.",
+  "Entkopplung {0} %: In der zweiten Hälfte kostete dieselbe Leistung mehr Puls. Über 5 % trägt die Grundlage diese Dauer noch nicht ganz; bleib bei dieser Länge, bis es darunter liegt.":
+    "Decoupling {0} %: in the second half the same power took more heart rate. Above 5 % your base does not quite carry this duration yet; stay at this length until it is below.",
+  "Entkopplung {0} %: In der zweiten Hälfte kostete dasselbe Tempo mehr Puls. Über 5 % trägt die Grundlage diese Dauer noch nicht ganz; bleib bei dieser Länge, bis es darunter liegt.":
+    "Decoupling {0} %: in the second half the same pace took more heart rate. Above 5 % your base does not quite carry this duration yet; stay at this length until it is below.",
+  "Entkopplung {0} %: Puls und Leistung blieben beieinander. Die Grundlage trägt diese Dauer.":
+    "Decoupling {0} %: heart rate and power stayed together. Your base carries this duration.",
+  "Entkopplung {0} %: Puls und Tempo blieben beieinander. Die Grundlage trägt diese Dauer.":
+    "Decoupling {0} %: heart rate and pace stayed together. Your base carries this duration.",
+  "{0} statt {1} min, {2} statt {3} TSS.":
+    "{0} instead of {1} min, {2} instead of {3} TSS.",
+  "{0} statt {1} min.":
+    "{0} instead of {1} min.",
+  "Die fehlende Zeit holt der Plan nicht nach; ab morgen rechnet er mit dem, was du wirklich gemacht hast.":
+    "The plan does not make up the missing time; from tomorrow it works with what you actually did.",
   "und": "and",
   "Deine Intervalle am {0} lagen im Schnitt {1} Punkte über dem Zielbereich.":
     "Your intervals on {0} were on average {1} points above the target range.",
