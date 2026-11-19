@@ -710,7 +710,7 @@ const BENCHMARKS: readonly WorkoutTemplate[] = perLang(() => [
     measures: 'threshold',
     phases: ['BASE', 'BUILD', 'SPECIFIC', 'TAPER', 'RECOVERY'],
     coachNote:
-      t('Flache Runde, gleichmäßig laufen, nicht die ersten Minuten verschenken. Deine Schwellenpace liegt etwa 5 % über der Durchschnittszeit dieser 20 Minuten — schneller gelaufen heißt also auch: neue Zielpaces für alles danach.'),
+      t('So schnell, wie du 20 min gleichmäßig halten kannst. Der Bereich in der Grafik ist nur eine Orientierung. Flache Runde, nicht die ersten Minuten verschenken. Deine Schwellenpace liegt etwa 5 % über der Durchschnittszeit dieser 20 Minuten — schneller gelaufen heißt also auch: neue Zielpaces für alles danach.'),
     blocks: [
       step('12m', '72-78% Pace', { label: t('Einlaufen') }),
       repeat(3, [step('1m', '105% Pace'), step('1m', '60% Pace')]),

@@ -381,8 +381,8 @@ export const EN: Readonly<Record<string, string>> = {
     "One single maximal block, ridden evenly — don't burn the first five minutes. FTP is 95 % of the average power over the 20 minutes. Only a value like this bounds the estimate from above; intervals cannot.",
   "Maximal, gleichmäßig": "Maximal, even",
   "Standortbestimmung Schwelle 20min": "Threshold test run 20min",
-  "Flache Runde, gleichmäßig laufen, nicht die ersten Minuten verschenken. Deine Schwellenpace liegt etwa 5 % über der Durchschnittszeit dieser 20 Minuten — schneller gelaufen heißt also auch: neue Zielpaces für alles danach.":
-    "Flat loop, run evenly, don't give away the first minutes. Your threshold pace is about 5 % above the average time of these 20 minutes — running faster therefore also means: new target paces for everything after.",
+  "So schnell, wie du 20 min gleichmäßig halten kannst. Der Bereich in der Grafik ist nur eine Orientierung. Flache Runde, nicht die ersten Minuten verschenken. Deine Schwellenpace liegt etwa 5 % über der Durchschnittszeit dieser 20 Minuten — schneller gelaufen heißt also auch: neue Zielpaces für alles danach.":
+    "As fast as you can hold evenly for 20 min. The range in the chart is only a guide. Flat loop, don't give away the first minutes. Your threshold pace is about 5 % above the average time of these 20 minutes — running faster therefore also means: new target paces for everything after.",
   "Standortbestimmung CSS 400/200": "Threshold test CSS 400/200",
   "Zwei maximale Strecken: erst 400 m, dann nach lockerem Schwimmen 200 m, beide gleichmäßig und so schnell wie möglich. Aus der Zeitdifferenz ergibt sich deine CSS: (Zeit 400 − Zeit 200) ÷ 2 pro 100 m.":
     "Two maximal efforts: first 400 m, then after easy swimming 200 m, both even and as fast as possible. The time difference gives your CSS: (time 400 − time 200) ÷ 2 per 100 m.",
