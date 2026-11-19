@@ -377,15 +377,15 @@ export const EN: Readonly<Record<string, string>> = {
   "Regeneration im Wasser entlastet die Beine vollständig — nach harten Lauftagen oft die bessere Wahl als ein Regenerationslauf.":
     "Recovery in the water takes the load off the legs completely — after hard run days often the better choice than a recovery run.",
   "Standortbestimmung FTP 20min": "Threshold test FTP 20min",
-  "Ein einziger maximaler Block, gleichmäßig gefahren — nicht die ersten fünf Minuten verheizen. Die FTP sind 95 % der Durchschnittsleistung über die 20 Minuten. Nur so ein Wert nach oben begrenzt die Schätzung; Intervalle können das nicht.":
-    "One single maximal block, ridden evenly — don't burn the first five minutes. FTP is 95 % of the average power over the 20 minutes. Only a value like this bounds the estimate from above; intervals cannot.",
+  "So hart, wie du 20 min gleichmäßig halten kannst. Der Bereich in der Grafik ist nur eine Orientierung. Nicht die ersten fünf Minuten verheizen. Die FTP sind 95 % der Durchschnittsleistung über die 20 Minuten. Nur so ein Wert nach oben begrenzt die Schätzung; Intervalle können das nicht.":
+    "As hard as you can hold evenly for 20 min. The range in the chart is only a guide. Don't burn the first five minutes. FTP is 95 % of the average power over the 20 minutes. Only a value like this bounds the estimate from above; intervals cannot.",
   "Maximal, gleichmäßig": "Maximal, even",
   "Standortbestimmung Schwelle 20min": "Threshold test run 20min",
   "So schnell, wie du 20 min gleichmäßig halten kannst. Der Bereich in der Grafik ist nur eine Orientierung. Flache Runde, nicht die ersten Minuten verschenken. Deine Schwellenpace liegt etwa 5 % über der Durchschnittszeit dieser 20 Minuten — schneller gelaufen heißt also auch: neue Zielpaces für alles danach.":
     "As fast as you can hold evenly for 20 min. The range in the chart is only a guide. Flat loop, don't give away the first minutes. Your threshold pace is about 5 % above the average time of these 20 minutes — running faster therefore also means: new target paces for everything after.",
   "Standortbestimmung CSS 400/200": "Threshold test CSS 400/200",
-  "Zwei maximale Strecken: erst 400 m, dann nach lockerem Schwimmen 200 m, beide gleichmäßig und so schnell wie möglich. Aus der Zeitdifferenz ergibt sich deine CSS: (Zeit 400 − Zeit 200) ÷ 2 pro 100 m.":
-    "Two maximal efforts: first 400 m, then after easy swimming 200 m, both even and as fast as possible. The time difference gives your CSS: (time 400 − time 200) ÷ 2 per 100 m.",
+  "Zwei maximale Strecken: erst 400 m, dann nach lockerem Schwimmen 200 m, beide gleichmäßig und so schnell wie möglich. Die Bereiche in der Grafik sind nur eine Orientierung. Aus der Zeitdifferenz ergibt sich deine CSS: (Zeit 400 − Zeit 200) ÷ 2 pro 100 m.":
+    "Two maximal efforts: first 400 m, then after easy swimming 200 m, both even and as fast as possible. The ranges in the chart are only a guide. The time difference gives your CSS: (time 400 − time 200) ÷ 2 per 100 m.",
   "Steigern": "Build",
   "Locker": "Easy",
   "Formkontrolle Rad 4x4min": "Form check bike 4x4min",
