@@ -8,6 +8,7 @@ import { ExecutionActions } from './ExecutionActions.tsx'
 import { drawableTrace, intensityWord, isCompared } from '../trace-geometry.ts'
 import { GarminDevice } from './GarminAttribution.tsx'
 import { HeartCorrection } from './HeartCorrection.tsx'
+import { TestResult } from './TestResult.tsx'
 import { t } from '../../coach/lang.ts'
 
 /**
@@ -345,6 +346,7 @@ export const ExecutionView = ({ execution }: { readonly execution: Execution }) 
           {execution.benchmark.message}
         </p>
       )}
+      {execution.test && <TestResult outcome={execution.test} />}
 
       {trace && (
         <p className="exec__legend">

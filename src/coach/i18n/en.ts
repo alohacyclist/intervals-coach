@@ -478,6 +478,26 @@ export const EN: Readonly<Record<string, string>> = {
   "Aus deiner Standortbestimmung: {0} statt {1}.": "From your threshold test: {0} instead of {1}.",
   "Das ist gemessen, nicht geschätzt — alle Vorgaben sollten jetzt darauf stehen.":
     "That is measured, not estimated — all targets should now be based on it.",
+  "Weniger als 1 % Unterschied: deine Vorgaben passen, spürbar ändert sich nichts.":
+    "Less than 1 % apart: your targets fit, nothing changes noticeably.",
+  "{0} % besser. Übernimm den Wert, sonst sind deine Vorgaben ab jetzt zu leicht.":
+    "{0} % better. Adopt the value, or your targets are too easy from now on.",
+  "{0} % schwächer. Ein Test kann an einem schlechten Tag liegen: warst du frisch, übernimm ihn, sonst wiederhole ihn in zwei, drei Wochen.":
+    "{0} % weaker. A test can fall on a bad day: if you were fresh, adopt it; otherwise repeat it in two or three weeks.",
+  "400 m und 200 m ergeben eine CSS von {0}, eingestellt sind {1}.":
+    "The 400 m and the 200 m give a CSS of {0}; the setting is {1}.",
+  "Deine besten 20 Minuten lagen bei {0} % der Schwelle. Das war kein durchgezogener Test, daraus lese ich keinen neuen Wert ab.":
+    "Your best 20 minutes were at {0} % of threshold. That was not a test held to the end, so no new value is read from it.",
+  "20 min im Schnitt {0}, das ergibt eine FTP von {1}. Eingestellt sind {2}.":
+    "20 min at {0} on average, which gives an FTP of {1}. The setting is {2}.",
+  "20 min im Schnitt {0}, das ergibt eine Schwellenpace von {1}. Eingestellt sind {2}.":
+    "20 min at {0} on average, which gives a threshold pace of {1}. The setting is {2}.",
+  "Ergebnis:":
+    "Result:",
+  "{0} übernehmen":
+    "Adopt {0}",
+  "✓ Übernommen: deine Vorgaben stehen ab jetzt auf {0}, auch in intervals.icu.":
+    "✓ Adopted: your targets are set to {0} from now on, in intervals.icu too.",
   "und": "and",
   "Deine Intervalle am {0} lagen im Schnitt {1} Punkte über dem Zielbereich.":
     "Your intervals on {0} were on average {1} points above the target range.",
