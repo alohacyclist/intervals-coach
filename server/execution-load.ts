@@ -6,6 +6,7 @@ import { buildTrace } from '../src/coach/trace.ts'
 import { checkHeart, correctedHeartRate, withHeartCheck } from '../src/coach/heart-check.ts'
 import { garminDevice } from '../src/coach/attribution.ts'
 import { testOutcome } from '../src/coach/test-outcome.ts'
+import { sessionFeedback } from '../src/coach/session-outcome.ts'
 import type { IntervalsSource } from './source.ts'
 
 export type LoadedExecution = {
@@ -66,7 +67,18 @@ export const loadExecution = async (
 
   const heart = streams ? checkHeart(streams, threshold, profile.maxHr) : null
   const corrected = streams ? correctedHeartRate(streams, heart) : null
-  const checked = withHeartCheck(execution, heart)
+  const marked = withHeartCheck(execution, heart)
+  // Read after the heart check: a faulty recording says nothing about how the heart held up.
+  const checked: Execution = {
+    ...marked,
+    feedback: sessionFeedback({
+      execution: marked,
+      template,
+      threshold,
+      maxHr: profile.maxHr,
+      shortened: pushed !== null && pushed < template.minutes,
+    }),
+  }
 
   return {
     activity,

@@ -347,6 +347,16 @@ export const ExecutionView = ({ execution }: { readonly execution: Execution }) 
         </p>
       )}
       {execution.test && <TestResult outcome={execution.test} />}
+      {execution.feedback && execution.feedback.length > 0 && (
+        <div className="exec__test">
+          {execution.feedback.map((line, index) => (
+            <p key={line} className="exec__benchmark">
+              {index === 0 && <strong>{t('Fazit:')} </strong>}
+              {line}
+            </p>
+          ))}
+        </div>
+      )}
 
       {trace && (
         <p className="exec__legend">

@@ -498,6 +498,54 @@ export const EN: Readonly<Record<string, string>> = {
     "Adopt {0}",
   "✓ Übernommen: deine Vorgaben stehen ab jetzt auf {0}, auch in intervals.icu.":
     "✓ Adopted: your targets are set to {0} from now on, in intervals.icu too.",
+  "Fazit:":
+    "Verdict:",
+  "Intervall {0} nach {1} von {2} min beendet.":
+    "Interval {0} ended after {1} of {2} min.",
+  "Intervall {0} vorzeitig beendet.":
+    "Interval {0} ended early.",
+  "Intervall {0} nicht {1}.":
+    "Interval {0} not {1}.",
+  "Intervall {0} unter dem Korridor.":
+    "Interval {0} below the target range.",
+  "Der Puls lag schon in Intervall {0} bei {1} % deiner HFmax.":
+    "Your heart rate was already at {1} % of your max HR in interval {0}.",
+  "Die Stufe bleibt: aufgestiegen wird erst, wenn alle Intervalle halten.":
+    "The level stays: you move up once every interval holds.",
+  "Liegt auch die nächste Intervalleinheit so weit darunter, schlägt der Plan vor, deine Schwelle mit der Standortbestimmung zu prüfen.":
+    "If the next interval session sits this far below as well, the plan suggests checking your threshold with the threshold test.",
+  "Die Intervalle lagen im Schnitt {0} Punkte über dem Korridor. Liegt auch die nächste Intervalleinheit so weit darüber, schlägt der Plan dir eine höhere Schwelle vor.":
+    "The intervals sat {0} points above the target range on average. If the next interval session sits this far above as well, the plan suggests a higher threshold.",
+  "Intervall {0} etwas über dem Korridor, das passt.":
+    "Interval {0} a little above the target range, that is fine.",
+  "Alle Intervalle im Korridor.":
+    "Every interval in the target range.",
+  "Für die nächste Stufe zählt nur die volle Fassung der Einheit.":
+    "Only the full version of the session counts towards the next level.",
+  "Als Nächstes in dieser Reihe: {0}.":
+    "Next in this series: {0}.",
+  "Das ist die höchste Stufe dieser Reihe.":
+    "This is the top level of this series.",
+  "Locker geblieben, wie geplant.":
+    "Stayed easy, as planned.",
+  "Locker geplant, aber {0} min über {1}. Das kostet Erholung für die nächste harte Einheit; nächstes Mal unter {2} bleiben.":
+    "Planned easy, but {0} min above {1}. That costs recovery for the next hard session; next time stay below {2}.",
+  "Locker geplant, aber {0} min schneller als {1}. Das kostet Erholung für die nächste harte Einheit; nächstes Mal langsamer als {2} bleiben.":
+    "Planned easy, but {0} min faster than {1}. That costs recovery for the next hard session; next time stay slower than {2}.",
+  "Entkopplung {0} %: In der zweiten Hälfte kostete dieselbe Leistung mehr Puls. Über 5 % trägt die Grundlage diese Dauer noch nicht ganz; bleib bei dieser Länge, bis es darunter liegt.":
+    "Decoupling {0} %: in the second half the same power took more heart rate. Above 5 % your base does not quite carry this duration yet; stay at this length until it is below.",
+  "Entkopplung {0} %: In der zweiten Hälfte kostete dasselbe Tempo mehr Puls. Über 5 % trägt die Grundlage diese Dauer noch nicht ganz; bleib bei dieser Länge, bis es darunter liegt.":
+    "Decoupling {0} %: in the second half the same pace took more heart rate. Above 5 % your base does not quite carry this duration yet; stay at this length until it is below.",
+  "Entkopplung {0} %: Puls und Leistung blieben beieinander. Die Grundlage trägt diese Dauer.":
+    "Decoupling {0} %: heart rate and power stayed together. Your base carries this duration.",
+  "Entkopplung {0} %: Puls und Tempo blieben beieinander. Die Grundlage trägt diese Dauer.":
+    "Decoupling {0} %: heart rate and pace stayed together. Your base carries this duration.",
+  "{0} statt {1} min, {2} statt {3} TSS.":
+    "{0} instead of {1} min, {2} instead of {3} TSS.",
+  "{0} statt {1} min.":
+    "{0} instead of {1} min.",
+  "Die fehlende Zeit holt der Plan nicht nach; ab morgen rechnet er mit dem, was du wirklich gemacht hast.":
+    "The plan does not make up the missing time; from tomorrow it works with what you actually did.",
   "und": "and",
   "Deine Intervalle am {0} lagen im Schnitt {1} Punkte über dem Zielbereich.":
     "Your intervals on {0} were on average {1} points above the target range.",

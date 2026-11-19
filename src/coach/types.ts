@@ -814,6 +814,8 @@ export type Execution = {
   readonly benchmark?: BenchmarkResult | null
   /** For a threshold test: what it measured and what follows, right under the session. */
   readonly test?: TestOutcome | null
+  /** A few sentences on what the session means and what follows from it; empty when nothing is worth saying. */
+  readonly feedback?: readonly string[]
   /** Null without a usable stream: pool swims, or a ride without a meter. */
   readonly trace: ExecutionTrace | null
   /** "Garmin <device>" when the session was recorded on a Garmin; the card and the picture name it. */
