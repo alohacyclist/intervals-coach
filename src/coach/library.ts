@@ -674,11 +674,11 @@ const SWIM: readonly WorkoutTemplate[] = perLang(() => [
 ])
 
 /**
- * Reference sessions. They never change and never progress, because their whole
- * value is comparability: same work, same targets, and the heart rate needed to
- * hold them tells you more than a fresh threshold test would.
+ * Tests. They never change and never progress: one sustained maximal effort per
+ * sport that settles the threshold every target hangs on. Nothing in between —
+ * the plan already adapts to every session as it is done.
  */
-const BENCHMARKS: readonly WorkoutTemplate[] = perLang(() => [
+const TESTS: readonly WorkoutTemplate[] = perLang(() => [
   {
     id: 'test-bike-ftp20',
     sport: 'Ride',
@@ -740,59 +740,9 @@ const BENCHMARKS: readonly WorkoutTemplate[] = perLang(() => [
       cooldownSwim('200mtr', '60% Pace'),
     ],
   },
-  {
-    id: 'bench-bike-4x4',
-    sport: 'Ride',
-    stimulus: 'VO2',
-    name: t('Formkontrolle Rad 4x4min'),
-    minutes: 52,
-    load: 68,
-    benchmark: true,
-    measures: 'vo2',
-    phases: ['BASE', 'BUILD', 'SPECIFIC', 'TAPER', 'RECOVERY'],
-    coachNote: t('Vergleichseinheit. Immer identisch fahren — gleiche Watt, gleiche Trittfrequenz. Sinkt die Herzfrequenz bei gleicher Leistung, bist du besser geworden.'),
-    blocks: [
-      warmupBike('15m'),
-      repeat(4, [step('4m', '105-110%', { cadence: '90-100rpm' }), step('4m', '50%')]),
-      cooldownBike('9m', '55%'),
-    ],
-  },
-  {
-    id: 'bench-run-4x4',
-    sport: 'Run',
-    stimulus: 'VO2',
-    name: t('Formkontrolle Lauf 4x4min'),
-    measures: 'vo2',
-    minutes: 48,
-    load: 62,
-    benchmark: true,
-    phases: ['BASE', 'BUILD', 'SPECIFIC', 'TAPER', 'RECOVERY'],
-    coachNote: t('Vergleichseinheit. Gleiche Pace wie beim letzten Mal, nicht schneller. Die Herzfrequenz ist das Ergebnis, nicht die Zeit.'),
-    blocks: [
-      step('12m', '72-78% Pace', { label: t('Einlaufen') }),
-      repeat(4, [step('4m', '104-108% Pace'), step('3m', '62-68% Pace')]),
-      cooldownRun('8m', '72% Pace'),
-    ],
-  },
-  {
-    id: 'bench-swim-400',
-    sport: 'Swim',
-    stimulus: 'THRESHOLD',
-    name: t('Formkontrolle Schwimmen 400m'),
-    minutes: 35,
-    load: 45,
-    benchmark: true,
-    phases: ['BASE', 'BUILD', 'SPECIFIC', 'TAPER', 'RECOVERY'],
-    coachNote: t('Vergleichseinheit. 400 m gleichmäßig auf CSS-Tempo, danach dieselbe Auswertung wie bei Rad und Lauf.'),
-    blocks: [
-      warmupSwim('300mtr'),
-      step('400mtr', '98-102% Pace'),
-      cooldownSwim('200mtr', '60% Pace'),
-    ],
-  },
 ])
 
-export const LIBRARY: readonly WorkoutTemplate[] = perLang(() => [...BIKE, ...RUN, ...SWIM, ...BENCHMARKS])
+export const LIBRARY: readonly WorkoutTemplate[] = perLang(() => [...BIKE, ...RUN, ...SWIM, ...TESTS])
 
 export const templatesFor = (sport: Sport): readonly WorkoutTemplate[] =>
   LIBRARY.filter((template) => template.sport === sport)

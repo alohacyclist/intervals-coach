@@ -103,8 +103,8 @@ const buildVariants = (
   stretchTo: number | undefined,
   coreAt: number | undefined,
 ): readonly SessionVariant[] => {
-  // A reference session exists to be compared with itself, and a race is as long
-  // as the race. Trimmed, either would be a different session, so both come whole.
+  // A test measures what it measures only as written, and a race is as long as
+  // the race. Trimmed, either would be a different session, so both come whole.
   if (template.benchmark === true || template.occasion === 'race') {
     const whole = variantFor('max', template.minutes, template, threshold, reason)
     return whole ? [whole] : []

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { planDays } from '../src/coach/engine.ts'
 import { buildState } from '../src/coach/state.ts'
-import { addDays, startOfWeek } from '../src/coach/dates.ts'
+import { addDays, diffDays, startOfWeek } from '../src/coach/dates.ts'
 import { intensityClass } from '../src/coach/library.ts'
 import { completionsFrom } from '../src/coach/progression.ts'
 import {
@@ -196,7 +196,7 @@ describe('plan engine', () => {
     const tight = withMinutes({ min: 40, normal: 60, max: 80 })
     for (const day of planDays(stateFrom(rested), tight, 3)) {
       for (const option of day.options) {
-        // A reference session is offered whole or not at all, so it is exempt.
+        // A test is offered whole or not at all, so it is exempt.
         if (option.template.benchmark === true) continue
         const shortest = option.variants[0]?.minutes ?? Infinity
         // Nothing is cut below half of itself, and two versions within twelve
@@ -909,28 +909,6 @@ describe('recognising a workout that was already done', () => {
   })
 })
 
-describe('the reference session', () => {
-  // Lang genug gelaufen, dass die Referenzeinheit fällig ist — und ein Montag, weil
-  // die Erholungswochen in Kalenderwochen zählen und keine davon auf "heute" fallen soll.
-  const longRunning = { ...config, planStart: '2026-01-05' }
-
-  it('lands on a quality day once it is due, without the athlete deciding', () => {
-    const [today] = planDays(stateFrom(rested), longRunning, 1, measured)
-    expect(today?.dayType).toBe('KEY')
-    expect(today?.options.map((option) => option.template.id)).toContain('bench-bike-4x4')
-    expect(
-      today?.options.find((option) => option.template.id === 'bench-bike-4x4')?.reason,
-    ).toContain('Formkontrolle')
-  })
-
-  it('never comes up as ordinary work', () => {
-    const days = planDays(stateFrom(rested), config, 7, measured)
-    expect(days.flatMap((day) => day.options.map((option) => option.template.id))).not.toContain(
-      'bench-bike-4x4',
-    )
-  })
-})
-
 describe('choosing which threshold to measure', () => {
   it('offers the test for every sport it is due for, not only the recommendation', () => {
     const [today] = planDays(stateFrom(rested), config, 1, [])
@@ -947,14 +925,41 @@ describe('choosing which threshold to measure', () => {
     expect(measuring.map((option) => option.template.id)).toContain('test-swim-css')
   })
 
-  it('still allows only one test inside a week', () => {
-    const days = planDays(stateFrom(rested), config, 7, [])
-    const measuring = days.filter((day) =>
-      day.options.some((option) => option.template.measures === 'threshold'),
+  const testDays = (days: ReturnType<typeof planDays>) =>
+    days.filter((day) => day.options.some((option) => option.template.measures === 'threshold'))
+
+  it('plans each test once, however far ahead, and keeps a week between tests', () => {
+    // TODAY is a Wednesday: two weeks ahead cross two Mondays, where a week-bound
+    // rule would offer the test that is planned but not yet done all over again.
+    const days = planDays(stateFrom(rested), config, 14, [])
+    const tests = days.flatMap((day) =>
+      day.options.filter((option) => option.template.measures === 'threshold').map((option) => option.sport),
     )
-    // TODAY is a Wednesday, so seven days reach into the next week, which may
-    // rightly carry its own test — but never two in the same one.
-    const weeks = new Set(measuring.map((day) => startOfWeek(day.date)))
-    expect(weeks.size).toBe(measuring.length)
+    expect(tests.length).toBeGreaterThan(0)
+    expect(new Set(tests).size).toBe(tests.length)
+    const dates = testDays(days).map((day) => day.date)
+    for (let index = 1; index < dates.length; index += 1) {
+      expect(diffDays(dates[index - 1]!, dates[index]!)).toBeGreaterThanOrEqual(7)
+    }
+  })
+
+  it('waits a week after a test already done, in whichever sport', () => {
+    // The run was measured two days ago; the bike never was, so it is due —
+    // but not before the run test is a week old.
+    const event = plannedEvent(2, 'lauftest', { externalId: 'coach:2026-01-01:test-run-thr20' })
+    const run = activity(2, 'Run', { load: 70, intensity: 100, pairedEventId: event.id, compliance: 95 })
+    const done = completionsFrom([event], [run])
+    expect(done.map((completion) => completion.templateId)).toEqual(['test-run-thr20'])
+
+    const days = planDays(stateFrom([...rested, run]), config, 14, done)
+    const firstAllowed = addDays(TODAY, 5)
+    const dates = testDays(days).map((day) => day.date)
+    expect(dates.length).toBeGreaterThan(0)
+    expect(dates.every((date) => date >= firstAllowed)).toBe(true)
+    // Measured two days ago, the run is not offered again; the bike is what is due.
+    const sports = testDays(days).flatMap((day) =>
+      day.options.filter((option) => option.template.measures === 'threshold').map((option) => option.sport),
+    )
+    expect(sports).toEqual(['Ride'])
   })
 })

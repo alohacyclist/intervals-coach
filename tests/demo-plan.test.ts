@@ -55,7 +55,7 @@ describe('planner on demo data', () => {
     expect(recommended.template.name).toBe(missed.planned[0])
   })
 
-  it('shows weeks of history with a recovery week, levels and a reference session', async () => {
+  it('shows weeks of history with a recovery week and levels', async () => {
     const { get } = routesOn('2026-10-21')
     const progress = await get('/api/progress')
     const loads = progress['weeks'].map((week: { load: number }) => week.load)
@@ -63,7 +63,6 @@ describe('planner on demo data', () => {
     const recent = loads.slice(-6, -1)
     expect(Math.min(...recent)).toBeLessThan(Math.max(...recent) * 0.75)
     expect(progress['levels'].length).toBeGreaterThan(0)
-    expect(progress['benchmark'].due).toBe(false)
   })
 
   it('compares a session with its plan and finds the faulty heart recording, without offering to write it', async () => {
@@ -94,16 +93,23 @@ describe('planner on demo data', () => {
   })
 
   it('lengthens today on a day with more time, and only today', async () => {
-    const stretchedOn = await Promise.all(
-      WEEK.map(async (date) => {
-        const plan = await routesOn(date).get('/api/plan?minutes=180')
-        vi.useRealTimers()
-        const added = (day: Record<string, any>) =>
-          day['options'].some((option: Record<string, any>) => option['variants'].some((variant: Record<string, any>) => variant['tier'] === 'extra'))
-        expect(plan['days'].slice(1).some(added)).toBe(false)
-        return added(plan['days'][0])
-      }),
-    )
+    // One day after the other: the clock is faked per day, so the days must not run at once.
+    // A plateau may lengthen a later day on its own; the wish must not add to that.
+    const lengthened = (day: Record<string, any>): readonly string[] =>
+      day['options']
+        .filter((option: Record<string, any>) => option['variants'].some((variant: Record<string, any>) => variant['tier'] === 'extra'))
+        .map((option: Record<string, any>) => option['template'].id)
+    const stretchedOn: boolean[] = []
+    for (const date of WEEK) {
+      const { get } = routesOn(date)
+      const usual = await get('/api/plan')
+      const wished = await get('/api/plan?minutes=180')
+      for (const [index, day] of wished['days'].entries()) {
+        if (index === 0) continue
+        for (const id of lengthened(day)) expect(lengthened(usual['days'][index]), `${date}, day ${index}`).toContain(id)
+      }
+      stretchedOn.push(lengthened(wished['days'][0]).length > lengthened(usual['days'][0]).length)
+    }
     expect(stretchedOn.some(Boolean)).toBe(true)
   })
 

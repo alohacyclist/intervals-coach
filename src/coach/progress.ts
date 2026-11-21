@@ -1,6 +1,5 @@
 import type {
   Activity,
-  BenchmarkStatus,
   FamilyLevel,
   Feasibility,
   FitnessPoint,
@@ -24,15 +23,6 @@ import { chosenLevel, levelFor } from './progression.ts'
  * monthly. Every number here comes out of activities the plan already loaded,
  * so the page costs no extra call to intervals.icu.
  */
-
-/** Only for a caller that asks for the series alone, as the tests do. */
-const EMPTY_BENCHMARK: BenchmarkStatus = {
-  due: false,
-  weeksSinceLast: null,
-  intervalWeeks: 0,
-  sessions: [],
-  results: [],
-}
 
 /** Below this, curves and weekly bars show a start-up ramp rather than a trend. */
 export const EARLY_DAYS = 14
@@ -145,7 +135,6 @@ const familyLevels = (
 }
 
 type Achievements = {
-  readonly benchmark: BenchmarkStatus
   readonly feasibility: readonly Feasibility[]
   /** The athlete's own sports; empty means every family in the library. */
   readonly sports: readonly Sport[]
@@ -164,7 +153,7 @@ export const buildProgress = (
   today: string,
   historyDays = 180,
   weeks = 12,
-  achieved: Achievements = { benchmark: EMPTY_BENCHMARK, feasibility: [], sports: [] },
+  achieved: Achievements = { feasibility: [], sports: [] },
 ): Progress => {
   const from = addDays(today, -historyDays)
   const inRange = activities.filter((entry) => entry.date >= from && entry.date <= today)
@@ -180,7 +169,6 @@ export const buildProgress = (
     fitness: fitnessSeries(activities, today, historyDays),
     weeks: weeklyLoads(activities, today, weeks),
     levels: familyLevels(completions, achieved.sports, achieved.levelChoices),
-    benchmark: achieved.benchmark,
     feasibility: achieved.feasibility,
     standing: achieved.standing ?? [],
     goalOptions: achieved.goalOptions ?? [],

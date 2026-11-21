@@ -176,8 +176,6 @@ const RUN_KEYS = ['run-tempo-25', 'run-thr-5x1k', 'run-cv-4x2k'] as const
 const BIKE_LONG = ['bike-endurance-75', 'bike-long-90', 'bike-long-120'] as const
 const RUN_LONG = ['run-easy-strides', 'run-long-80', 'run-long-80'] as const
 
-/** The reference session every eight weeks, in place of that week's bike key. */
-const BENCHMARK_WEEK = -7
 /**
  * The threshold tests, eight weeks back: inside the app's ten week interval, so
  * today is a training day and not a test day, and recent enough to anchor the
@@ -189,13 +187,9 @@ const TESTS: Readonly<Record<number, string>> = { 1: 'test-bike-ftp20', 2: 'test
 const loadedWeek = (week: number): readonly Slot[] => {
   const index = blockWeek(week)
   const slots: readonly Slot[] = [
-    { day: 1, templateId: week === BENCHMARK_WEEK ? 'bench-bike-4x4' : BIKE_KEYS[index]!, pushed: true },
-    {
-      day: 2,
-      templateId: week === BENCHMARK_WEEK ? 'bench-swim-400' : index === 1 ? 'swim-css-5x200' : 'swim-technique',
-      pushed: week === BENCHMARK_WEEK,
-    },
-    { day: 3, templateId: week === BENCHMARK_WEEK ? 'bench-run-4x4' : RUN_KEYS[index]!, pushed: true },
+    { day: 1, templateId: BIKE_KEYS[index]!, pushed: true },
+    { day: 2, templateId: index === 1 ? 'swim-css-5x200' : 'swim-technique', pushed: false },
+    { day: 3, templateId: RUN_KEYS[index]!, pushed: true },
     { day: 5, templateId: BIKE_LONG[index]!, pushed: true },
     { day: 6, templateId: RUN_LONG[index]!, pushed: false },
   ]

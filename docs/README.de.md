@@ -136,7 +136,7 @@ dauert so lange wie eingestellt:
   längste Einheit selbst. Schwimmen wird in Metern geplant und nicht verlängert.
 - **Gar nicht** verlängert wird an Ruhe- und Regenerationstagen, an Tagen, die die
   Erholungswerte, die Ermüdung oder eine eingetragene Pause locker halten, rund um ein
-  Rennen und bei Tests und Referenzeinheiten.
+  Rennen und bei Tests.
 
 Wofür die Zeit verwendet wird und wo sie über das Empfohlene geht, steht in Stichworten unter
 dem Grund des Tages („Mehr Zeit: lockere Grundlage nach den Intervallen · Laufen: mehr als
@@ -168,11 +168,11 @@ Auf- und Auswärmen geht zuerst.
 Vier Regeln halten das ehrlich: nichts verliert mehr als die Hälfte von sich; eine Einheit
 wird nie gestreckt, nur getrimmt — mehr Zeit an einem Tag bringt lockere Grundlage dazu,
 nie mehr Intervalle (siehe *Heute mehr Zeit*); zwei Fassungen, die weniger als zwölf Minuten
-auseinanderliegen, sind dieselbe Einheit und werden zu einer; und Referenzeinheiten
-werden gar nicht gekürzt, weil sie sonst nicht mehr mit sich selbst vergleichbar wären.
+auseinanderliegen, sind dieselbe Einheit und werden zu einer; und Tests werden gar nicht
+gekürzt, weil sie sonst etwas anderes messen würden.
 Eine gekürzte Fassung schaltet keine Progressionsstufe frei.
 
-## Progression, Kraft, Benchmarks
+## Progression, Kraft, Tests
 
 **Stufen.** Workouts gehören zu Familien (`bike-threshold`, `run-vo2`, …). Die nächste
 Stufe wird frei, wenn die vorige ganz absolviert wurde: mit mindestens 75 % Compliance, falls
@@ -185,9 +185,9 @@ Aktivität gilt als diese Einheit, wenn Sportart und Tag stimmen, die Dauer zwis
 150 % liegt und der Reiz passt — oder, wenn nichts Näheres passt, die Aktivität deutlich
 länger ist, aber die Arbeit der Einheit vollständig enthält: die 40/20 in einer
 Zwei-Stunden-Ausfahrt. Grundlage und lange Einheiten, die einfach länger wurden, zählen auch
-dann; Tests, Referenzeinheiten und Regeneration nicht. Der Reiz muss passen: *genau*, wenn der Reiz der Einheit in den Zonen steckt,
+dann; Tests und Regeneration nicht. Der Reiz muss passen: *genau*, wenn der Reiz der Einheit in den Zonen steckt,
 *ähnlich*, wenn nur die Härte passt. Ähnlich reicht für „erledigt" und den Verlauf, nicht
-für Progression. Tests und Referenzeinheiten brauchen immer den genauen Reiz; ein erkannter
+für Progression. Tests brauchen immer den genauen Reiz; ein erkannter
 Test zählt nur, wenn ein durchgehaltener Block darin steckt und das Ergebnis nicht mehr als
 3 % unter dem eingestellten Wert liegt — sonst war es eine normale Schwelleneinheit. Ein
 gepaarter Kalendereintrag bleibt der direktere Beleg und gewinnt.
@@ -202,14 +202,11 @@ Einheit) und passt sich an die vorhandene Ausrüstung an: Studio, Kurzhanteln bi
 oder nur Körpergewicht. Ohne Gewichte übernehmen einbeinige Arbeit, langsame Absenkphasen
 und Plyometrie die Rolle der Last.
 
-**Formkontrolle.** Alle 8 Wochen legt die App dieselbe Referenzeinheit (4×4 min) auf einen
-Qualitätstag — unverändert, damit die Ergebnisse vergleichbar bleiben. Verglichen wird nur
-über die Arbeitsintervalle, und zwar Tempo bzw. Leistung pro Herzschlag gegenüber der
-vorigen Formkontrolle: ab 1,5 % Unterschied heißt das effizienter oder weniger effizient.
-Wer diesmal schneller lief, wird dadurch nicht für den höheren Puls bestraft. Beide Werte
-werden gegen die aktuelle Schwelle gelesen, sind also auch nach einer Schwellenänderung
-vergleichbar. Ohne lesbare Intervalle fällt der Vergleich auf den Puls der ganzen Einheit
-zurück. Das Ergebnis steht in der Soll-Ist-Karte der Einheit und auf der Verlauf-Seite.
+**Keine Zwischenkontrollen.** Gemessen wird nur, was eine Zahl setzt: die Schwelle, mit
+einem maximalen Test (siehe *Standortbestimmung*). Eine wiederholte Vergleichseinheit
+dazwischen, die nur den Puls bei gleicher Arbeit vergleicht, gibt es nicht — der Puls
+schwankt von Tag zu Tag stärker als der Fortschritt in acht Wochen, und der Plan passt sich
+ohnehin an jede absolvierte Einheit an (Stufen, *Vorgaben gegen Ausführung*).
 
 **Vorgaben gegen Ausführung.** Liegen die letzten zwei erkannten Intervalleinheiten einer
 Sportart (höchstens 28 Tage alt, keine Tests oder Rennen) beide im Schnitt mindestens 3
@@ -226,7 +223,10 @@ trainiert, aber nie testet, sieht seinen Schätzwert deshalb sinken — und beko
 leichte Vorgaben, die den nächsten Schätzwert weiter drücken. Die App plant den Ausweg
 selbst ein: einen 20-Minuten-Maximalblock, alle 10 Wochen und immer auf einem Qualitätstag.
 Nicht in Tapering- oder Erholungswochen, nicht bei Form unter −15, nicht direkt nach einer
-Pause, nie über dem angegebenen Zeitbudget und höchstens einmal pro Woche.
+Pause, nie über dem angegebenen Zeitbudget und mit mindestens sieben Tagen Abstand zum
+letzten Maximaltest in irgendeiner Sportart — gleich, wo die Kalenderwoche endet, und
+bereits absolvierte Tests mitgezählt. Ein geplanter, noch nicht absolvierter Test gilt in der
+Vorschau als erledigt, damit derselbe Test nicht zweimal hintereinander auftaucht.
 
 **Danach** liest die App das Ergebnis selbst aus: sie holt die Intervalle der absolvierten
 Einheit, nimmt den längsten Block ab 15 Minuten und rechnet daraus die Schwelle — 95 % der
@@ -490,8 +490,7 @@ mindestens zehn Minuten und zwei Fünftel der Einheit sauber, schätzt die App d
 Abschnitte aus dem angepassten Zusammenhang, an den Rändern an die echte Messung angeschlossen.
 Geschätztes ist in der Kurve gestrichelt und an den Zahlen mit „~“ markiert, und der Vermerk nennt
 den bereinigten Schnitt neben dem aufgezeichneten. Reicht die saubere Messung nicht, wird der Puls
-dort ausgeblendet statt falsch gezeigt. Die Formkontrolle auf der Karte rechnet mit dem bereinigten
-Puls.
+dort ausgeblendet statt falsch gezeigt.
 
 **Zurückschreiben.** Unter dem Vermerk steht „In intervals.icu korrigieren“. Der erste Tipp sagt,
 was sich ändert (wie viele Minuten, der Schnitt vorher und nachher) und dass die App es nicht
@@ -592,7 +591,6 @@ src/coach/     reine Trainingslogik, ohne IO — hier liegt die gesamte Fachlich
   engine.ts    Regel-Engine für die nächsten Tage
   progression.ts  Stufen je Workout-Familie, aus tatsächlich absolvierten Einheiten
   adherence.ts absolviert, getauscht, ausgefallen — die letzten sieben Tage
-  benchmark.ts Referenzeinheit alle acht Wochen
   heart-check.ts  Pulsaufzeichnung gegen die Arbeit prüfen, Störungen schätzen
   speed-power.ts  Leistung aus Tempo und Höhenprofil, Sätze in Fahrten ohne Wattmessung
   threshold-drift.ts  Abgleich der Schwellenwerte mit intervals.icu
