@@ -1,7 +1,7 @@
 import type { Fitness, Phase, Sport } from './types.ts'
 import type { Completion } from './progression.ts'
 import { diffDays } from './dates.ts'
-import { thresholdTestFor } from './library.ts'
+import { findTemplate, thresholdTestFor } from './library.ts'
 import { t } from './lang.ts'
 
 /**
@@ -17,6 +17,12 @@ import { t } from './lang.ts'
 
 export const TEST_INTERVAL_WEEKS = 10
 const TEST_INTERVAL_DAYS = TEST_INTERVAL_WEEKS * 7
+
+/**
+ * One maximal test in seven days at most, whatever the sport and wherever the
+ * calendar week ends: the second would measure the first.
+ */
+export const TEST_SPACING_DAYS = 7
 
 /** A maximal effort on tired legs measures the fatigue, not the threshold. */
 const MIN_TSB = -15
@@ -39,6 +45,17 @@ const daysSinceLast = (
     .map((completion) => diffDays(completion.date, today))
     .sort((left, right) => left - right)
   return ages[0] ?? null
+}
+
+export const isThresholdTest = (templateId: string): boolean => findTemplate(templateId)?.measures === 'threshold'
+
+/** Days since the last maximal test in any sport before today; infinite when there was none. */
+export const daysSinceAnyTest = (completions: readonly Completion[], today: string): number => {
+  const ages = completions
+    .filter((completion) => isThresholdTest(completion.templateId))
+    .map((completion) => diffDays(completion.date, today))
+    .filter((age) => age > 0)
+  return ages.length === 0 ? Number.POSITIVE_INFINITY : Math.min(...ages)
 }
 
 /**

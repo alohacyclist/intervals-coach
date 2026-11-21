@@ -12,7 +12,6 @@ import { toIntervalsText } from '../src/coach/format.ts'
 import { planDays } from '../src/coach/engine.ts'
 import { buildState } from '../src/coach/state.ts'
 import { levelFor, completionsFrom } from '../src/coach/progression.ts'
-import { benchmarkTemplateFor } from '../src/coach/benchmark.ts'
 import type { Block, Repeat, Step, WorkoutTemplate } from '../src/coach/types.ts'
 import { activity, baselineWellness, config, plannedEvent, wellness } from './fixtures.ts'
 
@@ -190,7 +189,7 @@ describe('one version per configured time budget', () => {
     }
   })
 
-  it('never trims a reference session, which has to stay comparable', () => {
+  it('never trims a test, which has to measure the same thing every time', () => {
     for (const template of LIBRARY.filter((entry) => entry.benchmark === true)) {
       const session = planDays(state(), config, 1)[0]?.options.find(
         (option) => option.template.id === template.id,
@@ -250,10 +249,11 @@ describe('the threshold test', () => {
     expect(test.measures).toBe('threshold')
   })
 
-  it('stays out of the eight week rotation, which tracks something else', () => {
-    // benchmarkFor picks per sport, so a second Ride benchmark must not shadow it.
-    expect(benchmarkTemplateFor('Ride')?.id).toBe('bench-bike-4x4')
+  it('is the only test there is: no comparison sessions in between', () => {
+    const tests = LIBRARY.filter((template) => template.benchmark === true)
+    expect(tests.every((template) => template.measures === 'threshold')).toBe(true)
     expect(thresholdTestFor('Ride')?.id).toBe('test-bike-ftp20')
+    expect(tests.filter((template) => template.sport === 'Ride').map((template) => template.id)).toEqual(['test-bike-ftp20'])
   })
 
   it('is prescribed by the plan, not left to the athlete to volunteer', () => {

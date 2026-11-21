@@ -330,22 +330,6 @@ export const ExecutionView = ({ execution }: { readonly execution: Execution }) 
       {execution.unavailable && !execution.estimate && <p className="exec__note">{execution.unavailable}</p>}
       {execution.estimate && <EstimatedSets estimate={execution.estimate} />}
       {execution.heart && <p className="exec__note exec__note--heart">{execution.heart.message}</p>}
-      {execution.benchmark && (
-        <p className="exec__benchmark">
-          <strong
-            className={
-              execution.benchmark.verdict === 'better'
-                ? 'history__ok'
-                : execution.benchmark.verdict === 'worse'
-                  ? 'history__miss'
-                  : ''
-            }
-          >
-            {t('Formkontrolle:')}
-          </strong>{' '}
-          {execution.benchmark.message}
-        </p>
-      )}
       {execution.test && <TestResult outcome={execution.test} />}
       {execution.feedback && execution.feedback.length > 0 && (
         <div className="exec__test">

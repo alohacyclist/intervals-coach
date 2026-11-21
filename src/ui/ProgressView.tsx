@@ -5,7 +5,6 @@ import { FitnessCurve } from './components/FitnessCurve.tsx'
 import { WeekBars } from './components/WeekBars.tsx'
 import { SeasonBand } from './components/SeasonBand.tsx'
 import { LevelLadder } from './components/LevelLadder.tsx'
-import { BenchmarkCard } from './components/BenchmarkCard.tsx'
 import { GoalsPanel } from './components/GoalsPanel.tsx'
 import { StandingCard } from './components/StandingCard.tsx'
 import { SPORT_LABELS } from '../coach/types.ts'
@@ -219,10 +218,6 @@ export const ProgressView = ({ onNeedsOnboarding }: Props) => {
       {!early && <WeekBars weeks={progress.weeks} />}
 
       <LevelLadder levels={progress.levels} onChoose={(family, level) => void pickLevel(family, level)} saving={savingLevel} />
-
-      {(progress.benchmark.due || progress.benchmark.results.length > 0) && (
-        <BenchmarkCard status={progress.benchmark} />
-      )}
 
       {/* Goals the standing already shows with their trend are not told a second time, from older numbers. */}
       {config && (config.goals.length === 0 || openGoals.length > 0) && (

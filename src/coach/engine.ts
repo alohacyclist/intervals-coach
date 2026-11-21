@@ -23,8 +23,7 @@ import { HARD_ON_LOAD_ALONE, projectFitness } from './fitness.ts'
 import { PHASE_LABELS, goalForSport, phaseForSport, primaryGoal, weeklyHardBudget } from './phase.ts'
 import { selectedSports } from './thresholds.ts'
 import { breakLimit, returnWindow } from './breaks.ts'
-import { thresholdTestDue } from './threshold-test.ts'
-import { benchmarkDue } from './benchmark.ts'
+import { TEST_SPACING_DAYS, daysSinceAnyTest, isThresholdTest, thresholdTestDue } from './threshold-test.ts'
 import { chosenLevel, levelCeilings } from './progression.ts'
 import { completedFrom, effortsFrom } from './done.ts'
 import type { Effort } from './done.ts'
@@ -142,8 +141,16 @@ type Simulation = {
   readonly stimulusAge: Readonly<Record<string, number>>
   readonly usedTemplateIds: readonly string[]
   readonly strengthThisWeek: number
-  /** One maximal test a week at most — the second would measure the first. */
-  readonly testedThisWeek: boolean
+  /**
+   * Days since the last maximal test in any sport, done or planned in this
+   * projection; see TEST_SPACING_DAYS.
+   */
+  readonly daysSinceTest: number
+  /**
+   * Sports whose test the projection already holds. Not done yet, it would
+   * otherwise still be due on every later day — the same test twice.
+   */
+  readonly testsPlanned: readonly Sport[]
   readonly consecutiveRest: number
   readonly weekStart: string
 }
@@ -174,7 +181,7 @@ const strengthThisWeekFrom = (state: TrainingState, config: CoachConfig): number
   return Math.max(state.strengthSessionsThisWeek, logged)
 }
 
-const initSimulation = (state: TrainingState, config: CoachConfig): Simulation => ({
+const initSimulation = (state: TrainingState, config: CoachConfig, completions: readonly Completion[]): Simulation => ({
   fitness: state.overall,
   daysSinceHard: state.daysSinceHard,
   lastHardLoad: state.lastHardLoad,
@@ -186,7 +193,8 @@ const initSimulation = (state: TrainingState, config: CoachConfig): Simulation =
   ),
   usedTemplateIds: [],
   strengthThisWeek: strengthThisWeekFrom(state, config),
-  testedThisWeek: false,
+  daysSinceTest: daysSinceAnyTest(completions, state.today),
+  testsPlanned: [],
   consecutiveRest: state.consecutiveRestDays,
   weekStart: startOfWeek(state.today),
 })
@@ -728,7 +736,8 @@ const advance = (
   offered: readonly PlannedSession[],
   strengthAdded: boolean,
   nextDate: string,
-  tested: boolean,
+  /** The sports measured on this day, done or still planned. */
+  tested: readonly Sport[],
 ): Simulation => {
   const sameWeek = startOfWeek(nextDate) === simulation.weekStart
   const sessions = efforts.filter((effort) => effort.sport !== 'Other')
@@ -773,7 +782,8 @@ const advance = (
       ...offered.map((option) => option.template.id),
     ],
     strengthThisWeek: (sameWeek ? simulation.strengthThisWeek : 0) + (strengthAdded ? 1 : 0),
-    testedThisWeek: (sameWeek && simulation.testedThisWeek) || tested,
+    daysSinceTest: tested.length > 0 ? 1 : simulation.daysSinceTest + 1,
+    testsPlanned: [...new Set([...simulation.testsPlanned, ...tested])],
     consecutiveRest: efforts.length > 0 ? 0 : simulation.consecutiveRest + 1,
     weekStart: sameWeek ? simulation.weekStart : startOfWeek(nextDate),
   }
@@ -893,7 +903,7 @@ const extraTimeNotes = (extra: ExtraTime, options: readonly PlannedSession[]): r
   if (options.some((option) => option.variants.some((variant) => variant.tier === 'extra'))) {
     return extra.lead ? [extra.lead, ...extra.notes] : extra.notes
   }
-  const measuring = options.some((option) => option.template.benchmark === true || option.template.measures !== undefined)
+  const measuring = options.some((option) => option.template.measures !== undefined)
   return measuring
     ? [
         {
@@ -1006,7 +1016,7 @@ export const planDays = (
       // that is due gets its own, because which one to test is the athlete's
       // choice exactly as which one to train is.
       const testable =
-        dayType === 'KEY' && !simulation.testedThisWeek && !raceDay && !raceEve
+        dayType === 'KEY' && simulation.daysSinceTest >= TEST_SPACING_DAYS && !raceDay && !raceEve
 
       // While the legs recover, a quality day's run is a light one — unless running
       // is all there is, which on a quality day means the athlete asked for it.
@@ -1018,7 +1028,7 @@ export const planDays = (
       const regular = sports.map((sport) => {
         const sportPhase = phases[sport]
         const sportDayType = held(sport) ? 'EASY' : dayType
-        const test = testable && !held(sport)
+        const test = testable && !held(sport) && !simulation.testsPlanned.includes(sport)
           ? thresholdTestDue(
               sport,
               known,
@@ -1033,14 +1043,6 @@ export const planDays = (
         if (test) {
           const template = findTemplate(test.templateId)
           if (template) return buildSession(template, config, test.reason, date)
-        }
-        // Setting the numbers comes first; comparing against the last time comes after.
-        const reference = testable && !held(sport)
-          ? benchmarkDue(sport, known, date, config.planStart, sportPhase, returning, budgetMinutes)
-          : null
-        if (reference) {
-          const template = findTemplate(reference.templateId)
-          if (template) return buildSession(template, config, reference.reason, date)
         }
         if (openers && sport === openers.sport) return buildSession(openers, config, decision.reason, date)
         const goalKind = goalForSport(config.goals, sport, date)?.kind
@@ -1122,8 +1124,17 @@ export const planDays = (
       const planned = chosen ? [plannedEffort(chosen, dayType)] : []
       const stillOpen = dayType === 'KEY' && !actual.some((effort) => effort.hard)
       const efforts = actual.length === 0 ? planned : stillOpen ? [...actual, ...planned] : actual
-      const tested =
-        (actual.length === 0 || stillOpen) && options.some((option) => option.template.measures === 'threshold')
+      // A test still open counts as done for the days after, as a test done today does.
+      const plannedTests: readonly Sport[] =
+        actual.length === 0 || stillOpen
+          ? options.filter((option) => option.template.measures === 'threshold').map((option) => option.sport)
+          : []
+      const doneTests: readonly Sport[] = isToday
+        ? completions
+            .filter((completion) => completion.date === date && isThresholdTest(completion.templateId))
+            .flatMap((completion) => findTemplate(completion.templateId)?.sport ?? [])
+        : []
+      const tested = [...plannedTests, ...doneTests]
 
       return {
         simulation: advance(
@@ -1137,7 +1148,7 @@ export const planDays = (
         plan: [...plan, day],
       }
     },
-    { simulation: initSimulation(state, morningConfig), plan: [] },
+    { simulation: initSimulation(state, morningConfig, morningCompletions), plan: [] },
   )
 
   return plan

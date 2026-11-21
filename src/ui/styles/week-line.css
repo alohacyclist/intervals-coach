@@ -391,7 +391,7 @@
 }
 
 /* Flat sections keep their 14px inset for the text and run their rules to the page edge, like the line. */
-.app > :is(.issue, .kpis, .history, .pause, .totals, .chart, .ladder, .benchmark, .goals) {
+.app > :is(.issue, .kpis, .history, .pause, .totals, .chart, .ladder, .goals) {
   margin-inline: -14px;
 }
 .panel .disclose > summary,

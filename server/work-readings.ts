@@ -65,7 +65,7 @@ const readExecution = async (
 }
 
 /** The work intervals of one recognised session, reduced to how far they sat from their targets. */
-export const readWork = async (
+const readWork = async (
   source: IntervalsSource,
   profile: AthleteProfile,
   completion: Completion,

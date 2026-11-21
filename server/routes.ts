@@ -23,10 +23,7 @@ import { seasonBand } from '../src/coach/phase.ts'
 import { buildHistory } from '../src/coach/adherence.ts'
 import { chosenLevel, completionsFrom, familyLevels, scheduledFrom, toJudge, withHeld } from '../src/coach/progression.ts'
 import type { IntervalVerdict } from '../src/coach/progression.ts'
-import { benchmarkCompletions, benchmarkStatus, compareBenchmarks } from '../src/coach/benchmark.ts'
-import type { WorkReading } from '../src/coach/efficiency.ts'
-import { workReading } from '../src/coach/efficiency.ts'
-import { executionSuggestions, readHeld, readWork, readWorkMany } from './work-readings.ts'
+import { executionSuggestions, readHeld } from './work-readings.ts'
 import { buildStanding } from '../src/coach/standing.ts'
 import { goalOptions, relabel } from '../src/coach/goal-options.ts'
 import {
@@ -41,7 +38,7 @@ import { adoptThreshold, thresholdSuggestions } from '../src/coach/threshold-dri
 import type { ObservedThresholds } from '../src/coach/threshold-drift.ts'
 import { matchedCompletions, mergeCompletions, withScheduled } from '../src/coach/matching.ts'
 import { withProposal } from '../src/coach/proposals.ts'
-import type { BenchmarkResult, CoachConfig, DayProposal, Execution, PlannedDay, Sport, WorkoutTemplate } from '../src/coach/types.ts'
+import type { DayProposal, PlannedDay, Sport } from '../src/coach/types.ts'
 import { readThresholdTests } from './threshold-tests.ts'
 import { garminAttribution } from '../src/coach/attribution.ts'
 import { ZWIFT_ROUTES, findRoute } from './zwift-routes.ts'
@@ -139,54 +136,6 @@ const rememberProposals = async (store: ConfigStore, days: readonly PlannedDay[]
   if (proposals !== latest.proposals) await store.save(validateConfig({ ...latest, proposals }))
 }
 
-/** The repeated comparison session, not the threshold test: only it is compared with its predecessor. */
-const isReference = (template: WorkoutTemplate): boolean =>
-  template.benchmark === true && template.measures !== 'threshold'
-
-/**
- * A reference session set against the one before it, for the card under the
- * session itself — where the athlete looks, not only on the progress page.
- */
-const referenceResult = async (
-  source: IntervalsSource,
-  config: CoachConfig,
-  sport: Sport,
-  activityId: string,
-  date: string | null,
-  execution: Execution,
-  today: string,
-): Promise<BenchmarkResult | null> => {
-  const [recorded, events] = await Promise.all([
-    source.activities(addDays(today, -PROGRESSION_DAYS), today),
-    source.events(addDays(today, -PROGRESSION_DAYS), today),
-  ])
-  const activities = withRideEstimates(recorded, config.rideEstimates ?? [])
-  const completions = mergeCompletions(
-    completionsFrom(events, activities),
-    matchedCompletions(withScheduled(config.proposals, scheduledFrom(events)), activities, config.profile),
-    activities,
-    config.profile,
-  )
-  const current = activities.find((activity) => activity.id === activityId)
-  const on = date ?? current?.date ?? today
-  const earlier = benchmarkCompletions(sport, completions).filter(
-    (completion) => completion.activityId !== activityId && completion.date <= on,
-  )
-  const previous = earlier[earlier.length - 1] ?? null
-  const previousActivity = previous ? activities.find((activity) => activity.id === previous.activityId) : undefined
-  return compareBenchmarks(
-    sport,
-    { date: on, reading: workReading(execution), averageHr: current?.averageHr ?? null },
-    previous
-      ? {
-          date: previous.date,
-          reading: await readWork(source, config.profile, previous, previousActivity),
-          averageHr: previousActivity?.averageHr ?? null,
-        }
-      : null,
-  )
-}
-
 /** The first weekly reading of a run needs six weeks of runs before it. */
 const STANDING_WARMUP_DAYS = 42
 
@@ -199,7 +148,7 @@ const buildProgressView = async (deps: RouteDeps, span: ProgressSpan): Promise<P
   const today = todayFor(deps)
   const config = await deps.store.load()
   const [recorded, events, wellness, settings] = await Promise.all([
-    // Levels and benchmarks judge the same history as the plan, whatever span is shown.
+    // Levels judge the same history as the plan, whatever span is shown.
     deps.source.activities(addDays(today, -Math.max(ACTIVITY_HISTORY_DAYS, span + FITNESS_WARMUP_DAYS)), today),
     deps.source.events(addDays(today, -PROGRESSION_DAYS), today),
     // The estimated FTP over the span, and resting heart rate for reading the runs. Optional:
@@ -220,13 +169,6 @@ const buildProgressView = async (deps: RouteDeps, span: ProgressSpan): Promise<P
     () => new Map<string, IntervalVerdict>(),
   )
   const completions = withHeld(recognised, held)
-  // The last two reference sessions per sport, read over their work intervals.
-  const references = config.profile.sports.flatMap((setting) =>
-    benchmarkCompletions(setting.sport, completions).slice(-2),
-  )
-  const readings = await readWorkMany(deps.source, config.profile, references, activities).catch(
-    () => new Map<string, WorkReading>(),
-  )
   const feasibility = assessGoals(config.goals, config.profile, today)
   const standing = buildStanding(
     activities,
@@ -242,7 +184,6 @@ const buildProgressView = async (deps: RouteDeps, span: ProgressSpan): Promise<P
     span,
   )
   const progress = buildProgress(activities, completions, today, span, weeksFor(span), {
-    benchmark: benchmarkStatus(config, completions, activities, today, readings),
     feasibility,
     sports: config.profile.sports.map((setting) => setting.sport),
     season: seasonBand(config, today),
@@ -538,12 +479,7 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
             estimate,
           }
         : loaded.execution
-    const benchmark = isReference(template)
-      ? await referenceResult(source, config, template.sport, activityId, day, execution, todayFor(deps)).catch(
-          () => null,
-        )
-      : null
-    return context.json({ ...execution, benchmark })
+    return context.json(execution)
   })
 
   /**

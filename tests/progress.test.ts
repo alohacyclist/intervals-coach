@@ -88,7 +88,6 @@ describe('buildProgress', () => {
 
   it('leaves out the families of sports the athlete does not train', () => {
     const rider = buildProgress([], [], TODAY, 180, 12, {
-      benchmark: { due: false, weeksSinceLast: null, intervalWeeks: 0, sessions: [], results: [] },
       feasibility: [],
       sports: ['Ride'],
     })

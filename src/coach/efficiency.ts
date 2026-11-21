@@ -61,21 +61,6 @@ export const workReading = (execution: Execution): WorkReading | null => {
 }
 
 /**
- * Work per heartbeat. Two readings are comparable because both percentages are
- * taken against the same current threshold when they are read, so the ratio
- * follows the absolute pace or power, whatever the threshold was on the day.
- */
-export const efficiencyOf = (reading: WorkReading): number | null =>
-  reading.heartRate !== null && reading.heartRate > 0 ? reading.percent / reading.heartRate : null
-
-/** Change in efficiency from one reading to the next, in percent; positive is better. */
-export const efficiencyChange = (latest: WorkReading, previous: WorkReading): number | null => {
-  const now = efficiencyOf(latest)
-  const before = efficiencyOf(previous)
-  return now === null || before === null ? null : (now / before - 1) * 100
-}
-
-/**
  * The threshold at which the work would have sat in the middle of its bands.
  * Percent is threshold over pace for running and swimming, watts over FTP for the
  * bike, so a faster pace means a smaller number of seconds and a larger FTP.
