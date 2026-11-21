@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { ExecutedStep, Execution } from '../src/coach/types.ts'
 import type { WorkReading } from '../src/coach/efficiency.ts'
-import { efficiencyChange, thresholdImplied, workReading } from '../src/coach/efficiency.ts'
-import { compareBenchmarks } from '../src/coach/benchmark.ts'
+import { thresholdImplied, workReading } from '../src/coach/efficiency.ts'
 import { executionSuggestion } from '../src/coach/threshold-drift.ts'
 import { config } from './fixtures.ts'
 
@@ -55,44 +54,11 @@ describe('reading the work intervals', () => {
   })
 })
 
-describe('efficiency', () => {
-  it('is pace per beat: faster at the same heart rate is better', () => {
-    expect(efficiencyChange(reading(106, 160), reading(103, 160))).toBeCloseTo((106 / 103 - 1) * 100, 5)
-  })
-
+describe('the threshold behind the work', () => {
   it('finds the threshold that would have put the work mid-band', () => {
     // 4 % above target: FTP up by 4 %, threshold pace 4 % fewer seconds per km.
     expect(thresholdImplied('power', 250, [reading(110.24, null, 0, 106)])).toBeCloseTo(260, 0)
     expect(thresholdImplied('pace', 260, [reading(110.24, null, 0, 106)])).toBeCloseTo(250, 0)
-  })
-})
-
-describe('the reference session', () => {
-  it('calls a faster run at a few more beats progress, not a loss', () => {
-    const result = compareBenchmarks(
-      'Run',
-      { date: '2026-09-24', reading: reading(107, 164), averageHr: 150 },
-      { date: '2026-07-29', reading: reading(101, 162), averageHr: 146 },
-    )
-    expect(result.basis).toBe('intervals')
-    expect(result.verdict).toBe('better')
-    expect(result.message).toContain('effizienter')
-  })
-
-  it('falls back to the whole activity when the intervals cannot be read', () => {
-    const result = compareBenchmarks(
-      'Run',
-      { date: '2026-09-24', reading: null, averageHr: 150 },
-      { date: '2026-07-29', reading: reading(101, 162), averageHr: 154 },
-    )
-    expect(result.basis).toBe('activity')
-    expect(result.verdict).toBe('better')
-  })
-
-  it('sets a first reference without a comparison', () => {
-    expect(compareBenchmarks('Run', { date: '2026-09-24', reading: reading(106, 160), averageHr: 150 }, null).verdict).toBe(
-      'first',
-    )
   })
 })
 

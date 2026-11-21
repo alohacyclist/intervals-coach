@@ -39,4 +39,3 @@ for (const day of plan.days) {
 const progress = await get('/api/progress')
 console.log('Wochen:', progress.weeks.map((week: any) => `${week.start.slice(5)}:${week.load}`).join(' '))
 console.log('Stufen:', progress.levels.map((level: any) => `${level.family}=${level.level ?? level.current}`).join(' '))
-console.log('Benchmark:', JSON.stringify(progress.benchmark).slice(0, 200))

@@ -234,8 +234,30 @@ describe('planned against done', () => {
    * that intervals.icu happened to file as work. By duration alone the fourth
    * interval was paired with the cool-down and read as 73 %, "zu leicht".
    */
-  describe('the Formkontrolle run with a stop in the last interval', () => {
-    const benchmark = findTemplate('bench-run-4x4') as WorkoutTemplate
+  describe('a 4x4 min run with a stop in the last interval', () => {
+    // The session as it was run then; it has since left the library, the case has not.
+    const fourByFour: WorkoutTemplate = {
+      id: 'run-4x4-case',
+      sport: 'Run',
+      stimulus: 'VO2',
+      name: '4x4min',
+      minutes: 48,
+      load: 62,
+      phases: ['BASE', 'BUILD', 'SPECIFIC'],
+      coachNote: '',
+      blocks: [
+        { kind: 'step', duration: '12m', target: '72-78% Pace', label: 'Einlaufen' },
+        {
+          kind: 'repeat',
+          times: 4,
+          steps: [
+            { kind: 'step', duration: '4m', target: '104-108% Pace' },
+            { kind: 'step', duration: '3m', target: '62-68% Pace' },
+          ],
+        },
+        { kind: 'step', duration: '8m', target: '72% Pace', label: 'Auslaufen' },
+      ],
+    }
     const pace: SportThreshold = { metric: 'pace', thresholdSecPerKm: 240 }
     const at = (seconds: number, secPerKm: number, kind: 'work' | 'recovery' = 'work'): ActualInterval => ({
       kind,
@@ -264,7 +286,7 @@ describe('planned against done', () => {
       at(60, 320, 'recovery'),
       at(247, 328),
     ]
-    const run = (intervals: readonly ActualInterval[]) => compare(intervals, benchmark, pace)
+    const run = (intervals: readonly ActualInterval[]) => compare(intervals, fourByFour, pace)
 
     it('reads the fourth interval as the two pieces it was run in', () => {
       const fourth = run(session).steps[3]

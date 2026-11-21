@@ -2,7 +2,7 @@
 
 Etmal mit Beispieldaten, zum Zeigen in Bewerbungen und Gesprächen. Eine erfundene
 Athletin (Rad, Lauf, Schwimmen) mit einem Jahr Training: ruhige Grundlage, danach zwölf
-strukturierte Wochen im 3:1-Rhythmus mit Schwellentests, Formkontrolle, einer Erkältung
+strukturierte Wochen im 3:1-Rhythmus mit Schwellentests, einer Erkältung
 als eingetragener Pause und einer ausgefallenen Qualitätseinheit kurz vor heute. Am
 Plan sieht man so, wie die App nach einem Ausfall umplant. Alles liegt relativ zu
 „heute“, die Demo wirkt also an jedem Tag aktuell, und derselbe Tag ergibt immer

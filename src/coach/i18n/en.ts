@@ -54,30 +54,7 @@ export const EN: Readonly<Record<string, string>> = {
   "manuell ausgewählt": "chosen by hand",
   "Keine {0}-Fassung für {1}": "No {0} version for {1}",
   "Einheit ohne Namen": "Unnamed session",
-  "Formkontrolle: dieselbe Einheit alle acht Wochen. Verglichen wird Tempo bzw. Leistung pro Herzschlag in den Intervallen — heute wird die erste Referenz gesetzt.":
-    "Form check: the same session every eight weeks. What is compared is pace or power per heartbeat in the intervals — today sets the first reference.",
-  "Formkontrolle: dieselbe Einheit wie vor {0} Wochen. Mehr Arbeit pro Herzschlag ist der Fortschritt.":
-    "Form check: the same session as {0} weeks ago. More work per heartbeat is the progress.",
-  "Erste Referenz gesetzt. Beim nächsten Mal gibt es einen Vergleich.":
-    "First reference set. Next time there will be a comparison.",
-  "Erste Referenz: {0} bpm im Schnitt. Beim nächsten Mal gibt es einen Vergleich.":
-    "First reference: {0} bpm on average. Next time there will be a comparison.",
-  "Ohne Herzfrequenz lässt sich die Einheit nicht vergleichen.":
-    "Without heart rate the session cannot be compared.",
-  "gegenüber {0}": "compared with {0}",
-  "{0} bpm — unverändert{1}. Gleiche Arbeit, gleicher Preis.":
-    "{0} bpm — unchanged{1}. Same work, same price.",
-  "{0} bpm statt {1}{2}: {3} Schläge weniger für dieselbe Arbeit. Das ist der Fortschritt.":
-    "{0} bpm instead of {1}{2}: {3} beats fewer for the same work. That is the progress.",
-  "{0} bpm statt {1}{2}: {3} Schläge mehr. Ermüdung, Hitze oder ein Formverlust — erst beim nächsten Mal wiederholen, bevor du daraus etwas ableitest.":
-    "{0} bpm instead of {1}{2}: {3} beats more. Fatigue, heat or a loss of form — repeat it next time before you read anything into it.",
   "Leistung": "Power",
-  "{0} % bei {1} bpm": "{0} % at {1} bpm",
-  "{0}: gleiche Effizienz.": "{0}: same efficiency.",
-  "{0}: {1} % effizienter. Das ist der Fortschritt.":
-    "{0}: {1} % more efficient. That is the progress.",
-  "{0}: {1} % weniger effizient. Ermüdung, Hitze oder ein Formverlust — erst beim nächsten Mal wiederholen, bevor du daraus etwas ableitest.":
-    "{0}: {1} % less efficient. Fatigue, heat or a loss of form — repeat it next time before you read anything into it.",
   "Krankheit": "Illness",
   "Impfung": "Vaccination",
   "Verletzung": "Injury",
@@ -388,15 +365,6 @@ export const EN: Readonly<Record<string, string>> = {
     "Two maximal efforts: first 400 m, then after easy swimming 200 m, both even and as fast as possible. The ranges in the chart are only a guide. The time difference gives your CSS: (time 400 − time 200) ÷ 2 per 100 m.",
   "Steigern": "Build",
   "Locker": "Easy",
-  "Formkontrolle Rad 4x4min": "Form check bike 4x4min",
-  "Vergleichseinheit. Immer identisch fahren — gleiche Watt, gleiche Trittfrequenz. Sinkt die Herzfrequenz bei gleicher Leistung, bist du besser geworden.":
-    "Comparison session. Always ride it identically — same watts, same cadence. If heart rate drops at the same power, you have got better.",
-  "Formkontrolle Lauf 4x4min": "Form check run 4x4min",
-  "Vergleichseinheit. Gleiche Pace wie beim letzten Mal, nicht schneller. Die Herzfrequenz ist das Ergebnis, nicht die Zeit.":
-    "Comparison session. Same pace as last time, not faster. Heart rate is the result, not the time.",
-  "Formkontrolle Schwimmen 400m": "Form check swim 400m",
-  "Vergleichseinheit. 400 m gleichmäßig auf CSS-Tempo, danach dieselbe Auswertung wie bei Rad und Lauf.":
-    "Comparison session. 400 m evenly at CSS pace, then the same evaluation as for bike and run.",
   "Kniebeuge / Beinpresse": "Squat / leg press",
   "~85 % 1RM": "~85 % 1RM",
   "Rumänisches Kreuzheben": "Romanian deadlift",
@@ -769,12 +737,6 @@ export const EN: Readonly<Record<string, string>> = {
   "Tage trainiert": "Days trained",
   "Längste Pause": "Longest break",
   "Ø pro Woche": "Avg per week",
-  "Formkontrolle": "Form check",
-  "noch nie durchgeführt": "never done yet",
-  "zuletzt vor {0} Wochen": "last done {0} weeks ago",
-  "Fällig — steht am nächsten Qualitätstag im Plan.":
-    "Due — it is in the plan on the next quality day.",
-  "Wieder fällig in {0} Wochen.": "Due again in {0} weeks.",
   "Fehler": "Error",
   "Pause beenden": "End break",
   "Längere Pause": "Longer break",
@@ -868,7 +830,6 @@ export const EN: Readonly<Record<string, string>> = {
   "Inter­vall­zeit": "Interval time",
   "Dauer": "Duration",
   "Belastung": "Load",
-  "Formkontrolle:": "Form check:",
   "Zielkorridor": "Target corridor",
   "Zeit im Korridor": "Time in corridor",
   "-s-Mittel": " s average",
@@ -1220,8 +1181,6 @@ export const EN: Readonly<Record<string, string>> = {
   "Pause nach harter Einheit — für die fehlenden {0} Einheiten bleiben noch {1} Tage":
     "Rest after a hard session — {1} days remain for the {0} sessions still missing",
   "letzte {0} Tage": "last {0} days",
-  "Alle {0} Wochen dieselbe Einheit. Verglichen wird Tempo bzw. Leistung pro Herzschlag in den Arbeitsintervallen — mehr Arbeit für denselben Puls ist der Fortschritt.":
-    "The same session every {0} weeks. What is compared is pace or power per heartbeat in the work intervals — more work for the same heart rate is the progress.",
   "noch 1 Tag · bis": "1 day left · until",
   "noch {0} Tage · bis": "{0} days left · until",
   "Alle {0} Einheiten der letzten 180 Tage kommen ohne Trainingsbelastung an. intervals.icu berechnet diese nur, wenn eine Einheit Herzfrequenz- oder Leistungsdaten enthält. Ohne sie kann der Plan Fitness und Ermüdung nicht bestimmen.":

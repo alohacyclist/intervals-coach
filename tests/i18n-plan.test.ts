@@ -68,7 +68,7 @@ describe('the plan in English', () => {
   it('leaves no German in what the athlete reads', async () => {
     const plan = await ask<Plan>('/api/plan?days=7', 'en')
     const progress = await ask<Progress>('/api/progress', 'en')
-    const left = [...strings(plan.days), ...strings(plan.history), ...strings(progress.levels), ...strings(progress.benchmark)].filter(
+    const left = [...strings(plan.days), ...strings(plan.history), ...strings(progress.levels)].filter(
       (text) => GERMAN.test(text),
     )
     expect([...new Set(left)]).toEqual([])

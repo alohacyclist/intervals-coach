@@ -508,14 +508,13 @@ export type WorkoutTemplate = {
   /** Progression family; harder levels unlock once the previous one was done. */
   readonly family?: string
   readonly level?: number
-  /** Fixed reference session, repeated unchanged so results stay comparable. */
+  /** A test: fixed, never progressed, and scheduled only when it is due, never as ordinary work. */
   readonly benchmark?: boolean
   /**
-   * What the reference session answers. The eight week rotation tracks 'vo2';
-   * 'threshold' is the sustained maximal effort that settles an FTP, and is
-   * offered when the configured value is in doubt rather than on a schedule.
+   * What the test measures: 'threshold' is the sustained maximal effort that
+   * settles an FTP, a threshold pace or a CSS.
    */
-  readonly measures?: 'vo2' | 'threshold'
+  readonly measures?: 'threshold'
   /** Only offered around a race: the race itself, or the openers the day before. */
   readonly occasion?: 'race' | 'pre-race'
   /**
@@ -653,28 +652,6 @@ export type TestOutcome = {
   readonly message: string
 }
 
-export type BenchmarkResult = {
-  readonly sport: Sport
-  readonly date: string
-  readonly averageHr: number | null
-  readonly previousDate: string | null
-  readonly previousAverageHr: number | null
-  readonly verdict: 'first' | 'better' | 'unchanged' | 'worse' | 'unknown'
-  /** Compared over the work intervals, pace per beat; or over the whole activity, heart rate alone. */
-  readonly basis: 'intervals' | 'activity'
-  /** Pace or power per heartbeat against last time, in percent; positive is better. */
-  readonly efficiencyChange: number | null
-  readonly message: string
-}
-
-export type BenchmarkStatus = {
-  readonly due: boolean
-  readonly weeksSinceLast: number | null
-  readonly intervalWeeks: number
-  readonly sessions: readonly { readonly sport: Sport; readonly templateId: string; readonly name: string }[]
-  readonly results: readonly BenchmarkResult[]
-}
-
 /** Where intervals.icu forwards planned workouts. Global per athlete, not per session. */
 export type WorkoutDestination = 'garmin' | 'wahoo' | 'zwift' | 'coros' | 'suunto'
 
@@ -810,8 +787,6 @@ export type Execution = {
   readonly compliance: number | null
   /** Why no interval could be compared at all, in words for the athlete. */
   readonly unavailable: string | null
-  /** For the reference session: how it compares with the one before. Only the card asks for it. */
-  readonly benchmark?: BenchmarkResult | null
   /** For a threshold test: what it measured and what follows, right under the session. */
   readonly test?: TestOutcome | null
   /** A few sentences on what the session means and what follows from it; empty when nothing is worth saying. */
@@ -908,7 +883,6 @@ export type Progress = {
   readonly fitness: readonly FitnessPoint[]
   readonly weeks: readonly WeekLoad[]
   readonly levels: readonly FamilyLevel[]
-  readonly benchmark: BenchmarkStatus
   readonly feasibility: readonly Feasibility[]
   /** What the athlete could do today, per sport, and how it has moved. */
   readonly standing: readonly SportStanding[]
