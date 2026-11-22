@@ -601,15 +601,10 @@ export const EN: Readonly<Record<string, string>> = {
   "Derselbe Reiz, egal welche du nimmst.": "The same stimulus, whichever you take.",
   "Der Tagesplan: die Woche bisher, darunter die Einheiten für heute zur Wahl":
     "The daily plan: the week so far, below it today's sessions to choose from",
-  "Jeden Morgen neu: jede deiner Sportarten als Wahl, komplett oder kurz.":
-    "New every morning: each of your sports as a choice, complete or short.",
   "Eine Radeinheit mit drei Intervallen über den Zielkorridoren, je Intervall die gehaltene Prozentzahl":
     "A ride with three intervals over the target corridors, with the percentage held for each interval",
-  "Danach: Intervall für Intervall, ob du im Ziel warst.":
-    "Afterwards: interval by interval, whether you were on target.",
   "Der Verlauf: Fitnesskurve, Saisonphasen und Wochenlast":
     "Progress: fitness curve, season phases and weekly load",
-  "Und über Wochen: ob du vorankommst.": "And over weeks: whether you are getting anywhere.",
   "Anmelden": "Sign in",
   "Ein Klick über intervals.icu. Kein neues Passwort, keine API-Schlüssel zum Kopieren.":
     "One click via intervals.icu. No new password, no API keys to copy.",
@@ -632,6 +627,74 @@ export const EN: Readonly<Record<string, string>> = {
   "Wir haben dir eine Mail geschickt — erst mit dem Klick darin stehst du auf der Liste.":
     "We have sent you an email — only the click in it puts you on the list.",
   "Sag mir Bescheid, wenn Etmal offen ist": "Tell me when Etmal opens",
+  "Der Trainingsplan für Wochen mit wenig Zeit.": "The training plan for weeks with little time.",
+  "Jede Einheit gibt es auch als Kurzfassung, die den Trainingsreiz hält. Fällt ein Tag aus, rechnet Etmal am nächsten Morgen mit dem, was wirklich passiert ist.":
+    "Every session also comes as a short version that keeps the training stimulus. If a day falls through, Etmal works the next morning with what really happened.",
+  "Der Trainingsplan, bei dem du jeden Tag wählst.":
+    "The training plan that lets you choose every day.",
+  "Etmal liest deine Einheiten und Erholungswerte aus intervals.icu und schlägt jeden Morgen eine Einheit für jede deiner Sportarten vor: Rad, Laufen, Schwimmen, jeweils komplett und als Kurzfassung.":
+    "Etmal reads your sessions and recovery values from intervals.icu and proposes one session for each of your sports every morning: bike, run, swim, each complete and as a short version.",
+  "Wahl statt Plan": "Choice instead of a plan",
+  "Auf die Warteliste": "Join the waitlist",
+  "Etmal, zur Startseite": "Etmal, to the home page",
+  "Plan, Soll-Ist und Verlauf in einer App": "Plan, planned versus actual and progress in one app",
+  "Etmal zeigt, was heute dran ist, wie die Einheit lief und ob die Wochen dich weiterbringen.":
+    "Etmal shows what is due today, how the session went and whether the weeks are taking you forward.",
+  "Jeden Morgen neu geplant": "Planned afresh every morning",
+  "Die nächsten drei Tage, jede deiner Sportarten als Wahl, komplett oder kurz.":
+    "The next three days, each of your sports as a choice, complete or short.",
+  "Soll und Ist, Intervall für Intervall": "Planned and actual, interval by interval",
+  "Nach der Einheit siehst du, ob du im Ziel warst, und teilst den Vergleich als Bild.":
+    "After the session you see whether you hit the target, and share the comparison as a picture.",
+  "Fortschritt über Wochen": "Progress over weeks",
+  "Fitness, Ermüdung, Saisonphasen und Wochenlast zeigen, ob du vorankommst.":
+    "Fitness, fatigue, season phases and weekly load show whether you are getting anywhere.",
+  "Eine Einheit pro Sportart, derselbe Trainingsreiz":
+    "One session per sport, the same training stimulus",
+  "Zeit ist der eigentliche Engpass. Welche Sportart und welche Länge du wählst, ändert den Weg, nicht den Plan. Dafür rechnet Etmal jeden Morgen mit diesen Werten:":
+    "Time is the real bottleneck. Which sport and which length you choose changes the way, not the plan. For that, Etmal works with these values every morning:",
+  "Fitness, Ermüdung und Form": "Fitness, fatigue and form",
+  "Aus all deinen Einheiten, Rad, Laufen und Schwimmen.":
+    "From all your sessions: bike, run and swim.",
+  "HRV, Ruhepuls und Schlaf": "HRV, resting heart rate and sleep",
+  "Im Vergleich zu deiner eigenen Baseline der letzten 30 Tage.":
+    "Against your own baseline of the last 30 days.",
+  "48 Stunden Abstand": "48 hours apart",
+  "Mindestens so viel Zeit liegt zwischen zwei harten Einheiten.":
+    "At least that much time lies between two hard sessions.",
+  "Periodisierung auf dein Ziel": "Periodisation towards your goal",
+  "Auf dein Zieldatum, sonst in Blöcken; jede vierte Woche ist leichter.":
+    "Towards your goal date, otherwise in blocks; every fourth week is easier.",
+  "Dein Zeitbudget": "Your time budget",
+  "Keine 90-Minuten-Einheit, wenn du 45 Minuten hast.":
+    "No 90-minute session when you have 45 minutes.",
+  "Watt, Pace und 100 m": "Watts, pace and 100 m",
+  "Vorgaben fürs Rad in Watt, mit Wattmesser oder Smart-Trainer; fürs Laufen als Pace, fürs Schwimmen pro 100 m.":
+    "Bike targets in watts, with a power meter or smart trainer; running as pace, swimming per 100 m.",
+  "In drei Schritten zum ersten Plan": "Three steps to your first plan",
+  "Deine Daten und was Etmal damit darf": "Your data and what Etmal may do with it",
+  "Die Anmeldung läuft über intervals.icu. Etmal fragt vier Berechtigungen an, nicht mehr. Trainings- und Gesundheitsdaten holt Etmal bei jedem Aufruf frisch und speichert sie nicht.":
+    "You sign in through intervals.icu. Etmal asks for four permissions, no more. Etmal fetches training and health data fresh on every visit and does not store them.",
+  "Kein Zugriff auf dein Passwort, und Etmal löscht nichts. Du kannst die Freigabe jederzeit in deinen intervals.icu-Einstellungen widerrufen.":
+    "No access to your password, and Etmal deletes nothing. You can revoke access at any time in your intervals.icu settings.",
+  "Aktivitäten lesen": "Read activities",
+  "Deine Einheiten, um Fitness und Ermüdung zu berechnen.":
+    "Your sessions, to calculate fitness and fatigue.",
+  "Erholungswerte lesen": "Read recovery values",
+  "HRV, Ruhepuls und Schlaf für deine Tagesform.":
+    "HRV, resting heart rate and sleep for how you are today.",
+  "Einheiten in deinen Kalender schreiben": "Write sessions to your calendar",
+  "Damit die gewählte Einheit auf Uhr, Radcomputer oder Rolle landet.":
+    "So the chosen session reaches your watch, bike computer or trainer.",
+  "Einstellungen ändern": "Change settings",
+  "Schwellen und Geräte liest Etmal; ändern tut es sie nur, wenn du es anklickst.":
+    "Etmal reads thresholds and devices; it changes them only when you click to.",
+  "Etmal ist in der Beta kostenlos.": "Etmal is free during the beta.",
+  "Trag dich ein, dann bekommst du eine Mail, sobald Etmal für alle offen ist.":
+    "Sign up and you will get an email as soon as Etmal is open to everyone.",
+  "Melde dich mit intervals.icu an und richte deine Sportarten ein.":
+    "Sign in with intervals.icu and set up your sports.",
+  "Rechtliches": "Legal",
   "deine@mail.de": "you@mail.com",
   "Eintragen": "Enter",
   "Website": "Website",
@@ -644,37 +707,9 @@ export const EN: Readonly<Record<string, string>> = {
   "Kostenlos in der Beta. Du brauchst ein intervals.icu-Konto, fürs Rad einen Wattmesser.":
     "Free during the beta. You need an intervals.icu account, and a power meter for the bike.",
   "Etmal": "Etmal",
-  "Wahl statt Plan: Du entscheidest spontan, der Trainingsreiz stimmt trotzdem.":
-    "Choice instead of a plan: you decide on the spot, and the training stimulus is still right.",
-  "Etmal liest deine Einheiten und Erholungswerte aus intervals.icu und schlägt jeden Tag eine Einheit für":
-    "Etmal reads your sessions and recovery values from intervals.icu and proposes one session a day for",
-  "jede": "each",
-  "deiner Sportarten vor – Rad, Laufen, Schwimmen –, jeweils komplett und als Kurzfassung. Verpasst du einen Tag, verschiebt sich der Plan, statt zu brechen.":
-    "of your sports – bike, run, swim – each complete and as a short version. Miss a day and the plan shifts instead of breaking.",
   "Bestätigt.": "Confirmed.",
   "Du stehst auf der Liste und hörst von uns, sobald Etmal offen ist.":
     "You are on the list and will hear from us as soon as Etmal opens.",
-  "So sieht es aus": "What it looks like",
-  "Warum eine Einheit pro Sportart?": "Why one session per sport?",
-  "Weil Zeit der eigentliche Engpass ist. Mal passt die Rolle, mal sind die Laufschuhe schneller angezogen, mal bleiben nur 30 Minuten. Alle Vorschläge eines Tages setzen denselben Trainingsreiz – welche Sportart und welche Länge du wählst, ändert den Plan nicht, nur den Weg dahin. Und fällt ein Tag aus, rechnet Etmal am nächsten Morgen einfach mit dem, was wirklich passiert ist.":
-    "Because time is the real bottleneck. Sometimes the trainer fits, sometimes the running shoes are on faster, sometimes only 30 minutes are left. All of a day's proposals set the same training stimulus – which sport and which length you choose does not change the plan, only the way there. And if a day falls through, Etmal simply works the next morning with what really happened.",
-  "So läuft es": "How it works",
-  "Was der Plan berücksichtigt": "What the plan takes into account",
-  "Fitness, Ermüdung und Form aus all deinen Einheiten – Rad, Laufen und Schwimmen":
-    "Fitness, fatigue and form from all your sessions – bike, run and swim",
-  "HRV, Ruhepuls und Schlaf im Vergleich zu deiner eigenen Baseline der letzten 30 Tage":
-    "HRV, resting heart rate and sleep compared with your own baseline of the last 30 days",
-  "Mindestens 48 Stunden zwischen zwei harten Einheiten":
-    "At least 48 hours between two hard sessions",
-  "Periodisierung auf dein Zieldatum, wenn du eins hast, sonst in Blöcken – jede vierte Woche ist leichter":
-    "Periodisation towards your target date if you have one, otherwise in blocks – every fourth week is lighter",
-  "Dein Zeitbudget: keine 90-Minuten-Einheit, wenn du 45 Minuten hast":
-    "Your time budget: no 90-minute session when you have 45 minutes",
-  "Vorgaben in Watt fürs Rad, als Pace fürs Laufen und pro 100 m fürs Schwimmen. Ohne Wattmesser oder Smart-Trainer lässt sich der Radplan noch nicht sinnvoll fahren.":
-    "Targets in watts for the bike, as pace for running and per 100 m for swimming. Without a power meter or smart trainer the bike plan cannot yet be ridden sensibly.",
-  "Deine Daten": "Your data",
-  "Die Anmeldung läuft über intervals.icu. Etmal fragt vier Berechtigungen an: Aktivitäten lesen, Erholungswerte lesen, geplante Einheiten in deinen Kalender schreiben und Einstellungen ändern. Über die Einstellungen liest Etmal deine Schwellenwerte und verbundenen Geräte; ändern tut es sie nur, wenn du es anklickst. Kein Zugriff auf dein Passwort, und Etmal löscht nichts. Du kannst die Freigabe jederzeit in deinen intervals.icu-Einstellungen widerrufen.":
-    "Sign-in runs through intervals.icu. Etmal asks for four permissions: read activities, read recovery values, write planned sessions to your calendar and change settings. Through the settings Etmal reads your thresholds and connected devices; it changes them only when you click to. No access to your password, and Etmal deletes nothing. You can withdraw the permission at any time in your intervals.icu settings.",
   "Datenschutz": "Privacy",
   "Impressum": "Imprint",
   "Kein konkretes Ziel – fit bleiben": "No specific goal – stay fit",

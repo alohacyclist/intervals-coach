@@ -402,6 +402,11 @@ npx wrangler secret put BREVO_DOI_TEMPLATE_ID   # Zahl, Vorlage mit Double-Opt-I
 Alternativ als gleichnamige Secrets im GitHub-Repository: der Deploy-Workflow gibt gesetzte
 `BREVO_*`-Secrets mit jedem Deployment an den Worker weiter.
 
+Ein Anzeigen-Link kann einen Code mitgeben, etwa `https://etmal.coach/?c=rd-b-de`. Steht unter
+seinen Teilen ein `b`, zeigt die Landingpage die Überschrift zur Anzeige über kurze Einheiten
+(„Der Trainingsplan für Wochen mit wenig Zeit."), sonst die über die tägliche Wahl. Gezählt wird
+dabei nichts.
+
 Die Bilder der Landingpage (`public/landing/de/` und `public/landing/en/`, je Sprache dieselben drei
 Dateien) sind aus synthetischen Daten der Demo erzeugt, nie aus
 einem echten Konto.
