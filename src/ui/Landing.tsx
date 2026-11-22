@@ -150,9 +150,9 @@ type Shot = { readonly file: string; readonly alt: string; readonly title: strin
 const shots = (): readonly Shot[] => [
   {
     file: 'heute.jpg',
-    alt: t('Der Tagesplan: die Woche bisher, darunter die Einheiten für heute zur Wahl'),
+    alt: t('Der heutige Tag: jede Sportart zur Wahl, darunter die Einheit mit Pace und den Minuten jedes Blocks'),
     title: t('Jeden Morgen neu geplant'),
-    body: t('Die nächsten drei Tage, jede deiner Sportarten als Wahl, komplett oder kurz.'),
+    body: t('Jede deiner Sportarten als Wahl, komplett oder kurz, mit Watt oder Pace und den Minuten jedes Blocks.'),
     fit: 'top',
   },
   {
@@ -164,9 +164,9 @@ const shots = (): readonly Shot[] => [
   },
   {
     file: 'verlauf.jpg',
-    alt: t('Der Verlauf: Fitnesskurve, Saisonphasen und Wochenlast'),
-    title: t('Fortschritt über Wochen'),
-    body: t('Fitness, Ermüdung, Saisonphasen und Wochenlast zeigen, ob du vorankommst.'),
+    alt: t('Der Leistungsstand: geschätzte FTP und Halbmarathonzeit, je mit dem Trend zum Ziel'),
+    title: t('Wo du stehst'),
+    body: t('Geschätzte FTP und Wettkampfzeit, mit dem Trend der letzten Wochen zum Ziel.'),
     fit: 'top',
   },
 ]

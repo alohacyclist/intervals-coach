@@ -599,12 +599,12 @@ export const EN: Readonly<Record<string, string>> = {
   "Qualitätstag": "Quality day",
   "oder": "or",
   "Derselbe Reiz, egal welche du nimmst.": "The same stimulus, whichever you take.",
-  "Der Tagesplan: die Woche bisher, darunter die Einheiten für heute zur Wahl":
-    "The daily plan: the week so far, below it today's sessions to choose from",
+  "Der heutige Tag: jede Sportart zur Wahl, darunter die Einheit mit Pace und den Minuten jedes Blocks":
+    "Today: each sport to choose from, below it the session with its pace and the minutes of every block",
   "Eine Radeinheit mit drei Intervallen über den Zielkorridoren, je Intervall die gehaltene Prozentzahl":
     "A ride with three intervals over the target corridors, with the percentage held for each interval",
-  "Der Verlauf: Fitnesskurve, Saisonphasen und Wochenlast":
-    "Progress: fitness curve, season phases and weekly load",
+  "Der Leistungsstand: geschätzte FTP und Halbmarathonzeit, je mit dem Trend zum Ziel":
+    "Where you stand: estimated FTP and half-marathon time, each with the trend towards the goal",
   "Anmelden": "Sign in",
   "Ein Klick über intervals.icu. Kein neues Passwort, keine API-Schlüssel zum Kopieren.":
     "One click via intervals.icu. No new password, no API keys to copy.",
@@ -641,14 +641,15 @@ export const EN: Readonly<Record<string, string>> = {
   "Etmal zeigt, was heute dran ist, wie die Einheit lief und ob die Wochen dich weiterbringen.":
     "Etmal shows what is due today, how the session went and whether the weeks are taking you forward.",
   "Jeden Morgen neu geplant": "Planned afresh every morning",
-  "Die nächsten drei Tage, jede deiner Sportarten als Wahl, komplett oder kurz.":
-    "The next three days, each of your sports as a choice, complete or short.",
+  "Jede deiner Sportarten als Wahl, komplett oder kurz, mit Watt oder Pace und den Minuten jedes Blocks.":
+    "Each of your sports as a choice, complete or short, with watts or pace and the minutes of every block.",
   "Soll und Ist, Intervall für Intervall": "Planned and actual, interval by interval",
   "Nach der Einheit siehst du, ob du im Ziel warst, und teilst den Vergleich als Bild.":
     "After the session you see whether you hit the target, and share the comparison as a picture.",
-  "Fortschritt über Wochen": "Progress over weeks",
-  "Fitness, Ermüdung, Saisonphasen und Wochenlast zeigen, ob du vorankommst.":
-    "Fitness, fatigue, season phases and weekly load show whether you are getting anywhere.",
+  "Wo du stehst":
+    "Where you stand",
+  "Geschätzte FTP und Wettkampfzeit, mit dem Trend der letzten Wochen zum Ziel.":
+    "Estimated FTP and race time, with the trend of the last weeks towards the goal.",
   "Eine Einheit pro Sportart, derselbe Trainingsreiz":
     "One session per sport, the same training stimulus",
   "Zeit ist der eigentliche Engpass. Welche Sportart und welche Länge du wählst, ändert den Weg, nicht den Plan. Dafür rechnet Etmal jeden Morgen mit diesen Werten:":
