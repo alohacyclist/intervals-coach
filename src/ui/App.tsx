@@ -151,24 +151,28 @@ export const App = () => {
   if (!me.authenticated) {
     // Until intervals.icu opens the app to everyone, visitors meet the waitlist and the
     // owner signs in at /login; afterwards the landing page carries the sign-in itself.
-    const signIn = me.mode === 'single' && path === LOGIN_PATH
-    return (
-      <Shell>
-        {signIn ? (
+    if (me.mode === 'single' && path === LOGIN_PATH) {
+      return (
+        <Shell>
           <PasswordLogin
             onDone={() => {
               go(PLAN_PATH)
               void load()
             }}
           />
-        ) : (
-          <Landing
-            mode={me.mode === 'single' ? 'waitlist' : 'signup'}
-            error={new URLSearchParams(window.location.search).get('fehler')}
-            confirmed={path === CONFIRMED_PATH}
-          />
-        )}
-      </Shell>
+        </Shell>
+      )
+    }
+    // The landing page is a page of its own width, with its own header and footer.
+    return (
+      <ErrorBoundary>
+        <Landing
+          mode={me.mode === 'single' ? 'waitlist' : 'signup'}
+          error={new URLSearchParams(window.location.search).get('fehler')}
+          confirmed={path === CONFIRMED_PATH}
+          search={window.location.search}
+        />
+      </ErrorBoundary>
     )
   }
 
