@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { Landing, landingError } from '../src/ui/Landing.tsx'
+import { Landing, landingError, pitchOf } from '../src/ui/Landing.tsx'
 import { EXPIRED_SESSION_URL } from '../src/ui/api.ts'
 import { inLang } from '../src/coach/lang.ts'
 
@@ -62,6 +62,11 @@ describe('the landing page before the app is open to everyone', () => {
     expect(html).toContain('href="/login"')
   })
 
+  it('names what is needed beside the form, not only at sign-in', () => {
+    expect(html).toContain('intervals.icu-Konto')
+    expect(html).toContain('Wattmesser')
+  })
+
   it('thanks a confirmed address and does not ask for it again', () => {
     const back = renderToStaticMarkup(createElement(Landing, { mode: 'waitlist', error: null, confirmed: true }))
     expect(back).toContain('Bestätigt.')
@@ -83,5 +88,25 @@ describe('the reason a sign-in page gives', () => {
     expect(landingError('abgelehnt')).toContain('Zugriff wurde abgelehnt')
     expect(landingError('einwilligung')).toContain('Ohne Einwilligung')
     expect(landingError('state')).toBe('Die Anmeldung ist fehlgeschlagen. Bitte noch einmal versuchen.')
+  })
+})
+
+describe('the headline an ad leads to', () => {
+  it('reads the ad about short sessions from a b among the code parts', () => {
+    expect(pitchOf('?c=rd-b-de')).toBe('time')
+    expect(pitchOf('?c=RD-B-EN')).toBe('time')
+  })
+
+  it('keeps the headline about choosing for every other code and for no code', () => {
+    expect(pitchOf('?c=rd-a-de')).toBe('choice')
+    expect(pitchOf('?c=gs-de')).toBe('choice')
+    expect(pitchOf('?c=bike')).toBe('choice')
+    expect(pitchOf('')).toBe('choice')
+  })
+
+  it('says in the headline what the ad said', () => {
+    const page = (search: string) => renderToStaticMarkup(createElement(Landing, { mode: 'waitlist', error: null, search }))
+    expect(page('?c=rd-b-de')).toContain('Wochen mit wenig Zeit')
+    expect(page('?c=rd-a-de')).toContain('bei dem du jeden Tag wählst')
   })
 })
