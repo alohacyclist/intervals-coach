@@ -183,13 +183,21 @@ const buildProgressView = async (deps: RouteDeps, span: ProgressSpan): Promise<P
     today,
     span,
   )
+  const season = seasonBand(config, today)
+  const thisWeek = season.find((week) => week.current)
   const progress = buildProgress(activities, completions, today, span, weeksFor(span), {
     feasibility,
     sports: config.profile.sports.map((setting) => setting.sport),
-    season: seasonBand(config, today),
+    season,
     levelChoices: config.levelChoices,
     standing,
     goalOptions: goalOptions(config.goals, standing, feasibility, today),
+    ceiling: {
+      profile: config.profile,
+      breaks: config.breaks,
+      // The band's own week: a recovery week or a taper flattens the curve on purpose.
+      phase: thisWeek?.recovery ? 'RECOVERY' : (thisWeek?.phase ?? 'BASE'),
+    },
   })
   return { ...progress, garmin: garminAttribution(activities) }
 }
