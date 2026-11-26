@@ -1,5 +1,5 @@
-import type { FitnessPoint } from '../../coach/types.ts'
-import { t } from '../../coach/lang.ts'
+import type { FitnessCeiling, FitnessPoint } from '../../coach/types.ts'
+import { locale, t } from '../../coach/lang.ts'
 
 /**
  * Fitness against fatigue over the whole history. The marks live in a stretched
@@ -12,11 +12,44 @@ const STEPS = 4
 
 type Props = {
   readonly points: readonly FitnessPoint[]
+  readonly ceiling?: FitnessCeiling | null
+}
+
+const decimal = (value: number): string => value.toLocaleString(locale(), { maximumFractionDigits: 1 })
+
+/**
+ * Says before the curve shows it that the same training will not bring more,
+ * and what it takes instead: time for easy volume, not harder sessions.
+ */
+const CeilingNote = ({ ceiling }: { readonly ceiling: FitnessCeiling }) => {
+  const level = Math.round(ceiling.level)
+  const hours = decimal(ceiling.hoursPerWeek)
+  const budget = decimal(ceiling.budgetHours)
+  return (
+    <div className="ceiling" role="note">
+      <p className="ceiling__head">
+        {ceiling.kind === 'falling' ? t('Fitness sinkt') : t('Fitness flacht ab')}
+      </p>
+      <p>
+        {ceiling.kind === 'falling'
+          ? t`Bei der Last der letzten vier Wochen (${hours} h pro Woche) sinkt deine Fitness Richtung ${level}.`
+          : t`Bei der Last der letzten vier Wochen (${hours} h pro Woche) pendelt sich deine Fitness bei etwa ${level} ein — ohne mehr Training ist keine weitere Verbesserung zu erwarten.`}
+        {ceiling.kind === 'flat' && ceiling.ahead > 0 &&
+          t` Die nächsten vier Wochen bringen nur noch +${decimal(ceiling.ahead)}.`}
+      </p>
+      <p>
+        {t`Etwa ${ceiling.moreMinutes} min lockeres Training mehr pro Woche heben das Niveau auf ${Math.round(ceiling.raised)} — mehr Umfang, nicht mehr Härte.`}{' '}
+        {ceiling.budgetFull
+          ? t`Dein Zeitbudget (bis ${budget} h pro Woche) reicht dafür nicht: In den Einstellungen mehr oder längere Einheiten freigeben.`
+          : t`Dein Zeitbudget (bis ${budget} h pro Woche) lässt das zu: eine Einheit mehr, oder an freien Tagen mit dem Regler „Zeit“ verlängern.`}
+      </p>
+    </div>
+  )
 }
 
 const niceCeiling = (value: number): number => Math.max(20, Math.ceil(value / 20) * 20)
 
-export const FitnessCurve = ({ points }: Props) => {
+export const FitnessCurve = ({ points, ceiling = null }: Props) => {
   if (points.length < 2) return null
 
   const peak = Math.max(...points.map((point) => Math.max(point.ctl, point.atl)))
@@ -114,6 +147,8 @@ export const FitnessCurve = ({ points }: Props) => {
           {t('Form ')}{form > 0 ? `+${form}` : form}{t(' · Bestwert ')}{best.ctl}
         </span>
       </p>
+
+      {ceiling && <CeilingNote ceiling={ceiling} />}
     </figure>
   )
 }

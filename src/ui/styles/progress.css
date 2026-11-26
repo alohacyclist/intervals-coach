@@ -118,6 +118,24 @@
   align-items: center;
   gap: 6px;
 }
+.ceiling {
+  padding: 10px 14px 12px;
+  border-top: 1px solid var(--rule);
+  border-left: 3px solid var(--warn);
+  font-size: 13px;
+  color: var(--dim);
+}
+.ceiling p {
+  margin: 0;
+  max-width: 70ch;
+}
+.ceiling p + p {
+  margin-top: 6px;
+}
+.ceiling__head {
+  font-weight: 700;
+  color: var(--ink);
+}
 .chart__key {
   width: 12px;
   height: 3px;

@@ -4,6 +4,13 @@ import { addDays, diffDays } from './dates.ts'
 export const CTL_DAYS = 42
 export const ATL_DAYS = 7
 
+/**
+ * Less fitness than this gained over four weeks is a plateau. The plan reads it
+ * backwards (what the last four weeks brought), the progress page forwards (what
+ * the next four will bring at the same load).
+ */
+export const PLATEAU_GAIN = 2
+
 const emptyFitness: Fitness = { ctl: 0, atl: 0, tsb: 0 }
 
 /** Sums daily training load, restricted to `sport` when given. */

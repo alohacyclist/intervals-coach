@@ -38,6 +38,10 @@ be shared as a picture:
   between, the plan already adapts to every session — and suggests threshold updates.
 - **Shows where you stand:** estimated FTP and the race time over the goal distance, read
   from pace and heart rate of every run, with the trend of the last weeks towards the goal.
+- **Says when the same training will not bring more.** Fitness closes in on the average
+  daily load and stops there, so the last four weeks already show where the curve will
+  flatten. Before it does, the progress page names that level, how many minutes of easy
+  training a week lift it, and whether the time budget leaves room for them.
 - **Checks heart-rate recordings** against the work done, flags wrist-sensor artefacts
   and estimates the affected segments, clearly marked as estimates.
 - **Reads rides recorded without power or heart rate** from speed and the elevation

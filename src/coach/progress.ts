@@ -1,5 +1,6 @@
 import type {
   Activity,
+  AthleteProfile,
   FamilyLevel,
   Feasibility,
   FitnessPoint,
@@ -8,14 +9,17 @@ import type {
   SeasonWeek,
   SportStanding,
   Sport,
+  TrainingBreak,
+  Phase,
   WeekLoad,
 } from './types.ts'
 import { STIMULUS_LABELS } from './types.ts'
 import { addDays, diffDays, startOfWeek } from './dates.ts'
-import { ATL_DAYS, CTL_DAYS, dailyLoads, ewmaSeries } from './fitness.ts'
+import { ATL_DAYS, computeFitness, CTL_DAYS, dailyLoads, ewmaSeries } from './fitness.ts'
 import { LIBRARY } from './library.ts'
 import type { Completion } from './progression.ts'
 import { chosenLevel, levelFor } from './progression.ts'
+import { fitnessCeiling } from './ceiling.ts'
 
 /**
  * What the plan page cannot answer: am I getting anywhere? The daily view asks
@@ -145,6 +149,12 @@ type Achievements = {
   readonly goalOptions?: readonly GoalOption[]
   /** Levels the athlete chose, per family. */
   readonly levelChoices?: Readonly<Record<string, number>>
+  /** What reading the ceiling needs from the config; without it none is read. */
+  readonly ceiling?: {
+    readonly profile: AthleteProfile
+    readonly breaks: readonly TrainingBreak[]
+    readonly phase: Phase
+  }
 }
 
 export const buildProgress = (
@@ -167,6 +177,10 @@ export const buildProgress = (
     today,
     historyDays,
     fitness: fitnessSeries(activities, today, historyDays),
+    // Read from the fitness the plan steers by and the last four weeks, whatever span the page shows.
+    ceiling: achieved.ceiling
+      ? fitnessCeiling(activities, today, computeFitness(activities, today).ctl, achieved.ceiling)
+      : null,
     weeks: weeklyLoads(activities, today, weeks),
     levels: familyLevels(completions, achieved.sports, achieved.levelChoices),
     feasibility: achieved.feasibility,
