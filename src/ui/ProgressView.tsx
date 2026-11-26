@@ -211,7 +211,7 @@ export const ProgressView = ({ onNeedsOnboarding }: Props) => {
         </section>
       )}
 
-      {!early && <FitnessCurve points={progress.fitness} />}
+      {!early && <FitnessCurve points={progress.fitness} ceiling={progress.ceiling} />}
 
       <SeasonBand season={progress.season} />
 
