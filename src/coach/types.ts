@@ -877,10 +877,31 @@ export type GoalOption = {
   readonly date: { readonly targetDate: string } | null
 }
 
+/** Where fitness settles at the load of the last four weeks, shown once it will not rise much further. */
+export type FitnessCeiling = {
+  /** flat: closing in on the level; falling: the level lies below today's fitness. */
+  readonly kind: 'flat' | 'falling'
+  /** The fitness the recent load settles at: its average per day. */
+  readonly level: number
+  /** Fitness the next four weeks bring at that load; negative when it falls. */
+  readonly ahead: number
+  readonly hoursPerWeek: number
+  /** Easy minutes more per week that lift the level enough to keep gaining. */
+  readonly moreMinutes: number
+  /** The level with those minutes added. */
+  readonly raised: number
+  /** What the profile allows at most per week: sessions times the longest session. */
+  readonly budgetHours: number
+  /** The extra time does not fit in that budget: it takes more time set aside, not just using it. */
+  readonly budgetFull: boolean
+}
+
 export type Progress = {
   readonly today: string
   readonly historyDays: number
   readonly fitness: readonly FitnessPoint[]
+  /** Absent where the curve still has room to rise, or a break, recovery week or taper explains it. */
+  readonly ceiling: FitnessCeiling | null
   readonly weeks: readonly WeekLoad[]
   readonly levels: readonly FamilyLevel[]
   readonly feasibility: readonly Feasibility[]

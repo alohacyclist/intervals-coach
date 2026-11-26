@@ -19,7 +19,7 @@ import type {
 import { ALL_SPORTS, SPORT_LABELS, STIMULUS_LABELS } from './types.ts'
 import { formNote } from './wording.ts'
 import { addDays, diffDays, startOfWeek, weekdayLabel } from './dates.ts'
-import { HARD_ON_LOAD_ALONE, projectFitness } from './fitness.ts'
+import { HARD_ON_LOAD_ALONE, PLATEAU_GAIN, projectFitness } from './fitness.ts'
 import { PHASE_LABELS, goalForSport, phaseForSport, primaryGoal, weeklyHardBudget } from './phase.ts'
 import { selectedSports } from './thresholds.ts'
 import { breakLimit, returnWindow } from './breaks.ts'
@@ -77,13 +77,12 @@ const RIDE_GROWTH = 1.25
 const RUN_GROWTH = 1.1
 const RUN_MIN_STEP = 10
 
-/**
- * Less than this CTL gained over one 3:1 cycle, with every promised session done,
- * is a plateau: the body has adapted to the load it gets. More intensity is the
- * wrong answer to that — the cheapest lever is volume at low intensity, so the
- * sessions grow by easy base, not by harder work.
+/*
+ * Less than PLATEAU_GAIN CTL gained over one 3:1 cycle, with every promised
+ * session done, is a plateau: the body has adapted to the load it gets. More
+ * intensity is the wrong answer to that — the cheapest lever is volume at low
+ * intensity, so the sessions grow by easy base, not by harder work.
  */
-const PLATEAU_GAIN = 2
 /** Below this many sessions with load there is no curve to read yet. */
 const PLATEAU_MIN_SESSIONS = 8
 /** A session grows by a quarter, and at least by enough to be a different session. */

@@ -878,6 +878,19 @@ export const EN: Readonly<Record<string, string>> = {
   "Tippen oder darüberfahren für Werte": "Tap or hover for values",
   "Fitness und Ermüdung": "Fitness and fatigue",
   "Fitness heute {0}, Höchstwert {1} am {2}.": "Fitness today {0}, peak {1} on {2}.",
+  "Fitness sinkt": "Fitness is falling",
+  "Fitness flacht ab": "Fitness is levelling off",
+  "Bei der Last der letzten vier Wochen ({0} h pro Woche) sinkt deine Fitness Richtung {1}.":
+    "At the load of the last four weeks ({0} h a week) your fitness is falling towards {1}.",
+  "Bei der Last der letzten vier Wochen ({0} h pro Woche) pendelt sich deine Fitness bei etwa {1} ein — ohne mehr Training ist keine weitere Verbesserung zu erwarten.":
+    "At the load of the last four weeks ({0} h a week) your fitness settles at about {1} — without more training, expect no further improvement.",
+  "Die nächsten vier Wochen bringen nur noch +{0}.": "The next four weeks bring only +{0} more.",
+  "Etwa {0} min lockeres Training mehr pro Woche heben das Niveau auf {1} — mehr Umfang, nicht mehr Härte.":
+    "About {0} min more easy training a week lifts the level to {1} — more volume, not more intensity.",
+  "Dein Zeitbudget (bis {0} h pro Woche) reicht dafür nicht: In den Einstellungen mehr oder längere Einheiten freigeben.":
+    "Your time budget (up to {0} h a week) does not cover that: allow more or longer sessions in the settings.",
+  "Dein Zeitbudget (bis {0} h pro Woche) lässt das zu: eine Einheit mehr, oder an freien Tagen mit dem Regler „Zeit“ verlängern.":
+    "Your time budget (up to {0} h a week) allows it: one more session, or lengthen sessions on free days with the “Time” slider.",
   "Ermüdung heute {0}. Form {1} {2}.": "Fatigue today {0}. Form {1} {2}.",
   "Fitness": "Fitness",
   "Ermüdung": "Fatigue",
