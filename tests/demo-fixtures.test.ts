@@ -5,6 +5,9 @@ import { isHardActivity } from '../src/coach/fitness.ts'
 import { DEMO_ATHLETE_ID, demoConfig, generateDemo, intervalsOf, streamsOf } from '../server/demo/fixtures.ts'
 import { demoData, fixtureSource } from '../server/demo/source.ts'
 import { SourceReadOnlyError } from '../server/source.ts'
+import { analyzeSteady, BLOCK_BATCH } from '../src/coach/dashboard.ts'
+import type { BlockReading } from '../src/coach/dashboard.ts'
+import { loadBlocks, loadDashboardSummary } from '../server/dashboard-load.ts'
 import { IntervalsError } from '../server/intervals.ts'
 
 // A Wednesday; the demo is laid out relative to whatever day it is given.
@@ -152,5 +155,25 @@ describe('fixture source', () => {
   it('answers an unknown activity as intervals.icu would', async () => {
     const source = fixtureSource(demoData(TODAY))
     await expect(source.activity('gibt-es-nicht')).rejects.toBeInstanceOf(IntervalsError)
+  })
+})
+
+describe('demo dashboard', () => {
+  it('shows the planted drift and elevated pulse as findings', async () => {
+    const data = generateDemo(TODAY)
+    const source = fixtureSource(data)
+    const summary = await loadDashboardSummary(source, TODAY, 12)
+    const ids = summary.candidates.map((c) => c.id)
+    const batches = Array.from({ length: Math.ceil(ids.length / BLOCK_BATCH) }, (_unused, i) =>
+      ids.slice(i * BLOCK_BATCH, (i + 1) * BLOCK_BATCH),
+    )
+    const readings = new Map<string, BlockReading>()
+    for (const batch of batches) (await loadBlocks(source, batch)).forEach((r) => readings.set(r.id, r))
+    const { findings, coverage } = analyzeSteady(summary, readings)
+    const planted = (trend: 'drift' | 'elevated') =>
+      [...data.sessions.values()].find((s) => s.heartTrend === trend)?.activity.id
+    expect(findings).toContainEqual(expect.objectContaining({ activityId: planted('drift'), rule: 'hrDrift', severity: 'high' }))
+    expect(findings).toContainEqual(expect.objectContaining({ activityId: planted('elevated'), rule: 'elevatedHr' }))
+    expect(coverage.pending + coverage.unreadable).toBe(0)
   })
 })

@@ -573,6 +573,14 @@ Die Verbindung liegt verschlüsselt in KV und folgt derselben Frist wie das Kont
 des Crons verlängern sie nicht. „Strava trennen“ und das Löschen des Kontos entziehen der App auch
 auf Strava den Zugriff.
 
+## Dashboard
+
+`/dashboard` zeigt Radfahrten der letzten 8, 12 oder 26 Wochen: Wochenlast mit Mittel der vier
+Wochen davor, Effizienz, Kennzahlen je Fahrt und zwei Puls-Regeln auf dem ruhigen Block einer
+Fahrt (Puls-Drift, Puls über der eigenen Basis). Fahrten ohne ruhigen Block bekommen keine
+Aussage; die Abdeckung sagt, wie viele das sind. Ab 1100 px Breite ein Cockpit mit Animationen,
+schmaler eine einfache Ansicht. Warum so: [adr/0001-dashboard.md](adr/0001-dashboard.md).
+
 ## Demo
 
 Ein eigener Worker mit Beispieldaten zum Zeigen, ohne intervals.icu und ohne echte
@@ -601,6 +609,8 @@ src/coach/     reine Trainingslogik, ohne IO — hier liegt die gesamte Fachlich
   threshold-drift.ts  Abgleich der Schwellenwerte mit intervals.icu
   config-schema.ts    Validierung und Migration der gespeicherten Konfiguration
   feasibility.ts  Realismus-Check der Ziele
+  steady-block.ts ruhiger Block einer Fahrt und die zwei Puls-Regeln darauf
+  dashboard.ts Wochen, Fahrten und Auswertung für das Dashboard
   standing.ts     Leistungsstand: eFTP und Laufzeit aus Tempo und Puls, Trend zum Ziel
   goal-options.ts Auswege für Ziele, die so nicht klappen: anderer Wert oder anderes Datum
 server/        intervals.icu-Client, HTTP-Routen, Node-Entry für die Entwicklung
@@ -617,6 +627,7 @@ worker/        Cloudflare-Worker-Entry
 src/ui/        React-Oberfläche
   styles/      Designrichtung „Messgerät“, Tokens für hell und dunkel
   theme.ts     Moduswahl, gespeichert je Browser
+  dashboard/   Cockpit für breite Bildschirme, einfache Ansicht fürs Handy
   language.ts  Sprache des Browsers, vor dem ersten Rendern gesetzt
 src/coach/lang.ts     t(): jeder Satz steht deutsch im Code, das Englische im Katalog
 src/coach/i18n/en.ts  der englische Katalog, Schlüssel ist der deutsche Satz

@@ -1,0 +1,101 @@
+/* Dashboard on a phone: the app's own instrument look, light or dark as chosen, without motion. */
+
+.dash-m {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.dash-m__card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  background: var(--bg);
+  border: 1px solid var(--rule);
+}
+.dash-m__card h2 {
+  margin: 0;
+  font-size: 15px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.dash-m__chart {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.dash-m__bar {
+  fill: var(--data);
+}
+.dash-m__bar--partial {
+  fill: var(--rule-loud);
+}
+.dash-m__line {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+}
+.dash-m__findings,
+.dash-m__rides {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dash-m__finding {
+  border: 1px solid var(--rule);
+  border-left-width: 4px;
+}
+.dash-m__finding--warn {
+  border-left-color: var(--warn);
+}
+.dash-m__finding--calm {
+  border-left-color: var(--good);
+}
+.dash-m__finding summary {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-height: 44px;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+.dash-m__finding p {
+  margin: 0;
+  padding: 0 12px 12px;
+  line-height: 1.5;
+}
+.dash-m__finding--warn .readout:first-child {
+  color: var(--warn);
+}
+.dash-m__rides li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--rule-soft);
+}
+.dash-m__ride-name {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+.dash-m__status {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--dim);
+  text-align: right;
+}
+.dash-m__status--warn {
+  color: var(--warn);
+  font-weight: 600;
+}
+.dash-m__status--calm {
+  color: var(--good);
+}
+.dash-m progress {
+  width: 100%;
+  accent-color: var(--data);
+}

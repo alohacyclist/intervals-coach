@@ -1,0 +1,283 @@
+/* Cockpit motion: boot sequence, reveals, glitches, and the ways to switch them off. */
+
+/* Boot: a grid floor, two doors with the checks of this load, a sweep line. */
+.hud-floor {
+  position: absolute;
+  left: -30%;
+  right: -30%;
+  bottom: 0;
+  z-index: 0;
+  height: 300px;
+  transform: perspective(520px) rotateX(66deg);
+  transform-origin: bottom center;
+  background-image: linear-gradient(#1b2936 2px, transparent 2px),
+    linear-gradient(90deg, #1b2936 2px, transparent 2px);
+  background-size: 64px 64px;
+  animation: hud-fly 2.6s linear infinite;
+  mask-image: linear-gradient(to top, #000 10%, transparent 95%);
+}
+.hud-door {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 6;
+  height: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  background: var(--hud-bg);
+  pointer-events: none;
+}
+.hud-door--t {
+  top: 0;
+  justify-content: flex-end;
+  padding-bottom: 18px;
+  border-bottom: 2px solid var(--hud-cyan);
+  animation: hud-door-t 0.75s cubic-bezier(0.7, 0, 0.2, 1) 1.75s forwards;
+}
+.hud-door--b {
+  bottom: 0;
+  border-top: 2px solid var(--hud-cyan);
+  animation: hud-door-b 0.75s cubic-bezier(0.7, 0, 0.2, 1) 1.75s forwards;
+}
+.hud-chk {
+  opacity: 0;
+  animation: hud-on 0.01s linear forwards;
+}
+.hud-c1 {
+  animation-delay: 0.15s;
+}
+.hud-c2 {
+  animation-delay: 0.5s;
+}
+.hud-c3 {
+  animation-delay: 0.85s;
+}
+.hud-c4 {
+  animation-delay: 1.25s;
+}
+.hud-sweep {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  z-index: 5;
+  height: 3px;
+  background: var(--hud-cyan);
+  box-shadow: 0 0 24px 6px rgba(158, 201, 214, 0.45);
+  opacity: 0;
+  pointer-events: none;
+  animation: hud-sweep 1.5s cubic-bezier(0.3, 0, 0.3, 1) 2.4s both;
+}
+.hud-b1 {
+  animation: hud-flick 0.7s steps(1, end) var(--d) both;
+}
+.hud-b2 {
+  animation: hud-wipe 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) calc(var(--d) + 0.2s) both;
+}
+.hud-b3 {
+  animation: hud-rise 0.55s ease-out calc(var(--d) + 0.45s) both;
+}
+.hud-b4 {
+  animation: hud-flick 0.5s steps(1, end) calc(var(--d) + 0.7s) both;
+}
+.hud-b5 {
+  animation: hud-rise 0.55s ease-out calc(var(--d) + 0.9s) both;
+}
+.hud-reveal {
+  animation: hud-wipe 1.6s cubic-bezier(0.3, 0.6, 0.2, 1) calc(var(--d) + 1s) both;
+}
+/* After the boot only a short wipe, so a new ride shows up at once. */
+.hud--booted .hud-reveal {
+  animation: hud-wipe 0.6s cubic-bezier(0.3, 0.6, 0.2, 1) both;
+}
+/* Two names for one glitch, so picking a ride restarts it. */
+.hud-glitch-a {
+  animation: hud-glitch-a 0.28s steps(4, end) both;
+}
+.hud-glitch-b {
+  animation: hud-glitch-b 0.28s steps(4, end) both;
+}
+.hud-beat {
+  animation: hud-beat 1.6s ease-in-out infinite;
+}
+
+.hud--calm .hud-wing-l,
+.hud--calm .hud-wing-r,
+.hud--calm .hud-z1,
+.hud--calm .hud-z2 {
+  transform: none;
+}
+.hud--calm .hud-b1,
+.hud--calm .hud-b2,
+.hud--calm .hud-b3,
+.hud--calm .hud-b4,
+.hud--calm .hud-b5,
+.hud--calm .hud-reveal,
+.hud--calm .hud-bar,
+.hud--calm .hud-glitch-a,
+.hud--calm .hud-glitch-b {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hud-floor,
+  .hud-bar,
+  .hud-b1,
+  .hud-b2,
+  .hud-b3,
+  .hud-b4,
+  .hud-b5,
+  .hud-reveal,
+  .hud-beat,
+  .hud-lamp,
+  .hud-glitch-a,
+  .hud-glitch-b {
+    animation: none;
+  }
+  .hud-door,
+  .hud-sweep {
+    display: none;
+  }
+  .hud-deck,
+  .hud-al,
+  .hud-meter > div,
+  .hud-split-bar > div {
+    transition: none;
+  }
+}
+
+@keyframes hud-on {
+  to {
+    opacity: 1;
+  }
+}
+@keyframes hud-fly {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 0 64px;
+  }
+}
+@keyframes hud-door-t {
+  to {
+    transform: translateY(-102%);
+  }
+}
+@keyframes hud-door-b {
+  to {
+    transform: translateY(102%);
+  }
+}
+@keyframes hud-sweep {
+  0% {
+    opacity: 0.9;
+    transform: translateY(0);
+  }
+  90% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(1100px);
+  }
+}
+@keyframes hud-flick {
+  0% {
+    opacity: 0;
+  }
+  18% {
+    opacity: 0.7;
+  }
+  30% {
+    opacity: 0.15;
+  }
+  52% {
+    opacity: 0.9;
+  }
+  64% {
+    opacity: 0.4;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+@keyframes hud-wipe {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+@keyframes hud-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px) translateZ(-60px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes hud-glitch-a {
+  0% {
+    opacity: 0.2;
+    transform: translateX(-10px) skewX(-6deg);
+  }
+  50% {
+    opacity: 0.7;
+    transform: translateX(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes hud-glitch-b {
+  0% {
+    opacity: 0.2;
+    transform: translateX(-10px) skewX(-6deg);
+  }
+  50% {
+    opacity: 0.7;
+    transform: translateX(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes hud-beat {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+@keyframes hud-lamp {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  30% {
+    transform: scale(1.7);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+@keyframes hud-grow {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
