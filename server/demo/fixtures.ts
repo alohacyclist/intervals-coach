@@ -23,6 +23,7 @@ import type {
   CoachConfig,
   DestinationState,
   PlannedEvent,
+  RideStats,
   Sport,
   SportThreshold,
   Step,
@@ -347,6 +348,26 @@ const simulateSeconds = (sport: Sport, pieces: readonly Piece[], random: () => n
 const mean = (values: readonly number[]): number =>
   values.length === 0 ? 0 : values.reduce((sum, value) => sum + value, 0) / values.length
 
+/**
+ * What intervals.icu reports per ride, from the planned pieces: normalized power
+ * as the fourth-power mean, which is what the 30 s rolling version tends to on
+ * pieces this long. Indoor on weekdays, as an evening on the trainer.
+ */
+const rideStatsOf = (pieces: readonly Piece[], averageHr: number, indoor: boolean): RideStats => {
+  const seconds = pieces.reduce((sum, piece) => sum + piece.seconds, 0)
+  const wattsOf = (piece: Piece): number => (FTP * piece.percent) / 100
+  const averageWatts = pieces.reduce((sum, piece) => sum + piece.seconds * wattsOf(piece), 0) / seconds
+  const normalizedWatts = (pieces.reduce((sum, piece) => sum + piece.seconds * wattsOf(piece) ** 4, 0) / seconds) ** 0.25
+  return {
+    averageWatts: Math.round(averageWatts),
+    normalizedWatts: Math.round(normalizedWatts),
+    efficiencyFactor: round(normalizedWatts / averageHr, 2),
+    variabilityIndex: round(normalizedWatts / averageWatts, 2),
+    decouplingPct: null,
+    indoor,
+  }
+}
+
 // --------------------------------------------------------------- the dataset
 
 export type DemoSession = {
@@ -355,6 +376,8 @@ export type DemoSession = {
   readonly pieces: readonly Piece[]
   /** A stretch where the watch counted cadence instead of heartbeats — the heart check should catch it. */
   readonly heartFault: { readonly from: number; readonly to: number } | null
+  /** Planted for the dashboard's steady block rules: a pulse that climbs, or one high from the start. */
+  readonly heartTrend: 'drift' | 'elevated' | null
 }
 
 export type DemoData = {
@@ -425,6 +448,7 @@ export const generateDemo = (today: string): DemoData => {
           ? null
           : Math.round(mean(pieces.flatMap((piece) => Array(Math.ceil(piece.seconds / 60)).fill(heartFor(piece.percent)))))
       const local = startTime(template.sport, slot.day)
+      const rideStats = template.sport === 'Ride' && averageHr !== null ? rideStatsOf(pieces, averageHr, slot.day < 5) : null
 
       const activity: Activity = {
         id,
@@ -444,9 +468,10 @@ export const generateDemo = (today: string): DemoData => {
         averageHr,
         zoneSeconds: zoneSecondsOf(pieces),
         device: null,
+        rideStats,
       }
       activities.push(activity)
-      sessions.set(id, { activity, template, pieces, heartFault: null })
+      sessions.set(id, { activity, template, pieces, heartFault: null, heartTrend: null })
     }
   }
 
@@ -456,6 +481,15 @@ export const generateDemo = (today: string): DemoData => {
     .filter((session) => session.template.stimulus !== 'LONG' && session.template.stimulus !== 'ENDURANCE')
     .at(-1)
   if (faulty) sessions.set(faulty.activity.id, { ...faulty, heartFault: { from: 1680, to: 1890 } })
+
+  // The two newest steady rides carry what the dashboard's rules look for.
+  const steady = [...sessions.values()]
+    .filter((session) => session.template.sport === 'Ride')
+    .filter((session) => session.template.stimulus === 'ENDURANCE' || session.template.stimulus === 'LONG')
+    .slice(-2)
+  const [elevated, drift] = steady
+  if (elevated) sessions.set(elevated.activity.id, { ...elevated, heartTrend: 'elevated' })
+  if (drift) sessions.set(drift.activity.id, { ...drift, heartTrend: 'drift' })
 
   return {
     today,
@@ -535,17 +569,22 @@ export const intervalsOf = (session: DemoSession): readonly ActualInterval[] => 
   })
 }
 
+/** About +16 % over an hour for drift, +9 % throughout for a high day: clear of the 5 % and 6 % lines. */
+const trendFactor = (trend: DemoSession['heartTrend'], second: number): number =>
+  trend === 'drift' ? 1 + Math.max(0, second - 600) / 3600 * 0.18 : trend === 'elevated' ? 1.09 : 1
+
 /** Pool swims have no streams, as from a real watch; rides and runs come at one sample per second. */
 export const streamsOf = (session: DemoSession): ActivityStreams => {
   const { sport } = session.template
   if (sport === 'Swim') return { time: [], watts: null, speed: null, heartRate: null }
   const seconds = simulateSeconds(sport, session.pieces, rng(hash(`${session.activity.id}-streams`)))
   const fault = session.heartFault
-  const heartRate = fault
+  const faulted = fault
     ? seconds.heart.map((value, second) =>
         second >= fault.from && second < fault.to ? Math.round(value * 0.62) : value,
       )
     : seconds.heart
+  const heartRate = faulted.map((value, second) => Math.round(value * trendFactor(session.heartTrend, second)))
   return {
     time: seconds.time,
     watts: sport === 'Ride' ? seconds.watts : null,

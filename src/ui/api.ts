@@ -1,5 +1,6 @@
 import type { SessionTier } from '../coach/types.ts'
 import type { CoachConfig, Execution, Plan, Progress, ZrlSettings, ZwiftRoute } from '../coach/types.ts'
+import type { BlockReading, DashboardSummary, RideTrace } from '../coach/dashboard.ts'
 import type { ZrlRaceInput } from './zrl-rows.ts'
 import { OFFLINE, humanError } from './error-message.ts'
 import { LANGUAGE } from './language.ts'
@@ -213,3 +214,14 @@ export const postToStrava = async (activityId: string, templateId: string, date:
   if (outcome.status === 'posted') void getStrava(true)
   return outcome
 }
+
+/** Everything the activity summaries tell, without a single stream. */
+export const getDashboard = (weeks: number): Promise<DashboardSummary> =>
+  request<DashboardSummary>(`/api/dashboard?wochen=${weeks}`)
+
+/** Steady blocks of at most BLOCK_BATCH rides; the page asks batch by batch. */
+export const getDashboardBlocks = (ids: readonly string[]): Promise<readonly BlockReading[]> =>
+  request<readonly BlockReading[]>(`/api/dashboard/blocks?ids=${ids.map(encodeURIComponent).join(',')}`)
+
+export const getRideTrace = (activityId: string): Promise<RideTrace> =>
+  request<RideTrace>(`/api/dashboard/ride/${encodeURIComponent(activityId)}`)

@@ -276,6 +276,8 @@ export type Activity = {
    * speed and the climb, because the ride was recorded without power and heart rate.
    */
   readonly estimate?: EstimateSummary
+  /** Power and heart rate summary intervals.icu computes per ride; absent without a power meter. */
+  readonly rideStats?: RideStats | null
 }
 
 /** One set of a session, looked for in a ride without power. */
@@ -317,6 +319,23 @@ export type StoredRideEstimate = {
   readonly templateId: string | null
   readonly estimate: RideEstimate | null
   readonly version: number
+}
+
+/**
+ * Per-ride numbers as intervals.icu computes them over the whole ride. Only the
+ * dashboard reads them; the steady block rules work on the streams instead.
+ */
+export type RideStats = {
+  readonly averageWatts: number
+  readonly normalizedWatts: number | null
+  /** Normalized power per heartbeat, W/bpm. */
+  readonly efficiencyFactor: number | null
+  /** Normalized power over average power; 1.0 is perfectly even. */
+  readonly variabilityIndex: number | null
+  /** Pw:HR change between the halves of the whole ride, in percent. */
+  readonly decouplingPct: number | null
+  /** On a trainer: a virtual ride or the activity's trainer flag. */
+  readonly indoor: boolean
 }
 
 /**
