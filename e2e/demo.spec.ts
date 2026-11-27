@@ -56,6 +56,18 @@ test.describe('in German', () => {
     await expect(page.getByText('Wochenlast')).toBeVisible()
     await expect(page.getByText('Stufen', { exact: true })).toBeVisible()
   })
+
+  test('the dashboard on a phone shows the week, the findings and the rides', async ({ page }) => {
+    await signIn(page)
+    await page.getByRole('button', { name: 'Dashboard' }).click()
+    await expect(page).toHaveURL(/\/dashboard$/)
+    await expect(page.getByRole('heading', { name: /^Diese Woche/ })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Befunde' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Fahrten' })).toBeVisible()
+    // Every block is read in the end: the progress line goes away.
+    await expect(page.locator('.dash-m progress')).toHaveCount(0)
+    await expect(page.locator('.dash-m__findings li').first()).toBeVisible()
+  })
 })
 
 test.describe('in English', () => {
@@ -78,6 +90,15 @@ test.describe('in English', () => {
     await expect(page.locator('html')).toHaveAttribute('lang', 'de')
     await page.getByRole('button', { name: 'EN', exact: true }).click()
     await expect(page.locator('.panel__tag').first()).toHaveText('Today')
+  })
+
+  test('the cockpit on a wide screen speaks English', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 1000 })
+    await signIn(page)
+    await page.goto('/dashboard')
+    await expect(page.getByRole('heading', { name: 'Training cockpit' })).toBeVisible()
+    await expect(page.locator('.hud-al').first()).toBeVisible()
+    await expect(page.locator('.hud-al').first()).not.toHaveText(/[äöüß]/)
   })
 })
 
