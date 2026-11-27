@@ -8,3 +8,6 @@
 @import './styles/progress.css';
 @import './styles/pages.css';
 @import './styles/landing.css';
+@import './styles/dashboard.css';
+@import './styles/dashboard-motion.css';
+@import './styles/dashboard-phone.css';

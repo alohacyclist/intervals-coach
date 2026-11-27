@@ -7,6 +7,7 @@ import { PasswordLogin } from './PasswordLogin.tsx'
 import { Onboarding } from './Onboarding.tsx'
 import { PlanView } from './PlanView.tsx'
 import { ProgressView } from './ProgressView.tsx'
+import { DashboardView } from './DashboardView.tsx'
 import { Imprint } from './legal/Imprint.tsx'
 import { Privacy } from './legal/Privacy.tsx'
 import { ThemeSwitch } from './components/ThemeSwitch.tsx'
@@ -17,14 +18,15 @@ import { t } from '../coach/lang.ts'
 
 const PLAN_PATH = '/app'
 const PROGRESS_PATH = '/verlauf'
+const DASHBOARD_PATH = '/dashboard'
 const LOGIN_PATH = '/login'
 /** Where the confirmation link in the waitlist mail lands. */
 const CONFIRMED_PATH = '/warteliste/bestaetigt'
 
 /**
- * Two questions, two pages: what do I do today, and am I getting anywhere. The
- * switch is the same three-position control the theme already uses, so the app
- * gains a page without gaining a new kind of control.
+ * Three questions, three pages: what do I do today, am I getting anywhere, and
+ * what do my rides say. The switch is the same control the theme already uses,
+ * so the app gains a page without gaining a new kind of control.
  */
 const ViewSwitch = ({
   path,
@@ -36,7 +38,7 @@ const ViewSwitch = ({
   <div className="mode" role="group" aria-label={t('Ansicht')}>
     <button
       type="button"
-      aria-pressed={path !== PROGRESS_PATH}
+      aria-pressed={path !== PROGRESS_PATH && path !== DASHBOARD_PATH}
       onClick={() => onGo(PLAN_PATH)}
     >
       {t('Plan')}
@@ -48,6 +50,13 @@ const ViewSwitch = ({
     >
       {t('Verlauf')}
     </button>
+    <button
+      type="button"
+      aria-pressed={path === DASHBOARD_PATH}
+      onClick={() => onGo(DASHBOARD_PATH)}
+    >
+      {t('Dashboard')}
+    </button>
   </div>
 )
 
@@ -57,15 +66,18 @@ const Shell = ({
   nav,
   resetKey,
   demo = false,
+  wide = false,
 }: {
   readonly children: ReactNode
   readonly nav?: ReactNode
+  /** The dashboard's cockpit wants the whole width of a large screen. */
+  readonly wide?: boolean
   /** The demo deployment says so on every view. */
   readonly demo?: boolean
   /** Switching views remounts the boundary, so one broken page is escapable. */
   readonly resetKey?: string
 }) => (
-  <main className="app">
+  <main className={wide ? 'app app--wide' : 'app'}>
     <div className="topbar">
       {nav}
       {demo && <DemoBadge />}
@@ -192,8 +204,10 @@ export const App = () => {
   const needsOnboarding = () => setMe({ ...me, onboarded: false })
 
   return (
-    <Shell nav={<ViewSwitch path={path} onGo={go} />} resetKey={path} demo={demo}>
-      {path === PROGRESS_PATH ? (
+    <Shell nav={<ViewSwitch path={path} onGo={go} />} resetKey={path} demo={demo} wide={path === DASHBOARD_PATH}>
+      {path === DASHBOARD_PATH ? (
+        <DashboardView onNeedsOnboarding={needsOnboarding} />
+      ) : path === PROGRESS_PATH ? (
         <ProgressView onNeedsOnboarding={needsOnboarding} />
       ) : (
         <PlanView me={me} onNeedsOnboarding={needsOnboarding} />

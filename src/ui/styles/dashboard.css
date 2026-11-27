@@ -1,0 +1,645 @@
+/*
+ * Dashboard. On a wide screen a cockpit: always dark, because it is a lit
+ * display, not a printed page. On a phone the app's own instrument look, light
+ * or dark as chosen, without motion.
+ */
+
+.app--wide {
+  max-width: 1680px;
+}
+
+/* ------------------------------------------------------------------ cockpit */
+
+.hud {
+  --hud-bg: #070b10;
+  --hud-panel: #0b1118;
+  --hud-sunk: #0e151d;
+  --hud-line: #1c2733;
+  --hud-line-2: #24313f;
+  --hud-text: #d7e0ea;
+  --hud-dim: #8a99a8;
+  --hud-cyan: #9ec9d6;
+  --hud-white: #e8edf2;
+  --hud-grey: #5d6b7a;
+  --hud-ghost: #3b4856;
+  --hud-warn: #ffb020;
+  --hud-meter: #141d27;
+  /* Panels appear after the doors have opened. */
+  --d: 1.9s;
+
+  position: relative;
+  overflow: clip;
+  perspective: 1700px;
+  min-height: 900px;
+  padding: 20px 24px 96px;
+  border: 1px solid var(--hud-line);
+  background: var(--hud-bg);
+  color: var(--hud-text);
+  font-family: var(--sans);
+  color-scheme: dark;
+}
+.hud--calm {
+  --d: 0s;
+}
+
+.hud-deck {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  transform-style: preserve-3d;
+  transition: transform 0.25s ease-out;
+}
+.hud-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: stretch;
+  transform-style: preserve-3d;
+}
+.hud-row--top {
+  align-items: flex-start;
+}
+.hud-3d {
+  transform-style: preserve-3d;
+}
+.hud-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.hud-gap {
+  gap: 12px;
+}
+.hud-gap-l {
+  gap: 18px;
+}
+.hud-gap-s {
+  gap: 4px;
+}
+.hud-kv {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.hud-mono {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+.hud-lbl {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--hud-dim);
+}
+.hud-lbl--pw {
+  color: var(--hud-white);
+}
+.hud-lbl--hr {
+  color: var(--hud-cyan);
+}
+.hud-lbl--warn,
+.hud-tone-warn {
+  color: var(--hud-warn);
+}
+.hud-tone-calm {
+  color: var(--hud-cyan);
+}
+.hud-tone-ref,
+.hud-dim {
+  color: var(--hud-dim);
+}
+.hud-hi {
+  color: var(--hud-text);
+}
+.hud-attr {
+  letter-spacing: 0.06em;
+  text-transform: none;
+}
+.hud-note {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--hud-dim);
+}
+.hud-small {
+  font-size: 13px;
+}
+.hud-num {
+  font-size: 26px;
+}
+.hud-num small {
+  font-size: 13px;
+  color: var(--hud-dim);
+}
+.hud-num--hr {
+  color: var(--hud-cyan);
+}
+.hud-mid {
+  font-size: 20px;
+}
+.hud-big {
+  font-size: 34px;
+  line-height: 1.1;
+}
+.hud-big--pw {
+  color: var(--hud-white);
+}
+.hud-big--hr {
+  color: var(--hud-cyan);
+}
+.hud-title {
+  font-size: 20px;
+  font-weight: 600;
+}
+.hud-sentence {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Panels with two corner brackets, the way a heads-up display frames its readings. */
+.hud-pn {
+  position: relative;
+  flex: 1 1 290px;
+  min-width: 0;
+  padding: 18px;
+  background: var(--hud-panel);
+  border: 1px solid var(--hud-line);
+  transform-style: preserve-3d;
+}
+.hud-pn::before,
+.hud-pn::after {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--hud-cyan);
+  pointer-events: none;
+}
+.hud-pn::before {
+  left: -1px;
+  top: -1px;
+  border-right: 0;
+  border-bottom: 0;
+}
+.hud-pn::after {
+  right: -1px;
+  bottom: -1px;
+  border-left: 0;
+  border-top: 0;
+}
+.hud-center {
+  flex: 3 1 560px;
+}
+.hud-wing-r {
+  flex: 1 1 330px;
+}
+.hud-z1 {
+  transform: translateZ(26px);
+}
+.hud-z2 {
+  transform: translateZ(52px);
+}
+@media (min-width: 1280px) {
+  .hud-wing-l {
+    transform: rotateY(8deg);
+    transform-origin: right center;
+  }
+  .hud-wing-r {
+    transform: rotateY(-8deg);
+    transform-origin: left center;
+  }
+}
+
+/* Header */
+.hud-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 32px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--hud-line-2);
+}
+.hud-head__title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 16px;
+}
+.hud-head h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+.hud-head__status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 24px;
+}
+.hud-alert {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.hud-switch {
+  display: flex;
+  border: 1px solid var(--hud-line-2);
+}
+.hud-switch button {
+  min-height: 32px;
+  padding: 0 10px;
+  border: 0;
+  border-right: 1px solid var(--hud-line-2);
+  background: transparent;
+  color: var(--hud-dim);
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+}
+.hud-switch button:last-child {
+  border-right: 0;
+}
+.hud-switch button[aria-pressed='true'] {
+  background: #13202a;
+  color: var(--hud-text);
+}
+
+.hud-btn {
+  min-height: 44px;
+  padding: 0 18px;
+  background: transparent;
+  border: 1px solid var(--hud-cyan);
+  color: var(--hud-text);
+  font-family: var(--mono);
+  font-size: 14px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.hud-btn--small {
+  min-height: 32px;
+  padding: 0 12px;
+  font-size: 12px;
+}
+.hud-btn:hover,
+.hud-switch button:hover {
+  background: #13202a;
+}
+.hud :focus-visible {
+  outline: 2px solid var(--hud-text);
+  outline-offset: 2px;
+}
+
+/* Charts */
+.hud svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+/* The warning mark keeps its own size; charts stretch, it does not. */
+.hud .hud-beat {
+  flex: none;
+  width: 12px;
+  height: 12px;
+}
+.hud-grid line {
+  stroke: var(--hud-line);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+.hud-tr {
+  fill: none;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+  stroke-linejoin: round;
+}
+.hud-tr--pw {
+  stroke: var(--hud-white);
+}
+.hud-tr--hr {
+  stroke: var(--hud-cyan);
+}
+.hud-tr--ghost {
+  stroke: var(--hud-ghost);
+}
+.hud-tr--thin {
+  stroke-width: 1.5;
+}
+.hud-bar {
+  fill: var(--hud-grey);
+  transform-box: fill-box;
+  transform-origin: bottom;
+  animation: hud-grow 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) calc(var(--d) + 0.6s) both;
+}
+.hud-bar--partial {
+  fill: var(--hud-ghost);
+}
+.hud-mk {
+  fill: var(--hud-warn);
+}
+.hud-box {
+  fill: none;
+  stroke: var(--hud-dim);
+  stroke-width: 1.5;
+}
+.hud-warm {
+  fill: #111a24;
+}
+.hud-steady {
+  fill: var(--hud-cyan);
+}
+.hud-split {
+  stroke: var(--hud-warn);
+  stroke-width: 1;
+  stroke-dasharray: 5 5;
+  vector-effect: non-scaling-stroke;
+}
+
+.hud-trace__head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.hud-readouts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(130px, 100%), 1fr));
+  gap: 12px;
+}
+.hud-readout {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.hud-readout .hud-lbl {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.hud-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.hud-chart__plot {
+  position: relative;
+  height: 150px;
+}
+.hud-chart__plot > svg,
+.hud-live svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.hud-live {
+  position: absolute;
+  inset: 0;
+  filter: drop-shadow(0 0 5px rgba(215, 224, 234, 0.55));
+}
+.hud-cur {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--hud-text);
+}
+.hud-dot {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  margin: -5px 0 0 -5px;
+  border-radius: 50%;
+  box-shadow: 0 0 12px 3px rgba(215, 224, 234, 0.6);
+}
+.hud-dot--pw {
+  background: var(--hud-white);
+}
+.hud-dot--hr {
+  background: var(--hud-cyan);
+}
+.hud-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 6px 20px;
+}
+.hud-lamp {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--hud-cyan);
+  animation: hud-lamp 1s ease-out infinite;
+}
+
+.hud-meter {
+  height: 6px;
+  background: var(--hud-meter);
+}
+.hud-meter > div {
+  height: 100%;
+  transition: width 0.14s linear;
+}
+.hud-meter--tall {
+  height: 10px;
+}
+.hud-meter--pw {
+  background: var(--hud-white);
+}
+.hud-meter--hr,
+.hud-fill-calm {
+  background: var(--hud-cyan);
+}
+.hud-fill-ref {
+  background: var(--hud-grey);
+}
+.hud-fill-warn {
+  background: var(--hud-warn);
+}
+
+/* Findings: the list scrolls on its own, so a long one does not stretch the whole row. */
+.hud-al-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 330px;
+  overflow-y: auto;
+  padding-right: 4px;
+  scrollbar-color: var(--hud-line-2) transparent;
+}
+.hud-al-list > .hud-al {
+  flex-shrink: 0;
+}
+.hud-al {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 100%;
+  min-height: 72px;
+  padding: 10px 14px;
+  text-align: left;
+  background: var(--hud-sunk);
+  border: 1px solid var(--hud-line-2);
+  color: var(--hud-text);
+  font-family: inherit;
+  cursor: pointer;
+  transition: transform 0.2s ease-out, border-color 0.2s;
+}
+.hud-al:hover {
+  border-color: var(--hud-dim);
+  transform: translateZ(14px);
+}
+.hud-al--warn.is-on {
+  border-color: var(--hud-warn);
+  background: #17130a;
+}
+.hud-al--calm.is-on,
+.hud-al--muted.is-on {
+  border-color: var(--hud-text);
+  background: #121a23;
+}
+.hud-al .hud-kv {
+  flex-wrap: wrap;
+  row-gap: 2px;
+}
+.hud-code {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.hud-code svg {
+  width: 12px;
+}
+.hud-item-title {
+  font-size: 15px;
+  font-weight: 600;
+}
+.hud-detail {
+  padding-top: 6px;
+  border-top: 1px solid var(--hud-line-2);
+}
+.hud-tiles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.hud-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid var(--hud-line-2);
+}
+
+/* Coverage */
+.hud-split-bar {
+  display: flex;
+  gap: 2px;
+  height: 14px;
+}
+.hud-split-bar > div {
+  transition: width 0.9s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.hud-cov-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+}
+.hud-cov-list li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.hud-swatch {
+  width: 10px;
+  height: 10px;
+}
+.hud-cov--checked {
+  background: var(--hud-cyan);
+}
+.hud-cov--noBaseline {
+  background: #6f95a1;
+}
+.hud-cov--noBlock {
+  background: var(--hud-grey);
+}
+.hud-cov--skipped {
+  background: var(--hud-ghost);
+}
+.hud-cov--pending {
+  background: var(--hud-line-2);
+}
+.hud-cov--unreadable {
+  background: var(--hud-warn);
+}
+
+/* Ride table */
+.hud-scroll {
+  overflow-x: auto;
+}
+.hud-tbl {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.hud-tbl th {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--hud-line-2);
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--hud-dim);
+  text-align: right;
+}
+.hud-tbl td {
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--hud-meter);
+  font-family: var(--mono);
+  text-align: right;
+  white-space: nowrap;
+}
+.hud-tbl th:nth-child(-n + 2),
+.hud-tbl td:nth-child(-n + 2) {
+  text-align: left;
+}
+.hud-tbl tr.is-on td {
+  background: #121a23;
+}
+.hud-row-btn {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--hud-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.hud-row-btn .hud-dim {
+  display: inline-block;
+  max-width: 22ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: bottom;
+}

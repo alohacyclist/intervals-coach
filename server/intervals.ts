@@ -4,6 +4,7 @@ import type {
   Activity,
   DestinationState,
   PlannedEvent,
+  RideStats,
   Sport,
   Wellness,
   WorkoutDestination,
@@ -159,6 +160,9 @@ const nullableNum = (value: unknown): number | null =>
 type RawActivity = Record<string, unknown>
 type RawWellness = Record<string, unknown>
 
+const isIndoor = (raw: RawActivity): boolean =>
+  raw['trainer'] === true || raw['type'] === 'VirtualRide' || raw['type'] === 'VirtualRun' || raw['type'] === 'Treadmill'
+
 const mapActivity = (raw: RawActivity): Activity => ({
   id: String(raw['id'] ?? ''),
   source: typeof raw['source'] === 'string' ? raw['source'] : null,
@@ -177,8 +181,23 @@ const mapActivity = (raw: RawActivity): Activity => ({
   averageHr: nullableNum(raw['average_heartrate']),
   zoneSeconds: zoneSecondsOf(raw),
   device: typeof raw['device_name'] === 'string' && raw['device_name'].length > 0 ? raw['device_name'] : null,
-  indoor: raw['trainer'] === true || raw['type'] === 'VirtualRide' || raw['type'] === 'VirtualRun' || raw['type'] === 'Treadmill',
+  indoor: isIndoor(raw),
+  rideStats: mapRideStats(raw),
 })
+
+/** Field names from the Activity schema of the official API description (api/v1/docs). */
+export const mapRideStats = (raw: RawActivity): RideStats | null => {
+  const averageWatts = nullableNum(raw['icu_average_watts'])
+  if (toSport(raw['type']) !== 'Ride' || averageWatts === null || averageWatts <= 0) return null
+  return {
+    averageWatts,
+    normalizedWatts: nullableNum(raw['icu_weighted_avg_watts']),
+    efficiencyFactor: nullableNum(raw['icu_efficiency_factor']),
+    variabilityIndex: nullableNum(raw['icu_variability_index']),
+    decouplingPct: nullableNum(raw['decoupling']),
+    indoor: isIndoor(raw),
+  }
+}
 
 const mapEvent = (raw: Record<string, unknown>): PlannedEvent => ({
   id: String(raw['id'] ?? ''),

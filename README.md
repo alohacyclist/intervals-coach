@@ -52,6 +52,9 @@ be shared as a picture:
 - **The whole week on request.** The plan stands for three days; one tap shows seven,
   with the days past the third marked as an outlook that shifts with what is trained
   until then.
+- **A dashboard for rides** at `/dashboard`: weekly load, efficiency and two heart-rate
+  rules on the steady block of each ride, with a dark animated cockpit on wide screens and
+  a simple view on phones.
 - **German and English.** The interface and everything the coach writes — reasons, notes,
   workout names, the text sent to the calendar — follow the browser's language or the
   switch at the top, and so does the summary written to Strava. The legal pages are

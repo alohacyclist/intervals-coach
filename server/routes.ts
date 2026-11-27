@@ -52,8 +52,12 @@ import { findTemplate } from '../src/coach/library.ts'
 import { buildSession } from '../src/coach/session.ts'
 import { loadExecution } from './execution-load.ts'
 import { readRideEstimates, rememberRideEstimates, withRideEstimates } from './ride-estimates.ts'
+import { loadBlocks, loadDashboardSummary, loadRideTrace } from './dashboard-load.ts'
+import { BLOCK_BATCH, DEFAULT_DASHBOARD_WEEKS, isDashboardWeeks } from '../src/coach/dashboard.ts'
 import type { Intent, Plan, Progress } from '../src/coach/types.ts'
 import { t } from '../src/coach/lang.ts'
+
+const ACTIVITY_ID = /^[A-Za-z0-9_-]{1,40}$/
 
 export const DEFAULT_TIMEZONE = 'Europe/Berlin'
 /** Longer than this is not a break any more, it is a different training year. */
@@ -450,6 +454,32 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
       },
     })
     return context.json({ config: await store.save(merged), settings })
+  })
+
+  app.get('/api/dashboard', async (context) => {
+    const requested = Number(context.req.query('wochen') ?? DEFAULT_DASHBOARD_WEEKS)
+    const weeks = isDashboardWeeks(requested) ? requested : DEFAULT_DASHBOARD_WEEKS
+    const deps = await resolveFor(resolve, context)
+    return context.json(await loadDashboardSummary(deps.source, todayFor(deps), weeks))
+  })
+
+  /** Steady blocks of up to BLOCK_BATCH rides: `?ids=a,b,c`. */
+  app.get('/api/dashboard/blocks', async (context) => {
+    const ids = (context.req.query('ids') ?? '').split(',').filter((id) => id.length > 0)
+    // Each id becomes part of a path on intervals.icu, so only an id's own characters get through.
+    if (ids.length === 0 || ids.length > BLOCK_BATCH || !ids.every((id) => ACTIVITY_ID.test(id))) {
+      return context.json({ error: t('Ungültige Aktivitäten') }, 400)
+    }
+    const deps = await resolveFor(resolve, context)
+    return context.json(await loadBlocks(deps.source, ids))
+  })
+
+  /** One ride per minute for its chart, read when the athlete opens it. */
+  app.get('/api/dashboard/ride/:activityId', async (context) => {
+    const activityId = context.req.param('activityId')
+    if (!ACTIVITY_ID.test(activityId)) return context.json({ error: t('Ungültige Aktivität') }, 400)
+    const deps = await resolveFor(resolve, context)
+    return context.json(await loadRideTrace(deps.source, activityId))
   })
 
   /**

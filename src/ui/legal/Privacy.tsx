@@ -39,7 +39,9 @@ export const Privacy = () => (
         Zeit in den Trainingszonen) und Erholungswerte der letzten 60 Tage
         (Herzratenvariabilität, Ruhepuls, Schlafdauer, subjektives Befinden), für eine absolvierte
         Einheit zusätzlich ihr Verlauf von Leistung, Tempo und Herzfrequenz, bei einem Lauf auch
-        von Höhe und zurückgelegter Strecke (ohne Standort). Diese Daten werden von
+        von Höhe und zurückgelegter Strecke (ohne Standort). Für das Dashboard liest die App
+        Radfahrten von bis zu 26 Wochen plus 42 Tagen davor und für Fahrten ab 40 Minuten den
+        Verlauf von Leistung und Herzfrequenz, um Puls-Drift und erhöhten Puls zu erkennen. Diese Daten werden von
         intervals.icu abgerufen, im Arbeitsspeicher ausgewertet und{' '}
         <strong>nicht dauerhaft gespeichert</strong>. Damit Aufrufe kurz hintereinander intervals.icu
         nicht jedes Mal neu abfragen, hält die Anwendung die Antworten höchstens fünf Minuten
@@ -80,8 +82,9 @@ export const Privacy = () => (
         Betrieb und werden nicht mit deinem Konto zusammengeführt.
       </li>
       <li>
-        <strong>Im Browser gespeichert:</strong> deine Wahl zwischen heller und dunkler Darstellung.
-        Sie verlässt dein Gerät nicht.
+        <strong>Im Browser gespeichert:</strong> deine Wahl zwischen heller und dunkler Darstellung,
+        im Dashboard außerdem der gewählte Zeitraum und ob Effekte laufen. Das verlässt dein Gerät
+        nicht.
       </li>
     </ul>
     <p>
@@ -199,7 +202,7 @@ export const Privacy = () => (
 
     <h2>Automatisierte Entscheidungen</h2>
     <p>
-      Die Trainingsvorschläge entstehen automatisiert. Sie entfalten dir gegenüber keine rechtliche
+      Die Trainingsvorschläge und die Hinweise im Dashboard entstehen automatisiert. Sie entfalten dir gegenüber keine rechtliche
       Wirkung und beeinträchtigen dich nicht in ähnlicher Weise erheblich; eine automatisierte
       Entscheidung im Sinne von Art. 22 DSGVO liegt damit nicht vor. Ob du einem Vorschlag folgst,
       entscheidest allein du.
