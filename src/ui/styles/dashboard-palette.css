@@ -1,0 +1,93 @@
+/*
+ * Cockpit colours, light and dark. They follow the app's theme switch the same
+ * way tokens.css does: light by default, dark by system setting or by choice.
+ */
+
+.hud {
+  --hud-bg: #eef1f5;
+  --hud-panel: #ffffff;
+  --hud-sunk: #f6f8fa;
+  --hud-line: #dfe4ec;
+  --hud-line-2: #c9d1dc;
+  --hud-text: #1a2332;
+  --hud-dim: #4f5a6b;
+  --hud-pulse: #0e6a80;
+  --hud-pulse-2: #5b98a8;
+  --hud-power: #0b1220;
+  --hud-grey: #7c89a0;
+  --hud-ghost: #c3ccd8;
+  /* Warnings only: nothing else on the page may use this colour. */
+  --hud-warn: #a24a12;
+  --hud-warn-bg: #fdf3e7;
+  --hud-meter: #e6eaf0;
+  --hud-press: #e8edf3;
+  --hud-sel: #eef3f8;
+  --hud-warm: #eef1f5;
+  --hud-band: rgba(14, 106, 128, 0.1);
+  --hud-veil: rgba(11, 18, 32, 0.45);
+  --hud-shadow: rgba(11, 18, 32, 0.28);
+  /* Daylight: no glow, a little more line weight instead. */
+  --hud-raster: rgba(14, 106, 128, 0.07);
+  --hud-glow: none;
+  --hud-glow-dot: none;
+  --hud-tr-w: 2.25;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .hud {
+    --hud-bg: #070b10;
+    --hud-panel: #0b1118;
+    --hud-sunk: #0e151d;
+    --hud-line: #1c2733;
+    --hud-line-2: #24313f;
+    --hud-text: #d7e0ea;
+    --hud-dim: #8a99a8;
+    --hud-pulse: #9ec9d6;
+    --hud-pulse-2: #6f95a1;
+    --hud-power: #e8edf2;
+    --hud-grey: #5d6b7a;
+    --hud-ghost: #3b4856;
+    --hud-warn: #ffb020;
+    --hud-warn-bg: #17130a;
+    --hud-meter: #141d27;
+    --hud-press: #13202a;
+    --hud-sel: #121a23;
+    --hud-warm: #111a24;
+    --hud-band: rgba(158, 201, 214, 0.1);
+    --hud-veil: rgba(3, 6, 10, 0.72);
+    --hud-shadow: rgba(0, 0, 0, 0.8);
+    --hud-raster: rgba(158, 201, 214, 0.05);
+    --hud-glow: drop-shadow(0 0 4px rgba(215, 224, 234, 0.45));
+    --hud-glow-dot: 0 0 12px 3px rgba(215, 224, 234, 0.55);
+    --hud-tr-w: 2;
+    color-scheme: dark;
+  }
+}
+:root[data-theme='dark'] .hud {
+  --hud-bg: #070b10;
+  --hud-panel: #0b1118;
+  --hud-sunk: #0e151d;
+  --hud-line: #1c2733;
+  --hud-line-2: #24313f;
+  --hud-text: #d7e0ea;
+  --hud-dim: #8a99a8;
+  --hud-pulse: #9ec9d6;
+  --hud-pulse-2: #6f95a1;
+  --hud-power: #e8edf2;
+  --hud-grey: #5d6b7a;
+  --hud-ghost: #3b4856;
+  --hud-warn: #ffb020;
+  --hud-warn-bg: #17130a;
+  --hud-meter: #141d27;
+  --hud-press: #13202a;
+  --hud-sel: #121a23;
+  --hud-warm: #111a24;
+  --hud-band: rgba(158, 201, 214, 0.1);
+  --hud-veil: rgba(3, 6, 10, 0.72);
+  --hud-shadow: rgba(0, 0, 0, 0.8);
+  --hud-raster: rgba(158, 201, 214, 0.05);
+  --hud-glow: drop-shadow(0 0 4px rgba(215, 224, 234, 0.45));
+  --hud-glow-dot: 0 0 12px 3px rgba(215, 224, 234, 0.55);
+  --hud-tr-w: 2;
+  color-scheme: dark;
+}

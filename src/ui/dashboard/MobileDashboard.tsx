@@ -1,10 +1,11 @@
 import { useMemo } from 'react'
 import { DASHBOARD_WEEKS } from '../../coach/dashboard.ts'
 import type { DashboardSummary, DashboardWeeks } from '../../coach/dashboard.ts'
+import { lastEfficiency } from '../../coach/dashboard-trend.ts'
 import { t } from '../../coach/lang.ts'
 import { GarminAttribution } from '../components/GarminAttribution.tsx'
 import { weekChart } from './geometry.ts'
-import { byRide, coverageLine, disclaimer, findingItems, num, rideRows, verdictSentence } from './model.ts'
+import { byRide, coverageLine, disclaimer, findingItems, num, rideRows, verdictSentence, where } from './model.ts'
 import type { DashboardState } from './useDashboard.ts'
 
 type Ready = DashboardState & {
@@ -29,7 +30,8 @@ const WeekLoad = ({ summary }: { readonly summary: DashboardSummary }) => {
 
 const ThisWeek = ({ summary }: { readonly summary: DashboardSummary }) => {
   const now = summary.weeks[summary.weeks.length - 1]
-  const ef = [...summary.weeks].reverse().find((w) => w.efficiencyFactor !== null)?.efficiencyFactor ?? null
+  const efOut = lastEfficiency(summary.weeks, false)
+  const efIn = lastEfficiency(summary.weeks, true)
   return (
     <section className="dash-m__card">
       <h2>{now?.partial ? t('Diese Woche (läuft)') : t('Diese Woche')}</h2>
@@ -38,7 +40,8 @@ const ThisWeek = ({ summary }: { readonly summary: DashboardSummary }) => {
         <div><dt>{t('Mittel 4 Wo')}</dt><dd>{now?.loadChronic == null ? '–' : num(now.loadChronic)}</dd></div>
         <div><dt>{t('Fahrten')}</dt><dd>{now?.rides ?? 0}</dd></div>
         <div><dt>{t('Stunden')}</dt><dd>{num((now?.seconds ?? 0) / 3600, 1)}</dd></div>
-        <div><dt>{t('Effizienz')}</dt><dd>{ef === null ? '–' : num(ef, 2)}</dd></div>
+        <div><dt>{t`EF ${where(false)}`}</dt><dd>{efOut === null ? '–' : num(efOut, 2)}</dd></div>
+        <div><dt>{t`EF ${where(true)}`}</dt><dd>{efIn === null ? '–' : num(efIn, 2)}</dd></div>
         <div><dt>{t('Arbeit kJ')}</dt><dd>{num(now?.workKj ?? 0)}</dd></div>
       </dl>
       <WeekLoad summary={summary} />
