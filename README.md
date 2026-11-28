@@ -53,8 +53,10 @@ be shared as a picture:
   with the days past the third marked as an outlook that shifts with what is trained
   until then.
 - **A dashboard for rides** at `/dashboard`: weekly load, efficiency and two heart-rate
-  rules on the steady block of each ride, with a dark animated cockpit on wide screens and
-  a simple view on phones.
+  rules on the steady block of each ride. Wide screens get six tiles on one screen; a click
+  lifts one to the front, and a ride is read with a slider. Efficiency is split indoor and
+  outdoor with a four-week trend, and the numbers that have a better direction say so.
+  Phones get a simple view.
 - **German and English.** The interface and everything the coach writes — reasons, notes,
   workout names, the text sent to the calendar — follow the browser's language or the
   switch at the top, and so does the summary written to Strava. The legal pages are

@@ -1,4 +1,6 @@
 import type { BlockReading, DashboardRide, DashboardSummary, SteadyAnalysis, SteadyStatus } from '../../coach/dashboard.ts'
+import type { EfficiencyTrend } from '../../coach/dashboard-trend.ts'
+import { TREND_MIN_RIDES, TREND_WEEKS } from '../../coach/dashboard-trend.ts'
 import type { SteadyBlock, SteadyFinding, SteadyRule, SteadyThresholds } from '../../coach/steady-block.ts'
 import { weekdayLabel } from '../../coach/dates.ts'
 import { lang, locale, perLang, t } from '../../coach/lang.ts'
@@ -10,11 +12,14 @@ export const num = (value: number, digits = 0): string =>
 /** A signed share as percent: +5,5 %. */
 export const pct = (share: number): string => `${share >= 0 ? '+' : '−'}${num(Math.abs(share) * 100, 1)} %`
 
-/** "Do 12.11." or "Thu 12/11" from an ISO day. */
-export const shortDate = (date: string): string => {
+/** "12.11." or "12/11" from an ISO day. */
+export const dayMonth = (date: string): string => {
   const [day, month] = [date.slice(8, 10), date.slice(5, 7)]
-  return `${weekdayLabel(date)} ${lang() === 'en' ? `${day}/${month}` : `${day}.${month}.`}`
+  return lang() === 'en' ? `${day}/${month}` : `${day}.${month}.`
 }
+
+/** "Do 12.11." or "Thu 12/11" from an ISO day. */
+export const shortDate = (date: string): string => `${weekdayLabel(date)} ${dayMonth(date)}`
 
 export const clock = (minute: number): string =>
   `${String(Math.floor(minute / 60)).padStart(1, '0')}:${String(minute % 60).padStart(2, '0')}`
@@ -49,6 +54,10 @@ export const statusLabel = (status: SteadyStatus | undefined, warned: boolean): 
 }
 
 export type Tone = 'warn' | 'calm' | 'muted'
+
+/** A finding outranks every status; only a fully checked ride reads as calm. */
+export const toneOf = (status: SteadyStatus | undefined, warned: boolean): Tone =>
+  warned ? 'warn' : status === 'checked' ? 'calm' : 'muted'
 
 export type FindingItem = {
   readonly rideId: string
@@ -190,7 +199,7 @@ export const rideRows = (
       ef: ride.efficiencyFactor === null ? '–' : num(ride.efficiencyFactor, 2),
       steady: block ? `${num(block.durationS / 60)} min · ${pct(driftOf(block))}` : '–',
       status: statusLabel(status, isWarned),
-      tone: isWarned ? 'warn' : status === 'checked' ? 'calm' : 'muted',
+      tone: toneOf(status, isWarned),
     }
   })
 }
@@ -229,3 +238,85 @@ export const warnedWeeks = (summary: DashboardSummary, findings: readonly Steady
     return days.some((d) => d >= w.weekStart && d < next)
   })
 }
+
+/** The cockpit's tiles in reading order; each opens as a focus view. */
+export const TILES = ['findings', 'ride', 'load', 'efficiency', 'coverage', 'rides'] as const
+export type TileKey = (typeof TILES)[number]
+
+export const tileTitle = (key: TileKey): string => {
+  switch (key) {
+    case 'findings':
+      return t('Befunde')
+    case 'ride':
+      return t('Fahrtverlauf')
+    case 'load':
+      return t('Belastung')
+    case 'efficiency':
+      return t('Effizienz')
+    case 'coverage':
+      return t('Abdeckung')
+    default:
+      return t('Fahrten')
+  }
+}
+
+export const warningsLabel = (count: number): string =>
+  count === 0 ? t('Keine Warnung') : count === 1 ? t('1 Warnung') : t`${count} Warnungen`
+
+/** How many shown rides both rules could judge: silence must not read as health. */
+export const checkedLabel = (coverage: Readonly<Record<SteadyStatus, number>>): string => {
+  const all = COVERAGE_ORDER.reduce((sum, s) => sum + coverage[s], 0)
+  return t`${coverage.checked} von ${all} Fahrten voll geprüft`
+}
+
+/** What a rule's threshold means; each rule names its own, the drift line must not explain the baseline. */
+export const ruleHint = (rule: SteadyRule, thresholds: SteadyThresholds): string =>
+  rule === 'hrDrift'
+    ? t`Unter ${num(thresholds.hrDrift * 100)} % hält deine Ausdauer diese Dauer bei dieser Leistung. Darüber: an der Grenze, oder Hitze, zu wenig getrunken, Müdigkeit.`
+    : t`Bis ${num(thresholds.elevatedHr * 100)} % über deiner Basis ist normale Tagesform. Darüber: Müdigkeit, Hitze, wenig Schlaf oder Stress.`
+
+/** The trend in one sentence, or why there is none yet. */
+export const trendSentence = (trend: EfficiencyTrend): string =>
+  trend.change === null
+    ? t`${where(trend.indoor)}: zu wenig gleichmäßige Fahrten für einen Trend. Nötig sind je ${TREND_MIN_RIDES} in den letzten ${TREND_WEEKS} Wochen und den ${TREND_WEEKS} davor, da sind ${trend.recentRides} und ${trend.earlierRides}.`
+    : t`${where(trend.indoor)}: EF der letzten ${TREND_WEEKS} Wochen ${pct(trend.change)} gegenüber den ${TREND_WEEKS} Wochen davor, aus ${trend.recentRides} und ${trend.earlierRides} Fahrten.`
+
+/** One steady block in the drift chart: the drift and what makes two blocks comparable. */
+export type DriftPoint = {
+  readonly rideId: string
+  readonly date: string
+  readonly indoor: boolean
+  readonly drift: number
+  readonly minutes: number
+  readonly watts: number
+  readonly warned: boolean
+}
+
+/** Every shown ride with a steady block read so far, oldest first. */
+export const driftPoints = (
+  summary: DashboardSummary,
+  readings: ReadonlyMap<string, BlockReading>,
+  findings: readonly SteadyFinding[],
+): readonly DriftPoint[] => {
+  const drifted = new Set(findings.filter((f) => f.rule === 'hrDrift').map((f) => f.activityId))
+  return summary.rides
+    .flatMap((ride): DriftPoint[] => {
+      const block = readings.get(ride.id)?.block
+      if (!block) return []
+      return [
+        {
+          rideId: ride.id,
+          date: ride.date,
+          indoor: ride.indoor,
+          drift: driftOf(block),
+          minutes: Math.round(block.durationS / 60),
+          watts: Math.round(block.avgWatts),
+          warned: drifted.has(ride.id),
+        },
+      ]
+    })
+    .reverse()
+}
+
+export const driftPointLabel = (p: DriftPoint): string =>
+  t`${shortDate(p.date)} · ${where(p.indoor)} · ${p.minutes} min bei ${p.watts} W · Drift ${pct(p.drift)}`

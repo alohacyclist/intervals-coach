@@ -32,8 +32,25 @@
   - `analyzeSteady` läuft im Browser nach jedem Paket. So wachsen Befunde sichtbar mit.
   - `/api/dashboard/ride/:id` liefert für die gewählte Fahrt den Verlauf in Minutenmitteln.
 - Zeitraum 8, 12 oder 26 Wochen. Dazu kommen 42 Tage davor nur als Basis.
-- Zwei Darstellungen: ab 1100 px Breite ein dunkles Cockpit mit Animationen, darunter eine
-  einfache Ansicht im Stil der App. „Ruhig“ und `prefers-reduced-motion` schalten alle Effekte ab.
+- Zwei Darstellungen: ab 1100 px Breite ein Cockpit, darunter eine einfache Ansicht im Stil der App.
+  - Das Cockpit zeigt sechs Kacheln auf einem Bildschirm und folgt dem hellen oder dunklen Modus.
+  - Ein Klick holt eine Kachel groß nach vorn (natives `<dialog>`: Esc, Tastaturfang, oberste Ebene).
+    Erst dort stehen Achsenwerte, Erklärtexte und die volle Tabelle.
+  - Der Fahrtverlauf wird mit einem Schieberegler gelesen, nichts läuft von selbst. Eine dritte Linie
+    zeigt Puls pro Watt im ruhigen Block mit dem Mittel jeder Blockhälfte: das, was die Regel rechnet.
+  - Die Warnfarbe steht nur für Warnungen.
+  - Der Look bleibt ein HUD, aber still: Eckklammern, ein flaches Messraster, im dunklen Modus
+    leuchtende Messlinien. Die Stufen der Regel leuchten nie, sie müssen scharf auf ihrem Wert stehen.
+  - Bewegung gibt es nur beim Öffnen einer Kachel: Flug, ein Lichtstreifen, die Übersicht tritt zurück
+    ohne zu kippen. „Ruhig“ und `prefers-reduced-motion` schalten sie ab.
+- Das Cockpit sagt, welche Zahl in welche Richtung besser wird, aber nur wo das körperlich stimmt.
+  - „↑ besser“ am Effizienzfaktor, „↓ besser“ an Puls-Drift und Puls pro Watt. Load, NP, VI und kJ
+    bekommen keine Richtung: mehr Load ist nur mehr Belastung.
+  - Im Fokus steht unter jeder Zahl ein Satz, was sie heißt.
+  - Der Effizienzfaktor je Woche ist nach drinnen und draußen getrennt, auf einer gemeinsamen Achse.
+    Ein Satz vergleicht die letzten 4 Wochen mit den 4 davor, Fahrt für Fahrt, erst ab 3 Fahrten je Fenster.
+  - Die Befunde zeigen die Puls-Drift jedes ruhigen Blocks über die Wochen. Dauer und Leistung stehen am
+    Punkt, weil nur ähnliche Blöcke vergleichbar sind. Kein Gesamtwert, er würde verstecken, woraus er besteht.
 
 ## Konsequenzen
 
@@ -43,6 +60,9 @@
   die Datenschutzerklärung für Aktivitäten allgemein nennt; der Dashboard-Zweck steht dort eigens.
 - Die Werte für Aufwärmen, Spanne und Blocklänge sind eigene Schätzungen. Die 5-%-Linie ist eine
   Konvention aus der Trainingspraxis, kein geprüfter Grenzwert. Die App sagt das neben jedem Befund.
+- Der Effizienzfaktor kommt fertig von intervals.icu über die ganze Fahrt, Aufwärmen eingeschlossen.
+  Er ist dadurch ungenauer, aber für alle gleichmäßigen Fahrten gleich; der Trend bleibt lesbar.
+- Mit wenigen gleichmäßigen Fahrten bleibt der Trendsatz leer und sagt, wie viele fehlen.
 - Fahrten mit Garmin-Quelle tragen die Garmin-Zuschreibung direkt unter dem Kopf und je Fahrt.
 - CPU-Zeit und Abrufe je Anfrage sind lokal geprüft, aber nicht unter echter Last. Nach dem
   Ausrollen mit `npx wrangler tail` messen.
