@@ -25,6 +25,12 @@ import { SHORT_HORIZON, keepHorizon, readHorizon } from './plan-horizon.ts'
 import type { PlanHorizon } from './plan-horizon.ts'
 import { locale, t } from '../coach/lang.ts'
 
+type Wish = {
+  readonly intent?: 'hard' | 'easy' | 'rest'
+  readonly minutes?: number
+  readonly coreAt?: number
+}
+
 type Props = {
   readonly me: Me
   readonly onNeedsOnboarding: () => void
@@ -55,6 +61,8 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
   const [coreAt, setCoreAt] = useState<number | undefined>(undefined)
   const [horizon, setHorizon] = useState<PlanHorizon>(readHorizon)
   const [plan, setPlan] = useState<Plan | null>(null)
+  // The wish the plan on screen was built for. While a new one loads, a workout sent is the one shown.
+  const [shownWish, setShownWish] = useState<Wish>({})
   const [selected, setSelected] = useState<string | null>(null)
   const [config, setConfig] = useState<CoachConfig | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -88,14 +96,22 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
     setCoreAt(undefined)
   }, [])
 
+  // Dragging the time slider asks for several plans in a row, and they need not come back in
+  // order: only the latest request may change the screen, or it shows 2 h under a slider at 1 h 45.
+  const latestLoad = useRef(0)
+
   const load = useCallback(async (fresh = false) => {
+    const ticket = ++latestLoad.current
     setBusy(true)
     setError(null)
     try {
       const [nextPlan, nextConfig] = await Promise.all([getPlan(horizon, intent, fresh, minutesToday, coreAt), getConfig()])
+      if (ticket !== latestLoad.current) return
       setPlan(nextPlan)
+      setShownWish({ intent, minutes: minutesToday, coreAt: minutesToday === undefined ? undefined : coreAt })
       setConfig(nextConfig)
     } catch (caught) {
+      if (ticket !== latestLoad.current) return
       if (caught instanceof ApiError && caught.needsOnboarding) {
         onNeedsOnboarding()
         return
@@ -106,7 +122,7 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
       }
       setError(caught instanceof Error ? caught.message : t('Unbekannter Fehler'))
     } finally {
-      setBusy(false)
+      if (ticket === latestLoad.current) setBusy(false)
     }
   }, [onNeedsOnboarding, horizon, intent, minutesToday, coreAt])
 
@@ -195,9 +211,9 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
               onStrengthLogged={() => void load()}
               destinations={destinationLabels}
               scheduled={plan.scheduled.filter((entry) => entry.date === day.date)}
-              intent={intent}
-              minutesToday={minutesToday}
-              coreAt={minutesToday === undefined ? undefined : coreAt}
+              intent={shownWish.intent}
+              minutesToday={shownWish.minutes}
+              coreAt={shownWish.coreAt}
             >
               {index === 0 && (
                 <>
