@@ -34,6 +34,8 @@ export const hoursLabel = (minutes: number): string => {
 
 type StopSliderProps = {
   readonly id: string
+  /** The value in force, so a slider built anew shows what the plan was asked for rather than its resting point. */
+  readonly current: number | undefined
   readonly label: string
   /** The first stop is the resting point and stands for undefined. */
   readonly stops: readonly (number | undefined)[]
@@ -46,9 +48,9 @@ type StopSliderProps = {
  * A choice among stops as a slider rather than a row of buttons. The plan is asked
  * again only once the slider rests.
  */
-const StopSlider = ({ id, label, stops, restingLabel, onSettled }: StopSliderProps) => {
-  const [value, setValue] = useState<number | undefined>(undefined)
-  const [settled, setSettled] = useState<number | undefined>(undefined)
+const StopSlider = ({ id, current, label, stops, restingLabel, onSettled }: StopSliderProps) => {
+  const [value, setValue] = useState<number | undefined>(current)
+  const [settled, setSettled] = useState<number | undefined>(current)
 
   useEffect(() => {
     if (value === settled) return
@@ -92,15 +94,18 @@ const StopSlider = ({ id, label, stops, restingLabel, onSettled }: StopSliderPro
  */
 export const MoreTimeSlider = ({
   usual,
+  current,
   onSettled,
 }: {
   /** The usual ceiling: the slider's resting point, meaning "as always". */
   readonly usual: number
+  readonly current: number | undefined
   /** Undefined is the usual time. */
   readonly onSettled: (minutes: number | undefined) => void
 }) => (
   <StopSlider
     id="more-time"
+    current={current}
     label={t('Zeit')}
     stops={[undefined, ...moreTimeStops(usual).slice(1)]}
     restingLabel={t('wie immer')}
@@ -114,15 +119,18 @@ export const MoreTimeSlider = ({
  */
 export const CoreStartSlider = ({
   latest,
+  current,
   onSettled,
 }: {
   /** The latest minute the work can begin with all the added base in front of it. */
   readonly latest: number
+  readonly current: number | undefined
   /** Undefined is right after the warm-up. */
   readonly onSettled: (minute: number | undefined) => void
 }) => (
   <StopSlider
     id="core-start"
+    current={current}
     label={t('Kern ab')}
     stops={coreStartStops(latest)}
     restingLabel="direkt"

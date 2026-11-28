@@ -19,7 +19,7 @@ import { BreakBar } from './components/BreakBar.tsx'
 import { ZrlPanel } from './components/ZrlPanel.tsx'
 import { zrlRelevant } from './zrl-relevance.ts'
 import { GarminAttribution } from './components/GarminAttribution.tsx'
-import { CoreStartSlider, MoreTimeSlider } from './components/MoreTimeSlider.tsx'
+import { CoreStartSlider, MoreTimeSlider, coreStartStops } from './components/MoreTimeSlider.tsx'
 
 import { SHORT_HORIZON, keepHorizon, readHorizon } from './plan-horizon.ts'
 import type { PlanHorizon } from './plan-horizon.ts'
@@ -30,6 +30,9 @@ type Wish = {
   readonly minutes?: number
   readonly coreAt?: number
 }
+
+const sameWish = (left: Wish, right: Wish): boolean =>
+  left.intent === right.intent && left.minutes === right.minutes && left.coreAt === right.coreAt
 
 type Props = {
   readonly me: Me
@@ -95,6 +98,8 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
     setMinutesToday(minutes)
     setCoreAt(undefined)
   }, [])
+
+  const currentWish: Wish = { intent, minutes: minutesToday, coreAt: minutesToday === undefined ? undefined : coreAt }
 
   // Dragging the time slider asks for several plans in a row, and they need not come back in
   // order: only the latest request may change the screen, or it shows 2 h under a slider at 1 h 45.
@@ -214,6 +219,7 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
               intent={shownWish.intent}
               minutesToday={shownWish.minutes}
               coreAt={shownWish.coreAt}
+              updating={index === 0 && busy && !sameWish(shownWish, currentWish)}
             >
               {index === 0 && (
                 <>
@@ -229,10 +235,12 @@ export const PlanView = ({ me, onNeedsOnboarding }: Props) => {
                       </button>
                     ))}
                   </div>
-                  {config && <MoreTimeSlider usual={config.profile.sessionMinutes.max} onSettled={onMinutesToday} />}
-                  {minutesToday !== undefined && latestCore(day) >= 30 && (
+                  {config && (
+                    <MoreTimeSlider usual={config.profile.sessionMinutes.max} current={minutesToday} onSettled={onMinutesToday} />
+                  )}
+                  {minutesToday !== undefined && coreStartStops(latestCore(day)).length > 1 && (
                     // A new length starts the choice over: the latest start moves with it.
-                    <CoreStartSlider key={minutesToday} latest={latestCore(day)} onSettled={setCoreAt} />
+                    <CoreStartSlider key={minutesToday} latest={latestCore(day)} current={coreAt} onSettled={setCoreAt} />
                   )}
                 </>
               )}
