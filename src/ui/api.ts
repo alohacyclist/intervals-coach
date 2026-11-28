@@ -158,11 +158,23 @@ export const pushWorkout = (
   intent?: string,
   minutes?: number,
   coreAt?: number,
-): Promise<{ name: string; alreadyScheduled: boolean }> =>
-  request<{ name: string; alreadyScheduled: boolean }>('/api/push', {
-    method: 'POST',
-    body: JSON.stringify({ date, templateId, variant, intent, minutes, coreAt }),
+): Promise<{ name: string; alreadyScheduled: boolean }> => {
+  const send = () =>
+    request<{ name: string; alreadyScheduled: boolean }>('/api/push', {
+      method: 'POST',
+      body: JSON.stringify({ date, templateId, variant, intent, minutes, coreAt }),
+    })
+  // A gateway that did not answer is asked once more. Safe: the server reads the calendar
+  // afresh before it writes, so a workout the first attempt did create is not sent twice.
+  return send().catch(async (error: unknown) => {
+    if (!(error instanceof ApiError) || !GATEWAY.includes(error.status)) throw error
+    await new Promise((resolve) => setTimeout(resolve, PUSH_RETRY_MS))
+    return send()
   })
+}
+
+const GATEWAY: readonly number[] = [502, 503, 504]
+const PUSH_RETRY_MS = 1500
 
 export const deleteAccount = (): Promise<{ ok: boolean }> =>
   request<{ ok: boolean }>('/api/account', { method: 'DELETE' })

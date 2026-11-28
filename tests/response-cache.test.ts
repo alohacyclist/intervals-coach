@@ -148,6 +148,24 @@ describe('the plan with the cache in the Worker', () => {
     expect(calls.slice(before)).toContain('GET /athlete/iA/events')
   })
 
+  it('takes everything but the calendar from the recent reads when pushing', async () => {
+    const { env, cookie } = await setUp()
+    const calls = stubIntervals()
+    const plan = (await (await call('/api/plan?days=7', { headers: { Cookie: cookie } }, env)).json()) as {
+      days: { date: string; options: { template: { id: string } }[] }[]
+    }
+    const day = plan.days[0]!
+    const before = calls.length
+    const push = await call(
+      '/api/push',
+      { method: 'POST', headers: { Cookie: cookie }, body: JSON.stringify({ date: day.date, templateId: day.options[0]!.template.id }) },
+      env,
+    )
+    expect(push.status).toBe(200)
+    const reads = calls.slice(before).filter((entry) => entry.startsWith('GET '))
+    expect(reads).toEqual(['GET /athlete/iA/events'])
+  })
+
   it('sends the version on screen even when the rebuilt plan no longer offers the session', async () => {
     const { env, cookie } = await setUp()
     const calls = stubIntervals()
