@@ -97,8 +97,61 @@ test.describe('in English', () => {
     await signIn(page)
     await page.goto('/dashboard')
     await expect(page.getByRole('heading', { name: 'Training cockpit' })).toBeVisible()
-    await expect(page.locator('.hud-al').first()).toBeVisible()
-    await expect(page.locator('.hud-al').first()).not.toHaveText(/[äöüß]/)
+    await expect(page.locator('.hud-tile')).toHaveCount(6)
+    await expect(page.locator('.hud-tiles')).not.toHaveText(/[äöüß]/)
+  })
+
+  test('a tile opens large in front, the ride is read with a slider', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await signIn(page)
+    await page.goto('/dashboard')
+    // The overview fits one screen: nothing to scroll before deciding whether to look closer.
+    await expect(page.locator('.hud-tile')).toHaveCount(6)
+    expect(await page.evaluate(() => document.documentElement.scrollHeight <= window.innerHeight)).toBe(true)
+
+    await page.getByRole('button', { name: /^Findings/ }).click()
+    const focus = page.getByRole('dialog')
+    await expect(focus.getByRole('heading', { name: 'Findings' })).toBeVisible()
+    // Every steady block is a dot over the weeks; its label carries what makes two blocks comparable.
+    await expect(focus.getByRole('img', { name: 'Heart rate drift per steady block' })).toBeVisible()
+    await expect(focus.locator('.hud-pt').first()).toHaveAttribute('aria-label', /min at \d+ W · drift/)
+    // A finding leads to its ride, where verdict and trace sit together.
+    await focus.locator('.hud-al').first().click()
+    await expect(focus.getByRole('heading', { name: 'Ride trace' })).toBeVisible()
+    const slider = focus.getByRole('slider', { name: 'Choose ride time' })
+    await expect(slider).toBeVisible()
+    const before = await slider.getAttribute('aria-valuetext')
+    await slider.focus()
+    await page.keyboard.press('ArrowRight')
+    await expect(slider).not.toHaveAttribute('aria-valuetext', before ?? '')
+    // The arrow moved the slider, not the tile.
+    await expect(focus.getByRole('heading', { name: 'Ride trace' })).toBeVisible()
+    await expect(focus).not.toHaveText(/[äöüß]/)
+
+    await focus.getByRole('button', { name: 'Next tile' }).click()
+    await expect(focus.getByRole('heading', { name: 'Load' })).toBeVisible()
+    await page.keyboard.press('Escape')
+    await expect(focus).toBeHidden()
+    // Closing leaves nothing behind: the next tile opens and stays open.
+    await page.getByRole('button', { name: /^Coverage/ }).click()
+    await expect(focus.getByRole('heading', { name: 'Coverage' })).toBeVisible()
+    await focus.getByRole('button', { name: 'Close' }).click()
+    await expect(focus).toBeHidden()
+    await page.getByRole('button', { name: /^Rides/ }).click()
+    await expect(focus.getByRole('heading', { name: 'Rides' })).toBeVisible()
+    await page.keyboard.press('Escape')
+    // Efficiency is told apart by place, and says which way is better.
+    await page.getByRole('button', { name: /^Efficiency/ }).click()
+    await expect(focus.getByText('EF Outdoor, W/bpm')).toBeVisible()
+    await expect(focus.getByText('EF Indoor, W/bpm')).toBeVisible()
+    await expect(focus.locator('.hud-better').first()).toHaveText('↑higher is better')
+    // A dot in the drift chart opens its ride.
+    await focus.getByRole('button', { name: 'Previous tile' }).click()
+    await focus.getByRole('button', { name: 'Previous tile' }).click()
+    await focus.getByRole('button', { name: 'Previous tile' }).click()
+    await expect(focus.getByRole('heading', { name: 'Findings' })).toBeVisible()
+    await focus.locator('.hud-pt').first().click()
+    await expect(focus.getByRole('heading', { name: 'Ride trace' })).toBeVisible()
   })
 })
 
