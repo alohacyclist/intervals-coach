@@ -764,7 +764,10 @@ export const createApiRoutes = (resolve: DepsResolver): Hono => {
 
     const resolved = await resolve(context)
     // Whether this version is already on the calendar must come from the calendar as it is now.
-    const deps = { ...resolved, source: resolved.source.fresh() }
+    // Everything else is the plan the athlete just saw, from the same recent reads: asking
+    // intervals.icu afresh for months of activities and every interval read cost the Worker
+    // more than its share of time, and the send failed with a gateway page instead of an answer.
+    const deps = { ...resolved, source: { ...resolved.source, events: resolved.source.fresh().events } }
     // The plan as the athlete saw it: today's wish changes what today offers.
     const intent = body.intent === 'hard' || body.intent === 'easy' || body.intent === 'rest' ? body.intent : undefined
     const plan = await buildPlan(deps, 7, intent, minutesWish(body.minutes), coreWish(body.coreAt))

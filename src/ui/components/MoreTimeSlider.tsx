@@ -1,8 +1,8 @@
 import { useEffect, useState, type CSSProperties } from 'react'
 import { t } from '../../coach/lang.ts'
 
-/** From the usual ceiling up to five hours, in quarter hours. */
-const STEP = 15
+/** From the usual ceiling up to five hours, in five minutes: the time an athlete has is rarely a quarter hour. */
+const STEP = 5
 const LONGEST = 300
 /** Long enough to drag past a few stops without loading the plan for each. */
 const SETTLE_MS = 450
@@ -13,13 +13,16 @@ export const moreTimeStops = (usual: number): readonly number[] => {
   return [usual, ...Array.from({ length: count }, (_unused, index) => first + index * STEP)]
 }
 
+/** The earliest the work can be asked to begin later than right after the warm-up. */
+const FIRST_CORE = 15
+
 /**
- * Where the work of a lengthened session may begin, in quarter hours: the first stop is
+ * Where the work of a lengthened session may begin, in five minutes: the first stop is
  * right after the warm-up, the last the latest the added base allows.
  */
 export const coreStartStops = (latest: number): readonly (number | undefined)[] => {
-  const count = Math.max(0, Math.floor(latest / STEP) - 1)
-  return [undefined, ...Array.from({ length: count }, (_unused, index) => (index + 2) * STEP)]
+  const count = Math.max(0, Math.floor((latest - FIRST_CORE) / STEP) + 1)
+  return [undefined, ...Array.from({ length: count }, (_unused, index) => FIRST_CORE + index * STEP)]
 }
 
 export const hoursLabel = (minutes: number): string => {
