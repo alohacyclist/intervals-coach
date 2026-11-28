@@ -48,6 +48,18 @@ test.describe('in German', () => {
     await expect(page.locator('.line__panel:not([hidden]) .panel__facts').first()).toContainText('Ruhetag')
   })
 
+  test('more time in five minutes, and the work begins at the minute the second slider shows', async ({ page }) => {
+    await signIn(page)
+    await page.locator('#more-time').focus()
+    for (let stop = 0; stop < 4; stop++) await page.keyboard.press('ArrowRight')
+    await expect(page.locator('#more-time')).toHaveAttribute('aria-valuetext', '2 h 20')
+    await page.locator('#core-start').focus()
+    for (let stop = 0; stop < 2; stop++) await page.keyboard.press('ArrowRight')
+    await expect(page.locator('#core-start')).toHaveAttribute('aria-valuetext', '20 min')
+    await expect(page.locator('.line__panel:not([hidden])')).toContainText('Intervalle ab Minute 20')
+    await expect(page.locator('.day__session--updating')).toHaveCount(0)
+  })
+
   test('progress shows the curve, the weeks and the levels', async ({ page }) => {
     await signIn(page)
     await page.getByRole('button', { name: 'Verlauf' }).click()

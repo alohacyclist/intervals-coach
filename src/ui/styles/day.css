@@ -64,6 +64,11 @@
   font-size: 13px;
   color: var(--data);
 }
+/* The session drawn for the slider's last stop is still on its way: the one shown is not it yet. */
+.day__session--updating {
+  opacity: 0.45;
+  transition: opacity 0.15s ease;
+}
 .notes {
   list-style: none;
   margin: 0;

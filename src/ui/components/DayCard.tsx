@@ -31,6 +31,8 @@ type Props = {
   readonly minutesToday?: number
   /** Where today's lengthened work begins, for the same reason. */
   readonly coreAt?: number
+  /** A plan for a new wish is on its way: what is shown is still the one before it. */
+  readonly updating?: boolean
   /** Today's controls; another day has no wish to change. */
   readonly children?: ReactNode
 }
@@ -50,6 +52,7 @@ export const DayCard = ({
   intent,
   minutesToday,
   coreAt,
+  updating = false,
   children,
 }: Props) => {
   const trained = day.completed.length > 0
@@ -145,7 +148,12 @@ export const DayCard = ({
 
       {/* All stay mounted, so a version chosen or sent survives looking at another sport. */}
       {day.options.map((session) => (
-        <div key={cardKey(session)} hidden={session.template.id !== chosenId}>
+        <div
+          key={cardKey(session)}
+          hidden={session.template.id !== chosenId}
+          className={updating ? 'day__session--updating' : undefined}
+          aria-busy={updating || undefined}
+        >
           <SessionCard
             session={session}
             date={day.date}
