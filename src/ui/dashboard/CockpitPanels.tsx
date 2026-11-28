@@ -1,182 +1,65 @@
-import type { DashboardRide, DashboardSummary, SteadyAnalysis, SteadyStatus } from '../../coach/dashboard.ts'
-import type { SteadyBlock, SteadyFinding } from '../../coach/steady-block.ts'
-import { seriesPath, weekChart } from './geometry.ts'
-import type { FindingItem, RideRow } from './model.ts'
-import { COVERAGE_ORDER, coverageLabel, disclaimer, driftOf, num, pct, verdictSentence } from './model.ts'
+import type { DashboardSummary, SteadyAnalysis } from '../../coach/dashboard.ts'
+import type { SteadyThresholds } from '../../coach/steady-block.ts'
 import { t } from '../../coach/lang.ts'
+import { DriftPlot } from './CockpitProgress.tsx'
+import { weekChart } from './geometry.ts'
+import type { DriftPoint, FindingItem, RideRow } from './model.ts'
+import { COVERAGE_ORDER, coverageLabel, disclaimer, num, RULE_NAMES } from './model.ts'
+import { Better, Fact, MarkLegend, Plot, WEEK_BOX, WEEK_H, WEEK_PAD, WEEK_W, WeekAxis, WeekMarks } from './Plot.tsx'
 
-const CHART_W = 360
-const CHART_H = 64
+type WeekProps = { readonly summary: DashboardSummary; readonly warnedWeeks: readonly boolean[] }
 
-/** Amber ticks above the weeks that hold a finding. */
-const Marks = ({ centres, weeks }: { readonly centres: readonly number[]; readonly weeks: readonly boolean[] }) => (
-  <>
-    {weeks.map((hit, i) =>
-      hit ? <polygon key={i} className="hud-mk" points={`${(centres[i] ?? 0) - 5},0 ${(centres[i] ?? 0) + 5},0 ${centres[i] ?? 0},8`} /> : null,
-    )}
-  </>
-)
-
-export const LoadPanel = ({ summary, warnedWeeks }: { readonly summary: DashboardSummary; readonly warnedWeeks: readonly boolean[] }) => {
+export const LoadFocus = ({ summary, warnedWeeks }: WeekProps) => {
   const weeks = summary.weeks
-  const chart = weekChart(weeks, CHART_W, CHART_H - 6)
-  const ef = seriesPath(weeks.map((w) => w.efficiencyFactor), chart.centres, CHART_H - 6)
+  const chart = weekChart(weeks, WEEK_W, WEEK_H, WEEK_PAD)
   const now = weeks[weeks.length - 1]
-  const lastEf = [...weeks].reverse().find((w) => w.efficiencyFactor !== null)?.efficiencyFactor ?? null
   return (
-    <section className="hud-pn hud-b2 hud-wing-l hud-stack hud-gap-l">
-      <div className="hud-lbl">{t('Belastung und Effizienz')}</div>
+    <div className="hud-stack hud-gap-l">
+      <div className="hud-facts">
+        <Fact
+          big
+          label={now?.partial ? t('Load diese Woche · läuft') : t('Load diese Woche')}
+          value={num(now?.load ?? 0)}
+          hint={t('Dauer mal Härte aller Fahrten. Mehr ist nicht besser, nur mehr Belastung.')}
+        />
+        <Fact
+          big
+          label={t('Mittel der 4 Wochen davor')}
+          value={now?.loadChronic == null ? '–' : num(now.loadChronic)}
+          hint={t('Die Messlatte. Langsam darüber heißt aufbauen, weit darüber ist ein großer Sprung, darunter Erholung.')}
+        />
+        <Fact big label={t('Arbeit diese Woche, kJ')} value={num(now?.workKj ?? 0)} hint={t('Etwa die verbrannten kcal. Zeigt Umfang, nicht Form.')} />
+        <Fact
+          big
+          label={t('Fahrten · Stunden · km')}
+          value={now ? `${now.rides} · ${num(now.seconds / 3600, 1)} · ${num(now.distanceM / 1000)}` : '–'}
+          hint={t('Umfang. Stunden sagen mehr als km, die hängen an Wind und Strecke.')}
+        />
+      </div>
       <div className="hud-stack">
-        <div className="hud-kv">
-          <span className="hud-lbl">{now?.partial ? t('Load diese Woche · läuft') : t('Load diese Woche')}</span>
-          <span className="hud-mono hud-num">{num(now?.load ?? 0)}</span>
-        </div>
-        <svg viewBox={`0 0 ${CHART_W} ${CHART_H}`} role="img" aria-label={t`Load je Woche über ${weeks.length} Wochen als Balken, Linie: Mittel der vier Wochen davor`}>
-          <g transform="translate(0 6)">
-            <g className="hud-grid"><line x1="0" y1={CHART_H - 6} x2={CHART_W} y2={CHART_H - 6} /></g>
-            {chart.bars.map((b, i) => (
-              <rect key={i} className={b.partial ? 'hud-bar hud-bar--partial' : 'hud-bar'} x={b.x} y={b.y} width={b.width} height={b.height} />
-            ))}
-            <path className="hud-tr hud-tr--pw hud-tr--thin" d={chart.chronicPath} />
+        <Plot label={t('Load je Woche')} tone="plain" ticks={[num(chart.max), num(chart.max / 2), '0']} viewBox={WEEK_BOX} size="week">
+          <g className="hud-grid">
+            <line x1="0" y1={WEEK_PAD} x2={WEEK_W} y2={WEEK_PAD} />
+            <line x1="0" y1={(WEEK_H + WEEK_PAD) / 2} x2={WEEK_W} y2={(WEEK_H + WEEK_PAD) / 2} />
+            <line x1="0" y1={WEEK_H} x2={WEEK_W} y2={WEEK_H} />
           </g>
-          <Marks centres={chart.centres} weeks={warnedWeeks} />
-        </svg>
-        <span className="hud-note">
-          {t('Balken: jede Woche. Linie: Mittel der 4 Wochen davor, jetzt')}{' '}
-          <span className="hud-mono hud-hi">{now?.loadChronic === null || !now ? '–' : num(now.loadChronic)}</span>
-          {t('. Nebeneinander, nie als Verhältnis.')}
-        </span>
+          {chart.bars.map((b, i) => (
+            <rect key={i} className={b.partial ? 'hud-bar hud-bar--partial' : 'hud-bar'} x={b.x} y={b.y} width={b.width} height={b.height} />
+          ))}
+          <path className="hud-tr hud-tr--power" d={chart.chronicPath} />
+          <WeekMarks bars={chart.bars} weeks={warnedWeeks} />
+        </Plot>
+        <WeekAxis weeks={weeks} />
       </div>
-      <div className="hud-stack">
-        <div className="hud-kv">
-          <span className="hud-lbl">{t('Effizienzfaktor')}</span>
-          <span className="hud-mono hud-num hud-num--hr">
-            {lastEf === null ? '–' : num(lastEf, 2)}
-            <small> W/bpm</small>
-          </span>
-        </div>
-        <svg viewBox={`0 0 ${CHART_W} ${CHART_H}`} role="img" aria-label={t('Effizienzfaktor je Woche, nur gleichmäßige Fahrten')}>
-          <g transform="translate(0 6)">
-            <g className="hud-grid"><line x1="0" y1={CHART_H - 6} x2={CHART_W} y2={CHART_H - 6} /></g>
-            <path className="hud-tr hud-tr--hr hud-tr--thin" d={ef.path} />
-          </g>
-          <Marks centres={chart.centres} weeks={warnedWeeks} />
-        </svg>
-        <span className="hud-note">{t('Normalisierte Leistung pro Herzschlag, nur gleichmäßige Fahrten. Höher ist besser. Ein Trend, kein Alarm.')}</span>
+      <div className="hud-legend hud-cap">
+        <span><i className="hud-sw hud-sw--bar" aria-hidden="true" />{t('Load der Woche')}</span>
+        <span><i className="hud-sw hud-sw--line" aria-hidden="true" />{t('Mittel der 4 Wochen davor')}</span>
+        <MarkLegend shown={warnedWeeks.some(Boolean)} />
       </div>
-      <div className="hud-stack">
-        <div className="hud-kv">
-          <span className="hud-lbl">{t('Arbeit diese Woche')}</span>
-          <span className="hud-mono hud-num">
-            {num(now?.workKj ?? 0)}
-            <small> kJ</small>
-          </span>
-        </div>
-        <span className="hud-note">
-          {now ? `${now.rides === 1 ? t('1 Fahrt') : t`${now.rides} Fahrten`} · ${num(now.seconds / 3600, 1)} h · ${num(now.distanceM / 1000)} km` : ''}
-        </span>
-      </div>
-    </section>
+      <p className="hud-note">{t('Woche und Mittel stehen nebeneinander, nie als Verhältnis.')}</p>
+    </div>
   )
 }
-
-const Meter = ({ label, value, share, tone }: { readonly label: string; readonly value: string; readonly share: number; readonly tone: 'ref' | 'warn' | 'calm' }) => (
-  <div className="hud-stack hud-gap-s">
-    <div className="hud-kv">
-      <span className={tone === 'ref' ? 'hud-small hud-dim' : 'hud-small'}>{label}</span>
-      <span className={`hud-mono hud-small hud-tone-${tone}`}>{value}</span>
-    </div>
-    <div className="hud-meter hud-meter--tall">
-      <div className={`hud-fill-${tone}`} style={{ width: `${Math.min(100, share * 100).toFixed(1)}%` }} />
-    </div>
-  </div>
-)
-
-/** The rule as it is built: the two HR/W numbers it compares, side by side. */
-const RuleMeters = ({ findings, block }: { readonly findings: readonly SteadyFinding[]; readonly block: SteadyBlock | null }) => {
-  const pairs = findings.length > 0
-    ? findings.map((f) => ({
-        key: f.rule,
-        refLabel: f.rule === 'hrDrift' ? t('Erste Blockhälfte') : t`Basis aus ${f.referenceRides} Fahrten`,
-        obsLabel: f.rule === 'hrDrift' ? t('Zweite Blockhälfte') : t('Diese Fahrt, erste Hälfte'),
-        ref: f.referenceHrPerW,
-        obs: f.observedHrPerW,
-        dev: f.deviation,
-        warn: true,
-      }))
-    : block
-      ? [{ key: 'drift', refLabel: t('Erste Blockhälfte'), obsLabel: t('Zweite Blockhälfte'), ref: block.firstHalfHrPerW, obs: block.secondHalfHrPerW, dev: driftOf(block), warn: false }]
-      : []
-  if (pairs.length === 0) return null
-  const top = Math.max(...pairs.flatMap((p) => [p.ref, p.obs])) * 1.12
-  return (
-    <>
-      <span className="hud-lbl">{t('Regel wie gebaut · Puls pro Watt, bpm/W')}</span>
-      {pairs.map((p) => (
-        <div key={p.key} className="hud-stack hud-gap-s">
-          <Meter label={p.refLabel} value={num(p.ref, 3)} share={p.ref / top} tone="ref" />
-          <Meter label={p.obsLabel} value={`${num(p.obs, 3)} · ${pct(p.dev)}`} share={p.obs / top} tone={p.warn ? 'warn' : 'calm'} />
-        </div>
-      ))}
-    </>
-  )
-}
-
-const ItemButton = ({ item, selected, onPick }: { readonly item: FindingItem; readonly selected: boolean; readonly onPick: () => void }) => (
-  <button type="button" className={`hud-al hud-al--${item.tone}${selected ? ' is-on' : ''}`} aria-pressed={selected} onClick={onPick}>
-    <span className="hud-kv">
-      <span className={`hud-mono hud-code hud-tone-${item.tone === 'warn' ? 'warn' : 'ref'}`}>
-        {item.tone === 'warn' ? (
-          <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><polygon className="hud-mk" points="6,1 11,11 1,11" /></svg>
-        ) : (
-          <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><rect x="1.5" y="1.5" width="9" height="9" className="hud-box" /></svg>
-        )}
-        {item.code}
-      </span>
-      <span className="hud-mono hud-small hud-dim">{item.date}</span>
-    </span>
-    <span className="hud-item-title">{item.title}</span>
-    <span className="hud-mono hud-small">{item.line}</span>
-  </button>
-)
-
-type FindingsProps = {
-  readonly items: readonly FindingItem[]
-  readonly selectedId: string | null
-  readonly onPick: (rideId: string) => void
-  readonly ride: DashboardRide | null
-  readonly status: SteadyStatus | undefined
-  readonly findings: readonly SteadyFinding[]
-  readonly block: SteadyBlock | null
-  readonly summary: DashboardSummary
-  readonly glitch: boolean
-}
-
-export const FindingsPanel = ({ items, selectedId, onPick, ride, status, findings, block, summary, glitch }: FindingsProps) => (
-  <section className="hud-pn hud-b4 hud-wing-r">
-    <div className="hud-stack hud-gap hud-3d">
-      <div className="hud-lbl">{t('Befunde · eins auswählen')}</div>
-      {items.length === 0 && <p className="hud-note">{t('Noch keine Fahrt mit ruhigem Block gelesen.')}</p>}
-      <div className="hud-al-list">
-        {items.map((item) => (
-          <ItemButton key={item.rideId} item={item} selected={item.rideId === selectedId} onPick={() => onPick(item.rideId)} />
-        ))}
-      </div>
-      {ride && (
-        <div className={`${glitch ? 'hud-glitch-a' : 'hud-glitch-b'} hud-stack hud-gap hud-detail`}>
-          <RuleMeters findings={findings} block={block} />
-          <div className="hud-tiles hud-z1">
-            <div className="hud-tile"><span className="hud-lbl">NP W</span><span className="hud-mono hud-mid">{ride.normalizedWatts === null ? '–' : num(ride.normalizedWatts)}</span></div>
-            <div className="hud-tile"><span className="hud-lbl">VI</span><span className="hud-mono hud-mid">{ride.variabilityIndex === null ? '–' : num(ride.variabilityIndex, 2)}</span></div>
-            <div className="hud-tile"><span className="hud-lbl">EF</span><span className="hud-mono hud-mid">{ride.efficiencyFactor === null ? '–' : num(ride.efficiencyFactor, 2)}</span></div>
-          </div>
-          <p className="hud-sentence">{verdictSentence(status, findings, block, summary.thresholds)}</p>
-          <span className="hud-note">{disclaimer()}</span>
-        </div>
-      )}
-    </div>
-  </section>
-)
 
 type CoverageProps = {
   readonly analysis: SteadyAnalysis
@@ -184,62 +67,100 @@ type CoverageProps = {
   readonly total: number
   readonly stravaStubs: number
   readonly baselineDays: number
-  readonly blockError: string | null
-  readonly onRetry: () => void
 }
 
-/** How much of the range the rules could judge, so silence never reads as health. */
-export const CoveragePanel = ({ analysis, read, total, stravaStubs, baselineDays, blockError, onRetry }: CoverageProps) => {
+/** The split bar of what the rules could judge; the tile and the focus view share it. */
+export const CoverageBar = ({ analysis }: { readonly analysis: SteadyAnalysis }) => {
   const counts = analysis.coverage
   const all = Math.max(1, COVERAGE_ORDER.reduce((sum, s) => sum + counts[s], 0))
   return (
-    <section className="hud-pn hud-b5 hud-stack hud-gap" style={{ flex: '1 1 340px' }}>
-      <div className="hud-lbl">{t('Regelabdeckung · was geprüft werden konnte')}</div>
-      <div className="hud-split-bar" role="img" aria-label={COVERAGE_ORDER.map((s) => `${counts[s]} ${coverageLabel(s)}`).join(', ')}>
-        {COVERAGE_ORDER.map((s) => (counts[s] > 0 ? <div key={s} className={`hud-cov hud-cov--${s}`} style={{ width: `${(counts[s] / all) * 100}%` }} /> : null))}
-      </div>
-      <ul className="hud-cov-list">
+    <span className="hud-split-bar" role="img" aria-label={COVERAGE_ORDER.map((s) => `${counts[s]} ${coverageLabel(s)}`).join(', ')}>
+      {COVERAGE_ORDER.map((s) => (counts[s] > 0 ? <span key={s} className={`hud-cov hud-cov--${s}`} style={{ width: `${(counts[s] / all) * 100}%` }} /> : null))}
+    </span>
+  )
+}
+
+/** How much of the range the rules could judge, so silence never reads as health. */
+export const CoverageFocus = ({ analysis, read, total, stravaStubs, baselineDays }: CoverageProps) => {
+  const counts = analysis.coverage
+  return (
+    <div className="hud-stack hud-gap-l">
+      <div className="hud-facts">
         {COVERAGE_ORDER.filter((s) => counts[s] > 0).map((s) => (
-          <li key={s}>
-            <span className={`hud-swatch hud-cov--${s}`} aria-hidden="true" />
-            <span className="hud-mono">{counts[s]}</span> {coverageLabel(s)}
-          </li>
+          <div key={s} className="hud-fact">
+            <span className="hud-cap"><i className={`hud-sw hud-cov--${s}`} aria-hidden="true" />{coverageLabel(s)}</span>
+            <span className="hud-mono hud-big">{counts[s]}</span>
+          </div>
         ))}
-      </ul>
-      <div className="hud-stack hud-gap-s">
+      </div>
+      <CoverageBar analysis={analysis} />
+      <div className="hud-stack">
         <div className="hud-kv">
-          <span className="hud-lbl">{t('Messreihen gelesen')}</span>
+          <span>{t('Messreihen gelesen')}</span>
           <span className="hud-mono">{read} / {total}</span>
         </div>
         <div className="hud-meter"><div className="hud-fill-calm" style={{ width: `${total === 0 ? 100 : (read / total) * 100}%` }} /></div>
         <span className="hud-note">{t`Dazu zählen Fahrten der ${baselineDays} Tage vor dem Zeitraum. Sie dienen nur als Basis.`}</span>
       </div>
+      <div className="hud-kv">
+        <span>{t('Regeln aktiv')}</span>
+        <span className="hud-mono">{RULE_NAMES.hrDrift} · {RULE_NAMES.elevatedHr}</span>
+      </div>
+      <p className="hud-note">{t('Ohne ruhigen Block gibt es kein Urteil: Bei wechselnder Last schwankt der Puls pro Watt mit der Last, nicht mit dem Körper.')}</p>
       {stravaStubs > 0 && (
-        <span className="hud-note">{t`${stravaStubs} Fahrten aus Strava gibt intervals.icu nicht weiter. Sie fehlen in allen Zahlen.`}</span>
+        <p className="hud-note">{t`${stravaStubs} Fahrten aus Strava gibt intervals.icu nicht weiter. Sie fehlen in allen Zahlen.`}</p>
       )}
-      {blockError && (
-        <p className="hud-note hud-tone-warn" role="alert">
-          {blockError}{' '}
-          <button type="button" className="hud-btn hud-btn--small" onClick={onRetry}>{t('Weiterlesen')}</button>
-        </p>
-      )}
-    </section>
+    </div>
   )
 }
 
-export const RideTable = ({ rows, selectedId, onPick }: { readonly rows: readonly RideRow[]; readonly selectedId: string | null; readonly onPick: (id: string) => void }) => (
-  <section className="hud-pn hud-b5 hud-stack hud-gap" style={{ flex: '2 1 600px' }}>
-    <div className="hud-lbl">{t('Fahrten · Indoor und draußen werden nie miteinander verglichen')}</div>
+const ItemButton = ({ item, selected, onPick }: { readonly item: FindingItem; readonly selected: boolean; readonly onPick: () => void }) => (
+  <button type="button" className={`hud-al hud-al--${item.tone}${selected ? ' is-on' : ''}`} onClick={onPick}>
+    <span className="hud-kv">
+      <span className={`hud-mono hud-cap hud-tone-${item.tone === 'warn' ? 'warn' : 'ref'}`}>{item.code}</span>
+      <span className="hud-mono hud-cap">{item.date}</span>
+    </span>
+    <span className="hud-item-title">{item.title}</span>
+    <span className="hud-mono">{item.line}</span>
+  </button>
+)
+
+type FindingsProps = {
+  readonly items: readonly FindingItem[]
+  readonly points: readonly DriftPoint[]
+  readonly summary: DashboardSummary
+  readonly thresholds: SteadyThresholds
+  readonly selectedId: string | null
+  readonly onPick: (rideId: string) => void
+}
+
+export const FindingsFocus = ({ items, points, summary, thresholds, selectedId, onPick }: FindingsProps) => (
+  <div className="hud-stack hud-gap-l">
+    {items.length === 0 && <p className="hud-note">{t('Noch keine Fahrt mit ruhigem Block gelesen.')}</p>}
+    {points.length > 0 && <DriftPlot points={points} weeks={summary.weeks} thresholds={thresholds} onPick={onPick} />}
+    <div className="hud-al-list">
+      {items.map((item) => (
+        <ItemButton key={item.rideId} item={item} selected={item.rideId === selectedId} onPick={() => onPick(item.rideId)} />
+      ))}
+    </div>
+    <p className="hud-note">{t('Ein Klick öffnet den Fahrtverlauf mit Urteil und Zahlen.')} {disclaimer()}</p>
+  </div>
+)
+
+type RidesProps = { readonly rows: readonly RideRow[]; readonly selectedId: string | null; readonly onPick: (id: string) => void }
+
+export const RidesFocus = ({ rows, selectedId, onPick }: RidesProps) => (
+  <div className="hud-stack hud-gap">
     <div className="hud-scroll">
       <table className="hud-tbl">
         <thead>
-          <tr><th>{t('Fahrt')}</th><th>{t('Wo')}</th><th>NP W</th><th>VI</th><th>EF</th><th>{t('Ruhiger Block')}</th><th>{t('Status')}</th></tr>
+          <tr><th>{t('Fahrt')}</th><th>{t('Wo')}</th><th>NP W</th><th>VI</th><th>EF <Better way="up" /></th><th>{t('Ruhiger Block')}</th><th>{t('Status')}</th></tr>
         </thead>
         <tbody>
           {rows.map((r) => (
             <tr key={r.ride.id} className={r.ride.id === selectedId ? 'is-on' : undefined}>
               <td>
-                <button type="button" className="hud-row-btn" onClick={() => onPick(r.ride.id)} aria-pressed={r.ride.id === selectedId}>
+                <button type="button" className="hud-row-btn" onClick={() => onPick(r.ride.id)}>
                   {r.date} <span className="hud-dim">{r.ride.name}</span>
                 </button>
               </td>
@@ -254,5 +175,6 @@ export const RideTable = ({ rows, selectedId, onPick }: { readonly rows: readonl
         </tbody>
       </table>
     </div>
-  </section>
+    <p className="hud-note">{t('Ein Klick auf eine Fahrt öffnet ihren Verlauf. Indoor und draußen werden nie miteinander verglichen.')}</p>
+  </div>
 )

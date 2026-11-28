@@ -21,6 +21,8 @@ const CHRONIC_WEEKS = 4
 export const isDashboardWeeks = (value: number): value is DashboardWeeks =>
   (DASHBOARD_WEEKS as readonly number[]).includes(value)
 
+export type PlaceValues = { readonly indoor: number | null; readonly outdoor: number | null }
+
 export type DashboardWeek = {
   readonly weekStart: string
   readonly rides: number
@@ -31,8 +33,8 @@ export type DashboardWeek = {
   readonly workKj: number
   /** Mean load of the four weeks before; null while there are none. */
   readonly loadChronic: number | null
-  /** Mean efficiency factor of the even rides of the week, W/bpm. */
-  readonly efficiencyFactor: number | null
+  /** Mean efficiency factor of the even rides of the week, W/bpm, per place: indoors the heart runs warmer. */
+  readonly efficiency: PlaceValues
   /** The running week is not over, so it must not read as a drop. */
   readonly partial: boolean
 }
@@ -91,6 +93,16 @@ const isEven = (a: Activity): boolean =>
 const evenOnly = (a: Activity, value: number | null | undefined): number | null =>
   isEven(a) && value != null ? value : null
 
+const meanEfficiency = (rides: readonly Activity[], indoor: boolean): number | null =>
+  mean(
+    rides
+      .filter((a) => (a.rideStats?.indoor ?? false) === indoor)
+      .flatMap((a) => {
+        const value = evenOnly(a, a.rideStats?.efficiencyFactor)
+        return value === null ? [] : [value]
+      }),
+  )
+
 export const buildWeeks = (activities: readonly Activity[], today: string, count: number): readonly DashboardWeek[] => {
   const lastWeek = startOfWeek(today)
   const starts = Array.from({ length: count + CHRONIC_WEEKS }, (_unused, i) =>
@@ -106,7 +118,7 @@ export const buildWeeks = (activities: readonly Activity[], today: string, count
       distanceM: inWeek.reduce((sum, a) => sum + a.distanceM, 0),
       load: Math.round(inWeek.reduce((sum, a) => sum + a.load, 0)),
       workKj: Math.round(inWeek.reduce((sum, a) => sum + (a.rideStats?.averageWatts ?? 0) * a.movingTimeSec, 0) / 1000),
-      efficiencyFactor: mean(inWeek.map((a) => evenOnly(a, a.rideStats?.efficiencyFactor)).filter((v): v is number => v !== null)),
+      efficiency: { indoor: meanEfficiency(inWeek, true), outdoor: meanEfficiency(inWeek, false) },
       partial: addDays(weekStart, 6) >= today,
     }
   })

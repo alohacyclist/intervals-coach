@@ -1,0 +1,144 @@
+/* Legends, swatches, meters and the marks that say which way a number should move. */
+
+.hud-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 22px;
+  padding-left: 48px;
+}
+.hud-sw {
+  display: inline-block;
+  width: 14px;
+  height: 10px;
+  margin-right: 6px;
+  vertical-align: -1px;
+}
+.hud-sw--warm {
+  background: var(--hud-warm);
+  border: 1px solid var(--hud-line-2);
+}
+.hud-sw--band {
+  background: var(--hud-band);
+  border: 1px solid var(--hud-pulse-2);
+}
+.hud-sw--bar {
+  background: var(--hud-grey);
+}
+.hud-sw--warn {
+  height: 4px;
+  vertical-align: 3px;
+  background: var(--hud-warn);
+}
+.hud-sw--line,
+.hud-sw--pulse,
+.hud-sw--step {
+  height: 2px;
+  vertical-align: 4px;
+  background: var(--hud-power);
+}
+.hud-sw--pulse {
+  background: var(--hud-pulse);
+}
+.hud-sw--step {
+  height: 3px;
+  background: var(--hud-pulse);
+}
+.hud-sw--step.is-warn {
+  background: var(--hud-warn);
+}
+.hud-sw--ref {
+  height: 0;
+  vertical-align: 4px;
+  border-top: 2px dashed var(--hud-text);
+}
+.hud-sw--mid {
+  width: 0;
+  margin-left: 6px;
+  border-left: 1px dashed var(--hud-grey);
+}
+
+.hud-meter {
+  height: 6px;
+  background: var(--hud-meter);
+}
+.hud-meter > div {
+  height: 100%;
+}
+.hud-fill-calm {
+  background: var(--hud-pulse);
+}
+.hud-fill-ref {
+  background: var(--hud-grey);
+}
+.hud-fill-warn {
+  background: var(--hud-warn);
+}
+.hud-sw--alt {
+  height: 0;
+  vertical-align: 4px;
+  border-top: 2px dashed var(--hud-pulse);
+}
+.hud-tr--alt {
+  stroke-dasharray: 6 5;
+}
+
+/* Only on the few numbers that have a direction: everything else stays without one on purpose. */
+.hud-better {
+  margin-left: 8px;
+  font-family: var(--mono);
+  color: var(--hud-pulse);
+  white-space: nowrap;
+}
+.hud-fact__hint {
+  max-width: 30ch;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--hud-dim);
+}
+
+.hud-tile__ef {
+  display: grid;
+  grid-template-columns: 70px auto minmax(0, 1fr);
+  gap: 12px;
+  align-items: baseline;
+}
+.hud-tile__ef > :last-child {
+  text-align: right;
+}
+
+/* One dot per steady block: filled outdoors, hollow indoors, warn colour where the drift rule fired. */
+.hud-pt,
+.hud-sw--pt {
+  border: 2px solid var(--hud-pulse);
+  border-radius: 50%;
+  background: var(--hud-pulse);
+}
+.hud-pt {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  padding: 0;
+  cursor: pointer;
+}
+.hud-sw--pt {
+  width: 10px;
+  height: 10px;
+}
+.hud-pt--in,
+.hud-sw--pt-in {
+  background: var(--hud-panel);
+}
+.hud-pt.is-warn,
+.hud-sw--pt.is-warn {
+  border-color: var(--hud-warn);
+  background: var(--hud-warn);
+}
+.hud-pt--in.is-warn {
+  background: var(--hud-panel);
+}
+.hud-pt:hover,
+.hud-pt:focus-visible {
+  outline: 2px solid var(--hud-text);
+  outline-offset: 2px;
+}

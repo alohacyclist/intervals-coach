@@ -576,10 +576,11 @@ auf Strava den Zugriff.
 ## Dashboard
 
 `/dashboard` zeigt Radfahrten der letzten 8, 12 oder 26 Wochen: Wochenlast mit Mittel der vier
-Wochen davor, Effizienz, Kennzahlen je Fahrt und zwei Puls-Regeln auf dem ruhigen Block einer
+Wochen davor, Effizienz getrennt nach drinnen und draußen mit Trend über 4 Wochen, Kennzahlen je Fahrt und zwei Puls-Regeln auf dem ruhigen Block einer
 Fahrt (Puls-Drift, Puls über der eigenen Basis). Fahrten ohne ruhigen Block bekommen keine
-Aussage; die Abdeckung sagt, wie viele das sind. Ab 1100 px Breite ein Cockpit mit Animationen,
-schmaler eine einfache Ansicht. Warum so: [adr/0001-dashboard.md](adr/0001-dashboard.md).
+Aussage; die Abdeckung sagt, wie viele das sind. Ab 1100 px Breite ein Cockpit aus sechs
+Kacheln, ein Klick holt eine groß nach vorn; schmaler eine einfache Ansicht. Wo eine Zahl eine
+Richtung hat, steht „↑ besser“ oder „↓ besser“ daneben. Warum so: [adr/0001-dashboard.md](adr/0001-dashboard.md).
 
 ## Demo
 

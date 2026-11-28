@@ -91,7 +91,16 @@ describe('buildWeeks', () => {
       TODAY,
       1,
     )
-    expect(week?.efficiencyFactor).toBe(1.5)
+    expect(week?.efficiency.indoor).toBe(1.5)
+  })
+
+  it('never mixes indoor and outdoor efficiency in one week', () => {
+    const [week] = buildWeeks(
+      [ride(0, { rideStats: stats({ efficiencyFactor: 1.4 }) }), ride(1, { rideStats: stats({ efficiencyFactor: 1.8, indoor: false }) })],
+      TODAY,
+      1,
+    )
+    expect(week?.efficiency).toEqual({ indoor: 1.4, outdoor: 1.8 })
   })
 })
 
